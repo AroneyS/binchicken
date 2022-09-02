@@ -1,0 +1,12 @@
+.vscode/
+.Rhistory
+.Rproj.user/
+*.Rproj
+
+.snakemake/
+
+*.html
+*.pdf
+*.xlsx
+*.png
+
