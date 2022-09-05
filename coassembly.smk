@@ -6,6 +6,9 @@ import os
 output_dir = os.path.abspath(str(config["output_subdir"]))
 logs_dir = output_dir + "/logs"
 
+singlem_bin = "/home/aroneys/bin/singlem-dev"
+singlem_conda = "/home/aroneys/src/singlem/singlem.yml"
+
 if not "min_contig_size" in config:            config["min_contig_size"] = 2500
 if not "appraise_sequence_identity" in config: config["appraise_sequence_identity"] = 0.89
 if not "max_coassembly_size" in config:        config["max_coassembly_size"] = 50
@@ -47,11 +50,12 @@ rule singlem_pipe_reads:
     log:
         logs_dir + "/pipe/{read}_read.log"
     params:
+        singlem_bin = singlem_bin,
         singlem_metapackage=config["singlem_metapackage"]
     conda:
-        "/home/aroneys/src/singlem/singlem.yml"
+        singlem_conda
     shell:
-        "/home/aroneys/bin/singlem-dev pipe "
+        "{params.singlem_bin} pipe "
         "--forward {input.reads_1} "
         "--reverse {input.reads_2} "
         "--otu-table {output} "
@@ -66,11 +70,12 @@ rule singlem_summarise_reads:
     log:
         logs_dir + "/summarise/{read}.log"
     params:
+        singlem_bin = singlem_bin,
         singlem_metapackage=config["singlem_metapackage"]
     conda:
-        "/home/aroneys/src/singlem/singlem.yml"
+        singlem_conda
     shell:
-        "/home/aroneys/bin/singlem-dev summarise "
+        "{params.singlem_bin} summarise "
         "--input-otu-tables {input} "
         "--output-otu-table {output} "
         "--exclude-off-target-hits "
@@ -88,11 +93,12 @@ rule singlem_pipe_bins:
     log:
         logs_dir + "/pipe/{bin}_bin.log"
     params:
+        singlem_bin = singlem_bin,
         singlem_metapackage=config["singlem_metapackage"]
     conda:
-        "/home/aroneys/src/singlem/singlem.yml"
+        singlem_conda
     shell:
-        "/home/aroneys/bin/singlem-dev pipe "
+        "{params.singlem_bin} pipe "
         "--forward {input} "
         "--otu-table {output} "
         "--singlem-metapackage {params.singlem_metapackage} "
@@ -106,11 +112,12 @@ rule singlem_summarise_bins:
     log:
         logs_dir + "/summarise/bins.log"
     params:
+        singlem_bin = singlem_bin,
         singlem_metapackage=config["singlem_metapackage"]
     conda:
-        "/home/aroneys/src/singlem/singlem.yml"
+        singlem_conda
     shell:
-        "/home/aroneys/bin/singlem-dev summarise "
+        "{params.singlem_bin} summarise "
         "--input-otu-tables {input} "
         "--output-otu-table {output} "
         "--exclude-off-target-hits "
@@ -130,11 +137,12 @@ rule singlem_appraise:
     log:
         logs_dir + "/appraise/{read}.log"
     params:
+        singlem_bin = singlem_bin,
         sequence_identity=config["appraise_sequence_identity"]
     conda:
-        "/home/aroneys/src/singlem/singlem.yml"
+        singlem_conda
     shell:
-        "/home/aroneys/bin/singlem-dev appraise "
+        "{params.singlem_bin} appraise "
         "--metagenome-otu-tables {input.reads} "
         "--genome-otu-tables {input.bins} "
         "--output-unaccounted-for-otu-table {output.unbinned} "
@@ -151,11 +159,12 @@ rule singlem_summarise_unbinned:
     log:
         logs_dir + "/summarise/unbinned.log"
     params:
+        singlem_bin = singlem_bin,
         singlem_metapackage=config["singlem_metapackage"]
     conda:
-        "/home/aroneys/src/singlem/singlem.yml"
+        singlem_conda
     shell:
-        "/home/aroneys/bin/singlem-dev summarise "
+        "{params.singlem_bin} summarise "
         "--input-otu-tables {input} "
         "--output-otu-table {output} "
         "--singlem-metapackage {params.singlem_metapackage} "
@@ -169,11 +178,12 @@ rule singlem_summarise_binned:
     log:
         logs_dir + "/summarise/binned.log"
     params:
+        singlem_bin = singlem_bin,
         singlem_metapackage=config["singlem_metapackage"]
     conda:
-        "/home/aroneys/src/singlem/singlem.yml"
+        singlem_conda
     shell:
-        "/home/aroneys/bin/singlem-dev summarise "
+        "{params.singlem_bin} summarise "
         "--input-otu-tables {input} "
         "--output-otu-table {output} "
         "--singlem-metapackage {params.singlem_metapackage} "
@@ -204,7 +214,7 @@ rule cluster_unbinned:
     params:
         identity=config["min_coassembly_identity"]
     conda:
-        "/home/aroneys/src/singlem/singlem.yml"
+        singlem_conda
     threads:
         64
     shell:
