@@ -15,6 +15,7 @@ if not "max_coassembly_size" in config:        config["max_coassembly_size"] = 5
 if not "max_coassembly_samples" in config:     config["max_coassembly_samples"] = 5
 if not "min_coassembly_identity" in config:    config["min_coassembly_identity"] = 0.99
 if not "min_coassembly_coverage" in config:    config["min_coassembly_coverage"] = 10
+if not "max_recovery_samples" in config:       config["max_recovery_samples"] = 20
 if not "taxa_of_interest" in config:           config["taxa_of_interest"] = ""
 
 rule all:
@@ -216,6 +217,7 @@ rule cluster_graph:
     params:
         max_coassembly_size=config["max_coassembly_size"],
         max_coassembly_samples=config["max_coassembly_samples"],
+        max_recovery_samples=config["max_recovery_samples"],
     script:
         "scripts/cluster_graph.py"
 

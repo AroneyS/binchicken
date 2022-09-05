@@ -13,6 +13,7 @@ from operator import itemgetter
 MAX_COASSEMBLY_SIZE = snakemake.params.max_coassembly_size * 10**9
 MAX_COASSEMBLY_SAMPLES = snakemake.params.max_coassembly_samples
 MIN_COASSEMBLY_SAMPLES = 2
+MAX_RECOVERY_SAMPLES = snakemake.params.max_recovery_samples
 
 ################
 ### Pipeline ###
@@ -34,10 +35,13 @@ def lightest(graph):
     return (u, v)
 
 comp = community.girvan_newman(graph, most_valuable_edge=lightest)
-clusters = pd.DataFrame(columns=["samples", "length", "total_weight", "total_targets", "total_size"])
+clusters = pd.DataFrame(columns=["samples", "length", "total_weight", "total_targets", "total_size", "recover_samples"])
+umbrellas = []
 for iteration in comp:
     communities = tuple(sorted(c) for c in iteration)
     for c in communities:
+        if len(c) <= MAX_RECOVERY_SAMPLES and len(c) >= MIN_COASSEMBLY_SAMPLES and not c in umbrellas:
+            umbrellas.append(c)
         if len(c) > MAX_COASSEMBLY_SAMPLES: continue
         if len(c) < MIN_COASSEMBLY_SAMPLES: continue
 
@@ -53,12 +57,17 @@ for iteration in comp:
         total_weight = sum([data["weight"] for _,_,data in edgeview])
         total_targets = len(set([i for l in [data["target_ids"].split(",") for _,_,data in edgeview] for i in l]))
 
+        suitable_indices = [i for i,u in enumerate(umbrellas) if all([s in u for s in c])]
+        suitable_umbrellas = [umbrellas[i] for i in suitable_indices]
+        best_umbrella = suitable_umbrellas[0]
+
         df = pd.DataFrame({
             "samples": ",".join(c),
             "length": len(c),
             "total_weight": total_weight,
             "total_targets": total_targets,
-            "total_size": total_size
+            "total_size": total_size,
+            "recover_samples": ",".join(best_umbrella)
             },
             index = [0])
         clusters = pd.concat([clusters, df], ignore_index=True)
