@@ -28,17 +28,12 @@ except IndexError:
 ################
 ### Pipeline ###
 ################
+# Group hits by sequence within genes and number to form targets
 unbinned = pd.read_csv(snakemake.input.unbinned, sep="\t")
-clusters = pd.read_csv(snakemake.input.clusters, sep="\t",
-    names = ["record_type", "cluster", "seq_len", "perc_id", "strand", "none1", "none2", "align", "query", "target"])
-
-# Find clusters for each sequence
-clusters = clusters[clusters["record_type"].isin(["C", "H"])]
-unbinned = unbinned.set_index("id").join(clusters.set_index("query")).reset_index()
-unbinned.dropna(subset = ["target"], inplace = True)
-unbinned["target"] = unbinned.apply(lambda x: x["target"] if x["target"] != "*" else x["id"], axis = 1)
+unbinned["target"] = unbinned.groupby(["gene", "sequence"]).ngroup()
 unbinned["target"] = unbinned["target"].astype(str)
-unbinned["id"] = unbinned["id"].astype(str)
+
+taxonomy = unbinned.groupby("target")["taxonomy"].first()
 
 # Within each target cluster, find pairs of samples with combined coverage > MIN_COVERAGE
 def find_pairs(df):
@@ -62,11 +57,7 @@ sample_pairs = (unbinned
     .to_frame("sample_pairs")
     .explode("sample_pairs")
     .dropna(subset = "sample_pairs")
-    # Join taxonomy from cluster target
-    .join(unbinned
-        .set_index("id")
-        .loc[:,"taxonomy"]
-        )
+    .join(taxonomy)
     .reset_index()
     )
 
@@ -90,7 +81,7 @@ if len(TAXA_OF_INTEREST) > 1:
 # Create weighted graph with nodes as samples and edges weighted by the number of clusters supporting that co-assembly (networkx)
 # Output sparse matrix with taxa_group/sample1/sample2/edge weight (number of supporting clusters with coverage > threshold)
 sparse_edges = (sample_pairs
-    .groupby(["taxa_group", "sample_pairs"])["index"]
+    .groupby(["taxa_group", "sample_pairs"])["target"]
     .agg(["count", lambda x: ",".join(sorted(x))])
     .reset_index()
     )

@@ -189,48 +189,12 @@ rule singlem_summarise_binned:
         "--singlem-metapackage {params.singlem_metapackage} "
         "&> {log}"
 
-####################
-### Cluster hits ###
-####################
-rule create_unbinned_fastas:
-    input:
-        otu_table=output_dir + "/summarise/unbinned.otu_table.tsv"
-    output:
-        id_otu_table=output_dir + "/cluster/id_otu_table.csv"
-    params:
-        output_dir=output_dir + "/cluster"
-    log:
-        logs_dir + "/cluster/fastas.log"
-    script:
-        "scripts/separate_SingleM_seq.py"
-
-rule cluster_unbinned:
-    input:
-        output_dir + "/cluster/id_otu_table.csv"
-    output:
-        output_dir + "/cluster/unbinned_clusters.tsv"
-    log:
-        logs_dir + "/cluster/unbinned.log"
-    params:
-        identity=config["min_coassembly_identity"]
-    conda:
-        singlem_conda
-    threads:
-        64
-    shell:
-        "find {output_dir}/cluster -name '*.fasta' | "
-        "parallel -j {threads} "
-        "vsearch --cluster_fast {{}} --uc {{.}}.uc --id {params.identity} "
-        "&> {log} "
-        "&& cat {output_dir}/cluster/*.uc > {output}"
-
 ######################
 ### Target elusive ###
 ######################
 rule target_elusive:
     input:
-        unbinned=output_dir + "/cluster/id_otu_table.csv",
-        clusters=output_dir + "/cluster/unbinned_clusters.tsv",
+        unbinned=output_dir + "/summarise/unbinned.otu_table.tsv"
     output:
         output_edges=output_dir + "/target/elusive_edges.tsv"
     log:
