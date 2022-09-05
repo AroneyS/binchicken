@@ -1,7 +1,9 @@
 #############
 ### Setup ###
 #############
-output_dir = "results/coassembly/" + str(config["output_subdir"])
+import os
+
+output_dir = os.path.abspath(str(config["output_subdir"]))
 logs_dir = output_dir + "/logs"
 
 if not "min_contig_size" in config:            config["min_contig_size"] = 2500
@@ -63,59 +65,6 @@ rule singlem_summarise_reads:
         output_dir + "/summarise/{read}_summarised.otu_table.tsv"
     log:
         logs_dir + "/summarise/{read}.log"
-    params:
-        singlem_metapackage=config["singlem_metapackage"]
-    conda:
-        "/home/aroneys/src/singlem/singlem.yml"
-    shell:
-        "/home/aroneys/bin/singlem-dev summarise "
-        "--input-otu-tables {input} "
-        "--output-otu-table {output} "
-        "--exclude-off-target-hits "
-        "--singlem-metapackage {params.singlem_metapackage} "
-        "&> {log}"
-
-##########################
-### SingleM assemblies ###
-##########################
-rule filter_contigs:
-    input:
-        lambda wildcards: config["assemblies"][wildcards.assembly]
-    output:
-        temp(output_dir + "/temp/{assembly}_filtered.fasta")
-    log:
-        logs_dir + "/filter/{assembly}.log"
-    params:
-        min_contig_size=config["min_contig_size"]
-    shell:
-        "python /home/aroneys/scripts/filter_fasta_length.py {params.min_contig_size} {input} {output} "
-        "&> {log}"
-
-rule singlem_pipe_assemblies:
-    input:
-        output_dir + "/temp/{assembly}_filtered.fasta"
-    output:
-        output_dir + "/pipe/{assembly}_assembly.otu_table.tsv"
-    log:
-        logs_dir + "/pipe/{assembly}_assembly.log"
-    params:
-        singlem_metapackage=config["singlem_metapackage"]
-    conda:
-        "/home/aroneys/src/singlem/singlem.yml"
-    shell:
-        "/home/aroneys/bin/singlem-dev pipe "
-        "--forward {input} "
-        "--otu-table {output} "
-        "--singlem-metapackage {params.singlem_metapackage} "
-        "&> {log}"
-
-rule singlem_summarise_assemblies:
-    input:
-        expand(output_dir + "/pipe/{assembly}_assembly.otu_table.tsv", assembly=config["assemblies"])
-    output:
-        output_dir + "/summarise/assemblies_summarised.otu_table.tsv"
-    log:
-        logs_dir + "/summarise/assemblies.log"
     params:
         singlem_metapackage=config["singlem_metapackage"]
     conda:
