@@ -1,6 +1,8 @@
 #############
 ### Setup ###
 #############
+ruleorder: singlem_appraise_gzip_archive > singlem_appraise
+
 import os
 
 output_dir = os.path.abspath(str(config["output_subdir"]))
@@ -145,6 +147,30 @@ rule singlem_appraise:
     shell:
         "{params.singlem_bin} appraise "
         "--metagenome-otu-tables {input.reads} "
+        "--genome-otu-tables {input.bins} "
+        "--output-unaccounted-for-otu-table {output.unbinned} "
+        "--output-binned-otu-table {output.binned} "
+        "--imperfect "
+        "--sequence-identity {params.sequence_identity} "
+        "&> {log}"
+
+rule singlem_appraise_gzip_archive:
+    input:
+        reads=lambda wildcards: config["singlem_gzip_archive"][wildcards.read],
+        bins=output_dir + "/summarise/bins_summarised.otu_table.tsv",
+    output:
+        unbinned=output_dir + "/appraise/{read}_unbinned.otu_table.tsv",
+        binned=output_dir + "/appraise/{read}_binned.otu_table.tsv",
+    log:
+        logs_dir + "/appraise/{read}.log"
+    params:
+        singlem_bin = singlem_bin,
+        sequence_identity=config["appraise_sequence_identity"]
+    conda:
+        singlem_conda
+    shell:
+        "{params.singlem_bin} appraise "
+        "--metagenome-gzip-archive-otu-tables {input.reads} "
         "--genome-otu-tables {input.bins} "
         "--output-unaccounted-for-otu-table {output.unbinned} "
         "--output-binned-otu-table {output.binned} "
