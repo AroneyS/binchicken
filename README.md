@@ -1,4 +1,4 @@
-# SingleM coassembly
+# Cockatoo
 
 ## Coassembly description
 

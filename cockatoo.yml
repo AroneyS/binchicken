@@ -1,4 +1,4 @@
-name: coassembly
+name: cockatoo
 channels:
   - conda-forge
   - bioconda
