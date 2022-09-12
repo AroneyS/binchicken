@@ -1,5 +1,15 @@
 # Cockatoo
 
+## Install from source
+
+```bash
+git clone https://github.com/AroneyS/cockatoo.git
+cd cockatoo
+conda env create -f cockatoo.yml
+conda activate cockatoo
+pip install -e .
+```
+
 ## Coassembly description
 
 Snakemake pipeline to discover coassembly sample clusters based on co-occurrence of single-copy marker genes, excluding those genes present in reference genomes (e.g. previously recovered genomes).
