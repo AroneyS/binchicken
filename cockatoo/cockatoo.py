@@ -109,7 +109,7 @@ def coassemble(args):
         workflow = "coassembly.smk",
         output_dir = output,
         dryrun = args.dryrun,
-        conda_prefix = os.path.abspath(args.conda_prefix),
+        conda_prefix = args.conda_prefix,
     )
 
 def evaluate(args):
@@ -156,6 +156,7 @@ def main():
 
     args = main_parser.parse_the_args()
     logging.info(f"Cockatoo v{__version__}")
+    logging.info(f"Command: {' '.join(['cockatoo'] + sys.argv[1:])}")
 
     if args.subparser_name == "coassemble":
         coassemble(args)
