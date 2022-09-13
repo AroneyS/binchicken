@@ -62,7 +62,7 @@ rule singlem_pipe_reads:
         "--forward {input.reads_1} "
         "--reverse {input.reads_2} "
         "--otu-table {output} "
-        "--singlem-metapackage {params.singlem_metapackage} "
+        "--metapackage {params.singlem_metapackage} "
         "&> {log}"
 
 rule singlem_summarise_reads:
@@ -82,7 +82,7 @@ rule singlem_summarise_reads:
         "--input-otu-tables {input} "
         "--output-otu-table {output} "
         "--exclude-off-target-hits "
-        "--singlem-metapackage {params.singlem_metapackage} "
+        "--metapackage {params.singlem_metapackage} "
         "&> {log}"
 
 ####################
@@ -104,7 +104,7 @@ rule singlem_pipe_bins:
         "{params.singlem_bin} pipe "
         "--forward {input} "
         "--otu-table {output} "
-        "--singlem-metapackage {params.singlem_metapackage} "
+        "--metapackage {params.singlem_metapackage} "
         "&> {log}"
 
 rule singlem_summarise_bins:
@@ -124,7 +124,7 @@ rule singlem_summarise_bins:
         "--input-otu-tables {input} "
         "--output-otu-table {output} "
         "--exclude-off-target-hits "
-        "--singlem-metapackage {params.singlem_metapackage} "
+        "--metapackage {params.singlem_metapackage} "
         "&> {log}"
 
 ##################################
@@ -194,7 +194,7 @@ rule singlem_summarise_unbinned:
         "{params.singlem_bin} summarise "
         "--input-otu-tables {input} "
         "--output-otu-table {output} "
-        "--singlem-metapackage {params.singlem_metapackage} "
+        "--metapackage {params.singlem_metapackage} "
         "&> {log}"
 
 rule singlem_summarise_binned:
@@ -213,7 +213,7 @@ rule singlem_summarise_binned:
         "{params.singlem_bin} summarise "
         "--input-otu-tables {input} "
         "--output-otu-table {output} "
-        "--singlem-metapackage {params.singlem_metapackage} "
+        "--metapackage {params.singlem_metapackage} "
         "&> {log}"
 
 ######################

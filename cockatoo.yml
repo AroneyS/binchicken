@@ -12,3 +12,4 @@ dependencies:
   - networkx
   - bird_tool_utils_python
   - extern
+  - ruamel.yaml>=0.15.99
