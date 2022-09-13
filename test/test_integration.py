@@ -7,6 +7,7 @@ from bird_tool_utils import in_tempdir
 import extern
 
 path_to_data = os.path.join(os.path.dirname(os.path.realpath(__file__)),'data')
+path_to_conda = os.path.join(path_to_data,'.conda')
 
 SAMPLE_READS_FORWARD = " ".join([
     os.path.join(path_to_data, "sample_1.1.fq"),
@@ -34,7 +35,8 @@ class Tests(unittest.TestCase):
                 f"--reverse {SAMPLE_READS_REVERSE} "
                 f"--singlem-metapackage {METAPACKAGE} "
                 f"--genome-transcripts {GENOME_TRANSCRIPTS} "
-                f"--output test"
+                f"--output test "
+                f"--conda-prefix {path_to_conda} "
             )
             output = extern.run(cmd)
 

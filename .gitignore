@@ -1,14 +1,5 @@
-.vscode/
-.Rhistory
-.Rproj.user/
-*.Rproj
-
 __pycache__/
 *.egg-info/
 .snakemake/
-
-*.html
-*.pdf
-*.xlsx
-*.png
-
+.conda/
+.vscode/

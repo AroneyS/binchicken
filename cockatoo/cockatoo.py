@@ -30,13 +30,14 @@ def make_config(template, output_dir, config_items):
 
     return config_path
 
-def run_workflow(config, workflow, output_dir, cores=16, dryrun=False, snakemake_args="", conda_frontend="mamba"):
+def run_workflow(config, workflow, output_dir, cores=16, dryrun=False,
+                 snakemake_args="", conda_frontend="mamba", conda_prefix=None):
     load_configfile(config)
 
     cmd = (
         "snakemake --snakefile {snakefile} --configfile '{config}' --directory {output_dir} "
         "{jobs} --rerun-incomplete --nolock "
-        "--use-conda {conda_frontend} "
+        "--use-conda {conda_frontend} {conda_prefix}"
         "{dryrun} "
         "{snakemake_args}"
     ).format(
@@ -45,6 +46,7 @@ def run_workflow(config, workflow, output_dir, cores=16, dryrun=False, snakemake
         output_dir=output_dir,
         jobs=f"--jobs {cores}" if cores is not None else "",
         conda_frontend=f"--conda-frontend {conda_frontend}" if conda_frontend is not None else "",
+        conda_prefix=f"--conda-prefix {conda_prefix}" if conda_prefix is not None else "",
         dryrun="--dryrun" if dryrun else "",
         snakemake_args=snakemake_args,
     )
@@ -107,6 +109,7 @@ def coassemble(args):
         workflow = "coassembly.smk",
         output_dir = output,
         dryrun = args.dryrun,
+        conda_prefix = os.path.abspath(args.conda_prefix),
     )
 
 def evaluate(args):
@@ -142,6 +145,7 @@ def main():
     coassemble_parser.add_argument("--singlem-metapackage", help="SingleM metapackage for sequence searching")
     coassemble_parser.add_argument("--genome-transcripts", nargs='+', help="Genome transcripts for reference database")
     coassemble_parser.add_argument("--output", help="output directory")
+    coassemble_parser.add_argument("--conda-prefix", help="Path to conda environment install location", default=None)
     coassemble_parser.add_argument("--dryrun", action="store_true", help="dry run workflow")
 
     ###########################################################################
