@@ -5,15 +5,16 @@ ruleorder: singlem_appraise_gzip_archive > singlem_appraise
 
 import os
 
-output_dir = os.path.abspath("correlate")
+output_dir = os.path.abspath("cluster")
 logs_dir = output_dir + "/logs"
 
 singlem_bin = "/home/aroneys/bin/singlem-dev"
 
 rule all:
     input:
-        output_dir + "/target/coassemble_commands.sh",
-        output_dir + "/target/recover_commands.sh"
+        output_dir + "/target/elusive_edges.tsv",
+        output_dir + "/target/targets.tsv",
+        output_dir + "/target/elusive_clusters.tsv"
 
 #####################
 ### SingleM reads ###
@@ -237,14 +238,3 @@ rule cluster_graph:
         max_recovery_samples=config["max_recovery_samples"],
     script:
         "scripts/cluster_graph.py"
-
-rule coassemble_commands:
-    input:
-        elusive_clusters=output_dir + "/target/elusive_clusters.tsv"
-    output:
-        coassemble_commands=output_dir + "/target/coassemble_commands.sh",
-        recover_commands=output_dir + "/target/recover_commands.sh"
-    log:
-        logs_dir + "/coassemble_commands.log"
-    script:
-        "scripts/coassemble_commands.py"

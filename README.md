@@ -10,7 +10,7 @@ conda activate cockatoo
 pip install -e .
 ```
 
-## Cockatoo correlate
+## Cockatoo cluster
 
 Snakemake pipeline to discover coassembly sample clusters based on co-occurrence of single-copy marker genes, excluding those genes present in reference genomes (e.g. previously recovered genomes).
 Creates graph with samples as nodes and the number of overlapping sequences provided by SingleM.
@@ -20,6 +20,15 @@ The graph is clustered using the Girvan-Newman algorithm to provide sample group
 * Input: Sample reads, reference genomes
 * Parameters: target taxa, coassembly sample limit, SingleM metapackage
 * Output: suggested coassembly combinations
+
+## Cockatoo coassemble
+
+Snakemake pipeline to generate Aviary assemble/recover commands based on suggested coassemblies from Cluster.
+Optionally, reads can be mapped to the matched bins with only unmapped reads being assembled.
+
+* Input: Sample reads, Cluster output
+* Parameters: coassemble unmapped reads flag
+* Output: Aviary assemble/recover commands
 
 ## Cockatoo evaluate
 

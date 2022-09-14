@@ -55,7 +55,7 @@ def run_workflow(config, workflow, output_dir, cores=16, dryrun=False,
     logging.info(f"Executing: {cmd}")
     extern.run(cmd)
 
-def correlate(args):
+def cluster(args):
     if not args.forward:
         raise Exception("Input reads must be provided")
     if args.reverse and not args.forward:
@@ -100,14 +100,14 @@ def correlate(args):
         os.makedirs(output)
 
     config_path = make_config(
-        os.path.join(os.path.dirname(os.path.realpath(__file__)),"config","template_correlate.yaml"),
+        os.path.join(os.path.dirname(os.path.realpath(__file__)),"config","template_cluster.yaml"),
         output,
         config_items
         )
 
     run_workflow(
         config = config_path,
-        workflow = "correlate.smk",
+        workflow = "cluster.smk",
         output_dir = output,
         dryrun = args.dryrun,
         conda_prefix = args.conda_prefix,
@@ -117,7 +117,7 @@ def evaluate(args):
     if not args.singlem_metapackage:
         raise Exception("SingleM metapackage must be provided")
 
-    correlate_target_dir = os.path.abspath(os.path.join(args.correlate_output, "target"))
+    cluster_target_dir = os.path.abspath(os.path.join(args.cluster_output, "target"))
     recovered_bins = {
         os.path.basename(coassembly.rstrip("/")): 
             os.path.abspath(os.path.join(coassembly, "recover", "bins", "final_bins"))
@@ -130,9 +130,9 @@ def evaluate(args):
         }
 
     config_items = {
-        "targets": os.path.join(correlate_target_dir, "targets.tsv"),
-        "elusive_edges": os.path.join(correlate_target_dir, "elusive_edges.tsv"),
-        "elusive_clusters": os.path.join(correlate_target_dir, "elusive_clusters.tsv"),
+        "targets": os.path.join(cluster_target_dir, "targets.tsv"),
+        "elusive_edges": os.path.join(cluster_target_dir, "elusive_edges.tsv"),
+        "elusive_clusters": os.path.join(cluster_target_dir, "elusive_clusters.tsv"),
         "singlem_metapackage": os.path.abspath(args.singlem_metapackage),
         "checkm_version": args.checkm_version if args.checkm_version else None,
         "recovered_bins": recovered_bins,
@@ -160,20 +160,26 @@ def evaluate(args):
 def main():
     main_parser = btu.BirdArgparser(program="Cockatoo", version = __version__,
         examples = {
-            "correlate": [
+            "cluster": [
                 btu.Example(
-                    "correlate reads into suggested coassemblies",
-                    "cockatoo correlate --forward reads.1.fq --reverse reads.2.fq --output output_dir"
+                    "cluster reads into suggested coassemblies",
+                    "cockatoo cluster --forward reads.1.fq --reverse reads.2.fq --output output_dir"
                 ),
                 btu.Example(
-                    "correlate SingleM outputs (archive otu tables) into suggested coassemblies",
-                    "cockatoo correlate --singlem-gzip-archives reads.singlem.json.gz --output output_dir"
+                    "cluster SingleM outputs (archive otu tables) into suggested coassemblies",
+                    "cockatoo cluster --singlem-gzip-archives reads.singlem.json.gz --output output_dir"
+                )
+            ],
+            "coassemble": [
+                btu.Example(
+                    "coassemble a clustered set of reads",
+                    "cockatoo coassemble --cluster-output coassembly_dir --output output_dir"
                 )
             ],
             "evaluate": [
                 btu.Example(
                     "evaluate a completed coassembly",
-                    "cockatoo evaluate --coassembly-output coassembly_dir --output output_dir"
+                    "cockatoo evaluate --cluster-output cluster_dir --coassemble-output coassembly_dir --output output_dir"
                 )
             ]
         }
@@ -181,20 +187,20 @@ def main():
 
     ###########################################################################
 
-    correlate_parser = main_parser.new_subparser("correlate", "Correlate reads into suggested coassemblies by unbinned single-copy marker genes")
-    correlate_parser.add_argument("--forward", "--reads", "--sequences", nargs='+', help="input forward/unpaired nucleotide read sequence(s)")
-    correlate_parser.add_argument("--reverse", nargs='+', help="input reverse nucleotide read sequence(s)")
-    correlate_parser.add_argument("--singlem-metapackage", help="SingleM metapackage for sequence searching")
-    correlate_parser.add_argument("--genome-transcripts", nargs='+', help="Genome transcripts for reference database")
-    correlate_parser.add_argument("--output", help="output directory")
-    correlate_parser.add_argument("--conda-prefix", help="Path to conda environment install location", default=None)
-    correlate_parser.add_argument("--dryrun", action="store_true", help="dry run workflow")
+    cluster_parser = main_parser.new_subparser("cluster", "Cluster reads into suggested coassemblies by unbinned single-copy marker genes")
+    cluster_parser.add_argument("--forward", "--reads", "--sequences", nargs='+', help="input forward/unpaired nucleotide read sequence(s)")
+    cluster_parser.add_argument("--reverse", nargs='+', help="input reverse nucleotide read sequence(s)")
+    cluster_parser.add_argument("--singlem-metapackage", help="SingleM metapackage for sequence searching")
+    cluster_parser.add_argument("--genome-transcripts", nargs='+', help="Genome transcripts for reference database")
+    cluster_parser.add_argument("--output", help="output directory")
+    cluster_parser.add_argument("--conda-prefix", help="Path to conda environment install location", default=None)
+    cluster_parser.add_argument("--dryrun", action="store_true", help="dry run workflow")
 
     ###########################################################################
 
     evaluate_parser = main_parser.new_subparser("evaluate", "Evaluate coassembled bins")
-    evaluate_parser.add_argument("--correlate-output", help="Output dir from correlate subcommand", required=True)
-    evaluate_parser.add_argument("--aviary-outputs", nargs='+', help="Output dir from Aviary coassembly and recover commands produced by correlate subcommand", required=True)
+    evaluate_parser.add_argument("--cluster-output", help="Output dir from cluster subcommand", required=True)
+    evaluate_parser.add_argument("--aviary-outputs", nargs='+', help="Output dir from Aviary coassembly and recover commands produced by coassemble subcommand", required=True)
     evaluate_parser.add_argument("--checkm-version", type=int, help="CheckM version to use for bin evaluation")
     evaluate_parser.add_argument("--singlem-metapackage", help="SingleM metapackage for sequence searching")
     evaluate_parser.add_argument("--output", help="output directory")
@@ -207,8 +213,8 @@ def main():
     logging.info(f"Cockatoo v{__version__}")
     logging.info(f"Command: {' '.join(['cockatoo'] + sys.argv[1:])}")
 
-    if args.subparser_name == "correlate":
-        correlate(args)
+    if args.subparser_name == "cluster":
+        cluster(args)
     elif args.subparser_name == "evaluate":
         evaluate(args)
 
