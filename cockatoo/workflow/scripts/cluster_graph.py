@@ -1,8 +1,7 @@
-#########################
+########################
 ### cluster_graph.py ###
-#########################
+########################
 # Author: Samuel Aroney
-# Environment: coassembly
 
 import pandas as pd
 import re

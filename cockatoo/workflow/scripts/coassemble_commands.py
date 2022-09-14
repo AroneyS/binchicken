@@ -1,9 +1,7 @@
-#####################
-### coassemble.py ###
-#####################
+##############################
+### coassemble_commands.py ###
+##############################
 # Author: Samuel Aroney
-# Environment: coassembly
-# Produce aviary assemble and recover commands for co-assembly.
 
 import pandas as pd
 

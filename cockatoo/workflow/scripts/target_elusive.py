@@ -2,7 +2,6 @@
 ### target_elusive.py ###
 #########################
 # Author: Samuel Aroney
-# Environment: coassembly
 
 import pandas as pd
 from itertools import combinations

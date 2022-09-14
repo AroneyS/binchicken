@@ -2,7 +2,6 @@
 ### separate_SingleM_seq.py ###
 ###############################
 # Author: Samuel Aroney
-# Environment: aviary-dev-local
 
 import pandas as pd
 import re
