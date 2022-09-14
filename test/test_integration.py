@@ -97,6 +97,12 @@ class Tests(unittest.TestCase):
 
             config = load_configfile(os.path.join("test", "config.yaml"))
             self.assertEqual(config["max_threads"], 8)
+            self.assertEqual(config["appraise_sequence_identity"], 0.89)
+            self.assertEqual(config["max_coassembly_size"], 50)
+            self.assertEqual(config["max_coassembly_samples"], 5)
+            self.assertEqual(config["min_coassembly_coverage"], 10)
+            self.assertEqual(config["max_recovery_samples"], 20)
+            self.assertEqual(config["taxa_of_interest"], "")
 
     def test_evaluate(self):
         with in_tempdir():
@@ -173,6 +179,8 @@ class Tests(unittest.TestCase):
             config = load_configfile(os.path.join("test", "config.yaml"))
             self.assertEqual(config["max_threads"], 8)
             self.assertEqual(config["checkm_version"], 2)
+            self.assertEqual(config["min_completeness"], 70)
+            self.assertEqual(config["max_contamination"], 10)
 
 if __name__ == '__main__':
     unittest.main()

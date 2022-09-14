@@ -1,2 +1,8 @@
 output_subdir: coassembly
 max_threads: 8
+appraise_sequence_identity: 0.89
+max_coassembly_size: 50
+max_coassembly_samples: 5
+min_coassembly_coverage: 10
+max_recovery_samples: 20
+taxa_of_interest: ""

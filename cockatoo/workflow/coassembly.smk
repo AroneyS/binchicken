@@ -11,15 +11,6 @@ logs_dir = output_dir + "/logs"
 singlem_bin = "/home/aroneys/bin/singlem-dev"
 singlem_conda = "/home/aroneys/src/singlem/singlem.yml"
 
-if not "min_contig_size" in config:            config["min_contig_size"] = 2500
-if not "appraise_sequence_identity" in config: config["appraise_sequence_identity"] = 0.89
-if not "max_coassembly_size" in config:        config["max_coassembly_size"] = 50
-if not "max_coassembly_samples" in config:     config["max_coassembly_samples"] = 5
-if not "min_coassembly_identity" in config:    config["min_coassembly_identity"] = 0.99
-if not "min_coassembly_coverage" in config:    config["min_coassembly_coverage"] = 10
-if not "max_recovery_samples" in config:       config["max_recovery_samples"] = 20
-if not "taxa_of_interest" in config:           config["taxa_of_interest"] = ""
-
 rule all:
     input:
         output_dir + "/target/coassemble_commands.sh",
@@ -258,6 +249,3 @@ rule coassemble_commands:
         logs_dir + "/coassemble_commands.log"
     script:
         "scripts/coassemble_commands.py"
-
-# Co-assemble identified samples
-# Provide samples together space-separated to aviary (will automatically use megahit)

@@ -7,12 +7,6 @@ import os
 output_dir = os.path.abspath(str(config["output_subdir"]))
 logs_dir = output_dir + "/logs"
 
-if not "appraise_sequence_identity" in config: config["appraise_sequence_identity"] = 0.89
-if not "min_coassembly_identity" in config:    config["min_coassembly_identity"] = 0.99
-if not "taxa_of_interest" in config:           config["taxa_of_interest"] = ""
-if not "min_completeness" in config:           config["min_completeness"] = 70
-if not "max_contamination" in config:          config["max_contamination"] = 10
-
 coassembly_bins = {}
 
 if config["checkm_version"] == 1:
@@ -116,8 +110,3 @@ rule evaluate_plots:
         "env/r.yml"
     script:
         "scripts/evaluate.R"
-
-# Join new hits with old target names by sequence
-# Check for novelty (if too many then cluster)
-# Check for expected/unexpected elusive targets
-# Summarise taxonomy of total recovered vs newly binned (expected/unexpected)
