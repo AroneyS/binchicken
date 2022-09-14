@@ -223,7 +223,8 @@ rule target_elusive:
     input:
         unbinned=output_dir + "/summarise/unbinned.otu_table.tsv"
     output:
-        output_edges=output_dir + "/target/elusive_edges.tsv"
+        output_edges=output_dir + "/target/elusive_edges.tsv",
+        output_targets=output_dir + "/target/targets.tsv",
     log:
         logs_dir + "/elusive_targets.log"
     params:

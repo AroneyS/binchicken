@@ -32,6 +32,7 @@ except IndexError:
 unbinned = pd.read_csv(snakemake.input.unbinned, sep="\t")
 unbinned["target"] = unbinned.groupby(["gene", "sequence"]).ngroup()
 unbinned["target"] = unbinned["target"].astype(str)
+unbinned.to_csv(snakemake.output.output_targets, sep="\t", index=False)
 
 taxonomy = unbinned.groupby("target")["taxonomy"].first()
 

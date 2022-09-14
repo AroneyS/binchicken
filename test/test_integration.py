@@ -43,6 +43,12 @@ class Tests(unittest.TestCase):
             config_path = os.path.join("test", "config.yaml")
             self.assertTrue(os.path.exists(config_path))
 
+            edges_path = os.path.join("test", "coassembly", "target", "targets.tsv")
+            self.assertTrue(os.path.exists(edges_path))
+
+            edges_path = os.path.join("test", "coassembly", "target", "elusive_edges.tsv")
+            self.assertTrue(os.path.exists(edges_path))
+
             cluster_path = os.path.join("test", "coassembly", "target", "elusive_clusters.tsv")
             self.assertTrue(os.path.exists(cluster_path))
 
