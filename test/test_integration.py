@@ -127,6 +127,59 @@ class Tests(unittest.TestCase):
                 [
                     " ".join([
                         "aviary assemble -1",
+                        os.path.abspath(os.path.join("test", "coassemble", "mapping", "sample_1_unmapped.1.fq.gz")),
+                        os.path.abspath(os.path.join("test", "coassemble", "mapping", "sample_2_unmapped.1.fq.gz")),
+                        "-2",
+                        os.path.abspath(os.path.join("test", "coassemble", "mapping", "sample_1_unmapped.2.fq.gz")),
+                        os.path.abspath(os.path.join("test", "coassemble", "mapping", "sample_2_unmapped.2.fq.gz")),
+                        "--output $OUTPUT_DIR/coassembly_0/assemble -n $CPUS -m $MEMORY &> $OUTPUT_DIR/logs/coassembly_0_assemble.log ",
+                    ]),
+                    ""
+                ]
+            )
+            with open(coassemble_path) as f:
+                self.assertEqual(expected, f.read())
+
+            recover_path = os.path.join("test", "coassemble", "commands", "recover_commands.sh")
+            self.assertTrue(os.path.exists(recover_path))
+            expected = "\n".join(
+                [
+                    " ".join([
+                        "aviary recover --assembly $OUTPUT_DIR/coassembly_0/assemble/assembly/final_contigs.fasta -1",
+                        os.path.abspath(os.path.join("test", "coassemble", "mapping", "sample_1_unmapped.1.fq.gz")),
+                        os.path.abspath(os.path.join("test", "coassemble", "mapping", "sample_2_unmapped.1.fq.gz")),
+                        "-2",
+                        os.path.abspath(os.path.join("test", "coassemble", "mapping", "sample_1_unmapped.2.fq.gz")),
+                        os.path.abspath(os.path.join("test", "coassemble", "mapping", "sample_2_unmapped.2.fq.gz")),
+                        "--output $OUTPUT_DIR/coassembly_0/recover -n $CPUS -m $MEMORY &> $OUTPUT_DIR/logs/coassembly_0_recover.log ",
+                    ]),
+                    ""
+                ]
+            )
+            with open(recover_path) as f:
+                self.assertEqual(expected, f.read())
+
+    def test_coassemble_no_mapping(self):
+        with in_tempdir():
+            cmd = (
+                f"cockatoo coassemble "
+                f"--forward {SAMPLE_READS_FORWARD} "
+                f"--reverse {SAMPLE_READS_REVERSE} "
+                f"--cluster-output {MOCK_CLUSTER} "
+                f"--output test "
+                f"--conda-prefix {path_to_conda} "
+            )
+            extern.run(cmd)
+
+            config_path = os.path.join("test", "config.yaml")
+            self.assertTrue(os.path.exists(config_path))
+
+            coassemble_path = os.path.join("test", "coassemble", "commands", "coassemble_commands.sh")
+            self.assertTrue(os.path.exists(coassemble_path))
+            expected = "\n".join(
+                [
+                    " ".join([
+                        "aviary assemble -1",
                         os.path.join(os.path.abspath(path_to_data), "sample_1.1.fq"),
                         os.path.join(os.path.abspath(path_to_data), "sample_2.1.fq"),
                         "-2",

@@ -129,10 +129,17 @@ def coassemble(args):
 
     forward_reads, reverse_reads = build_reads_list(args.forward, args.reverse)
     cluster_target_dir = os.path.abspath(os.path.join(args.cluster_output, "target"))
+    if args.genomes:
+        genomes = {
+            os.path.splitext(os.path.basename(genome))[0]: os.path.abspath(genome) for genome in args.genomes
+            }
+
     config_items = {
         "reads_1": forward_reads,
         "reads_2": reverse_reads,
         "elusive_clusters": os.path.join(cluster_target_dir, "elusive_clusters.tsv"),
+        "assemble_unmapped": args.assemble_unmapped,
+        "genomes": genomes if args.genomes else None,
     }
 
     output = os.path.abspath(args.output)
