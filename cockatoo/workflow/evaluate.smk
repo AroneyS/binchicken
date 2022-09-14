@@ -4,7 +4,7 @@
 import pandas as pd
 import os
 
-output_dir = os.path.abspath(str(config["output_subdir"]))
+output_dir = os.path.abspath("evaluate")
 logs_dir = output_dir + "/logs"
 
 coassembly_bins = {}

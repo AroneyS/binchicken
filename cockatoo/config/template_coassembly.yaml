@@ -1,4 +1,3 @@
-output_subdir: coassembly
 max_threads: 8
 appraise_sequence_identity: 0.89
 max_coassembly_size: 50
