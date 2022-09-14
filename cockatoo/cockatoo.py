@@ -11,6 +11,29 @@ import extern
 from snakemake.io import load_configfile
 from ruamel.yaml import YAML
 
+def build_reads_list(forward, reverse):
+    if reverse:
+        if len(forward) != len(reverse):
+            raise Exception("Number of forward and reverse reads must be equal")
+        forward_reads = {}
+        reverse_reads = {}
+        for forward, reverse in zip(forward, reverse):
+            joint_name = os.path.commonprefix(
+                [os.path.basename(forward), os.path.basename(reverse)]
+                )
+            joint_name = joint_name.rstrip(".")
+
+            if joint_name in forward_reads:
+                raise Exception(f"Duplicate basename: {joint_name}")
+
+            forward_reads[joint_name] = os.path.abspath(forward)
+            reverse_reads[joint_name] = os.path.abspath(reverse)
+    else:
+        forward_reads = {os.path.basename(read): os.path.abspath(read) for read in args.forward}
+        reverse_reads = None
+
+    return forward_reads, reverse_reads
+
 def make_config(template, output_dir, config_items):
     config_path = os.path.join(output_dir, "config.yaml")
 
@@ -65,24 +88,7 @@ def cluster(args):
     if not args.singlem_metapackage:
         raise Exception("SingleM metapackage must be provided")
 
-    if args.reverse:
-        forward_reads = {}
-        reverse_reads = {}
-        for forward, reverse in zip(args.forward, args.reverse):
-            joint_name = os.path.commonprefix(
-                [os.path.basename(forward), os.path.basename(reverse)]
-                )
-            joint_name = joint_name.rstrip(".")
-
-            if joint_name in forward_reads:
-                raise Exception(f"Duplicate basename: {joint_name}")
-
-            forward_reads[joint_name] = os.path.abspath(forward)
-            reverse_reads[joint_name] = os.path.abspath(reverse)
-    else:
-        forward_reads = {os.path.basename(read): os.path.abspath(read) for read in args.forward}
-        reverse_reads = None
-    
+    forward_reads, reverse_reads = build_reads_list(args.forward, args.reverse)
     if args.genome_transcripts:
         genome_transcripts = {
             os.path.splitext(os.path.basename(transcript))[0]: os.path.abspath(transcript) for transcript in args.genome_transcripts
@@ -108,6 +114,40 @@ def cluster(args):
     run_workflow(
         config = config_path,
         workflow = "cluster.smk",
+        output_dir = output,
+        dryrun = args.dryrun,
+        conda_prefix = args.conda_prefix,
+    )
+
+def coassemble(args):
+    if not args.forward:
+        raise Exception("Input reads must be provided")
+    if args.reverse and not args.forward:
+        raise Exception("Reverse reads must be provided with forward reads")
+    if args.assemble_unmapped and not args.genomes:
+        raise Exception("Genomes must be provided for mapping reference with --assemble-unmapped")
+
+    forward_reads, reverse_reads = build_reads_list(args.forward, args.reverse)
+    cluster_target_dir = os.path.abspath(os.path.join(args.cluster_output, "target"))
+    config_items = {
+        "reads_1": forward_reads,
+        "reads_2": reverse_reads,
+        "elusive_clusters": os.path.join(cluster_target_dir, "elusive_clusters.tsv"),
+    }
+
+    output = os.path.abspath(args.output)
+    if not os.path.exists(output):
+        os.makedirs(output)
+
+    config_path = make_config(
+        os.path.join(os.path.dirname(os.path.realpath(__file__)),"config","template_coassemble.yaml"),
+        output,
+        config_items
+        )
+
+    run_workflow(
+        config = config_path,
+        workflow = "coassemble.smk",
         output_dir = output,
         dryrun = args.dryrun,
         conda_prefix = args.conda_prefix,
@@ -198,6 +238,18 @@ def main():
 
     ###########################################################################
 
+    coassemble_parser = main_parser.new_subparser("coassemble", "Coassemble suggested coassemblies using Aviary (optionally remove reads mapping to reference genomes)")
+    coassemble_parser.add_argument("--cluster-output", help="Output dir from cluster subcommand", required=True)
+    coassemble_parser.add_argument("--forward", "--reads", "--sequences", nargs='+', help="input forward/unpaired nucleotide read sequence(s)")
+    coassemble_parser.add_argument("--reverse", nargs='+', help="input reverse nucleotide read sequence(s)")
+    coassemble_parser.add_argument("--assemble-unmapped", action="store_true", help="Only assemble reads to do not map to reference genomes")
+    coassemble_parser.add_argument("--genomes", nargs='+', help="Reference genomes for read mapping")
+    coassemble_parser.add_argument("--output", help="output directory")
+    coassemble_parser.add_argument("--conda-prefix", help="Path to conda environment install location", default=None)
+    coassemble_parser.add_argument("--dryrun", action="store_true", help="dry run workflow")
+
+    ###########################################################################
+
     evaluate_parser = main_parser.new_subparser("evaluate", "Evaluate coassembled bins")
     evaluate_parser.add_argument("--cluster-output", help="Output dir from cluster subcommand", required=True)
     evaluate_parser.add_argument("--aviary-outputs", nargs='+', help="Output dir from Aviary coassembly and recover commands produced by coassemble subcommand", required=True)
@@ -215,6 +267,8 @@ def main():
 
     if args.subparser_name == "cluster":
         cluster(args)
+    elif args.subparser_name == "coassemble":
+        coassemble(args)
     elif args.subparser_name == "evaluate":
         evaluate(args)
 

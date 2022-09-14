@@ -1,0 +1,2 @@
+max_threads: 8
+assemble_unmapped: false

@@ -25,7 +25,7 @@ SAMPLE_READS_REVERSE = " ".join([
 
 METAPACKAGE = os.path.join(path_to_data, "singlem_metapackage.smpkg")
 SAMPLE_SINGLEM = os.path.join(path_to_data, "sample_1.otu_table.tsv")
-GENOME_TRANSCRIPTS = ' '.join([os.path.join(path_to_data, "GB_GCA_013286235.1_protein.fna")])
+GENOMES = ' '.join([os.path.join(path_to_data, "GB_GCA_013286235.1_protein.fna")])
 MOCK_CLUSTER = os.path.join(path_to_data, "mock_cluster")
 MOCK_COASSEMBLIES = ' '.join([os.path.join(MOCK_CLUSTER, "coassembly_0")])
 
@@ -37,7 +37,7 @@ class Tests(unittest.TestCase):
                 f"--forward {SAMPLE_READS_FORWARD} "
                 f"--reverse {SAMPLE_READS_REVERSE} "
                 f"--singlem-metapackage {METAPACKAGE} "
-                f"--genome-transcripts {GENOME_TRANSCRIPTS} "
+                f"--genome-transcripts {GENOMES} "
                 f"--output test "
                 f"--conda-prefix {path_to_conda} "
             )
@@ -88,7 +88,7 @@ class Tests(unittest.TestCase):
                 f"--forward {SAMPLE_READS_FORWARD} "
                 f"--reverse {SAMPLE_READS_REVERSE} "
                 f"--singlem-metapackage {METAPACKAGE} "
-                f"--genome-transcripts {GENOME_TRANSCRIPTS} "
+                f"--genome-transcripts {GENOMES} "
                 f"--output test "
                 f"--conda-prefix {path_to_conda} "
                 f"--dryrun "
@@ -103,6 +103,78 @@ class Tests(unittest.TestCase):
             self.assertEqual(config["min_coassembly_coverage"], 10)
             self.assertEqual(config["max_recovery_samples"], 20)
             self.assertEqual(config["taxa_of_interest"], "")
+
+    def test_coassemble(self):
+        with in_tempdir():
+            cmd = (
+                f"cockatoo coassemble "
+                f"--forward {SAMPLE_READS_FORWARD} "
+                f"--reverse {SAMPLE_READS_REVERSE} "
+                f"--cluster-output {MOCK_CLUSTER} "
+                f"--assemble-unmapped "
+                f"--genomes {GENOMES} "
+                f"--output test "
+                f"--conda-prefix {path_to_conda} "
+            )
+            extern.run(cmd)
+
+            config_path = os.path.join("test", "config.yaml")
+            self.assertTrue(os.path.exists(config_path))
+
+            coassemble_path = os.path.join("test", "coassemble", "commands", "coassemble_commands.sh")
+            self.assertTrue(os.path.exists(coassemble_path))
+            expected = "\n".join(
+                [
+                    " ".join([
+                        "aviary assemble -1",
+                        os.path.join(os.path.abspath(path_to_data), "sample_1.1.fq"),
+                        os.path.join(os.path.abspath(path_to_data), "sample_2.1.fq"),
+                        "-2",
+                        os.path.join(os.path.abspath(path_to_data), "sample_1.2.fq"),
+                        os.path.join(os.path.abspath(path_to_data), "sample_2.2.fq"),
+                        "--output $OUTPUT_DIR/coassembly_0/assemble -n $CPUS -m $MEMORY &> $OUTPUT_DIR/logs/coassembly_0_assemble.log ",
+                    ]),
+                    ""
+                ]
+            )
+            with open(coassemble_path) as f:
+                self.assertEqual(expected, f.read())
+
+            recover_path = os.path.join("test", "coassemble", "commands", "recover_commands.sh")
+            self.assertTrue(os.path.exists(recover_path))
+            expected = "\n".join(
+                [
+                    " ".join([
+                        "aviary recover --assembly $OUTPUT_DIR/coassembly_0/assemble/assembly/final_contigs.fasta -1",
+                        os.path.join(os.path.abspath(path_to_data), "sample_1.1.fq"),
+                        os.path.join(os.path.abspath(path_to_data), "sample_2.1.fq"),
+                        "-2",
+                        os.path.join(os.path.abspath(path_to_data), "sample_1.2.fq"),
+                        os.path.join(os.path.abspath(path_to_data), "sample_2.2.fq"),
+                        "--output $OUTPUT_DIR/coassembly_0/recover -n $CPUS -m $MEMORY &> $OUTPUT_DIR/logs/coassembly_0_recover.log ",
+                    ]),
+                    ""
+                ]
+            )
+            with open(recover_path) as f:
+                self.assertEqual(expected, f.read())
+
+    def test_coassemble_default_config(self):
+        with in_tempdir():
+            cmd = (
+                f"cockatoo coassemble "
+                f"--forward {SAMPLE_READS_FORWARD} "
+                f"--reverse {SAMPLE_READS_REVERSE} "
+                f"--cluster-output {MOCK_CLUSTER} "
+                f"--output test "
+                f"--conda-prefix {path_to_conda} "
+                f"--dryrun "
+            )
+            extern.run(cmd)
+
+            config = load_configfile(os.path.join("test", "config.yaml"))
+            self.assertEqual(config["max_threads"], 8)
+            self.assertEqual(config["assemble_unmapped"], False)
 
     def test_evaluate(self):
         with in_tempdir():

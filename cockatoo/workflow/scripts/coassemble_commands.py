@@ -10,12 +10,12 @@ import pandas as pd
 #################
 def produce_command(row):
     coassembly_sample_names = row["samples"]
-    coassembly_samples_1 = [snakemake.config["reads_1"][sample] for sample in coassembly_sample_names]
-    coassembly_samples_2= [snakemake.config["reads_2"][sample] for sample in coassembly_sample_names]
+    coassembly_samples_1 = [snakemake.params.reads_1[sample] for sample in coassembly_sample_names]
+    coassembly_samples_2= [snakemake.params.reads_2[sample] for sample in coassembly_sample_names]
 
     all_samples_names = row["recover_samples"]
-    all_samples_1 = [snakemake.config["reads_1"][sample] for sample in all_samples_names]
-    all_samples_2 = [snakemake.config["reads_2"][sample] for sample in all_samples_names]
+    all_samples_1 = [snakemake.params.reads_1[sample] for sample in all_samples_names]
+    all_samples_2 = [snakemake.params.reads_2[sample] for sample in all_samples_names]
 
     coassembly = row["coassembly"]
 
@@ -25,7 +25,7 @@ def produce_command(row):
     f"--output $OUTPUT_DIR/{coassembly}/assemble "
     f"-n $CPUS "
     f"-m $MEMORY "
-    f"&> $OUTPUT_DIR/logs/{coassembly}_assemble.log")
+    f"&> $OUTPUT_DIR/logs/{coassembly}_assemble.log ")
 
     aviary_recover = ("aviary recover "
     f"--assembly $OUTPUT_DIR/{coassembly}/assemble/assembly/final_contigs.fasta "
