@@ -5,7 +5,7 @@ ruleorder: singlem_appraise_gzip_archive > singlem_appraise
 
 import os
 
-output_dir = os.path.abspath("coassembly")
+output_dir = os.path.abspath("correlate")
 logs_dir = output_dir + "/logs"
 
 singlem_bin = "/home/aroneys/bin/singlem-dev"

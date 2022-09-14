@@ -26,14 +26,14 @@ SAMPLE_READS_REVERSE = " ".join([
 METAPACKAGE = os.path.join(path_to_data, "singlem_metapackage.smpkg")
 SAMPLE_SINGLEM = os.path.join(path_to_data, "sample_1.otu_table.tsv")
 GENOME_TRANSCRIPTS = ' '.join([os.path.join(path_to_data, "GB_GCA_013286235.1_protein.fna")])
-MOCK_COASSEMBLE = os.path.join(path_to_data, "mock_coassemble")
-MOCK_COASSEMBLIES = ' '.join([os.path.join(path_to_data, "mock_coassemble", "coassembly_0")])
+MOCK_CORRELATE = os.path.join(path_to_data, "mock_correlate")
+MOCK_COASSEMBLIES = ' '.join([os.path.join(MOCK_CORRELATE, "coassembly_0")])
 
 class Tests(unittest.TestCase):
-    def test_coassemble(self):
+    def test_correlate(self):
         with in_tempdir():
             cmd = (
-                f"cockatoo coassemble "
+                f"cockatoo correlate "
                 f"--forward {SAMPLE_READS_FORWARD} "
                 f"--reverse {SAMPLE_READS_REVERSE} "
                 f"--singlem-metapackage {METAPACKAGE} "
@@ -46,13 +46,13 @@ class Tests(unittest.TestCase):
             config_path = os.path.join("test", "config.yaml")
             self.assertTrue(os.path.exists(config_path))
 
-            edges_path = os.path.join("test", "coassembly", "target", "targets.tsv")
+            edges_path = os.path.join("test", "correlate", "target", "targets.tsv")
             self.assertTrue(os.path.exists(edges_path))
 
-            edges_path = os.path.join("test", "coassembly", "target", "elusive_edges.tsv")
+            edges_path = os.path.join("test", "correlate", "target", "elusive_edges.tsv")
             self.assertTrue(os.path.exists(edges_path))
 
-            cluster_path = os.path.join("test", "coassembly", "target", "elusive_clusters.tsv")
+            cluster_path = os.path.join("test", "correlate", "target", "elusive_clusters.tsv")
             self.assertTrue(os.path.exists(cluster_path))
 
             expected = "\n".join(
@@ -81,10 +81,10 @@ class Tests(unittest.TestCase):
             with open(cluster_path) as f:
                 self.assertEqual(expected, f.read())
 
-    def test_coassemble_default_config(self):
+    def test_correlate_default_config(self):
         with in_tempdir():
             cmd = (
-                f"cockatoo coassemble "
+                f"cockatoo correlate "
                 f"--forward {SAMPLE_READS_FORWARD} "
                 f"--reverse {SAMPLE_READS_REVERSE} "
                 f"--singlem-metapackage {METAPACKAGE} "
@@ -108,7 +108,7 @@ class Tests(unittest.TestCase):
         with in_tempdir():
             cmd = (
                 f"cockatoo evaluate "
-                f"--coassemble-output {MOCK_COASSEMBLE} "
+                f"--correlate-output {MOCK_CORRELATE} "
                 f"--aviary-outputs {MOCK_COASSEMBLIES} "
                 f"--checkm-version 2 "
                 f"--singlem-metapackage {METAPACKAGE} "
@@ -167,7 +167,7 @@ class Tests(unittest.TestCase):
         with in_tempdir():
             cmd = (
                 f"cockatoo evaluate "
-                f"--coassemble-output {MOCK_COASSEMBLE} "
+                f"--correlate-output {MOCK_CORRELATE} "
                 f"--aviary-outputs {MOCK_COASSEMBLIES} "
                 f"--singlem-metapackage {METAPACKAGE} "
                 f"--output test "
