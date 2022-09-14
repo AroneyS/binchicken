@@ -5,6 +5,8 @@ import os
 import sys
 from bird_tool_utils import in_tempdir
 import extern
+from snakemake.io import load_configfile
+from collections import OrderedDict
 
 path_to_data = os.path.join(os.path.dirname(os.path.realpath(__file__)),'data')
 path_to_conda = os.path.join(path_to_data,'.conda')
@@ -79,6 +81,23 @@ class Tests(unittest.TestCase):
             with open(cluster_path) as f:
                 self.assertEqual(expected, f.read())
 
+    def test_coassemble_default_config(self):
+        with in_tempdir():
+            cmd = (
+                f"cockatoo coassemble "
+                f"--forward {SAMPLE_READS_FORWARD} "
+                f"--reverse {SAMPLE_READS_REVERSE} "
+                f"--singlem-metapackage {METAPACKAGE} "
+                f"--genome-transcripts {GENOME_TRANSCRIPTS} "
+                f"--output test "
+                f"--conda-prefix {path_to_conda} "
+                f"--dryrun "
+            )
+            extern.run(cmd)
+
+            config = load_configfile(os.path.join("test", "config.yaml"))
+            self.assertEqual(config["max_threads"], 8)
+
     def test_evaluate(self):
         with in_tempdir():
             cmd = (
@@ -137,6 +156,23 @@ class Tests(unittest.TestCase):
             )
             with open(summary_path) as f:
                 self.assertEqual(expected, f.read())
+
+    def test_evaluate_default_config(self):
+        with in_tempdir():
+            cmd = (
+                f"cockatoo evaluate "
+                f"--coassemble-output {MOCK_COASSEMBLE} "
+                f"--aviary-outputs {MOCK_COASSEMBLIES} "
+                f"--singlem-metapackage {METAPACKAGE} "
+                f"--output test "
+                f"--conda-prefix {path_to_conda} "
+                f"--dryrun "
+            )
+            extern.run(cmd)
+
+            config = load_configfile(os.path.join("test", "config.yaml"))
+            self.assertEqual(config["max_threads"], 8)
+            self.assertEqual(config["checkm_version"], 2)
 
 if __name__ == '__main__':
     unittest.main()

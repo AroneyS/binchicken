@@ -22,8 +22,9 @@ def make_config(template, output_dir, config_items):
         config = yaml.load(f)
 
     for key, value in config_items.items():
-        config[key] = value
-    
+        if value is not None:
+            config[key] = value
+
     with open(config_path, 'w') as f:
         yaml.dump(config, f)
     logging.info(f"Config file written to: {config_path}")
