@@ -9,7 +9,6 @@ output_dir = os.path.abspath("coassembly")
 logs_dir = output_dir + "/logs"
 
 singlem_bin = "/home/aroneys/bin/singlem-dev"
-singlem_conda = "/home/aroneys/src/singlem/singlem.yml"
 
 rule all:
     input:
@@ -47,7 +46,7 @@ rule singlem_pipe_reads:
         singlem_bin = singlem_bin,
         singlem_metapackage=config["singlem_metapackage"]
     conda:
-        singlem_conda
+        "env/singlem.yml"
     shell:
         "{params.singlem_bin} pipe "
         "--forward {input.reads_1} "
@@ -67,7 +66,7 @@ rule singlem_summarise_reads:
         singlem_bin = singlem_bin,
         singlem_metapackage=config["singlem_metapackage"]
     conda:
-        singlem_conda
+        "env/singlem.yml"
     shell:
         "{params.singlem_bin} summarise "
         "--input-otu-tables {input} "
@@ -90,7 +89,7 @@ rule singlem_pipe_bins:
         singlem_bin = singlem_bin,
         singlem_metapackage=config["singlem_metapackage"]
     conda:
-        singlem_conda
+        "env/singlem.yml"
     shell:
         "{params.singlem_bin} pipe "
         "--forward {input} "
@@ -109,7 +108,7 @@ rule singlem_summarise_bins:
         singlem_bin = singlem_bin,
         singlem_metapackage=config["singlem_metapackage"]
     conda:
-        singlem_conda
+        "env/singlem.yml"
     shell:
         "{params.singlem_bin} summarise "
         "--input-otu-tables {input} "
@@ -134,7 +133,7 @@ rule singlem_appraise:
         singlem_bin = singlem_bin,
         sequence_identity=config["appraise_sequence_identity"]
     conda:
-        singlem_conda
+        "env/singlem.yml"
     shell:
         "{params.singlem_bin} appraise "
         "--metagenome-otu-tables {input.reads} "
@@ -158,7 +157,7 @@ rule singlem_appraise_gzip_archive:
         singlem_bin = singlem_bin,
         sequence_identity=config["appraise_sequence_identity"]
     conda:
-        singlem_conda
+        "env/singlem.yml"
     shell:
         "{params.singlem_bin} appraise "
         "--metagenome-gzip-archive-otu-tables {input.reads} "
@@ -180,7 +179,7 @@ rule singlem_summarise_unbinned:
         singlem_bin = singlem_bin,
         singlem_metapackage=config["singlem_metapackage"]
     conda:
-        singlem_conda
+        "env/singlem.yml"
     shell:
         "{params.singlem_bin} summarise "
         "--input-otu-tables {input} "
@@ -199,7 +198,7 @@ rule singlem_summarise_binned:
         singlem_bin = singlem_bin,
         singlem_metapackage=config["singlem_metapackage"]
     conda:
-        singlem_conda
+        "env/singlem.yml"
     shell:
         "{params.singlem_bin} summarise "
         "--input-otu-tables {input} "

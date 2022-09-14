@@ -42,7 +42,7 @@ rule prodigal_bins:
     log:
         logs_dir + "/transcripts/{bin}.log"
     conda:
-        "/home/aroneys/conda_env_yamls/prodigal.yaml"
+        "env/prodigal.yaml"
     shell:
         "prodigal -i {input} -d {output} "
         "&> {log}"
@@ -57,7 +57,7 @@ rule singlem_pipe_bins:
     params:
         singlem_metapackage=config["singlem_metapackage"]
     conda:
-        "/home/aroneys/src/singlem/singlem.yml"
+        "env/singlem.yml"
     shell:
         "/home/aroneys/bin/singlem-dev pipe "
         "--forward {input} "
@@ -75,7 +75,7 @@ rule singlem_summarise_bins:
     params:
         singlem_metapackage=config["singlem_metapackage"]
     conda:
-        "/home/aroneys/src/singlem/singlem.yml"
+        "env/singlem.yml"
     shell:
         "/home/aroneys/bin/singlem-dev summarise "
         "--input-otu-tables {input} "
