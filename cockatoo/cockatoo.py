@@ -113,6 +113,9 @@ def coassemble(args):
     )
 
 def evaluate(args):
+    if not args.singlem_metapackage:
+        raise Exception("SingleM metapackage must be provided")
+
     coassemble_target_dir = os.path.abspath(os.path.join(args.coassemble_output, "target"))
     recovered_bins = {
         os.path.basename(coassembly.rstrip("/")): 
