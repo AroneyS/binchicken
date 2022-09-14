@@ -4,7 +4,7 @@
 import pandas as pd
 import os
 
-output_dir = "results/evaluate/" + str(config["output_subdir"])
+output_dir = os.path.abspath(str(config["output_subdir"]))
 logs_dir = output_dir + "/logs"
 
 if not "appraise_sequence_identity" in config: config["appraise_sequence_identity"] = 0.89
@@ -68,7 +68,7 @@ rule singlem_pipe_bins:
         "/home/aroneys/bin/singlem-dev pipe "
         "--forward {input} "
         "--otu-table {output} "
-        "--singlem-metapackage {params.singlem_metapackage} "
+        "--metapackage {params.singlem_metapackage} "
         "&> {log}"
 
 rule singlem_summarise_bins:
@@ -87,7 +87,7 @@ rule singlem_summarise_bins:
         "--input-otu-tables {input} "
         "--output-otu-table {output} "
         "--exclude-off-target-hits "
-        "--singlem-metapackage {params.singlem_metapackage} "
+        "--metapackage {params.singlem_metapackage} "
         "&> {log}"
 
 ################
@@ -100,8 +100,7 @@ rule evaluate:
         unbinned_hits = output_dir + "/evaluate/unbinned_hits.tsv",
         novel_hits = output_dir + "/evaluate/novel_hits.tsv",
     params:
-        unbinned_otu_table=config["id_otu_table"],
-        unbinned_clusters=config["unbinned_clusters"],
+        unbinned_otu_table=config["targets"],
         elusive_edges=config["elusive_edges"],
         elusive_clusters=config["elusive_clusters"],
     script:

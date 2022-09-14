@@ -1,0 +1,2 @@
+samples	length	total_weight	total_targets	total_size	recover_samples	coassembly
+sample_1,sample_2	2	2	2	0	sample_1,sample_2	coassembly_0

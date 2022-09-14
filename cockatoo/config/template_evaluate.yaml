@@ -1,20 +1,3 @@
-output_subdir: palsa
-singlem_metapackage: /home/aroneys/ref/S3.metapackage_20220513.smpkg
+output_subdir: evaluate
 max_threads: 8
 checkm_version: 2
-id_otu_table: palsa/cluster/id_otu_table.csv
-unbinned_clusters: palsa/cluster/unbinned_clusters.tsv
-elusive_edges: palsa/target/elusive_edges.tsv
-elusive_clusters: palsa/target/elusive_clusters.tsv
-recovered_bins:
-  coassembly_0: palsa/coassembly/coassembly_0/recover/bins/final_bins
-  coassembly_1: palsa/coassembly/coassembly_1/recover/bins/final_bins
-  coassembly_2: palsa/coassembly/coassembly_2/recover/bins/final_bins
-  coassembly_3: palsa/coassembly/coassembly_3/recover/bins/final_bins
-  coassembly_4: palsa/coassembly/coassembly_4/recover/bins/final_bins
-checkm_out:
-  coassembly_0: palsa/coassembly/coassembly_0/recover/bins/checkm_minimal.tsv
-  coassembly_1: palsa/coassembly/coassembly_1/recover/bins/checkm_minimal.tsv
-  coassembly_2: palsa/coassembly/coassembly_2/recover/bins/checkm_minimal.tsv
-  coassembly_3: palsa/coassembly/coassembly_3/recover/bins/checkm_minimal.tsv
-  coassembly_4: palsa/coassembly/coassembly_4/recover/bins/checkm_minimal.tsv

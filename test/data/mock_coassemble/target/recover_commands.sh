@@ -1,0 +1,1 @@
+aviary recover --assembly $OUTPUT_DIR/coassembly_0/assemble/assembly/final_contigs.fasta -1 test/data/sample_1.1.fq test/data/sample_2.1.fq -2 test/data/sample_1.2.fq test/data/sample_2.2.fq --output $OUTPUT_DIR/coassembly_0/recover -n $CPUS -m $MEMORY &> $OUTPUT_DIR/logs/coassembly_0_recover.log 

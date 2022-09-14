@@ -6,19 +6,9 @@
 import pandas as pd
 import re
 
-
-# Load clusters of unbinned sequences (to match query ids and target ids)
-unbinnned_clusters = pd.read_csv(snakemake.params.unbinned_clusters, sep="\t",
-    names = ["record_type", "cluster", "seq_len", "perc_id", "strand", "none1", "none2", "align", "query", "target"])
-unbinnned_clusters = unbinnned_clusters[unbinnned_clusters["record_type"].isin(["C", "H"])]
-unbinnned_clusters["target"] = unbinnned_clusters.apply(lambda x: x["target"] if x["target"] != "*" else x["query"], axis = 1)
-unbinnned_clusters = unbinnned_clusters[["query", "target"]]
-
 # Load otu table of unbinned sequences and get unique id for each sequence (to match sequences to target id)
 unbinned_otu_table = pd.read_csv(snakemake.params.unbinned_otu_table, sep="\t")
-unbinned_otu_table = unbinned_otu_table.set_index("id").join(unbinnned_clusters.set_index("query")).reset_index()
-unbinned_otu_table["diff"] = unbinned_otu_table["target"] == unbinned_otu_table["id"]
-unbinned_otu_table = unbinned_otu_table.sort_values(by=["diff"], ascending = False).groupby(["gene", "sequence"]).first()[["id", "target", "taxonomy"]].reset_index()
+unbinned_otu_table = unbinned_otu_table.groupby(["gene", "sequence"]).first()[["target", "taxonomy"]].reset_index()
 unbinned_otu_table.dropna(inplace=True)
 unbinned_otu_table["target"] = unbinned_otu_table["target"].astype(str)
 
@@ -30,9 +20,18 @@ elusive_clusters = elusive_clusters.explode("samples").set_index("samples")[["co
 elusive_edges = pd.read_csv(snakemake.params.elusive_edges, sep="\t")
 elusive_edges["sample1"] = elusive_edges["sample1"].apply(lambda x: re.sub("\.1$", "", x))
 elusive_edges["sample2"] = elusive_edges["sample2"].apply(lambda x: re.sub("\.1$", "", x))
-elusive_edges = elusive_edges.set_index("sample1").join(elusive_clusters).reset_index().rename(columns={"index": "sample1"}).set_index("sample2").join(elusive_clusters, rsuffix="2").reset_index().rename(columns={"index": "sample2"})
+elusive_edges = (elusive_edges
+    .set_index("sample1")
+    .join(elusive_clusters)
+    .reset_index()
+    .rename(columns={"index": "sample1"})
+    .set_index("sample2")
+    .join(elusive_clusters, rsuffix="2")
+    .reset_index()
+    .rename(columns={"index": "sample2"})
+    )
 
-coassembly_edges = elusive_edges[elusive_edges["coassembly"] == elusive_edges["coassembly2"]]
+coassembly_edges = elusive_edges[elusive_edges["coassembly"] == elusive_edges["coassembly2"]].copy()
 coassembly_edges["target"] = coassembly_edges["target_ids"].str.split(",")
 coassembly_edges = coassembly_edges.explode("target").drop_duplicates(["target", "coassembly"]).set_index("target")[["coassembly"]]
 

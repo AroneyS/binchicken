@@ -113,7 +113,45 @@ def coassemble(args):
     )
 
 def evaluate(args):
-    pass
+    coassemble_target_dir = os.path.abspath(os.path.join(args.coassemble_output, "target"))
+    recovered_bins = {
+        os.path.basename(coassembly.rstrip("/")): 
+            os.path.abspath(os.path.join(coassembly, "recover", "bins", "final_bins"))
+            for coassembly in args.aviary_outputs
+        }
+    checkm_out = {
+        os.path.basename(coassembly.rstrip("/")): 
+            os.path.abspath(os.path.join(coassembly, "recover", "bins", "checkm_minimal.tsv"))
+            for coassembly in args.aviary_outputs
+        }
+
+    config_items = {
+        "targets": os.path.join(coassemble_target_dir, "targets.tsv"),
+        "elusive_edges": os.path.join(coassemble_target_dir, "elusive_edges.tsv"),
+        "elusive_clusters": os.path.join(coassemble_target_dir, "elusive_clusters.tsv"),
+        "singlem_metapackage": os.path.abspath(args.singlem_metapackage),
+        "checkm_version": args.checkm_version if args.checkm_version else None,
+        "recovered_bins": recovered_bins,
+        "checkm_out": checkm_out,
+    }
+
+    output = os.path.abspath(args.output)
+    if not os.path.exists(output):
+        os.makedirs(output)
+
+    config_path = make_config(
+        os.path.join(os.path.dirname(os.path.realpath(__file__)),"config","template_evaluate.yaml"),
+        output,
+        config_items
+        )
+
+    run_workflow(
+        config = config_path,
+        workflow = "evaluate.smk",
+        output_dir = output,
+        dryrun = args.dryrun,
+        conda_prefix = args.conda_prefix,
+    )
 
 def main():
     main_parser = btu.BirdArgparser(program="Cockatoo", version = __version__,
@@ -151,6 +189,13 @@ def main():
     ###########################################################################
 
     evaluate_parser = main_parser.new_subparser("evaluate", "Evaluate coassembled bins")
+    evaluate_parser.add_argument("--coassemble-output", help="Output dir from coassemble subcommand", required=True)
+    evaluate_parser.add_argument("--aviary-outputs", nargs='+', help="Output dir from Aviary coassembly and recover commands produced by coassemble subcommand", required=True)
+    evaluate_parser.add_argument("--checkm-version", type=int, help="CheckM version to use for bin evaluation")
+    evaluate_parser.add_argument("--singlem-metapackage", help="SingleM metapackage for sequence searching")
+    evaluate_parser.add_argument("--output", help="output directory")
+    evaluate_parser.add_argument("--conda-prefix", help="Path to conda environment install location", default=None)
+    evaluate_parser.add_argument("--dryrun", action="store_true", help="dry run workflow")
 
     ###########################################################################
 
