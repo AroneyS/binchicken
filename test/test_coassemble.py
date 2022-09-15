@@ -2,6 +2,7 @@
 
 import unittest
 import os
+import gzip
 from bird_tool_utils import in_tempdir
 import extern
 from snakemake.io import load_configfile
@@ -41,6 +42,13 @@ class Tests(unittest.TestCase):
 
             config_path = os.path.join("test", "config.yaml")
             self.assertTrue(os.path.exists(config_path))
+
+            unmapped_sample_1_path = os.path.join("test", "coassemble", "mapping", "sample_1_unmapped.1.fq.gz")
+            self.assertTrue(os.path.exists(unmapped_sample_1_path))
+            with gzip.open(unmapped_sample_1_path) as f:
+                file = f.read().decode()
+                self.assertTrue("@A00178:112:HMNM5DSXX:4:1622:16405:19194" in file)
+                self.assertTrue("@A00178:118:HTHTVDSXX:1:1249:16740:14105" not in file)
 
             coassemble_path = os.path.join("test", "coassemble", "commands", "coassemble_commands.sh")
             self.assertTrue(os.path.exists(coassemble_path))

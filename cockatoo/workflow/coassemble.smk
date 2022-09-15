@@ -33,22 +33,46 @@ rule map_reads:
         reads_2=lambda wildcards: config["reads_2"][wildcards.read],
         genomes=output_dir + "/mapping/{read}_reference.fna",
     output:
+        dir=directory(output_dir + "/mapping/{read}_coverm"),
+        unmapped_bam=output_dir + "/mapping/{read}_unmapped.bam",
         reads_1=output_dir + "/mapping/{read}_unmapped.1.fq.gz",
         reads_2=output_dir + "/mapping/{read}_unmapped.2.fq.gz",
     log:
-        logs_dir + "/mapping/{read}.log"
+        logs_dir + "/mapping/{read}.log",
+    params:
+        genomes="{read}_reference.fna",
+        reads_1=lambda wildcards: os.path.basename(config["reads_1"][wildcards.read]),
+        coverm_log=logs_dir + "/mapping/{read}_coverm.log",
+        view_log=logs_dir + "/mapping/{read}_view.log",
+        fastq_log=logs_dir + "/mapping/{read}_fastq.log",
+    threads:
+        8
     conda:
         "env/coverm.yml"
     shell:
-        "touch {output.reads_1} {output.reads_2} "
-        # "coverm make "
-        # "-r {input.genomes} "
-        # "--forward {input.reads_1} "
-        # "--reverse {input.reads_2} "
-        # "--genomes {input.genomes} "
-        # "--mapped-forward {output.reads_1} "
-        # "--mapped-reverse {output.reads_2} "
-        # "&> {log}"
+         "coverm make "
+         "-r {input.genomes} "
+         "-1 {input.reads_1} "
+         "-2 {input.reads_2} "
+         "-o {output.dir} "
+         "-t {threads} "
+         "&> {params.coverm_log} "
+         "&& "
+         "samtools view "
+         "-@ $(({threads} - 1)) "
+         "-b -f12 {output.dir}/{params.genomes}.{params.reads_1}.bam "
+         "2> {params.view_log} "
+         "> {output.unmapped_bam} "
+         "&& "
+         "samtools fastq "
+         "-@ $(({threads} - 1)) "
+         "{output.unmapped_bam} "
+         "-1 {output.reads_1} "
+         "-2 {output.reads_2} "
+         "-0 /dev/null "
+         "-s /dev/null "
+         "-n "
+         "&> {params.fastq_log} "
 
 rule finish_mapping:
     input:
