@@ -143,6 +143,7 @@ rule singlem_appraise:
         "--output-binned-otu-table {output.binned} "
         "--imperfect "
         "--sequence-identity {params.sequence_identity} "
+        "--output-found-in "
         "&> {log}"
 
 rule singlem_appraise_gzip_archive:
@@ -167,6 +168,7 @@ rule singlem_appraise_gzip_archive:
         "--output-binned-otu-table {output.binned} "
         "--imperfect "
         "--sequence-identity {params.sequence_identity} "
+        "--output-found-in "
         "&> {log}"
 
 rule singlem_summarise_unbinned:
