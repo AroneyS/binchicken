@@ -17,11 +17,21 @@ rule all:
 ##################################
 ### Map reads to matching bins ###
 ##################################
+rule collect_bins:
+    input:
+        appraise_binned=lambda wildcards: config["appraise_binned"][wildcards.read],
+    output:
+        output_dir + "/mapping/{read}_reference.fna",
+    params:
+        genomes=config["genomes"],
+    script:
+        "scripts/collect_reference_bins.py"
+
 rule map_reads:
     input:
         reads_1=lambda wildcards: config["reads_1"][wildcards.read],
         reads_2=lambda wildcards: config["reads_2"][wildcards.read],
-        genomes=config["genomes"].values(),
+        genomes=output_dir + "/mapping/{read}_reference.fna",
     output:
         reads_1=output_dir + "/mapping/{read}_unmapped.1.fq.gz",
         reads_2=output_dir + "/mapping/{read}_unmapped.2.fq.gz",
@@ -31,7 +41,8 @@ rule map_reads:
         "env/coverm.yml"
     shell:
         "touch {output.reads_1} {output.reads_2} "
-        # "coverm genome "
+        # "coverm make "
+        # "-r {input.genomes} "
         # "--forward {input.reads_1} "
         # "--reverse {input.reads_2} "
         # "--genomes {input.genomes} "
