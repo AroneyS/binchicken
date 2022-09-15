@@ -226,7 +226,11 @@ def main():
             "coassemble": [
                 btu.Example(
                     "coassemble a clustered set of reads",
-                    "cockatoo coassemble --cluster-output coassembly_dir --output output_dir"
+                    "cockatoo coassemble --cluster-output cluster_dir --output output_dir"
+                ),
+                btu.Example(
+                    "coassemble unmapped reads from a clustered set of reads",
+                    "cockatoo coassemble --cluster-output cluster_dir --forward reads.1.fq --reverse reads.2.fq --assemble-unmapped --genomes genome.fna --output output_dir"
                 )
             ],
             "evaluate": [
