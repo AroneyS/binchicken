@@ -263,6 +263,10 @@ def main():
                     "cockatoo cluster --forward reads.1.fq --reverse reads.2.fq --output output_dir"
                 ),
                 btu.Example(
+                    "cluster reads into suggested coassemblies based only on sequences from a specific taxa",
+                    "cockatoo cluster --forward reads.1.fq --reverse reads.2.fq --output output_dir --taxa-of-interest \"p__Planctomycetota\""
+                ),
+                btu.Example(
                     "cluster SingleM outputs (archive otu tables) into suggested coassemblies",
                     "cockatoo cluster --singlem-gzip-archives reads.singlem.json.gz --output output_dir"
                 )
