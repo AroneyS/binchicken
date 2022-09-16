@@ -226,9 +226,11 @@ def evaluate(args):
         "elusive_edges": os.path.join(cluster_target_dir, "elusive_edges.tsv"),
         "elusive_clusters": os.path.join(cluster_target_dir, "elusive_clusters.tsv"),
         "singlem_metapackage": os.path.abspath(args.singlem_metapackage),
-        "checkm_version": args.checkm_version if args.checkm_version else None,
         "recovered_bins": recovered_bins,
         "checkm_out": checkm_out,
+        "checkm_version": args.checkm_version,
+        "min_completeness": args.min_completeness,
+        "max_contamination": args.max_contamination,
     }
 
     output = os.path.abspath(args.output)
@@ -324,9 +326,11 @@ def main():
     evaluate_parser = main_parser.new_subparser("evaluate", "Evaluate coassembled bins")
     evaluate_parser.add_argument("--cluster-output", help="Output dir from cluster subcommand", required=True)
     evaluate_parser.add_argument("--aviary-outputs", nargs='+', help="Output dir from Aviary coassembly and recover commands produced by coassemble subcommand", required=True)
-    evaluate_parser.add_argument("--checkm-version", type=int, help="CheckM version to use for bin evaluation")
     evaluate_parser.add_argument("--singlem-metapackage", help="SingleM metapackage for sequence searching")
     evaluate_parser.add_argument("--output", help="output directory")
+    evaluate_parser.add_argument("--checkm-version", type=int, help="CheckM version to use to quality cutoffs [default: 2]", default=2)
+    evaluate_parser.add_argument("--min-completeness", type=int, help="Include bins with at least this minimum completeness [default: 70]", default=70)
+    evaluate_parser.add_argument("--max-contamination", type=int, help="Include bins with at most this maximum contamination [default: 10]", default=10)
     evaluate_parser.add_argument("--conda-prefix", help="Path to conda environment install location", default=None)
     evaluate_parser.add_argument("--cores", type=int, help="Maximum number of cores to use", default=1)
     evaluate_parser.add_argument("--dryrun", action="store_true", help="dry run workflow")
