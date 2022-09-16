@@ -46,6 +46,19 @@ class Tests(unittest.TestCase):
             config_path = os.path.join("test", "config.yaml")
             self.assertTrue(os.path.exists(config_path))
 
+            read_size_path = os.path.join("test", "cluster", "read_size.csv")
+            self.assertTrue(os.path.exists(read_size_path))
+            expected = "\n".join(
+                [
+                    ",".join(["sample_1", "1661"]),
+                    ",".join(["sample_2", "1208"]),
+                    ",".join(["sample_3", "1208"]),
+                    ""
+                ]
+            )
+            with open(read_size_path) as f:
+                self.assertEqual(expected, f.read())
+
             edges_path = os.path.join("test", "cluster", "target", "targets.tsv")
             self.assertTrue(os.path.exists(edges_path))
 
@@ -71,7 +84,7 @@ class Tests(unittest.TestCase):
                         "2",
                         "2",
                         "2",
-                        "0",
+                        "2869",
                         "sample_1,sample_2",
                         "coassembly_0"
                     ]),

@@ -25,13 +25,14 @@ rule count_bp_reads:
     output:
         output_dir + "/read_size.csv"
     params:
-        names=list(config["reads_1"].keys())
+        names=list(config["reads_1"].keys()),
+        cat="zcat" if [r for r in config["reads_1"].values()][0].endswith(".gz") else "cat",
     threads:
         8
     shell:
         "parallel -k -j {threads} "
         "echo -n {{1}}, '&&' "
-        "zcat {{2}} '|' sed -n 2~4p '|' tr -d '\"\n\"' '|' wc -m "
+        "{params.cat} {{2}} '|' sed -n 2~4p '|' tr -d '\"\n\"' '|' wc -m "
         "::: {params.names} :::+ {input} "
         "> {output}"
 
