@@ -6,8 +6,8 @@ __author__ = "Samuel Aroney"
 import os
 import sys
 import logging
+import subprocess
 import bird_tool_utils as btu
-import extern
 from snakemake.io import load_configfile
 from ruamel.yaml import YAML
 
@@ -76,7 +76,7 @@ def run_workflow(config, workflow, output_dir, cores=16, dryrun=False,
     )
 
     logging.info(f"Executing: {cmd}")
-    extern.run(cmd)
+    subprocess.check_call(cmd, shell=True)
 
 def cluster(args):
     if not args.forward:
