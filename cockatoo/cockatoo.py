@@ -132,6 +132,7 @@ def cluster(args):
         "reads_2": reverse_reads,
         "singlem_metapackage": os.path.abspath(args.singlem_metapackage) if args.singlem_metapackage else None,
         "bin_transcripts": genome_transcripts if args.genome_transcripts else None,
+        "taxa_of_interest": args.taxa_of_interest if args.taxa_of_interest else None,
         "appraise_sequence_identity": args.appraise_sequence_identity / 100 if args.appraise_sequence_identity > 1 else args.appraise_sequence_identity,
         "min_coassembly_coverage": args.min_sequence_coverage,
         "num_coassembly_samples": args.num_coassembly_samples,
@@ -295,7 +296,8 @@ def main():
     cluster_parser.add_argument("--genome-transcripts", nargs='+', help="Genome transcripts for reference database")
     cluster_parser.add_argument("--genome-singlem", help="Combined summarised SingleM otu tables for genome transcripts. If provided, genome SingleM is skipped")
     cluster_parser.add_argument("--singlem-metapackage", help="SingleM metapackage for sequence searching")
-    cluster_parser.add_argument("--output", help="output directory")
+    cluster_parser.add_argument("--output", help="Output directory")
+    cluster_parser.add_argument("--taxa-of-interest", help="Only consider sequences from this GTDB taxa (e.g. p__Planctomycetota) [default: all]")
     cluster_parser.add_argument("--appraise-sequence-identity", type=int, help="Minimum sequence identity for SingleM appraise against reference database [default: 89%]", default=0.89)
     cluster_parser.add_argument("--min-sequence-coverage", type=int, help="Minimum combined coverage for sequence inclusion [default: 10]", default=10)
     cluster_parser.add_argument("--num-coassembly-samples", type=int, help="Number of samples per coassembly cluster [default: 2]", default=2)
