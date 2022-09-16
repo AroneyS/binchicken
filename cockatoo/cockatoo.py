@@ -118,6 +118,7 @@ def cluster(args):
         cores = args.cores,
         dryrun = args.dryrun,
         conda_prefix = args.conda_prefix,
+        snakemake_args = args.snakemake_args,
     )
 
 def coassemble(args):
@@ -166,6 +167,7 @@ def coassemble(args):
         cores = args.cores,
         dryrun = args.dryrun,
         conda_prefix = args.conda_prefix,
+        snakemake_args = args.snakemake_args,
     )
 
 def evaluate(args):
@@ -211,6 +213,7 @@ def evaluate(args):
         cores = args.cores,
         dryrun = args.dryrun,
         conda_prefix = args.conda_prefix,
+        snakemake_args = args.snakemake_args,
     )
 
 def main():
@@ -256,6 +259,7 @@ def main():
     cluster_parser.add_argument("--conda-prefix", help="Path to conda environment install location", default=None)
     cluster_parser.add_argument("--cores", type=int, help="Maximum number of cores to use", default=1)
     cluster_parser.add_argument("--dryrun", action="store_true", help="dry run workflow")
+    cluster_parser.add_argument("--snakemake-args", help="Additional commands to be supplied to snakemake in the form of a space-prefixed single string e.g. \" --quiet\"", default="")
 
     ###########################################################################
 
@@ -269,6 +273,7 @@ def main():
     coassemble_parser.add_argument("--conda-prefix", help="Path to conda environment install location", default=None)
     coassemble_parser.add_argument("--cores", type=int, help="Maximum number of cores to use", default=1)
     coassemble_parser.add_argument("--dryrun", action="store_true", help="dry run workflow")
+    coassemble_parser.add_argument("--snakemake-args", help="Additional commands to be supplied to snakemake in the form of a space-prefixed single string e.g. \" --quiet\"", default="")
 
     ###########################################################################
 
@@ -281,6 +286,7 @@ def main():
     evaluate_parser.add_argument("--conda-prefix", help="Path to conda environment install location", default=None)
     evaluate_parser.add_argument("--cores", type=int, help="Maximum number of cores to use", default=1)
     evaluate_parser.add_argument("--dryrun", action="store_true", help="dry run workflow")
+    evaluate_parser.add_argument("--snakemake-args", help="Additional commands to be supplied to snakemake in the form of a space-prefixed single string e.g. \" --quiet\"", default="")
 
     ###########################################################################
 
