@@ -115,6 +115,7 @@ def cluster(args):
         config = config_path,
         workflow = "cluster.smk",
         output_dir = output,
+        cores = args.cores,
         dryrun = args.dryrun,
         conda_prefix = args.conda_prefix,
     )
@@ -162,6 +163,7 @@ def coassemble(args):
         config = config_path,
         workflow = "coassemble.smk",
         output_dir = output,
+        cores = args.cores,
         dryrun = args.dryrun,
         conda_prefix = args.conda_prefix,
     )
@@ -206,6 +208,7 @@ def evaluate(args):
         config = config_path,
         workflow = "evaluate.smk",
         output_dir = output,
+        cores = args.cores,
         dryrun = args.dryrun,
         conda_prefix = args.conda_prefix,
     )
@@ -251,6 +254,7 @@ def main():
     cluster_parser.add_argument("--genome-transcripts", nargs='+', help="Genome transcripts for reference database")
     cluster_parser.add_argument("--output", help="output directory")
     cluster_parser.add_argument("--conda-prefix", help="Path to conda environment install location", default=None)
+    cluster_parser.add_argument("--cores", type=int, help="Maximum number of cores to use", default=1)
     cluster_parser.add_argument("--dryrun", action="store_true", help="dry run workflow")
 
     ###########################################################################
@@ -263,6 +267,7 @@ def main():
     coassemble_parser.add_argument("--genomes", nargs='+', help="Reference genomes for read mapping")
     coassemble_parser.add_argument("--output", help="output directory")
     coassemble_parser.add_argument("--conda-prefix", help="Path to conda environment install location", default=None)
+    coassemble_parser.add_argument("--cores", type=int, help="Maximum number of cores to use", default=1)
     coassemble_parser.add_argument("--dryrun", action="store_true", help="dry run workflow")
 
     ###########################################################################
@@ -274,6 +279,7 @@ def main():
     evaluate_parser.add_argument("--singlem-metapackage", help="SingleM metapackage for sequence searching")
     evaluate_parser.add_argument("--output", help="output directory")
     evaluate_parser.add_argument("--conda-prefix", help="Path to conda environment install location", default=None)
+    evaluate_parser.add_argument("--cores", type=int, help="Maximum number of cores to use", default=1)
     evaluate_parser.add_argument("--dryrun", action="store_true", help="dry run workflow")
 
     ###########################################################################
