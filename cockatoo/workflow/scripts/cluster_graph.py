@@ -9,9 +9,9 @@ import networkx as nx
 from networkx.algorithms import community
 from operator import itemgetter
 
-MAX_COASSEMBLY_SIZE = snakemake.params.max_coassembly_size * 10**9
+MAX_COASSEMBLY_SIZE = snakemake.params.max_coassembly_size * 10**9 if snakemake.params.max_coassembly_size else None
 MAX_COASSEMBLY_SAMPLES = snakemake.params.max_coassembly_samples
-MIN_COASSEMBLY_SAMPLES = 2
+MIN_COASSEMBLY_SAMPLES = snakemake.params.num_coassembly_samples
 MAX_RECOVERY_SAMPLES = snakemake.params.max_recovery_samples
 
 ################
@@ -50,7 +50,7 @@ for iteration in comp:
             )
 
         total_size = sum([data["read_size"] for _,data in subgraphview.nodes(data=True)])
-        if total_size > MAX_COASSEMBLY_SIZE: continue
+        if MAX_COASSEMBLY_SIZE and total_size > MAX_COASSEMBLY_SIZE: continue
 
         edgeview = subgraphview.edges(data=True)
         total_weight = sum([data["weight"] for _,_,data in edgeview])

@@ -237,6 +237,7 @@ rule cluster_graph:
         logs_dir + "/cluster_graph.log"
     params:
         max_coassembly_size=config["max_coassembly_size"],
+        num_coassembly_samples=config["num_coassembly_samples"],
         max_coassembly_samples=config["max_coassembly_samples"],
         max_recovery_samples=config["max_recovery_samples"],
     script:

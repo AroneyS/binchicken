@@ -132,6 +132,12 @@ def cluster(args):
         "reads_2": reverse_reads,
         "singlem_metapackage": os.path.abspath(args.singlem_metapackage) if args.singlem_metapackage else None,
         "bin_transcripts": genome_transcripts if args.genome_transcripts else None,
+        "appraise_sequence_identity": args.appraise_sequence_identity / 100 if args.appraise_sequence_identity > 1 else args.appraise_sequence_identity,
+        "min_coassembly_coverage": args.min_sequence_coverage,
+        "num_coassembly_samples": args.num_coassembly_samples,
+        "max_coassembly_samples": args.max_coassembly_samples if args.max_coassembly_samples else args.num_coassembly_samples,
+        "max_coassembly_size": args.max_coassembly_size,
+        "max_recovery_samples": args.max_recovery_samples,
     }
 
     config_path = make_config(
@@ -288,6 +294,12 @@ def main():
     cluster_parser.add_argument("--genome-singlem", help="Combined summarised SingleM otu tables for genome transcripts. If provided, genome SingleM is skipped")
     cluster_parser.add_argument("--singlem-metapackage", help="SingleM metapackage for sequence searching")
     cluster_parser.add_argument("--output", help="output directory")
+    cluster_parser.add_argument("--appraise-sequence-identity", type=int, help="Minimum sequence identity for SingleM appraise against reference database [default: 89%]", default=0.89)
+    cluster_parser.add_argument("--min-sequence-coverage", type=int, help="Minimum combined coverage for sequence inclusion [default: 10]", default=10)
+    cluster_parser.add_argument("--num-coassembly-samples", type=int, help="Number of samples per coassembly cluster [default: 2]", default=2)
+    cluster_parser.add_argument("--max-coassembly-samples", type=int, help="Upper bound for number of samples per coassembly cluster [default: --num-coassembly-samples]", default=None)
+    cluster_parser.add_argument("--max-coassembly-size", type=int, help="Maximum size (Gbp) of coassembly cluster [default: None]", default=None)
+    cluster_parser.add_argument("--max-recovery-samples", type=int, help="Upper bound for number of related samples to use for differential abundance binning [default: 20]", default=20)
     cluster_parser.add_argument("--conda-prefix", help="Path to conda environment install location", default=None)
     cluster_parser.add_argument("--cores", type=int, help="Maximum number of cores to use", default=1)
     cluster_parser.add_argument("--dryrun", action="store_true", help="dry run workflow")
