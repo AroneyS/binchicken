@@ -24,9 +24,15 @@ SAMPLE_READS_REVERSE = " ".join([
 ])
 
 METAPACKAGE = os.path.join(path_to_data, "singlem_metapackage.smpkg")
-SAMPLE_SINGLEM = os.path.join(path_to_data, "sample_1.otu_table.tsv")
 GENOMES = ' '.join([os.path.join(path_to_data, "GB_GCA_013286235.1_protein.fna")])
 MOCK_CLUSTER = os.path.join(path_to_data, "mock_cluster")
+SAMPLE_SINGLEM = ' '.join([
+    os.path.join(MOCK_CLUSTER, "summarise", "sample_1_summarised.otu_table.tsv"),
+    os.path.join(MOCK_CLUSTER, "summarise", "sample_2_summarised.otu_table.tsv"),
+    os.path.join(MOCK_CLUSTER, "summarise", "sample_3_summarised.otu_table.tsv"),
+    ])
+SAMPLE_READ_SIZE = os.path.join(MOCK_CLUSTER, "read_size.csv")
+GENOME_SINGLEM = os.path.join(MOCK_CLUSTER, "summarise", "bins_summarised.otu_table.tsv")
 MOCK_COASSEMBLIES = ' '.join([os.path.join(MOCK_CLUSTER, "coassembly_0")])
 
 class Tests(unittest.TestCase):
@@ -116,6 +122,31 @@ class Tests(unittest.TestCase):
             self.assertEqual(config["min_coassembly_coverage"], 10)
             self.assertEqual(config["max_recovery_samples"], 20)
             self.assertEqual(config["taxa_of_interest"], "")
+
+    def test_cluster_singlem_inputs(self):
+        with in_tempdir():
+            cmd = (
+                f"cockatoo cluster "
+                f"--sample-singlem {SAMPLE_SINGLEM} "
+                f"--sample-read-size {SAMPLE_READ_SIZE} "
+                f"--genome-singlem {GENOME_SINGLEM} "
+                f"--output test "
+                f"--conda-prefix {path_to_conda} "
+                f"--dryrun "
+                f"--snakemake-args \" --quiet\" "
+            )
+            output = extern.run(cmd)
+
+            self.assertTrue("count_bp_reads" not in output)
+            self.assertTrue("singlem_pipe_reads" not in output)
+            self.assertTrue("singlem_summarise_reads" not in output)
+            self.assertTrue("singlem_pipe_bins" not in output)
+            self.assertTrue("singlem_summarise_bins" not in output)
+            self.assertTrue("singlem_appraise" in output)
+            self.assertTrue("singlem_summarise_unbinned" in output)
+            self.assertTrue("singlem_summarise_binned" not in output)
+            self.assertTrue("target_elusive" in output)
+            self.assertTrue("cluster_graph" in output)
 
 
 if __name__ == '__main__':

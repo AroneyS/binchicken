@@ -6,6 +6,7 @@ __author__ = "Samuel Aroney"
 import os
 import sys
 import logging
+import shutil
 import subprocess
 import bird_tool_utils as btu
 from snakemake.io import load_configfile
@@ -29,7 +30,7 @@ def build_reads_list(forward, reverse):
             forward_reads[joint_name] = os.path.abspath(forward)
             reverse_reads[joint_name] = os.path.abspath(reverse)
     else:
-        forward_reads = {os.path.basename(read): os.path.abspath(read) for read in args.forward}
+        forward_reads = {os.path.basename(read): os.path.abspath(read) for read in forward}
         reverse_reads = None
 
     return forward_reads, reverse_reads
@@ -53,6 +54,12 @@ def make_config(template, output_dir, config_items):
     logging.info(f"Config file written to: {config_path}")
 
     return config_path
+
+def copy_input(input, output):
+    os.makedirs(os.path.dirname(output), exist_ok=True)
+
+    logging.info(f"Copying input file {input} to {output}")
+    shutil.copyfile(input, output)
 
 def run_workflow(config, workflow, output_dir, cores=16, dryrun=False,
                  snakemake_args="", conda_frontend="mamba", conda_prefix=None):
@@ -79,31 +86,53 @@ def run_workflow(config, workflow, output_dir, cores=16, dryrun=False,
     subprocess.check_call(cmd, shell=True)
 
 def cluster(args):
-    if not args.forward:
-        raise Exception("Input reads must be provided")
+    if not args.forward and not args.sample_singlem:
+        raise Exception("Input reads (--forward) or SingleM otu tables (--sample-singlem) must be provided")
+    if not args.forward and not args.sample_read_size:
+        raise Exception("Input reads (--forward) or read sizes (--sample-read-size) must be provided")
     if args.reverse and not args.forward:
-        raise Exception("Reverse reads must be provided with forward reads")
-    if not args.genome_transcripts:
-        raise Exception("Genome transcripts must be provided")
-    if not args.singlem_metapackage:
-        raise Exception("SingleM metapackage must be provided")
-
-    forward_reads, reverse_reads = build_reads_list(args.forward, args.reverse)
-    if args.genome_transcripts:
-        genome_transcripts = {
-            os.path.splitext(os.path.basename(transcript))[0]: os.path.abspath(transcript) for transcript in args.genome_transcripts
-            }
-
-    config_items = {
-        "reads_1": forward_reads,
-        "reads_2": reverse_reads,
-        "singlem_metapackage": os.path.abspath(args.singlem_metapackage),
-        "bin_transcripts": genome_transcripts if args.genome_transcripts else None,
-    }
+        raise Exception("Reverse reads cannot be provided without forward reads")
+    if not args.genome_transcripts and not args.genome_singlem:
+        raise Exception("Genome transcripts (--genome-transcripts) or SingleM otu tables (--genome-singlem) must be provided")
+    if not args.singlem_metapackage and (not args.sample_singlem or not args.genome_singlem):
+        raise Exception("SingleM metapackage (--singlem-metapackage) must be provided when SingleM otu tables not provided")
 
     output = os.path.abspath(args.output)
     if not os.path.exists(output):
         os.makedirs(output)
+
+    if args.forward:
+        forward_reads, reverse_reads = build_reads_list(args.forward, args.reverse)
+    if args.sample_read_size:
+        with open(args.sample_read_size) as f:
+            forward_reads = {line.split(",")[0]: "" for line in f}
+            reverse_reads = forward_reads
+        copy_input(
+            os.path.abspath(args.sample_read_size),
+            os.path.join(output, "cluster", os.path.basename(args.sample_read_size)),
+        )
+    if args.sample_singlem:
+        for table in args.sample_singlem:
+            copy_input(
+                os.path.abspath(table),
+                os.path.join(output, "cluster", "summarise", os.path.basename(table))
+            )
+    if args.genome_transcripts:
+        genome_transcripts = {
+            os.path.splitext(os.path.basename(transcript))[0]: os.path.abspath(transcript) for transcript in args.genome_transcripts
+            }
+    if args.genome_singlem:
+        copy_input(
+            os.path.abspath(args.genome_singlem),
+            os.path.join(output, "cluster", "summarise", os.path.basename(args.genome_singlem))
+        )
+
+    config_items = {
+        "reads_1": forward_reads,
+        "reads_2": reverse_reads,
+        "singlem_metapackage": os.path.abspath(args.singlem_metapackage) if args.singlem_metapackage else None,
+        "bin_transcripts": genome_transcripts if args.genome_transcripts else None,
+    }
 
     config_path = make_config(
         os.path.join(os.path.dirname(os.path.realpath(__file__)),"config","template_cluster.yaml"),
@@ -253,8 +282,11 @@ def main():
     cluster_parser = main_parser.new_subparser("cluster", "Cluster reads into suggested coassemblies by unbinned single-copy marker genes")
     cluster_parser.add_argument("--forward", "--reads", "--sequences", nargs='+', help="input forward/unpaired nucleotide read sequence(s)")
     cluster_parser.add_argument("--reverse", nargs='+', help="input reverse nucleotide read sequence(s)")
-    cluster_parser.add_argument("--singlem-metapackage", help="SingleM metapackage for sequence searching")
+    cluster_parser.add_argument("--sample-singlem", nargs='+', help="Summarised SingleM otu tables for each sample. If provided, sample SingleM is skipped")
+    cluster_parser.add_argument("--sample-read-size", help="Comma separated list of sample name and size (bp). If provided, sample read counting is skipped")
     cluster_parser.add_argument("--genome-transcripts", nargs='+', help="Genome transcripts for reference database")
+    cluster_parser.add_argument("--genome-singlem", help="Combined summarised SingleM otu tables for genome transcripts. If provided, genome SingleM is skipped")
+    cluster_parser.add_argument("--singlem-metapackage", help="SingleM metapackage for sequence searching")
     cluster_parser.add_argument("--output", help="output directory")
     cluster_parser.add_argument("--conda-prefix", help="Path to conda environment install location", default=None)
     cluster_parser.add_argument("--cores", type=int, help="Maximum number of cores to use", default=1)
