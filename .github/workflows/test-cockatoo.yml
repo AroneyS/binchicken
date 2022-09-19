@@ -30,8 +30,6 @@ jobs:
           pip install -e .
       - name: Run unit tests
         run: |
-          pwd
-          ls cockatoo/config
           python test/test_cluster.py
           python test/test_coassemble.py
           python test/test_evaluate.py
