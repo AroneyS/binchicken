@@ -40,5 +40,3 @@ dependencies:
     - nmslib
     - --no-binary nmslib
     - git+https://github.com/AroneyS/singlem.git@add-reference-to-appraise-output
-variables:
-  GIT_LFS_SKIP_SMUDGE=1
