@@ -177,6 +177,31 @@ class Tests(unittest.TestCase):
             self.assertEqual(config["memory"], 250)
             self.assertEqual(config["assemble_unmapped"], False)
 
+    def test_coassemble_run_aviary(self):
+        with in_tempdir():
+            cmd = (
+                f"cockatoo coassemble "
+                f"--forward {SAMPLE_READS_FORWARD} "
+                f"--reverse {SAMPLE_READS_REVERSE} "
+                f"--cluster-output {MOCK_CLUSTER} "
+                f"--assemble-unmapped "
+                f"--genomes {GENOMES} "
+                f"--output test "
+                f"--run-aviary "
+                f"--conda-prefix {path_to_conda} "
+                f"--dryrun "
+                f"--snakemake-args \" --quiet\" "
+            )
+            output = extern.run(cmd)
+
+            self.assertTrue("collect_bins" in output)
+            self.assertTrue("map_reads" in output)
+            self.assertTrue("finish_mapping" in output)
+            self.assertTrue("coassemble_commands" not in output)
+            self.assertTrue("aviary_assemble" in output)
+            self.assertTrue("aviary_recover" in output)
+            self.assertTrue("collate_coassemblies" in output)
+
 
 if __name__ == '__main__':
     unittest.main()

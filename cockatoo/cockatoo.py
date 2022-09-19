@@ -186,6 +186,7 @@ def coassemble(args):
         "appraise_binned": appraise_binned,
         "genomes": genomes if args.genomes else None,
         "memory": args.memory,
+        "run_aviary": args.run_aviary,
     }
 
     output = os.path.abspath(args.output)
@@ -323,6 +324,7 @@ def main():
     coassemble_parser.add_argument("--reverse", nargs='+', help="input reverse nucleotide read sequence(s)")
     coassemble_parser.add_argument("--assemble-unmapped", action="store_true", help="Only assemble reads to do not map to reference genomes")
     coassemble_parser.add_argument("--genomes", nargs='+', help="Reference genomes for read mapping")
+    coassemble_parser.add_argument("--run-aviary", action="store_true", help="Run Aviary assemble/recover commands [default: print commands to file]")
     coassemble_parser.add_argument("--output", help="output directory")
     coassemble_parser.add_argument("--conda-prefix", help="Path to conda environment install location", default=None)
     coassemble_parser.add_argument("--cores", type=int, help="Maximum number of cores to use", default=16)
