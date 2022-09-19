@@ -59,7 +59,7 @@ rule singlem_pipe_bins:
     conda:
         "env/singlem.yml"
     shell:
-        "/home/aroneys/bin/singlem-dev pipe "
+        "singlem pipe "
         "--forward {input} "
         "--otu-table {output} "
         "--metapackage {params.singlem_metapackage} "
@@ -77,7 +77,7 @@ rule singlem_summarise_bins:
     conda:
         "env/singlem.yml"
     shell:
-        "/home/aroneys/bin/singlem-dev summarise "
+        "singlem summarise "
         "--input-otu-tables {input} "
         "--output-otu-table {output} "
         "--exclude-off-target-hits "

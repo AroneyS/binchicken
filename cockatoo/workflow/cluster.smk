@@ -8,8 +8,6 @@ import os
 output_dir = os.path.abspath("cluster")
 logs_dir = output_dir + "/logs"
 
-singlem_bin = "/home/aroneys/bin/singlem-dev"
-
 rule all:
     input:
         output_dir + "/target/elusive_edges.tsv",
@@ -45,12 +43,11 @@ rule singlem_pipe_reads:
     log:
         logs_dir + "/pipe/{read}_read.log"
     params:
-        singlem_bin = singlem_bin,
         singlem_metapackage=config["singlem_metapackage"]
     conda:
         "env/singlem.yml"
     shell:
-        "{params.singlem_bin} pipe "
+        "singlem pipe "
         "--forward {input.reads_1} "
         "--reverse {input.reads_2} "
         "--otu-table {output} "
@@ -65,12 +62,11 @@ rule singlem_summarise_reads:
     log:
         logs_dir + "/summarise/{read}.log"
     params:
-        singlem_bin = singlem_bin,
         singlem_metapackage=config["singlem_metapackage"]
     conda:
         "env/singlem.yml"
     shell:
-        "{params.singlem_bin} summarise "
+        "singlem summarise "
         "--input-otu-tables {input} "
         "--output-otu-table {output} "
         "--exclude-off-target-hits "
@@ -88,12 +84,11 @@ rule singlem_pipe_bins:
     log:
         logs_dir + "/pipe/{bin}_bin.log"
     params:
-        singlem_bin = singlem_bin,
         singlem_metapackage=config["singlem_metapackage"]
     conda:
         "env/singlem.yml"
     shell:
-        "{params.singlem_bin} pipe "
+        "singlem pipe "
         "--forward {input} "
         "--otu-table {output} "
         "--metapackage {params.singlem_metapackage} "
@@ -107,12 +102,11 @@ rule singlem_summarise_bins:
     log:
         logs_dir + "/summarise/bins.log"
     params:
-        singlem_bin = singlem_bin,
         singlem_metapackage=config["singlem_metapackage"]
     conda:
         "env/singlem.yml"
     shell:
-        "{params.singlem_bin} summarise "
+        "singlem summarise "
         "--input-otu-tables {input} "
         "--output-otu-table {output} "
         "--exclude-off-target-hits "
@@ -132,12 +126,11 @@ rule singlem_appraise:
     log:
         logs_dir + "/appraise/{read}.log"
     params:
-        singlem_bin = singlem_bin,
         sequence_identity=config["appraise_sequence_identity"]
     conda:
         "env/singlem.yml"
     shell:
-        "{params.singlem_bin} appraise "
+        "singlem appraise "
         "--metagenome-otu-tables {input.reads} "
         "--genome-otu-tables {input.bins} "
         "--output-unaccounted-for-otu-table {output.unbinned} "
@@ -157,12 +150,11 @@ rule singlem_appraise_gzip_archive:
     log:
         logs_dir + "/appraise/{read}.log"
     params:
-        singlem_bin = singlem_bin,
         sequence_identity=config["appraise_sequence_identity"]
     conda:
         "env/singlem.yml"
     shell:
-        "{params.singlem_bin} appraise "
+        "singlem appraise "
         "--metagenome-gzip-archive-otu-tables {input.reads} "
         "--genome-otu-tables {input.bins} "
         "--output-unaccounted-for-otu-table {output.unbinned} "
@@ -180,12 +172,11 @@ rule singlem_summarise_unbinned:
     log:
         logs_dir + "/summarise/unbinned.log"
     params:
-        singlem_bin = singlem_bin,
         singlem_metapackage=config["singlem_metapackage"]
     conda:
         "env/singlem.yml"
     shell:
-        "{params.singlem_bin} summarise "
+        "singlem summarise "
         "--input-otu-tables {input} "
         "--output-otu-table {output} "
         "--metapackage {params.singlem_metapackage} "
@@ -199,12 +190,11 @@ rule singlem_summarise_binned:
     log:
         logs_dir + "/summarise/binned.log"
     params:
-        singlem_bin = singlem_bin,
         singlem_metapackage=config["singlem_metapackage"]
     conda:
         "env/singlem.yml"
     shell:
-        "{params.singlem_bin} summarise "
+        "singlem summarise "
         "--input-otu-tables {input} "
         "--output-otu-table {output} "
         "--metapackage {params.singlem_metapackage} "
