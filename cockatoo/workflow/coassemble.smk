@@ -93,9 +93,13 @@ rule coassemble_commands:
     output:
         coassemble_commands=output_dir + "/commands/coassemble_commands.sh",
         recover_commands=output_dir + "/commands/recover_commands.sh"
+    threads:
+        64
     params:
         reads_1 = mapped_reads_1 if config["assemble_unmapped"] else config["reads_1"],
         reads_2 = mapped_reads_2 if config["assemble_unmapped"] else config["reads_2"],
+        dir=output_dir,
+        memory=config["memory"],
     log:
         logs_dir + "/coassemble_commands.log"
     script:

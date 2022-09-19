@@ -40,6 +40,8 @@ class Tests(unittest.TestCase):
             )
             extern.run(cmd)
 
+            test_dir = os.path.abspath("test")
+
             config_path = os.path.join("test", "config.yaml")
             self.assertTrue(os.path.exists(config_path))
 
@@ -56,12 +58,15 @@ class Tests(unittest.TestCase):
                 [
                     " ".join([
                         "aviary assemble -1",
-                        os.path.abspath(os.path.join("test", "coassemble", "mapping", "sample_1_unmapped.1.fq.gz")),
-                        os.path.abspath(os.path.join("test", "coassemble", "mapping", "sample_2_unmapped.1.fq.gz")),
+                        os.path.join(test_dir, "coassemble", "mapping", "sample_1_unmapped.1.fq.gz"),
+                        os.path.join(test_dir, "coassemble", "mapping", "sample_2_unmapped.1.fq.gz"),
                         "-2",
-                        os.path.abspath(os.path.join("test", "coassemble", "mapping", "sample_1_unmapped.2.fq.gz")),
-                        os.path.abspath(os.path.join("test", "coassemble", "mapping", "sample_2_unmapped.2.fq.gz")),
-                        "--output $OUTPUT_DIR/coassembly_0/assemble -n $CPUS -m $MEMORY &> $OUTPUT_DIR/logs/coassembly_0_assemble.log ",
+                        os.path.join(test_dir, "coassemble", "mapping", "sample_1_unmapped.2.fq.gz"),
+                        os.path.join(test_dir, "coassemble", "mapping", "sample_2_unmapped.2.fq.gz"),
+                        "--output", os.path.join(test_dir, "coassemble", "coassembly_0", "assemble"),
+                        "-n 16 -m 250 &>",
+                        os.path.join(test_dir, "coassemble", "logs", "coassembly_0_assemble.log"),
+                        ""
                     ]),
                     ""
                 ]
@@ -74,13 +79,17 @@ class Tests(unittest.TestCase):
             expected = "\n".join(
                 [
                     " ".join([
-                        "aviary recover --assembly $OUTPUT_DIR/coassembly_0/assemble/assembly/final_contigs.fasta -1",
-                        os.path.abspath(os.path.join("test", "coassemble", "mapping", "sample_1_unmapped.1.fq.gz")),
-                        os.path.abspath(os.path.join("test", "coassemble", "mapping", "sample_2_unmapped.1.fq.gz")),
+                        "aviary recover --assembly", os.path.join(test_dir, "coassemble", "coassembly_0", "assemble", "assembly", "final_contigs.fasta"),
+                        "-1",
+                        os.path.join(test_dir, "coassemble", "mapping", "sample_1_unmapped.1.fq.gz"),
+                        os.path.join(test_dir, "coassemble", "mapping", "sample_2_unmapped.1.fq.gz"),
                         "-2",
-                        os.path.abspath(os.path.join("test", "coassemble", "mapping", "sample_1_unmapped.2.fq.gz")),
-                        os.path.abspath(os.path.join("test", "coassemble", "mapping", "sample_2_unmapped.2.fq.gz")),
-                        "--output $OUTPUT_DIR/coassembly_0/recover -n $CPUS -m $MEMORY &> $OUTPUT_DIR/logs/coassembly_0_recover.log ",
+                        os.path.join(test_dir, "coassemble", "mapping", "sample_1_unmapped.2.fq.gz"),
+                        os.path.join(test_dir, "coassemble", "mapping", "sample_2_unmapped.2.fq.gz"),
+                        "--output", os.path.join(test_dir, "coassemble", "coassembly_0", "recover"),
+                        "-n 16 -m 250 &>",
+                        os.path.join(test_dir, "coassemble", "logs", "coassembly_0_recover.log"),
+                        ""
                     ]),
                     ""
                 ]
@@ -100,6 +109,8 @@ class Tests(unittest.TestCase):
             )
             extern.run(cmd)
 
+            test_dir = os.path.abspath("test")
+
             config_path = os.path.join("test", "config.yaml")
             self.assertTrue(os.path.exists(config_path))
 
@@ -114,7 +125,10 @@ class Tests(unittest.TestCase):
                         "-2",
                         os.path.join(os.path.abspath(path_to_data), "sample_1.2.fq"),
                         os.path.join(os.path.abspath(path_to_data), "sample_2.2.fq"),
-                        "--output $OUTPUT_DIR/coassembly_0/assemble -n $CPUS -m $MEMORY &> $OUTPUT_DIR/logs/coassembly_0_assemble.log ",
+                        "--output", os.path.join(test_dir, "coassemble", "coassembly_0", "assemble"),
+                        "-n 16 -m 250 &>",
+                        os.path.join(test_dir, "coassemble", "logs", "coassembly_0_assemble.log"),
+                        ""
                     ]),
                     ""
                 ]
@@ -127,13 +141,17 @@ class Tests(unittest.TestCase):
             expected = "\n".join(
                 [
                     " ".join([
-                        "aviary recover --assembly $OUTPUT_DIR/coassembly_0/assemble/assembly/final_contigs.fasta -1",
+                        "aviary recover --assembly", os.path.join(test_dir, "coassemble", "coassembly_0", "assemble", "assembly", "final_contigs.fasta"),
+                        "-1",
                         os.path.join(os.path.abspath(path_to_data), "sample_1.1.fq"),
                         os.path.join(os.path.abspath(path_to_data), "sample_2.1.fq"),
                         "-2",
                         os.path.join(os.path.abspath(path_to_data), "sample_1.2.fq"),
                         os.path.join(os.path.abspath(path_to_data), "sample_2.2.fq"),
-                        "--output $OUTPUT_DIR/coassembly_0/recover -n $CPUS -m $MEMORY &> $OUTPUT_DIR/logs/coassembly_0_recover.log ",
+                        "--output", os.path.join(test_dir, "coassemble", "coassembly_0", "recover"),
+                        "-n 16 -m 250 &>",
+                        os.path.join(test_dir, "coassemble", "logs", "coassembly_0_recover.log"),
+                        ""
                     ]),
                     ""
                 ]
@@ -156,6 +174,7 @@ class Tests(unittest.TestCase):
 
             config = load_configfile(os.path.join("test", "config.yaml"))
             self.assertEqual(config["max_threads"], 8)
+            self.assertEqual(config["memory"], 250)
             self.assertEqual(config["assemble_unmapped"], False)
 
 
