@@ -8,6 +8,7 @@ import sys
 import logging
 import shutil
 import subprocess
+import importlib.resources
 import bird_tool_utils as btu
 from snakemake.io import load_configfile
 from ruamel.yaml import YAML
@@ -42,7 +43,7 @@ def make_config(template, output_dir, config_items):
     yaml.version = (1, 1)
     yaml.default_flow_style = False
 
-    with open(template) as f:
+    with importlib.resources.as_file(template) as f:
         config = yaml.load(f)
 
     for key, value in config_items.items():
@@ -140,9 +141,10 @@ def cluster(args):
         "max_coassembly_size": args.max_coassembly_size,
         "max_recovery_samples": args.max_recovery_samples,
     }
+    import pdb; pdb.set_trace()
 
     config_path = make_config(
-        os.path.join(os.path.dirname(os.path.realpath(__file__)),"config","template_cluster.yaml"),
+        importlib.resources.files("cockatoo.config").joinpath("template_cluster.yaml"),
         output,
         config_items
         )
@@ -191,7 +193,7 @@ def coassemble(args):
         os.makedirs(output)
 
     config_path = make_config(
-        os.path.join(os.path.dirname(os.path.realpath(__file__)),"config","template_coassemble.yaml"),
+        importlib.resources.files("cockatoo.config").joinpath("template_coassemble.yaml"),
         output,
         config_items
         )
@@ -239,7 +241,7 @@ def evaluate(args):
         os.makedirs(output)
 
     config_path = make_config(
-        os.path.join(os.path.dirname(os.path.realpath(__file__)),"config","template_evaluate.yaml"),
+        importlib.resources.files("cockatoo.config").joinpath("template_evaluate.yaml"),
         output,
         config_items
         )
