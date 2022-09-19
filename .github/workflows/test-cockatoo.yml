@@ -24,6 +24,9 @@ jobs:
       - run: |
           conda info
           conda list
+      - name: Install Cockatoo
+        run: |
+          pip install .
       - name: Run pytest
         run: |
             python test/test_cluster.py && \
