@@ -35,6 +35,8 @@ dependencies:
   - bird_tool_utils_python
   - pip
   - sqlalchemy
+  - git
+  - git-lfs
   - pip:
     - scann
     - nmslib
