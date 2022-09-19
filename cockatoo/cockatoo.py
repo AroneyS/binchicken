@@ -141,7 +141,6 @@ def cluster(args):
         "max_coassembly_size": args.max_coassembly_size,
         "max_recovery_samples": args.max_recovery_samples,
     }
-    import pdb; pdb.set_trace()
 
     config_path = make_config(
         importlib.resources.files("cockatoo.config").joinpath("template_cluster.yaml"),
