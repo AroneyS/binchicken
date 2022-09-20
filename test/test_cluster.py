@@ -31,7 +31,7 @@ SAMPLE_SINGLEM = ' '.join([
     os.path.join(MOCK_CLUSTER, "summarise", "sample_2_summarised.otu_table.tsv"),
     os.path.join(MOCK_CLUSTER, "summarise", "sample_3_summarised.otu_table.tsv"),
     ])
-SAMPLE_READ_SIZE = os.path.join(MOCK_CLUSTER, "read_size.csv")
+SAMPLE_READ_SIZE = os.path.join(MOCK_CLUSTER, "read_size2.csv")
 GENOME_SINGLEM = os.path.join(MOCK_CLUSTER, "summarise", "bins_summarised.otu_table2.tsv")
 MOCK_COASSEMBLIES = ' '.join([os.path.join(MOCK_CLUSTER, "coassembly_0")])
 

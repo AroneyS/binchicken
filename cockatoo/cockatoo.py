@@ -110,7 +110,7 @@ def cluster(args):
             reverse_reads = forward_reads.copy()
         copy_input(
             os.path.abspath(args.sample_read_size),
-            os.path.join(output, "cluster", os.path.basename(args.sample_read_size)),
+            os.path.join(output, "cluster", "read_size.csv"),
         )
     if args.sample_singlem:
         for table in args.sample_singlem:
