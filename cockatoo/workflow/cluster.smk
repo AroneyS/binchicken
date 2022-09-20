@@ -1,8 +1,6 @@
 #############
 ### Setup ###
 #############
-ruleorder: singlem_appraise_gzip_archive > singlem_appraise
-
 import os
 
 output_dir = os.path.abspath("cluster")
@@ -118,13 +116,15 @@ rule singlem_summarise_bins:
 ##################################
 rule singlem_appraise:
     input:
-        reads=output_dir + "/summarise/{read}_summarised.otu_table.tsv",
+        reads=expand(output_dir + "/summarise/{read}_summarised.otu_table.tsv", read=config["reads_1"]),
         bins=output_dir + "/summarise/bins_summarised.otu_table.tsv",
     output:
-        unbinned=output_dir + "/appraise/{read}_unbinned.otu_table.tsv",
-        binned=output_dir + "/appraise/{read}_binned.otu_table.tsv",
+        unbinned=output_dir + "/appraise/unbinned.otu_table.tsv",
+        binned=output_dir + "/appraise/binned.otu_table.tsv",
     log:
-        logs_dir + "/appraise/{read}.log"
+        logs_dir + "/appraise/appraise.log"
+    threads:
+        64
     params:
         sequence_identity=config["appraise_sequence_identity"]
     conda:
@@ -140,33 +140,9 @@ rule singlem_appraise:
         "--output-found-in "
         "&> {log}"
 
-rule singlem_appraise_gzip_archive:
-    input:
-        reads=lambda wildcards: config["singlem_gzip_archive"][wildcards.read],
-        bins=output_dir + "/summarise/bins_summarised.otu_table.tsv",
-    output:
-        unbinned=output_dir + "/appraise/{read}_unbinned.otu_table.tsv",
-        binned=output_dir + "/appraise/{read}_binned.otu_table.tsv",
-    log:
-        logs_dir + "/appraise/{read}.log"
-    params:
-        sequence_identity=config["appraise_sequence_identity"]
-    conda:
-        "env/singlem.yml"
-    shell:
-        "singlem appraise "
-        "--metagenome-gzip-archive-otu-tables {input.reads} "
-        "--genome-otu-tables {input.bins} "
-        "--output-unaccounted-for-otu-table {output.unbinned} "
-        "--output-binned-otu-table {output.binned} "
-        "--imperfect "
-        "--sequence-identity {params.sequence_identity} "
-        "--output-found-in "
-        "&> {log}"
-
 rule singlem_summarise_unbinned:
     input:
-        expand(output_dir + "/appraise/{read}_unbinned.otu_table.tsv", read=config["reads_1"])
+        output_dir + "/appraise/unbinned.otu_table.tsv",
     output:
         output_dir + "/summarise/unbinned.otu_table.tsv"
     log:
@@ -184,7 +160,7 @@ rule singlem_summarise_unbinned:
 
 rule singlem_summarise_binned:
     input:
-        expand(output_dir + "/appraise/{read}_binned.otu_table.tsv", read=config["reads_1"])
+        output_dir + "/appraise/binned.otu_table.tsv",
     output:
         output_dir + "/summarise/binned.otu_table.tsv"
     log:
