@@ -107,7 +107,7 @@ def cluster(args):
     if args.sample_read_size:
         with open(args.sample_read_size) as f:
             forward_reads = {line.split(",")[0]: "" for line in f}
-            reverse_reads = forward_reads
+            reverse_reads = forward_reads.copy()
         copy_input(
             os.path.abspath(args.sample_read_size),
             os.path.join(output, "cluster", os.path.basename(args.sample_read_size)),
@@ -125,7 +125,7 @@ def cluster(args):
     if args.genome_singlem:
         copy_input(
             os.path.abspath(args.genome_singlem),
-            os.path.join(output, "cluster", "summarise", os.path.basename(args.genome_singlem))
+            os.path.join(output, "cluster", "summarise", "bins_summarised.otu_table.tsv")
         )
 
     config_items = {
