@@ -19,22 +19,33 @@ def produce_command(row):
 
     coassembly = row["coassembly"]
 
+    if snakemake.config["abstract_options"]:
+        output_dir = "$OUTPUT_DIR"
+        assemble_output = "$ASSEMBLE_OUTPUT"
+        threads = "$CPUS"
+        memory = "$MEMORY"
+    else:
+        output_dir = snakemake.params.dir
+        assemble_output = snakemake.params.dir
+        threads = snakemake.threads
+        memory = snakemake.params.memory
+
     aviary_assemble = ("aviary assemble "
     f"-1 {' '.join(coassembly_samples_1)} "
     f"-2 {' '.join(coassembly_samples_2)} "
-    f"--output {snakemake.params.dir}/{coassembly}/assemble "
-    f"-n {snakemake.threads} "
-    f"-m {snakemake.params.memory} "
-    f"&> {snakemake.params.dir}/logs/{coassembly}_assemble.log ")
+    f"--output {output_dir}/{coassembly}/assemble "
+    f"-n {threads} "
+    f"-m {memory} "
+    f"&> {output_dir}/logs/{coassembly}_assemble.log ")
 
     aviary_recover = ("aviary recover "
-    f"--assembly {snakemake.params.dir}/{coassembly}/assemble/assembly/final_contigs.fasta "
+    f"--assembly {assemble_output}/{coassembly}/assemble/assembly/final_contigs.fasta "
     f"-1 {' '.join(all_samples_1)} "
     f"-2 {' '.join(all_samples_2)} "
-    f"--output {snakemake.params.dir}/{coassembly}/recover "
-    f"-n {snakemake.threads} "
-    f"-m {snakemake.params.memory} "
-    f"&> {snakemake.params.dir}/logs/{coassembly}_recover.log ")
+    f"--output {output_dir}/{coassembly}/recover "
+    f"-n {threads} "
+    f"-m {memory} "
+    f"&> {output_dir}/logs/{coassembly}_recover.log ")
 
     return pd.Series([aviary_assemble, aviary_recover])
 
