@@ -102,8 +102,6 @@ def cluster(args):
     if not os.path.exists(output):
         os.makedirs(output)
 
-    if args.forward:
-        forward_reads, reverse_reads = build_reads_list(args.forward, args.reverse)
     if args.sample_read_size:
         with open(args.sample_read_size) as f:
             forward_reads = {line.split(",")[0]: "" for line in f}
@@ -112,6 +110,8 @@ def cluster(args):
             os.path.abspath(args.sample_read_size),
             os.path.join(output, "cluster", "read_size.csv"),
         )
+    if args.forward:
+        forward_reads, reverse_reads = build_reads_list(args.forward, args.reverse)
     if args.sample_singlem:
         for table in args.sample_singlem:
             copy_input(
