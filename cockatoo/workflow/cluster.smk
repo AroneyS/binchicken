@@ -52,25 +52,6 @@ rule singlem_pipe_reads:
         "--metapackage {params.singlem_metapackage} "
         "&> {log}"
 
-rule singlem_summarise_reads:
-    input:
-        output_dir + "/pipe/{read}_read.otu_table.tsv"
-    output:
-        output_dir + "/summarise/{read}_summarised.otu_table.tsv"
-    log:
-        logs_dir + "/summarise/{read}.log"
-    params:
-        singlem_metapackage=config["singlem_metapackage"]
-    conda:
-        "env/singlem.yml"
-    shell:
-        "singlem summarise "
-        "--input-otu-tables {input} "
-        "--output-otu-table {output} "
-        "--exclude-off-target-hits "
-        "--metapackage {params.singlem_metapackage} "
-        "&> {log}"
-
 ####################
 ### SingleM bins ###
 ####################
@@ -111,28 +92,28 @@ rule singlem_summarise_bins:
         "--metapackage {params.singlem_metapackage} "
         "&> {log}"
 
-##################################
-### SingleM appraise/summarise ###
-##################################
+########################
+### SingleM appraise ###
+########################
 rule singlem_appraise:
     input:
-        reads=expand(output_dir + "/summarise/{read}_summarised.otu_table.tsv", read=config["reads_1"]),
+        reads=expand(output_dir + "/pipe/{read}_read.otu_table.tsv", read=config["reads_1"]),
         bins=output_dir + "/summarise/bins_summarised.otu_table.tsv",
     output:
         unbinned=output_dir + "/appraise/unbinned.otu_table.tsv",
         binned=output_dir + "/appraise/binned.otu_table.tsv",
     log:
         logs_dir + "/appraise/appraise.log"
-    threads:
-        64
     params:
-        sequence_identity=config["appraise_sequence_identity"]
+        sequence_identity=config["appraise_sequence_identity"],
+        singlem_metapackage=config["singlem_metapackage"]
     conda:
         "env/singlem.yml"
     shell:
         "singlem appraise "
         "--metagenome-otu-tables {input.reads} "
         "--genome-otu-tables {input.bins} "
+        "--metapackage {params.singlem_metapackage} "
         "--output-unaccounted-for-otu-table {output.unbinned} "
         "--output-binned-otu-table {output.binned} "
         "--imperfect "
@@ -140,48 +121,12 @@ rule singlem_appraise:
         "--output-found-in "
         "&> {log}"
 
-rule singlem_summarise_unbinned:
-    input:
-        output_dir + "/appraise/unbinned.otu_table.tsv",
-    output:
-        output_dir + "/summarise/unbinned.otu_table.tsv"
-    log:
-        logs_dir + "/summarise/unbinned.log"
-    params:
-        singlem_metapackage=config["singlem_metapackage"]
-    conda:
-        "env/singlem.yml"
-    shell:
-        "singlem summarise "
-        "--input-otu-tables {input} "
-        "--output-otu-table {output} "
-        "--metapackage {params.singlem_metapackage} "
-        "&> {log}"
-
-rule singlem_summarise_binned:
-    input:
-        output_dir + "/appraise/binned.otu_table.tsv",
-    output:
-        output_dir + "/summarise/binned.otu_table.tsv"
-    log:
-        logs_dir + "/summarise/binned.log"
-    params:
-        singlem_metapackage=config["singlem_metapackage"]
-    conda:
-        "env/singlem.yml"
-    shell:
-        "singlem summarise "
-        "--input-otu-tables {input} "
-        "--output-otu-table {output} "
-        "--metapackage {params.singlem_metapackage} "
-        "&> {log}"
-
 ######################
 ### Target elusive ###
 ######################
 rule target_elusive:
     input:
-        unbinned=output_dir + "/summarise/unbinned.otu_table.tsv"
+        unbinned=output_dir + "/appraise/unbinned.otu_table.tsv"
     output:
         output_edges=output_dir + "/target/elusive_edges.tsv",
         output_targets=output_dir + "/target/targets.tsv",

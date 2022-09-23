@@ -116,7 +116,7 @@ def cluster(args):
         for table in args.sample_singlem:
             copy_input(
                 os.path.abspath(table),
-                os.path.join(output, "cluster", "summarise", os.path.basename(table))
+                os.path.join(output, "cluster", "pipe", os.path.basename(table))
             )
     if args.genome_transcripts:
         genome_transcripts = {

@@ -27,9 +27,9 @@ METAPACKAGE = os.path.join(path_to_data, "singlem_metapackage.smpkg")
 GENOMES = ' '.join([os.path.join(path_to_data, "GB_GCA_013286235.1_protein.fna")])
 MOCK_CLUSTER = os.path.join(path_to_data, "mock_cluster")
 SAMPLE_SINGLEM = ' '.join([
-    os.path.join(MOCK_CLUSTER, "summarise", "sample_1_summarised.otu_table.tsv"),
-    os.path.join(MOCK_CLUSTER, "summarise", "sample_2_summarised.otu_table.tsv"),
-    os.path.join(MOCK_CLUSTER, "summarise", "sample_3_summarised.otu_table.tsv"),
+    os.path.join(MOCK_CLUSTER, "pipe", "sample_1_read.otu_table.tsv"),
+    os.path.join(MOCK_CLUSTER, "pipe", "sample_2_read.otu_table.tsv"),
+    os.path.join(MOCK_CLUSTER, "pipe", "sample_3_read.otu_table.tsv"),
     ])
 SAMPLE_READ_SIZE = os.path.join(MOCK_CLUSTER, "read_size2.csv")
 GENOME_SINGLEM = os.path.join(MOCK_CLUSTER, "summarise", "bins_summarised.otu_table2.tsv")
@@ -134,12 +134,9 @@ class Tests(unittest.TestCase):
 
             self.assertTrue("count_bp_reads" not in output)
             self.assertTrue("singlem_pipe_reads" not in output)
-            self.assertTrue("singlem_summarise_reads" not in output)
             self.assertTrue("singlem_pipe_bins" not in output)
             self.assertTrue("singlem_summarise_bins" not in output)
             self.assertTrue("singlem_appraise" in output)
-            self.assertTrue("singlem_summarise_unbinned" in output)
-            self.assertTrue("singlem_summarise_binned" not in output)
             self.assertTrue("target_elusive" in output)
             self.assertTrue("cluster_graph" in output)
 
@@ -150,6 +147,7 @@ class Tests(unittest.TestCase):
                 f"--sample-singlem {SAMPLE_SINGLEM} "
                 f"--sample-read-size {SAMPLE_READ_SIZE} "
                 f"--genome-singlem {GENOME_SINGLEM} "
+                f"--singlem-metapackage {METAPACKAGE} "
                 f"--output test "
                 f"--taxa-of-interest \"p__Actinobacteriota\" "
                 f"--conda-prefix {path_to_conda} "

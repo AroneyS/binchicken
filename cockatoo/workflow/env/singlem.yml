@@ -41,4 +41,4 @@ dependencies:
     - scann
     - nmslib
     - --no-binary nmslib
-    - git+https://github.com/AroneyS/singlem.git@add-reference-to-appraise-output
+    - git+https://github.com/AroneyS/singlem.git@199c66195f5335ce364117f0375f74f560453f9d
