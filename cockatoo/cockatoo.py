@@ -273,33 +273,41 @@ def main():
         examples = {
             "cluster": [
                 btu.Example(
-                    "cluster reads into suggested coassemblies",
-                    "cockatoo cluster --forward reads.1.fq --reverse reads.2.fq --output output_dir"
+                    "cluster reads into suggested coassemblies based on unbinned sequences",
+                    "cockatoo cluster --forward reads_1.1.fq ... --reverse reads_1.2.fq ... --genome-transcripts genome_protein.fna ... --singlem-metapackage metapackage.smpkg"
                 ),
                 btu.Example(
-                    "cluster reads into suggested coassemblies based only on sequences from a specific taxa",
-                    "cockatoo cluster --forward reads.1.fq --reverse reads.2.fq --output output_dir --taxa-of-interest \"p__Planctomycetota\""
+                    "cluster reads into suggested coassemblies based on unbinned sequences from a specific taxa",
+                    "cockatoo cluster --forward reads_1.1.fq ... --reverse reads_1.2.fq ... --genome-transcripts genome_protein.fna ... --taxa-of-interest \"p__Planctomycetota\" --singlem-metapackage metapackage.smpkg"
                 ),
                 btu.Example(
-                    "cluster SingleM outputs (archive otu tables) into suggested coassemblies",
-                    "cockatoo cluster --singlem-gzip-archives reads.singlem.json.gz --output output_dir"
-                )
+                    "cluster SingleM outputs into suggested coassemblies (skips SingleM pipe)",
+                    "cockatoo cluster --sample-singlem reads_1.otu_table.tsv ... --sample-read-size read_size.csv --genome-singlem genome.otu_table.tsv --singlem-metapackage metapackage.smpkg"
+                ),
+                btu.Example(
+                    "cluster SingleM query outputs into suggested coassemblies (skips SingleM pipe and appraise)",
+                    "cockatoo cluster --sample-query reads_1_query.otu_table.tsv ... --sample-read-size read_size.csv"
+                ),
+                btu.Example(
+                    "find relevant samples for differential coverage binning (no coassembly)",
+                    "cockatoo cluster --forward reads_1.1.fq ... --reverse reads_1.2.fq ... --single-assembly --singlem-metapackage metapackage.smpkg"
+                ),
             ],
             "coassemble": [
                 btu.Example(
                     "coassemble a clustered set of reads",
-                    "cockatoo coassemble --cluster-output cluster_dir --output output_dir"
+                    "cockatoo coassemble --cluster-output cluster_dir --forward reads_1.1.fq ... --reverse reads_1.2.fq ..."
                 ),
                 btu.Example(
                     "coassemble unmapped reads from a clustered set of reads",
-                    "cockatoo coassemble --cluster-output cluster_dir --forward reads.1.fq --reverse reads.2.fq --assemble-unmapped --genomes genome.fna --output output_dir"
-                )
+                    "cockatoo coassemble --cluster-output cluster_dir --forward reads_1.1.fq ... --reverse reads_1.2.fq ... --genomes genome.fna ... --assemble-unmapped"
+                ),
             ],
             "evaluate": [
                 btu.Example(
                     "evaluate a completed coassembly",
-                    "cockatoo evaluate --cluster-output cluster_dir --coassemble-output coassembly_dir --output output_dir"
-                )
+                    "cockatoo evaluate --cluster-output cluster_dir --aviary-outputs coassembly_0_dir ... --singlem-metapackage metapackage.smpkg"
+                ),
             ]
         }
         )
@@ -315,7 +323,7 @@ def main():
     cluster_parser.add_argument("--genome-transcripts", nargs='+', help="Genome transcripts for reference database")
     cluster_parser.add_argument("--genome-singlem", help="Combined SingleM otu tables for genome transcripts. If provided, genome SingleM is skipped")
     cluster_parser.add_argument("--singlem-metapackage", help="SingleM metapackage for sequence searching")
-    cluster_parser.add_argument("--output", help="Output directory")
+    cluster_parser.add_argument("--output", help="Output directory [default: .]", default="./")
     cluster_parser.add_argument("--taxa-of-interest", help="Only consider sequences from this GTDB taxa (e.g. p__Planctomycetota) [default: all]")
     cluster_parser.add_argument("--appraise-sequence-identity", type=int, help="Minimum sequence identity for SingleM appraise against reference database [default: 89%]", default=0.89)
     cluster_parser.add_argument("--min-sequence-coverage", type=int, help="Minimum combined coverage for sequence inclusion [default: 10]", default=10)
@@ -339,7 +347,7 @@ def main():
     coassemble_parser.add_argument("--genomes", nargs='+', help="Reference genomes for read mapping")
     coassemble_parser.add_argument("--abstract-options", action="store_true", help="Print Aviary commands with bash variables for OUTPUT_DIR, CPUS and MEMORY [default: hardcode arguments]")
     coassemble_parser.add_argument("--run-aviary", action="store_true", help="Run Aviary assemble/recover commands [default: print commands to file]")
-    coassemble_parser.add_argument("--output", help="output directory")
+    coassemble_parser.add_argument("--output", help="Output directory [default: .]", default="./")
     coassemble_parser.add_argument("--conda-prefix", help="Path to conda environment install location", default=None)
     coassemble_parser.add_argument("--cores", type=int, help="Maximum number of cores to use", default=16)
     coassemble_parser.add_argument("--memory", type=int, help="Maximum amount of memory to use (Gigabytes)", default=250)
@@ -352,7 +360,7 @@ def main():
     evaluate_parser.add_argument("--cluster-output", help="Output dir from cluster subcommand", required=True)
     evaluate_parser.add_argument("--aviary-outputs", nargs='+', help="Output dir from Aviary coassembly and recover commands produced by coassemble subcommand", required=True)
     evaluate_parser.add_argument("--singlem-metapackage", help="SingleM metapackage for sequence searching")
-    evaluate_parser.add_argument("--output", help="output directory")
+    evaluate_parser.add_argument("--output", help="Output directory [default: .]", default="./")
     evaluate_parser.add_argument("--checkm-version", type=int, help="CheckM version to use to quality cutoffs [default: 2]", default=2)
     evaluate_parser.add_argument("--min-completeness", type=int, help="Include bins with at least this minimum completeness [default: 70]", default=70)
     evaluate_parser.add_argument("--max-contamination", type=int, help="Include bins with at most this maximum contamination [default: 10]", default=10)
