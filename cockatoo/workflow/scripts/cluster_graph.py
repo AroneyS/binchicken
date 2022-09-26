@@ -72,7 +72,7 @@ for iteration in comp:
         clusters = pd.concat([clusters, df], ignore_index=True)
 
 clusters.drop_duplicates(inplace=True)
-clusters.sort_values(by="total_targets", ascending=False, inplace=True)
+clusters.sort_values(by=["total_targets", "samples"], ascending=False, inplace=True)
 clusters.reset_index(drop=True, inplace=True)
 clusters["coassembly"] = (clusters.reset_index()["index"].apply(lambda x: "coassembly_" + str(x)))
 clusters.to_csv(snakemake.output.elusive_clusters, sep="\t", index=False)

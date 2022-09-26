@@ -2,11 +2,9 @@
 
 import unittest
 import os
-import sys
 from bird_tool_utils import in_tempdir
 import extern
 from snakemake.io import load_configfile
-from collections import OrderedDict
 
 path_to_data = os.path.join(os.path.dirname(os.path.realpath(__file__)),'data')
 path_to_conda = os.path.join(path_to_data,'.conda')
@@ -239,6 +237,69 @@ class Tests(unittest.TestCase):
                         "2869",
                         "sample_1,sample_2",
                         "coassembly_0"
+                    ]),
+                    ""
+                ]
+            )
+            with open(cluster_path) as f:
+                self.assertEqual(expected, f.read())
+
+    def test_cluster_single_assembly(self):
+        with in_tempdir():
+            cmd = (
+                f"cockatoo cluster "
+                f"--forward {SAMPLE_READS_FORWARD} "
+                f"--reverse {SAMPLE_READS_REVERSE} "
+                f"--singlem-metapackage {METAPACKAGE} "
+                f"--single-assembly "
+                f"--output test "
+                f"--conda-prefix {path_to_conda} "
+            )
+            extern.run(cmd)
+
+            config_path = os.path.join("test", "config.yaml")
+            self.assertTrue(os.path.exists(config_path))
+
+            cluster_path = os.path.join("test", "cluster", "target", "elusive_clusters.tsv")
+            self.assertTrue(os.path.exists(cluster_path))
+
+            expected = "\n".join(
+                [
+                    "\t".join([
+                        "samples",
+                        "length",
+                        "total_weight",
+                        "total_targets",
+                        "total_size",
+                        "recover_samples",
+                        "coassembly",
+                    ]),
+                    "\t".join([
+                        "sample_3",
+                        "1",
+                        "0",
+                        "0",
+                        "1208",
+                        "sample_3",
+                        "coassembly_0"
+                    ]),
+                    "\t".join([
+                        "sample_2",
+                        "1",
+                        "0",
+                        "0",
+                        "1208",
+                        "sample_1,sample_2",
+                        "coassembly_1"
+                    ]),
+                    "\t".join([
+                        "sample_1",
+                        "1",
+                        "0",
+                        "0",
+                        "1661",
+                        "sample_1,sample_2",
+                        "coassembly_2"
                     ]),
                     ""
                 ]

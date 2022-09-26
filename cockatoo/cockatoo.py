@@ -93,8 +93,8 @@ def cluster(args):
         raise Exception("Input reads (--forward) or read sizes (--sample-read-size) must be provided")
     if args.reverse and not args.forward:
         raise Exception("Reverse reads cannot be provided without forward reads")
-    if not args.genome_transcripts and not args.genome_singlem and not args.sample_query:
-        raise Exception("Genome transcripts (--genome-transcripts) or SingleM otu tables (--genome-singlem or --sample-query) must be provided")
+    if not args.genome_transcripts and not args.genome_singlem and not args.sample_query and not args.single_assembly:
+            raise Exception("Genome transcripts (--genome-transcripts) or SingleM otu tables (--genome-singlem or --sample-query) must be provided")
     if not args.singlem_metapackage and (not args.sample_singlem or not args.genome_singlem) and not args.sample_query:
         raise Exception("SingleM metapackage (--singlem-metapackage) must be provided when SingleM otu tables not provided")
 
@@ -133,6 +133,9 @@ def cluster(args):
             os.path.abspath(args.genome_singlem),
             os.path.join(output, "cluster", "summarise", "bins_summarised.otu_table.tsv")
         )
+    if args.single_assembly:
+        args.num_coassembly_samples = 1
+        args.max_coassembly_samples = 1
 
     config_items = {
         "reads_1": forward_reads,
@@ -146,6 +149,7 @@ def cluster(args):
         "max_coassembly_samples": args.max_coassembly_samples if args.max_coassembly_samples else args.num_coassembly_samples,
         "max_coassembly_size": args.max_coassembly_size,
         "max_recovery_samples": args.max_recovery_samples,
+        "single_assembly": args.single_assembly,
     }
 
     config_path = make_config(
@@ -315,6 +319,7 @@ def main():
     cluster_parser.add_argument("--taxa-of-interest", help="Only consider sequences from this GTDB taxa (e.g. p__Planctomycetota) [default: all]")
     cluster_parser.add_argument("--appraise-sequence-identity", type=int, help="Minimum sequence identity for SingleM appraise against reference database [default: 89%]", default=0.89)
     cluster_parser.add_argument("--min-sequence-coverage", type=int, help="Minimum combined coverage for sequence inclusion [default: 10]", default=10)
+    cluster_parser.add_argument("--single-assembly", action="store_true", help="Skip appraise to discover samples to differential abundance binning. Forces --num-coassembly-samples and --max-coassembly-samples to 1")
     cluster_parser.add_argument("--num-coassembly-samples", type=int, help="Number of samples per coassembly cluster [default: 2]", default=2)
     cluster_parser.add_argument("--max-coassembly-samples", type=int, help="Upper bound for number of samples per coassembly cluster [default: --num-coassembly-samples]", default=None)
     cluster_parser.add_argument("--max-coassembly-size", type=int, help="Maximum size (Gbp) of coassembly cluster [default: None]", default=None)

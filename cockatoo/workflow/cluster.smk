@@ -1,7 +1,7 @@
 #############
 ### Setup ###
 #############
-ruleorder: query_processing > singlem_appraise
+ruleorder: single_assembly > query_processing > singlem_appraise
 
 import os
 
@@ -139,6 +139,20 @@ rule query_processing:
         window_size=60,
     script:
         "scripts/query_processing.py"
+
+#####################################
+### Single assembly (alternative) ###
+#####################################
+rule single_assembly:
+    input:
+        reads=expand(output_dir + "/pipe/{read}_read.otu_table.tsv", read=config["reads_1"]),
+    output:
+        unbinned=output_dir + "/appraise/unbinned.otu_table.tsv" if config["single_assembly"] else [],
+        binned=output_dir + "/appraise/binned.otu_table.tsv" if config["single_assembly"] else [],
+    log:
+        logs_dir + "/appraise/appraise.log"
+    script:
+        "scripts/single_assembly.py"
 
 ######################
 ### Target elusive ###
