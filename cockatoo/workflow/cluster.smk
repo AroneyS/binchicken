@@ -1,6 +1,8 @@
 #############
 ### Setup ###
 #############
+ruleorder: query_processing > singlem_appraise
+
 import os
 
 output_dir = os.path.abspath("cluster")
@@ -106,7 +108,7 @@ rule singlem_appraise:
         logs_dir + "/appraise/appraise.log"
     params:
         sequence_identity=config["appraise_sequence_identity"],
-        singlem_metapackage=config["singlem_metapackage"]
+        singlem_metapackage=config["singlem_metapackage"],
     conda:
         "env/singlem.yml"
     shell:
@@ -120,6 +122,23 @@ rule singlem_appraise:
         "--sequence-identity {params.sequence_identity} "
         "--output-found-in "
         "&> {log}"
+
+###################################
+### SingleM query (alternative) ###
+###################################
+rule query_processing:
+    input:
+        reads=expand(output_dir + "/query/{read}_query.otu_table.tsv", read=config["reads_1"]),
+    output:
+        unbinned=output_dir + "/appraise/unbinned.otu_table.tsv",
+        binned=output_dir + "/appraise/binned.otu_table.tsv",
+    log:
+        logs_dir + "/query/processing.log"
+    params:
+        sequence_identity=config["appraise_sequence_identity"],
+        window_size=60,
+    script:
+        "scripts/query_processing.py"
 
 ######################
 ### Target elusive ###

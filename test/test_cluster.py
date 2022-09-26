@@ -34,6 +34,11 @@ SAMPLE_SINGLEM = ' '.join([
 SAMPLE_READ_SIZE = os.path.join(MOCK_CLUSTER, "read_size2.csv")
 GENOME_SINGLEM = os.path.join(MOCK_CLUSTER, "summarise", "bins_summarised.otu_table2.tsv")
 MOCK_COASSEMBLIES = ' '.join([os.path.join(MOCK_CLUSTER, "coassembly_0")])
+SAMPLE_QUERY = ' '.join([
+    os.path.join(path_to_data, "query", "sample_1_query.otu_table.tsv"),
+    os.path.join(path_to_data, "query", "sample_2_query.otu_table.tsv"),
+    os.path.join(path_to_data, "query", "sample_3_query.otu_table.tsv"),
+    ])
 
 class Tests(unittest.TestCase):
     def test_cluster(self):
@@ -184,6 +189,55 @@ class Tests(unittest.TestCase):
                         "2",
                         "2869",
                         "sample_1,sample_3",
+                        "coassembly_0"
+                    ]),
+                    ""
+                ]
+            )
+            with open(cluster_path) as f:
+                self.assertEqual(expected, f.read())
+
+    def test_cluster_query_input(self):
+        with in_tempdir():
+            cmd = (
+                f"cockatoo cluster "
+                f"--sample-query {SAMPLE_QUERY} "
+                f"--sample-read-size {SAMPLE_READ_SIZE} "
+                f"--output test "
+                f"--conda-prefix {path_to_conda} "
+            )
+            extern.run(cmd)
+
+            config_path = os.path.join("test", "config.yaml")
+            self.assertTrue(os.path.exists(config_path))
+
+            edges_path = os.path.join("test", "cluster", "target", "targets.tsv")
+            self.assertTrue(os.path.exists(edges_path))
+
+            edges_path = os.path.join("test", "cluster", "target", "elusive_edges.tsv")
+            self.assertTrue(os.path.exists(edges_path))
+
+            cluster_path = os.path.join("test", "cluster", "target", "elusive_clusters.tsv")
+            self.assertTrue(os.path.exists(cluster_path))
+
+            expected = "\n".join(
+                [
+                    "\t".join([
+                        "samples",
+                        "length",
+                        "total_weight",
+                        "total_targets",
+                        "total_size",
+                        "recover_samples",
+                        "coassembly",
+                    ]),
+                    "\t".join([
+                        "sample_1,sample_2",
+                        "2",
+                        "2",
+                        "2",
+                        "2869",
+                        "sample_1,sample_2",
                         "coassembly_0"
                     ]),
                     ""

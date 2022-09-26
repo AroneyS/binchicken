@@ -87,15 +87,15 @@ def run_workflow(config, workflow, output_dir, cores=16, dryrun=False,
     subprocess.check_call(cmd, shell=True)
 
 def cluster(args):
-    if not args.forward and not args.sample_singlem:
-        raise Exception("Input reads (--forward) or SingleM otu tables (--sample-singlem) must be provided")
+    if not args.forward and not args.sample_singlem and not args.sample_query:
+        raise Exception("Input reads (--forward) or SingleM otu tables (--sample-singlem or --sample-query) must be provided")
     if not args.forward and not args.sample_read_size:
         raise Exception("Input reads (--forward) or read sizes (--sample-read-size) must be provided")
     if args.reverse and not args.forward:
         raise Exception("Reverse reads cannot be provided without forward reads")
-    if not args.genome_transcripts and not args.genome_singlem:
-        raise Exception("Genome transcripts (--genome-transcripts) or SingleM otu tables (--genome-singlem) must be provided")
-    if not args.singlem_metapackage and (not args.sample_singlem or not args.genome_singlem):
+    if not args.genome_transcripts and not args.genome_singlem and not args.sample_query:
+        raise Exception("Genome transcripts (--genome-transcripts) or SingleM otu tables (--genome-singlem or --sample-query) must be provided")
+    if not args.singlem_metapackage and (not args.sample_singlem or not args.genome_singlem) and not args.sample_query:
         raise Exception("SingleM metapackage (--singlem-metapackage) must be provided when SingleM otu tables not provided")
 
     output = os.path.abspath(args.output)
@@ -117,6 +117,12 @@ def cluster(args):
             copy_input(
                 os.path.abspath(table),
                 os.path.join(output, "cluster", "pipe", os.path.basename(table))
+            )
+    if args.sample_query:
+        for table in args.sample_query:
+            copy_input(
+                os.path.abspath(table),
+                os.path.join(output, "cluster", "query", os.path.basename(table))
             )
     if args.genome_transcripts:
         genome_transcripts = {
@@ -299,10 +305,11 @@ def main():
     cluster_parser = main_parser.new_subparser("cluster", "Cluster reads into suggested coassemblies by unbinned single-copy marker genes")
     cluster_parser.add_argument("--forward", "--reads", "--sequences", nargs='+', help="input forward/unpaired nucleotide read sequence(s)")
     cluster_parser.add_argument("--reverse", nargs='+', help="input reverse nucleotide read sequence(s)")
-    cluster_parser.add_argument("--sample-singlem", nargs='+', help="Summarised SingleM otu tables for each sample. If provided, sample SingleM is skipped")
+    cluster_parser.add_argument("--sample-singlem", nargs='+', help="SingleM otu tables for each sample, in the form \"[sample name]_read.otu_table.tsv\". If provided, SingleM pipe sample is skipped")
+    cluster_parser.add_argument("--sample-query", nargs='+', help="Queried SingleM otu tables for each sample against genome database, in the form \"[sample name]_query.otu_table.tsv\". If provided, SingleM pipe and appraise are skipped")
     cluster_parser.add_argument("--sample-read-size", help="Comma separated list of sample name and size (bp). If provided, sample read counting is skipped")
     cluster_parser.add_argument("--genome-transcripts", nargs='+', help="Genome transcripts for reference database")
-    cluster_parser.add_argument("--genome-singlem", help="Combined summarised SingleM otu tables for genome transcripts. If provided, genome SingleM is skipped")
+    cluster_parser.add_argument("--genome-singlem", help="Combined SingleM otu tables for genome transcripts. If provided, genome SingleM is skipped")
     cluster_parser.add_argument("--singlem-metapackage", help="SingleM metapackage for sequence searching")
     cluster_parser.add_argument("--output", help="Output directory")
     cluster_parser.add_argument("--taxa-of-interest", help="Only consider sequences from this GTDB taxa (e.g. p__Planctomycetota) [default: all]")
