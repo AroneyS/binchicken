@@ -88,7 +88,9 @@ def run_workflow(config, workflow, output_dir, cores=16, dryrun=False,
 
 def cluster(args):
     if not args.forward and not args.sample_singlem and not args.sample_query:
-        raise Exception("Input reads (--forward) or SingleM otu tables (--sample-singlem or --sample-query) must be provided")
+        raise Exception("Input reads (--forward) or SingleM otu tables (--sample-singlem and/or --sample-query) must be provided")
+    if args.sample_query and not args.sample_singlem:
+        raise Exception("Input SingleM query (--sample-query) requires SingleM otu tables (--sample-singlem) for coverage")
     if not args.forward and not args.sample_read_size:
         raise Exception("Input reads (--forward) or read sizes (--sample-read-size) must be provided")
     if args.reverse and not args.forward:

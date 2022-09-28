@@ -37,6 +37,11 @@ SAMPLE_QUERY = ' '.join([
     os.path.join(path_to_data, "query", "sample_2_query.otu_table.tsv"),
     os.path.join(path_to_data, "query", "sample_3_query.otu_table.tsv"),
     ])
+SAMPLE_QUERY_SINGLEM = ' '.join([
+    os.path.join(path_to_data, "query", "sample_1_read.otu_table.tsv"),
+    os.path.join(path_to_data, "query", "sample_2_read.otu_table.tsv"),
+    os.path.join(path_to_data, "query", "sample_3_read.otu_table.tsv"),
+    ])
 
 class Tests(unittest.TestCase):
     def test_cluster(self):
@@ -200,6 +205,7 @@ class Tests(unittest.TestCase):
             cmd = (
                 f"cockatoo cluster "
                 f"--sample-query {SAMPLE_QUERY} "
+                f"--sample-singlem {SAMPLE_QUERY_SINGLEM} "
                 f"--sample-read-size {SAMPLE_READ_SIZE} "
                 f"--output test "
                 f"--conda-prefix {path_to_conda} "

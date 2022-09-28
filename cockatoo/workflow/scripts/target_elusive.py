@@ -86,6 +86,11 @@ sparse_edges = (sample_pairs
     .reset_index()
     )
 sparse_edges.rename(columns = {"count": "weight", "<lambda_0>": "target_ids"}, inplace=True)
-sparse_edges[["sample1", "sample2"]] = sparse_edges.sample_pairs.apply(lambda x: pd.Series([i for i in x]))
+
+if len(sparse_edges) == 0:
+    sparse_edges[["sample1", "sample2"]] = None
+else:
+    sparse_edges[["sample1", "sample2"]] = sparse_edges.sample_pairs.apply(lambda x: pd.Series([i for i in x]))
+
 sparse_edges.drop("sample_pairs", axis = 1, inplace = True)
 sparse_edges.to_csv(snakemake.output.output_edges, sep="\t", index=False)

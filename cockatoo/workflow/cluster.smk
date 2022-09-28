@@ -128,7 +128,8 @@ rule singlem_appraise:
 ###################################
 rule query_processing:
     input:
-        reads=expand(output_dir + "/query/{read}_query.otu_table.tsv", read=config["reads_1"]),
+        pipe_reads=expand(output_dir + "/pipe/{read}_read.otu_table.tsv", read=config["reads_1"]),
+        query_reads=expand(output_dir + "/query/{read}_query.otu_table.tsv", read=config["reads_1"]),
     output:
         unbinned=output_dir + "/appraise/unbinned.otu_table.tsv",
         binned=output_dir + "/appraise/binned.otu_table.tsv",
