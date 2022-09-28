@@ -16,7 +16,7 @@ def trimmed_mean(data, trim=0.1):
         return np.mean(a[cut:-cut])
 
 appraise_binned = pd.read_csv(snakemake.input.appraise_binned, sep="\t")
-appraise_binned["sample"] = appraise_binned["sample"].str.replace(".1$", "")
+appraise_binned["sample"] = appraise_binned["sample"].str.replace(".1$", "", regex=True)
 appraise_binned = appraise_binned[appraise_binned["sample"] == snakemake.params.sample]
 appraise_binned["found_in"] = appraise_binned["found_in"].str.split(",")
 appraise_binned = appraise_binned.explode("found_in")
