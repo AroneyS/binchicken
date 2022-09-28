@@ -21,7 +21,9 @@ appraise_binned = appraise_binned[appraise_binned["sample"] == snakemake.params.
 appraise_binned["found_in"] = appraise_binned["found_in"].str.split(",")
 appraise_binned = appraise_binned.explode("found_in")
 
-trimmed_binned = (appraise_binned[["gene", "coverage", "found_in"]]
+trimmed_binned = (appraise_binned.groupby(["gene", "found_in"])["coverage"]
+    .sum()
+    .reset_index()
     .pivot(index="gene", columns="found_in", values="coverage")
     .reset_index()
     .melt(id_vars="gene")
