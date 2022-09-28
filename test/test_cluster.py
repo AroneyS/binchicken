@@ -22,7 +22,7 @@ SAMPLE_READS_REVERSE = " ".join([
 ])
 
 METAPACKAGE = os.path.join(path_to_data, "singlem_metapackage.smpkg")
-GENOMES = ' '.join([os.path.join(path_to_data, "GB_GCA_013286235.1_protein.fna")])
+GENOME_TRANSCRIPTS = ' '.join([os.path.join(path_to_data, "GB_GCA_013286235.1_protein.fna")])
 MOCK_CLUSTER = os.path.join(path_to_data, "mock_cluster")
 SAMPLE_SINGLEM = ' '.join([
     os.path.join(MOCK_CLUSTER, "pipe", "sample_1_read.otu_table.tsv"),
@@ -51,7 +51,7 @@ class Tests(unittest.TestCase):
                 f"--forward {SAMPLE_READS_FORWARD} "
                 f"--reverse {SAMPLE_READS_REVERSE} "
                 f"--singlem-metapackage {METAPACKAGE} "
-                f"--genome-transcripts {GENOMES} "
+                f"--genome-transcripts {GENOME_TRANSCRIPTS} "
                 f"--output test "
                 f"--conda-prefix {path_to_conda} "
             )
@@ -115,7 +115,7 @@ class Tests(unittest.TestCase):
                 f"--forward {SAMPLE_READS_FORWARD} "
                 f"--reverse {SAMPLE_READS_REVERSE} "
                 f"--singlem-metapackage {METAPACKAGE} "
-                f"--genome-transcripts {GENOMES} "
+                f"--genome-transcripts {GENOME_TRANSCRIPTS} "
                 f"--output test "
                 f"--conda-prefix {path_to_conda} "
                 f"--dryrun "
