@@ -22,10 +22,10 @@ SAMPLE_READS_REVERSE = " ".join([
     os.path.join(path_to_data, "sample_3.2.fq"),
 ])
 
-GENOMES = " ".join([os.path.join(path_to_data, "GB_GCA_013286235.1_protein.fna")])
+GENOMES = " ".join([os.path.join(path_to_data, "GB_GCA_013286235.1.fna")])
 TWO_GENOMES = " ".join([
-    os.path.join(path_to_data, "GB_GCA_013286235.1_protein.fna"),
-    os.path.join(path_to_data, "GB_GCA_013286235.2_protein.fna"),
+    os.path.join(path_to_data, "GB_GCA_013286235.1.fna"),
+    os.path.join(path_to_data, "GB_GCA_013286235.2.fna"),
     ])
 MOCK_CLUSTER = os.path.join(path_to_data, "mock_cluster")
 

@@ -20,6 +20,7 @@ appraise_binned["sample"] = appraise_binned["sample"].str.replace(".1$", "", reg
 appraise_binned = appraise_binned[appraise_binned["sample"] == snakemake.params.sample]
 appraise_binned["found_in"] = appraise_binned["found_in"].str.split(",")
 appraise_binned = appraise_binned.explode("found_in")
+appraise_binned["found_in"] = appraise_binned["found_in"].str.replace("_protein$", "", regex=True)
 
 trimmed_binned = (appraise_binned.groupby(["gene", "found_in"])["coverage"]
     .sum()
