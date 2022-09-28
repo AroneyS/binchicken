@@ -25,6 +25,10 @@ SAMPLE_READS_REVERSE = " ".join([
 GENOMES = ' '.join([os.path.join(path_to_data, "GB_GCA_013286235.1_protein.fna")])
 MOCK_CLUSTER = os.path.join(path_to_data, "mock_cluster")
 
+def write_string_to_file(string, filename):
+    with open(filename, "w") as f:
+        f.write("\n".join(string.split(" ")))
+
 class Tests(unittest.TestCase):
     def test_coassemble(self):
         with in_tempdir():
@@ -234,6 +238,34 @@ class Tests(unittest.TestCase):
             self.assertEqual(config["max_threads"], 8)
             self.assertEqual(config["memory"], 250)
             self.assertEqual(config["assemble_unmapped"], False)
+
+    def test_coassemble_file_of_paths(self):
+        with in_tempdir():
+            write_string_to_file(SAMPLE_READS_FORWARD, "sample_reads_forward")
+            write_string_to_file(SAMPLE_READS_REVERSE, "sample_reads_reverse")
+            write_string_to_file(GENOMES, "genomes")
+
+            cmd = (
+                f"cockatoo coassemble "
+                f"--forward-list sample_reads_forward "
+                f"--reverse-list sample_reads_reverse "
+                f"--cluster-output {MOCK_CLUSTER} "
+                f"--assemble-unmapped "
+                f"--genomes-list genomes "
+                f"--output test "
+                f"--conda-prefix {path_to_conda} "
+                f"--dryrun "
+                f"--snakemake-args \" --quiet\" "
+            )
+            output = extern.run(cmd)
+
+            self.assertTrue("collect_bins" in output)
+            self.assertTrue("map_reads" in output)
+            self.assertTrue("finish_mapping" in output)
+            self.assertTrue("coassemble_commands" in output)
+            self.assertTrue("aviary_assemble" not in output)
+            self.assertTrue("aviary_recover" not in output)
+            self.assertTrue("collate_coassemblies" not in output)
 
     def test_coassemble_run_aviary(self):
         with in_tempdir():

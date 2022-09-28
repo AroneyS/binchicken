@@ -62,6 +62,10 @@ def copy_input(input, output):
     logging.info(f"Copying input file {input} to {output}")
     shutil.copyfile(input, output)
 
+def read_list(path):
+    with open(path) as f:
+        return [line.strip() for line in f]
+
 def run_workflow(config, workflow, output_dir, cores=16, dryrun=False,
                  snakemake_args="", conda_frontend="mamba", conda_prefix=None):
     load_configfile(config)
@@ -171,20 +175,29 @@ def cluster(args):
     )
 
 def coassemble(args):
-    if not args.forward:
+    if not args.forward and not args.forward_list:
         raise Exception("Input reads must be provided")
-    if args.reverse and not args.forward:
+    if (args.reverse or args.reverse_list) and not (args.forward or args.forward_list):
         raise Exception("Reverse reads must be provided with forward reads")
-    if args.assemble_unmapped and not args.genomes:
+    if args.assemble_unmapped and not (args.genomes or args.genomes_list):
         raise Exception("Genomes must be provided for mapping reference with --assemble-unmapped")
+    if (args.forward and args.forward_list) or (args.reverse and args.reverse_list) or (args.genomes and args.genomes_list):
+        raise Exception("General argument cannot be provided with list argument")
 
+    if args.forward_list:
+        args.forward = read_list(args.forward_list)
+    if args.reverse_list:
+        args.reverse = read_list(args.reverse_list)
     forward_reads, reverse_reads = build_reads_list(args.forward, args.reverse)
-    cluster_target_dir = os.path.abspath(os.path.join(args.cluster_output, "target"))
 
+    cluster_target_dir = os.path.abspath(os.path.join(args.cluster_output, "target"))
     cluster_appraise_dir = os.path.abspath(os.path.join(args.cluster_output, "appraise"))
     appraise_binned = {}
     for read in forward_reads:
         appraise_binned[read] = os.path.join(cluster_appraise_dir, read + "_binned.otu_table.tsv")
+
+    if args.genomes_list:
+        args.genomes = read_list(args.genomes_list)
     if args.genomes:
         genomes = {
             os.path.splitext(os.path.basename(genome))[0]: os.path.abspath(genome) for genome in args.genomes
@@ -344,9 +357,12 @@ def main():
     coassemble_parser = main_parser.new_subparser("coassemble", "Coassemble suggested coassemblies using Aviary (optionally remove reads mapping to reference genomes)")
     coassemble_parser.add_argument("--cluster-output", help="Output dir from cluster subcommand", required=True)
     coassemble_parser.add_argument("--forward", "--reads", "--sequences", nargs='+', help="input forward/unpaired nucleotide read sequence(s)")
+    coassemble_parser.add_argument("--forward-list", "--reads-list", "--sequences-list", help="input forward/unpaired nucleotide read sequence(s) newline separated")
     coassemble_parser.add_argument("--reverse", nargs='+', help="input reverse nucleotide read sequence(s)")
+    coassemble_parser.add_argument("--reverse-list", help="input reverse nucleotide read sequence(s) newline separated")
     coassemble_parser.add_argument("--assemble-unmapped", action="store_true", help="Only assemble reads to do not map to reference genomes")
     coassemble_parser.add_argument("--genomes", nargs='+', help="Reference genomes for read mapping")
+    coassemble_parser.add_argument("--genomes-list", help="Reference genomes for read mapping newline separated")
     coassemble_parser.add_argument("--abstract-options", action="store_true", help="Print Aviary commands with bash variables for OUTPUT_DIR, CPUS and MEMORY [default: hardcode arguments]")
     coassemble_parser.add_argument("--run-aviary", action="store_true", help="Run Aviary assemble/recover commands [default: print commands to file]")
     coassemble_parser.add_argument("--output", help="Output directory [default: .]", default="./")
