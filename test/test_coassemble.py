@@ -236,7 +236,8 @@ class Tests(unittest.TestCase):
 
             config = load_configfile(os.path.join("test", "config.yaml"))
             self.assertEqual(config["max_threads"], 8)
-            self.assertEqual(config["memory"], 250)
+            self.assertEqual(config["aviary_threads"], 16)
+            self.assertEqual(config["aviary_memory"], 250)
             self.assertEqual(config["assemble_unmapped"], False)
 
     def test_coassemble_file_of_paths(self):

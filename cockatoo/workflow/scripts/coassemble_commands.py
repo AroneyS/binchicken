@@ -27,7 +27,7 @@ def produce_command(row):
     else:
         output_dir = snakemake.params.dir
         assemble_output = snakemake.params.dir
-        threads = snakemake.threads
+        threads = snakemake.params.threads
         memory = snakemake.params.memory
 
     aviary_assemble = ("aviary assemble "

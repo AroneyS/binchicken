@@ -210,7 +210,8 @@ def coassemble(args):
         "assemble_unmapped": args.assemble_unmapped,
         "appraise_binned": appraise_binned,
         "genomes": genomes if args.genomes else None,
-        "memory": args.memory,
+        "aviary_memory": args.aviary_memory,
+        "aviary_threads": args.aviary_cores,
         "abstract_options": args.abstract_options,
         "run_aviary": args.run_aviary,
     }
@@ -365,10 +366,11 @@ def main():
     coassemble_parser.add_argument("--genomes-list", help="Reference genomes for read mapping newline separated")
     coassemble_parser.add_argument("--abstract-options", action="store_true", help="Print Aviary commands with bash variables for OUTPUT_DIR, CPUS and MEMORY [default: hardcode arguments]")
     coassemble_parser.add_argument("--run-aviary", action="store_true", help="Run Aviary assemble/recover commands [default: print commands to file]")
+    coassemble_parser.add_argument("--aviary-cores", type=int, help="Maximum number of cores for Aviary to use", default=16)
+    coassemble_parser.add_argument("--aviary-memory", type=int, help="Maximum amount of memory for Aviary to use (Gigabytes)", default=250)
     coassemble_parser.add_argument("--output", help="Output directory [default: .]", default="./")
     coassemble_parser.add_argument("--conda-prefix", help="Path to conda environment install location", default=None)
-    coassemble_parser.add_argument("--cores", type=int, help="Maximum number of cores to use", default=16)
-    coassemble_parser.add_argument("--memory", type=int, help="Maximum amount of memory to use (Gigabytes)", default=250)
+    coassemble_parser.add_argument("--cores", type=int, help="Maximum number of cores to use", default=1)
     coassemble_parser.add_argument("--dryrun", action="store_true", help="dry run workflow")
     coassemble_parser.add_argument("--snakemake-args", help="Additional commands to be supplied to snakemake in the form of a space-prefixed single string e.g. \" --quiet\"", default="")
 

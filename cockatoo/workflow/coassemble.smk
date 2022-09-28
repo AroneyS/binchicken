@@ -121,7 +121,8 @@ rule coassemble_commands:
         reads_1 = mapped_reads_1 if config["assemble_unmapped"] else config["reads_1"],
         reads_2 = mapped_reads_2 if config["assemble_unmapped"] else config["reads_2"],
         dir=output_dir,
-        memory=config["memory"],
+        memory=config["aviary_memory"],
+        threads=config["aviary_threads"],
     log:
         logs_dir + "/coassemble_commands.log"
     script:
@@ -147,7 +148,7 @@ rule aviary_assemble:
     threads:
         64
     params:
-        memory=config["memory"],
+        memory=config["aviary_memory"],
     conda:
         "env/aviary.yml"
     shell:
@@ -175,7 +176,7 @@ rule aviary_recover:
     threads:
         64
     params:
-        memory=config["memory"],
+        memory=config["aviary_memory"],
     conda:
         "env/aviary.yml"
     shell:
