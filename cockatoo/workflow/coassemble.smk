@@ -41,11 +41,12 @@ rule all:
 ##################################
 rule collect_bins:
     input:
-        appraise_binned=lambda wildcards: config["appraise_binned"][wildcards.read],
+        appraise_binned=config["appraise_binned"],
     output:
         output_dir + "/mapping/{read}_reference.fna",
     params:
         genomes=config["genomes"],
+        sample="{read}",
     script:
         "scripts/collect_reference_bins.py"
 

@@ -191,10 +191,7 @@ def coassemble(args):
     forward_reads, reverse_reads = build_reads_list(args.forward, args.reverse)
 
     cluster_target_dir = os.path.abspath(os.path.join(args.cluster_output, "target"))
-    cluster_appraise_dir = os.path.abspath(os.path.join(args.cluster_output, "appraise"))
-    appraise_binned = {}
-    for read in forward_reads:
-        appraise_binned[read] = os.path.join(cluster_appraise_dir, read + "_binned.otu_table.tsv")
+    cluster_appraise_binned = os.path.abspath(os.path.join(args.cluster_output, "appraise", "binned.otu_table.tsv"))
 
     if args.genomes_list:
         args.genomes = read_list(args.genomes_list)
@@ -208,7 +205,7 @@ def coassemble(args):
         "reads_2": reverse_reads,
         "elusive_clusters": os.path.join(cluster_target_dir, "elusive_clusters.tsv"),
         "assemble_unmapped": args.assemble_unmapped,
-        "appraise_binned": appraise_binned,
+        "appraise_binned": cluster_appraise_binned,
         "genomes": genomes if args.genomes else None,
         "aviary_memory": args.aviary_memory,
         "aviary_threads": args.aviary_cores,

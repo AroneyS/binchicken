@@ -1,2 +1,0 @@
-gene	sample	sequence	num_hits	coverage	taxonomy	found_in
-S3.7.ribosomal_protein_S7	sample_3.1	TTCCAGGTGCCTACCGAAGTTCGTCCCGAGCGTAAAATTGCATTGGGTATGAAATGGCTC	1	1.64	Root; d__Bacteria; p__Bacteroidota; c__Bacteroidia; o__Sphingobacteriales; f__Sphingobacteriaceae; g__Mucilaginibacter; s__Mucilaginibacter sp013286235	GB_GCA_013286235.1_protein

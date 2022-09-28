@@ -228,7 +228,7 @@ class Tests(unittest.TestCase):
     def test_coassemble_genome_trim(self):
         with in_tempdir():
             extern.run(f"cp -R {MOCK_CLUSTER} mock_cluster")
-            extern.run(f"cp {MOCK_CLUSTER}/appraise/sample_1_binned.otu_table2.tsv mock_cluster/appraise/sample_1_binned.otu_table.tsv")
+            extern.run(f"cp {MOCK_CLUSTER}/appraise/binned.otu_table2.tsv mock_cluster/appraise/binned.otu_table.tsv")
 
             cmd = (
                 f"cockatoo coassemble "
