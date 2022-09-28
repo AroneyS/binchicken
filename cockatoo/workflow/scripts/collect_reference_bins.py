@@ -4,13 +4,32 @@
 # Author: Samuel Aroney
 
 import pandas as pd
+import numpy as np
 import extern
+
+def trimmed_mean(data, trim=0.1):
+    cut = int(np.floor(len(data) * trim))
+    if cut == 0:
+        return np.mean(data)
+    else:
+        a = sorted(data)
+        return np.mean(a[cut:-cut])
 
 appraise_binned = pd.read_csv(snakemake.input.appraise_binned, sep="\t")
 appraise_binned["found_in"] = appraise_binned["found_in"].str.split(",")
 appraise_binned = appraise_binned.explode("found_in")
 
-reference_bins = set(appraise_binned["found_in"].to_list())
+trimmed_binned = (appraise_binned[["gene", "coverage", "found_in"]]
+    .pivot(index="gene", columns="found_in", values="coverage")
+    .reset_index()
+    .melt(id_vars="gene")
+    .fillna(0)
+    .groupby("found_in")["value"]
+    .apply(trimmed_mean)
+    .reset_index()
+    )
+
+reference_bins = set(trimmed_binned[trimmed_binned["value"] > 0]["found_in"].to_list())
 
 if len(reference_bins) == 0:
     print(f"Warning: No reference bins found for {snakemake.wildcards.read}")

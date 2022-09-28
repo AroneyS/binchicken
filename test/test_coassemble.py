@@ -22,7 +22,11 @@ SAMPLE_READS_REVERSE = " ".join([
     os.path.join(path_to_data, "sample_3.2.fq"),
 ])
 
-GENOMES = ' '.join([os.path.join(path_to_data, "GB_GCA_013286235.1_protein.fna")])
+GENOMES = " ".join([os.path.join(path_to_data, "GB_GCA_013286235.1_protein.fna")])
+TWO_GENOMES = " ".join([
+    os.path.join(path_to_data, "GB_GCA_013286235.1_protein.fna"),
+    os.path.join(path_to_data, "GB_GCA_013286235.2_protein.fna"),
+    ])
 MOCK_CLUSTER = os.path.join(path_to_data, "mock_cluster")
 
 def write_string_to_file(string, filename):
@@ -220,6 +224,34 @@ class Tests(unittest.TestCase):
             )
             with open(recover_path) as f:
                 self.assertEqual(expected, f.read())
+
+    def test_coassemble_genome_trim(self):
+        with in_tempdir():
+            extern.run(f"cp -R {MOCK_CLUSTER} mock_cluster")
+            extern.run(f"cp {MOCK_CLUSTER}/appraise/sample_1_binned.otu_table2.tsv mock_cluster/appraise/sample_1_binned.otu_table.tsv")
+
+            cmd = (
+                f"cockatoo coassemble "
+                f"--forward {SAMPLE_READS_FORWARD} "
+                f"--reverse {SAMPLE_READS_REVERSE} "
+                f"--cluster-output mock_cluster "
+                f"--assemble-unmapped "
+                f"--genomes {TWO_GENOMES} "
+                f"--output test "
+                f"--conda-prefix {path_to_conda} "
+                f"--snakemake-args \" finish_mapping\" "
+            )
+            extern.run(cmd)
+
+            config_path = os.path.join("test", "config.yaml")
+            self.assertTrue(os.path.exists(config_path))
+
+            genomes_to_map_path = os.path.join("test", "coassemble", "mapping", "sample_1_reference.fna")
+            self.assertTrue(os.path.exists(genomes_to_map_path))
+            with open(genomes_to_map_path) as f:
+                lines = f.read()
+                self.assertTrue("JABDGE010000038.1_13" in lines)
+                self.assertTrue("TEST_CONTIG" not in lines)
 
     def test_coassemble_default_config(self):
         with in_tempdir():
