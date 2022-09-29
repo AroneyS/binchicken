@@ -27,16 +27,16 @@ TWO_GENOMES = " ".join([
     ])
 METAPACKAGE = os.path.join(path_to_data, "singlem_metapackage.smpkg")
 
-MOCK_CLUSTER = os.path.join(path_to_data, "mock_cluster")
+MOCK_COASSEMBLE = os.path.join(path_to_data, "mock_coassemble")
 
-SAMPLE_READ_SIZE = os.path.join(MOCK_CLUSTER, "read_size2.csv")
+SAMPLE_READ_SIZE = os.path.join(MOCK_COASSEMBLE, "read_size2.csv")
 SAMPLE_SINGLEM = ' '.join([
-    os.path.join(MOCK_CLUSTER, "pipe", "sample_1_read.otu_table.tsv"),
-    os.path.join(MOCK_CLUSTER, "pipe", "sample_2_read.otu_table.tsv"),
-    os.path.join(MOCK_CLUSTER, "pipe", "sample_3_read.otu_table.tsv"),
+    os.path.join(MOCK_COASSEMBLE, "pipe", "sample_1_read.otu_table.tsv"),
+    os.path.join(MOCK_COASSEMBLE, "pipe", "sample_2_read.otu_table.tsv"),
+    os.path.join(MOCK_COASSEMBLE, "pipe", "sample_3_read.otu_table.tsv"),
     ])
 GENOME_TRANSCRIPTS = ' '.join([os.path.join(path_to_data, "GB_GCA_013286235.1_protein.fna")])
-GENOME_SINGLEM = os.path.join(MOCK_CLUSTER, "summarise", "bins_summarised.otu_table2.tsv")
+GENOME_SINGLEM = os.path.join(MOCK_COASSEMBLE, "summarise", "bins_summarised.otu_table2.tsv")
 
 SAMPLE_QUERY = ' '.join([
     os.path.join(path_to_data, "query", "sample_1_query.otu_table.tsv"),

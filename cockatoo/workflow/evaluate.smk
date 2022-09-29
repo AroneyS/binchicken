@@ -42,7 +42,7 @@ rule prodigal_bins:
     log:
         logs_dir + "/transcripts/{bin}.log"
     conda:
-        "env/prodigal.yaml"
+        "env/prodigal.yml"
     shell:
         "prodigal -i {input} -d {output} "
         "&> {log}"

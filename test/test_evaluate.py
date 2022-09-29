@@ -10,15 +10,15 @@ path_to_data = os.path.join(os.path.dirname(os.path.realpath(__file__)),'data')
 path_to_conda = os.path.join(path_to_data,'.conda')
 
 METAPACKAGE = os.path.join(path_to_data, "singlem_metapackage.smpkg")
-MOCK_CLUSTER = os.path.join(path_to_data, "mock_cluster")
-MOCK_COASSEMBLIES = ' '.join([os.path.join(MOCK_CLUSTER, "coassembly_0")])
+MOCK_COASSEMBLE = os.path.join(path_to_data, "mock_coassemble")
+MOCK_COASSEMBLIES = ' '.join([os.path.join(MOCK_COASSEMBLE, "coassembly_0")])
 
 class Tests(unittest.TestCase):
     def test_evaluate(self):
         with in_tempdir():
             cmd = (
                 f"cockatoo evaluate "
-                f"--cluster-output {MOCK_CLUSTER} "
+                f"--coassemble-output {MOCK_COASSEMBLE} "
                 f"--aviary-outputs {MOCK_COASSEMBLIES} "
                 f"--checkm-version 2 "
                 f"--singlem-metapackage {METAPACKAGE} "
@@ -77,7 +77,7 @@ class Tests(unittest.TestCase):
         with in_tempdir():
             cmd = (
                 f"cockatoo evaluate "
-                f"--cluster-output {MOCK_CLUSTER} "
+                f"--coassemble-output {MOCK_COASSEMBLE} "
                 f"--aviary-outputs {MOCK_COASSEMBLIES} "
                 f"--singlem-metapackage {METAPACKAGE} "
                 f"--output test "

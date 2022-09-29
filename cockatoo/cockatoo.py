@@ -202,7 +202,7 @@ def evaluate(args):
     if not args.singlem_metapackage:
         raise Exception("SingleM metapackage must be provided")
 
-    cluster_target_dir = os.path.abspath(os.path.join(args.cluster_output, "target"))
+    coassemble_target_dir = os.path.abspath(os.path.join(args.coassemble_output, "target"))
     recovered_bins = {
         os.path.basename(coassembly.rstrip("/")): 
             os.path.abspath(os.path.join(coassembly, "recover", "bins", "final_bins"))
@@ -215,9 +215,9 @@ def evaluate(args):
         }
 
     config_items = {
-        "targets": os.path.join(cluster_target_dir, "targets.tsv"),
-        "elusive_edges": os.path.join(cluster_target_dir, "elusive_edges.tsv"),
-        "elusive_clusters": os.path.join(cluster_target_dir, "elusive_clusters.tsv"),
+        "targets": os.path.join(coassemble_target_dir, "targets.tsv"),
+        "elusive_edges": os.path.join(coassemble_target_dir, "elusive_edges.tsv"),
+        "elusive_clusters": os.path.join(coassemble_target_dir, "elusive_clusters.tsv"),
         "singlem_metapackage": os.path.abspath(args.singlem_metapackage),
         "recovered_bins": recovered_bins,
         "checkm_out": checkm_out,
@@ -251,15 +251,15 @@ def main():
         examples = {
             "coassemble": [
                 btu.Example(
-                    "cluster reads into suggested coassemblies based on unbinned sequences",
+                    "cluster reads into proposed coassemblies based on unbinned sequences",
                     "cockatoo coassemble --forward reads_1.1.fq ... --reverse reads_1.2.fq ... --genomes genome_1.fna ... --singlem-metapackage metapackage.smpkg"
                 ),
                 btu.Example(
-                    "cluster reads into suggested coassemblies based on unbinned sequences and coassemble only unbinned reads",
+                    "cluster reads into proposed coassemblies based on unbinned sequences and coassemble only unbinned reads",
                     "cockatoo coassemble --forward reads_1.1.fq ... --reverse reads_1.2.fq ... --genomes genome_1.fna ... --singlem-metapackage metapackage.smpkg --assemble-unmapped"
                 ),
                 btu.Example(
-                    "cluster reads into suggested coassemblies based on unbinned sequences from a specific taxa",
+                    "cluster reads into proposed coassemblies based on unbinned sequences from a specific taxa",
                     "cockatoo coassemble --forward reads_1.1.fq ... --reverse reads_1.2.fq ... --genomes genome_1.fna ... --singlem-metapackage metapackage.smpkg --taxa-of-interest \"p__Planctomycetota\""
                 ),
                 btu.Example(
@@ -318,13 +318,16 @@ def main():
     ###########################################################################
 
     evaluate_parser = main_parser.new_subparser("evaluate", "Evaluate coassembled bins")
-    evaluate_parser.add_argument("--cluster-output", help="Output dir from cluster subcommand", required=True)
+    # Base arguments
+    evaluate_parser.add_argument("--coassemble-output", help="Output dir from cluster subcommand", required=True)
     evaluate_parser.add_argument("--aviary-outputs", nargs='+', help="Output dir from Aviary coassembly and recover commands produced by coassemble subcommand", required=True)
     evaluate_parser.add_argument("--singlem-metapackage", help="SingleM metapackage for sequence searching")
-    evaluate_parser.add_argument("--output", help="Output directory [default: .]", default="./")
+    # Evaluate options
     evaluate_parser.add_argument("--checkm-version", type=int, help="CheckM version to use to quality cutoffs [default: 2]", default=2)
     evaluate_parser.add_argument("--min-completeness", type=int, help="Include bins with at least this minimum completeness [default: 70]", default=70)
     evaluate_parser.add_argument("--max-contamination", type=int, help="Include bins with at most this maximum contamination [default: 10]", default=10)
+    # General options
+    evaluate_parser.add_argument("--output", help="Output directory [default: .]", default="./")
     evaluate_parser.add_argument("--conda-prefix", help="Path to conda environment install location", default=None)
     evaluate_parser.add_argument("--cores", type=int, help="Maximum number of cores to use", default=1)
     evaluate_parser.add_argument("--dryrun", action="store_true", help="dry run workflow")

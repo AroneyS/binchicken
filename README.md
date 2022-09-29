@@ -16,17 +16,17 @@ Snakemake pipeline to discover coassembly sample clusters based on co-occurrence
 Creates graph with samples as nodes and the number of overlapping sequences provided by SingleM.
 The taxa of the considered sequences can be filtered to target a specific taxon (e.g. the phylum Planctomycetota).
 The graph is clustered using the Girvan-Newman algorithm to provide sample groupings.
-Aviary assemble/recover commands are generated based on suggested coassemblies.
+Aviary assemble/recover commands are generated based on proposed coassemblies.
 Optionally, reads can be mapped to the matched bins with only unmapped reads being assembled.
 
 ```bash
-# Example: cluster reads into suggested coassemblies based on unbinned sequences
+# Example: cluster reads into proposed coassemblies based on unbinned sequences
 cockatoo coassemble --forward reads_1.1.fq ... --reverse reads_1.2.fq ... --genomes genome_1.fna ... --singlem-metapackage metapackage.smpkg
 
-# Example: cluster reads into suggested coassemblies based on unbinned sequences and coassemble only unbinned reads
+# Example: cluster reads into proposed coassemblies based on unbinned sequences and coassemble only unbinned reads
 cockatoo coassemble --forward reads_1.1.fq ... --reverse reads_1.2.fq ... --genomes genome_1.fna ... --singlem-metapackage metapackage.smpkg --assemble-unmapped
 
-# Example: cluster reads into suggested coassemblies based on unbinned sequences from a specific taxa
+# Example: cluster reads into proposed coassemblies based on unbinned sequences from a specific taxa
 cockatoo coassemble --forward reads_1.1.fq ... --reverse reads_1.2.fq ... --genomes genome_1.fna ... --singlem-metapackage metapackage.smpkg --taxa-of-interest "p__Planctomycetota"
 
 # Example: find relevant samples for differential coverage binning (no coassembly)
