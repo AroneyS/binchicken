@@ -31,4 +31,3 @@ jobs:
       - name: Run unit tests
         run: |
           python test/test_coassemble.py
-          python test/test_evaluate.py
