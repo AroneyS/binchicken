@@ -61,9 +61,9 @@ class Tests(unittest.TestCase):
                 f"--forward {SAMPLE_READS_FORWARD} "
                 f"--reverse {SAMPLE_READS_REVERSE} "
                 f"--genomes {GENOMES} "
-                f"--genome-transcripts {GENOME_TRANSCRIPTS} "
                 f"--singlem-metapackage {METAPACKAGE} "
                 f"--assemble-unmapped "
+                f"--prodigal-meta "
                 f"--output test "
                 f"--conda-prefix {path_to_conda} "
             )
@@ -172,39 +172,6 @@ class Tests(unittest.TestCase):
             )
             with open(recover_path) as f:
                 self.assertEqual(expected, f.read())
-
-    def test_coassemble_singlem_inputs(self):
-        with in_tempdir():
-            cmd = (
-                f"cockatoo coassemble "
-                f"--forward {SAMPLE_READS_FORWARD} "
-                f"--reverse {SAMPLE_READS_REVERSE} "
-                f"--genomes {GENOMES} "
-                f"--genome-transcripts {GENOME_TRANSCRIPTS} "
-                f"--sample-singlem {SAMPLE_SINGLEM} "
-                f"--sample-read-size {SAMPLE_READ_SIZE} "
-                f"--genome-singlem {GENOME_SINGLEM} "
-                f"--singlem-metapackage {METAPACKAGE} "
-                f"--output test "
-                f"--conda-prefix {path_to_conda} "
-                f"--dryrun "
-                f"--snakemake-args \" --quiet\" "
-            )
-            output = extern.run(cmd)
-
-            self.assertTrue("singlem_pipe_reads" not in output)
-            self.assertTrue("singlem_pipe_bins" not in output)
-            self.assertTrue("singlem_summarise_bins" not in output)
-            self.assertTrue("singlem_appraise" in output)
-            self.assertTrue("query_processing" not in output)
-            self.assertTrue("single_assembly" not in output)
-            self.assertTrue("count_bp_reads" not in output)
-            self.assertTrue("target_elusive" in output)
-            self.assertTrue("cluster_graph" in output)
-            self.assertTrue("collect_bins" not in output)
-            self.assertTrue("map_reads" not in output)
-            self.assertTrue("finish_mapping" not in output)
-            self.assertTrue("aviary_commands" in output)
 
     def test_coassemble_taxa_of_interest(self):
         with in_tempdir():
@@ -511,9 +478,9 @@ class Tests(unittest.TestCase):
                 f"--forward {SAMPLE_READS_FORWARD} "
                 f"--reverse {SAMPLE_READS_REVERSE} "
                 f"--genomes {TWO_GENOMES} "
-                f"--genome-transcripts {GENOME_TRANSCRIPTS} "
                 f"--singlem-metapackage {METAPACKAGE} "
                 f"--assemble-unmapped "
+                f"--prodigal-meta "
                 f"--output test "
                 f"--conda-prefix {path_to_conda} "
                 f"--snakemake-args \" finish_mapping\" "
@@ -552,6 +519,40 @@ class Tests(unittest.TestCase):
             self.assertEqual(config["aviary_threads"], 16)
             self.assertEqual(config["aviary_memory"], 250)
 
+    def test_coassemble_singlem_inputs(self):
+        with in_tempdir():
+            cmd = (
+                f"cockatoo coassemble "
+                f"--forward {SAMPLE_READS_FORWARD} "
+                f"--reverse {SAMPLE_READS_REVERSE} "
+                f"--genomes {GENOMES} "
+                f"--genome-transcripts {GENOME_TRANSCRIPTS} "
+                f"--sample-singlem {SAMPLE_SINGLEM} "
+                f"--sample-read-size {SAMPLE_READ_SIZE} "
+                f"--genome-singlem {GENOME_SINGLEM} "
+                f"--singlem-metapackage {METAPACKAGE} "
+                f"--output test "
+                f"--conda-prefix {path_to_conda} "
+                f"--dryrun "
+                f"--snakemake-args \" --quiet\" "
+            )
+            output = extern.run(cmd)
+
+            self.assertTrue("singlem_pipe_reads" not in output)
+            self.assertTrue("genome_transcripts" not in output)
+            self.assertTrue("singlem_pipe_genomes" not in output)
+            self.assertTrue("singlem_summarise_genomes" not in output)
+            self.assertTrue("singlem_appraise" in output)
+            self.assertTrue("query_processing" not in output)
+            self.assertTrue("single_assembly" not in output)
+            self.assertTrue("count_bp_reads" not in output)
+            self.assertTrue("target_elusive" in output)
+            self.assertTrue("cluster_graph" in output)
+            self.assertTrue("collect_genomes" not in output)
+            self.assertTrue("map_reads" not in output)
+            self.assertTrue("finish_mapping" not in output)
+            self.assertTrue("aviary_commands" in output)
+
     def test_coassemble_files_of_paths(self):
         with in_tempdir():
             write_string_to_file(SAMPLE_READS_FORWARD, "sample_reads_forward")
@@ -575,15 +576,16 @@ class Tests(unittest.TestCase):
             output = extern.run(cmd)
 
             self.assertTrue("singlem_pipe_reads" in output)
-            self.assertTrue("singlem_pipe_bins" in output)
-            self.assertTrue("singlem_summarise_bins" in output)
+            self.assertTrue("genome_transcripts" not in output)
+            self.assertTrue("singlem_pipe_genomes" in output)
+            self.assertTrue("singlem_summarise_genomes" in output)
             self.assertTrue("singlem_appraise" in output)
             self.assertTrue("query_processing" not in output)
             self.assertTrue("single_assembly" not in output)
             self.assertTrue("count_bp_reads" in output)
             self.assertTrue("target_elusive" in output)
             self.assertTrue("cluster_graph" in output)
-            self.assertTrue("collect_bins" in output)
+            self.assertTrue("collect_genomes" in output)
             self.assertTrue("map_reads" in output)
             self.assertTrue("finish_mapping" in output)
             self.assertTrue("aviary_commands" in output)

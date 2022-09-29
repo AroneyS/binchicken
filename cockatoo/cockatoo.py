@@ -95,8 +95,12 @@ def coassemble(args):
         raise Exception("Input reads must be provided")
     if args.sample_query and not args.sample_singlem:
         raise Exception("Input SingleM query (--sample-query) requires SingleM otu tables (--sample-singlem) for coverage")
-    if not args.genomes and not args.genomes_list and not args.single_assembly:
-        raise Exception("Reference genomes must be provided")
+    if not args.genomes and not args.genomes_list and not args.genome_transcripts and not args.genome_transcripts_list and not args.single_assembly:
+        raise Exception("Input genomes must be provided")
+    if args.assemble_unmapped and args.single_assembly:
+        raise Exception("Assemble unmapped is incompatible with single-sample assembly")
+    if args.assemble_unmapped and not args.genomes and not args.genomes_list:
+        raise Exception("Reference genomes must be provided to assemble unmapped reads")
     if not args.singlem_metapackage and not args.sample_query:
         raise Exception("SingleM metapackage (--singlem-metapackage) must be provided when SingleM query otu tables are not provided")
     if (args.forward and args.forward_list) or (args.reverse and args.reverse_list) or (args.genomes and args.genomes_list):
@@ -140,9 +144,11 @@ def coassemble(args):
     if args.genome_transcripts_list:
         args.genome_transcripts = read_list(args.genome_transcripts_list)
     if args.genome_transcripts:
-        genome_transcripts = {
-            os.path.splitext(os.path.basename(transcript))[0]: os.path.abspath(transcript) for transcript in args.genome_transcripts
-            }
+        for tr in args.genome_transcripts:
+            copy_input(
+                os.path.abspath(tr),
+                os.path.join(output, "coassemble", "transcripts", os.path.basename(tr))
+            )
     if args.genome_singlem:
         copy_input(
             os.path.abspath(args.genome_singlem),
@@ -155,13 +161,11 @@ def coassemble(args):
         args.max_coassembly_samples = 1
 
     config_items = {
-        # Sample config
+        # General config
         "reads_1": forward_reads,
         "reads_2": reverse_reads,
-        "singlem_metapackage": os.path.abspath(args.singlem_metapackage) if args.singlem_metapackage else None,
-        # Genome config
         "genomes": genomes if args.genomes else None,
-        "bin_transcripts": genome_transcripts if args.genome_transcripts else None,
+        "singlem_metapackage": os.path.abspath(args.singlem_metapackage) if args.singlem_metapackage else None,
         # Clustering config
         "taxa_of_interest": args.taxa_of_interest if args.taxa_of_interest else None,
         "appraise_sequence_identity": args.appraise_sequence_identity / 100 if args.appraise_sequence_identity > 1 else args.appraise_sequence_identity,
@@ -171,6 +175,7 @@ def coassemble(args):
         "max_coassembly_samples": args.max_coassembly_samples if args.max_coassembly_samples else args.num_coassembly_samples,
         "max_coassembly_size": args.max_coassembly_size,
         "max_recovery_samples": args.max_recovery_samples,
+        "prodigal_meta": args.prodigal_meta,
         # Coassembly config
         "assemble_unmapped": args.assemble_unmapped,
         "abstract_options": args.abstract_options,
@@ -301,8 +306,8 @@ def main():
     coassemble_parser.add_argument("--sample-singlem", nargs='+', help="SingleM otu tables for each sample, in the form \"[sample name]_read.otu_table.tsv\". If provided, SingleM pipe sample is skipped")
     coassemble_parser.add_argument("--sample-query", nargs='+', help="Queried SingleM otu tables for each sample against genome database, in the form \"[sample name]_query.otu_table.tsv\". If provided, SingleM pipe and appraise are skipped")
     coassemble_parser.add_argument("--sample-read-size", help="Comma separated list of sample name and size (bp). If provided, sample read counting is skipped")
-    coassemble_parser.add_argument("--genome-transcripts", nargs='+', help="Genome transcripts for reference database")
-    coassemble_parser.add_argument("--genome-transcripts-list", help="Genome transcripts for reference database newline separated")
+    coassemble_parser.add_argument("--genome-transcripts", nargs='+', help="Genome transcripts for reference database, in the form \"[genome]_protein.fna\"")
+    coassemble_parser.add_argument("--genome-transcripts-list", help="Genome transcripts for reference database, in the form \"[genome]_protein.fna\" newline separated")
     coassemble_parser.add_argument("--genome-singlem", help="Combined SingleM otu tables for genome transcripts. If provided, genome SingleM is skipped")
     # Clustering options
     coassemble_parser.add_argument("--taxa-of-interest", help="Only consider sequences from this GTDB taxa (e.g. p__Planctomycetota) [default: all]")
@@ -313,6 +318,7 @@ def main():
     coassemble_parser.add_argument("--max-coassembly-samples", type=int, help="Upper bound for number of samples per coassembly cluster [default: --num-coassembly-samples]", default=None)
     coassemble_parser.add_argument("--max-coassembly-size", type=int, help="Maximum size (Gbp) of coassembly cluster [default: None]", default=None)
     coassemble_parser.add_argument("--max-recovery-samples", type=int, help="Upper bound for number of related samples to use for differential abundance binning [default: 20]", default=20)
+    coassemble_parser.add_argument("--prodigal-meta", action="store_true", help="Use prodigal \"-p meta\" argument (for testing)")
     # Coassembly options
     coassemble_parser.add_argument("--assemble-unmapped", action="store_true", help="Only assemble reads that do not map to reference genomes")
     coassemble_parser.add_argument("--abstract-options", action="store_true", help="Print Aviary commands with bash variables for OUTPUT_DIR, CPUS and MEMORY [default: hardcode arguments]")

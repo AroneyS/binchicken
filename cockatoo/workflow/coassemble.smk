@@ -42,16 +42,34 @@ rule singlem_pipe_reads:
         "--metapackage {params.singlem_metapackage} "
         "&> {log}"
 
-####################
-### SingleM bins ###
-####################
-rule singlem_pipe_bins:
+#######################
+### SingleM genomes ###
+#######################
+rule genome_transcripts:
     input:
-        lambda wildcards: config["bin_transcripts"][wildcards.bin]
+        lambda wildcards: config["genomes"][wildcards.genome],
     output:
-        output_dir + "/pipe/{bin}_bin.otu_table.tsv"
+        output_dir + "/transcripts/{genome}_protein.fna"
     log:
-        logs_dir + "/pipe/{bin}_bin.log"
+        logs_dir + "/transcripts/{genome}_protein.log"
+    params:
+        prodigal_meta = "-p meta" if config["prodigal_meta"] else ""
+    conda:
+        "env/prodigal.yml"
+    shell:
+        "prodigal "
+        "-i {input} "
+        "-d {output} "
+        "{params.prodigal_meta} "
+        "&> {log} "
+
+rule singlem_pipe_genomes:
+    input:
+        output_dir + "/transcripts/{genome}_protein.fna"
+    output:
+        output_dir + "/pipe/{genome}_bin.otu_table.tsv"
+    log:
+        logs_dir + "/pipe/{genome}_bin.log"
     params:
         singlem_metapackage=config["singlem_metapackage"]
     conda:
@@ -63,13 +81,13 @@ rule singlem_pipe_bins:
         "--metapackage {params.singlem_metapackage} "
         "&> {log}"
 
-rule singlem_summarise_bins:
+rule singlem_summarise_genomes:
     input:
-        expand(output_dir + "/pipe/{bin}_bin.otu_table.tsv", bin=config["bin_transcripts"])
+        expand(output_dir + "/pipe/{genome}_bin.otu_table.tsv", genome=config["genomes"])
     output:
         output_dir + "/summarise/bins_summarised.otu_table.tsv"
     log:
-        logs_dir + "/summarise/bins.log"
+        logs_dir + "/summarise/genomes.log"
     params:
         singlem_metapackage=config["singlem_metapackage"]
     conda:
@@ -193,10 +211,10 @@ rule cluster_graph:
     script:
         "scripts/cluster_graph.py"
 
-##################################
-### Map reads to matching bins ###
-##################################
-rule collect_bins:
+#####################################
+### Map reads to matching genomes ###
+#####################################
+rule collect_genomes:
     input:
         appraise_binned=output_dir + "/appraise/binned.otu_table.tsv",
     output:

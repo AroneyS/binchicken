@@ -2,8 +2,6 @@ max_threads: 8
 singlem_metapackage: 
 genomes:
   genome: 
-bin_transcripts:
-  genome: 
 taxa_of_interest: ""
 max_coassembly_size: 
 assemble_unmapped: false
