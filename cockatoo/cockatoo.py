@@ -249,42 +249,28 @@ def evaluate(args):
 def main():
     main_parser = btu.BirdArgparser(program="Cockatoo", version = __version__,
         examples = {
-            "cluster": [
+            "coassemble": [
                 btu.Example(
                     "cluster reads into suggested coassemblies based on unbinned sequences",
-                    "cockatoo cluster --forward reads_1.1.fq ... --reverse reads_1.2.fq ... --genome-transcripts genome_protein.fna ... --singlem-metapackage metapackage.smpkg"
+                    "cockatoo coassemble --forward reads_1.1.fq ... --reverse reads_1.2.fq ... --genomes genome_1.fna ... --singlem-metapackage metapackage.smpkg"
+                ),
+                btu.Example(
+                    "cluster reads into suggested coassemblies based on unbinned sequences and coassemble only unbinned reads",
+                    "cockatoo coassemble --forward reads_1.1.fq ... --reverse reads_1.2.fq ... --genomes genome_1.fna ... --singlem-metapackage metapackage.smpkg --assemble-unmapped"
                 ),
                 btu.Example(
                     "cluster reads into suggested coassemblies based on unbinned sequences from a specific taxa",
-                    "cockatoo cluster --forward reads_1.1.fq ... --reverse reads_1.2.fq ... --genome-transcripts genome_protein.fna ... --taxa-of-interest \"p__Planctomycetota\" --singlem-metapackage metapackage.smpkg"
-                ),
-                btu.Example(
-                    "cluster SingleM outputs into suggested coassemblies (skips SingleM pipe)",
-                    "cockatoo cluster --sample-singlem reads_1.otu_table.tsv ... --sample-read-size read_size.csv --genome-singlem genome.otu_table.tsv --singlem-metapackage metapackage.smpkg"
-                ),
-                btu.Example(
-                    "cluster SingleM query outputs into suggested coassemblies (skips SingleM pipe and appraise)",
-                    "cockatoo cluster --sample-query reads_1_query.otu_table.tsv ... --sample-read-size read_size.csv"
+                    "cockatoo coassemble --forward reads_1.1.fq ... --reverse reads_1.2.fq ... --genomes genome_1.fna ... --singlem-metapackage metapackage.smpkg --taxa-of-interest \"p__Planctomycetota\""
                 ),
                 btu.Example(
                     "find relevant samples for differential coverage binning (no coassembly)",
-                    "cockatoo cluster --forward reads_1.1.fq ... --reverse reads_1.2.fq ... --single-assembly --singlem-metapackage metapackage.smpkg"
-                ),
-            ],
-            "coassemble": [
-                btu.Example(
-                    "coassemble a clustered set of reads",
-                    "cockatoo coassemble --cluster-output cluster_dir --forward reads_1.1.fq ... --reverse reads_1.2.fq ..."
-                ),
-                btu.Example(
-                    "coassemble unmapped reads from a clustered set of reads",
-                    "cockatoo coassemble --cluster-output cluster_dir --forward reads_1.1.fq ... --reverse reads_1.2.fq ... --genomes genome.fna ... --assemble-unmapped"
+                    "cockatoo coassemble --forward reads_1.1.fq ... --reverse reads_1.2.fq ... --singlem-metapackage metapackage.smpkg --single-assembly"
                 ),
             ],
             "evaluate": [
                 btu.Example(
                     "evaluate a completed coassembly",
-                    "cockatoo evaluate --cluster-output cluster_dir --aviary-outputs coassembly_0_dir ... --singlem-metapackage metapackage.smpkg"
+                    "cockatoo evaluate --coassemble-output coassemble_dir --aviary-outputs coassembly_0_dir ... --singlem-metapackage metapackage.smpkg"
                 ),
             ]
         }

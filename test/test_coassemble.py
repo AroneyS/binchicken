@@ -319,8 +319,6 @@ class Tests(unittest.TestCase):
                 f"cockatoo coassemble "
                 f"--forward {SAMPLE_READS_FORWARD} "
                 f"--reverse {SAMPLE_READS_REVERSE} "
-                f"--genomes {GENOMES} "
-                f"--genome-transcripts {GENOME_TRANSCRIPTS} "
                 f"--singlem-metapackage {METAPACKAGE} "
                 f"--single-assembly "
                 f"--output test "
