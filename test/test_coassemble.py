@@ -173,6 +173,34 @@ class Tests(unittest.TestCase):
             with open(recover_path) as f:
                 self.assertEqual(expected, f.read())
 
+            summary_path = os.path.join("test", "coassemble", "summary.tsv")
+            self.assertTrue(os.path.exists(summary_path))
+            expected = "\n".join(
+                [
+                    "\t".join([
+                        "coassembly",
+                        "samples",
+                        "length",
+                        "total_weight",
+                        "total_targets",
+                        "total_size",
+                        "unmapped_size",
+                    ]),
+                    "\t".join([
+                        "coassembly_0",
+                        "sample_1,sample_2",
+                        "2",
+                        "2",
+                        "2",
+                        "2869",
+                        "2416",
+                    ]),
+                    ""
+                ]
+            )
+            with open(summary_path) as f:
+                self.assertEqual(expected, f.read())
+
     def test_coassemble_taxa_of_interest(self):
         with in_tempdir():
             cmd = (

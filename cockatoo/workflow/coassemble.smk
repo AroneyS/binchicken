@@ -11,12 +11,33 @@ logs_dir = output_dir + "/logs"
 mapped_reads_1 = {read: output_dir + f"/mapping/{read}_unmapped.1.fq.gz" for read in config["reads_1"]}
 mapped_reads_2 = {read: output_dir + f"/mapping/{read}_unmapped.2.fq.gz" for read in config["reads_2"]}
 
+def get_reads(wildcards):
+    version = wildcards.version
+    if version == "":
+        return config["reads_1"].values()
+    elif version == "unmapped_":
+        return mapped_reads_1.values()
+    else:
+        raise ValueError("Version should be empty or unmapped")
+
+def get_cat(wildcards):
+    return "zcat" if [r for r in get_reads(wildcards)][0].endswith(".gz") else "cat"
+
 rule all:
     input:
-        output_dir + "/target/targets.tsv",
         output_dir + "/target/elusive_clusters.tsv",
         output_dir + "/commands/coassemble_commands.sh",
         output_dir + "/commands/recover_commands.sh",
+        output_dir + "/summary.tsv",
+
+rule summary:
+    input:
+        elusive_clusters=output_dir + "/target/elusive_clusters.tsv",
+        read_size=output_dir + "/unmapped_read_size.csv" if config["assemble_unmapped"] else [],
+    output:
+        summary=output_dir + "/summary.tsv",
+    script:
+        "scripts/summarise_coassemblies.py"
 
 #####################
 ### SingleM reads ###
@@ -165,12 +186,12 @@ rule single_assembly:
 ######################
 rule count_bp_reads:
     input:
-        config["reads_1"].values()
+        get_reads
     output:
-        output_dir + "/read_size.csv"
+        output_dir + "/{version,.*}read_size.csv"
     params:
         names=list(config["reads_1"].keys()),
-        cat="zcat" if [r for r in config["reads_1"].values()][0].endswith(".gz") else "cat",
+        cat=get_cat,
     threads:
         8
     shell:
