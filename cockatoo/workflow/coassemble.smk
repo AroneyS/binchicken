@@ -300,6 +300,6 @@ rule aviary_commands:
         memory=config["aviary_memory"],
         threads=config["aviary_threads"],
     log:
-        logs_dir + "/coassemble_commands.log"
+        logs_dir + "/aviary_commands.log"
     script:
-        "scripts/coassemble_commands.py"
+        "scripts/aviary_commands.py"

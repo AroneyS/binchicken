@@ -1,5 +1,5 @@
 ##############################
-### coassemble_commands.py ###
+### aviary_commands.py ###
 ##############################
 # Author: Samuel Aroney
 
@@ -18,17 +18,9 @@ def produce_command(row):
     all_samples_2 = [snakemake.params.reads_2[sample] for sample in all_samples_names]
 
     coassembly = row["coassembly"]
-
-    if snakemake.config["abstract_options"]:
-        output_dir = "$OUTPUT_DIR"
-        assemble_output = "$ASSEMBLE_OUTPUT"
-        threads = "$CPUS"
-        memory = "$MEMORY"
-    else:
-        output_dir = snakemake.params.dir
-        assemble_output = snakemake.params.dir
-        threads = snakemake.params.threads
-        memory = snakemake.params.memory
+    output_dir = snakemake.params.dir
+    threads = snakemake.params.threads
+    memory = snakemake.params.memory
 
     aviary_assemble = ("aviary assemble "
     f"-1 {' '.join(coassembly_samples_1)} "
@@ -39,7 +31,7 @@ def produce_command(row):
     f"&> {output_dir}/logs/{coassembly}_assemble.log ")
 
     aviary_recover = ("aviary recover "
-    f"--assembly {assemble_output}/{coassembly}/assemble/assembly/final_contigs.fasta "
+    f"--assembly {output_dir}/{coassembly}/assemble/assembly/final_contigs.fasta "
     f"-1 {' '.join(all_samples_1)} "
     f"-2 {' '.join(all_samples_2)} "
     f"--output {output_dir}/{coassembly}/recover "
