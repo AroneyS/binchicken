@@ -13,7 +13,6 @@ mapped_reads_2 = {read: output_dir + f"/mapping/{read}_unmapped.2.fq.gz" for rea
 
 rule all:
     input:
-        output_dir + "/target/elusive_edges.tsv",
         output_dir + "/target/targets.tsv",
         output_dir + "/target/elusive_clusters.tsv",
         output_dir + "/commands/coassemble_commands.sh",

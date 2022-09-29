@@ -188,6 +188,7 @@ class Tests(unittest.TestCase):
                 f"--output test "
                 f"--taxa-of-interest \"p__Actinobacteriota\" "
                 f"--conda-prefix {path_to_conda} "
+                f"--snakemake-args \"cluster_graph\" "
             )
             extern.run(cmd)
 
@@ -242,6 +243,7 @@ class Tests(unittest.TestCase):
                 f"--sample-read-size {SAMPLE_READ_SIZE} "
                 f"--output test "
                 f"--conda-prefix {path_to_conda} "
+                f"--snakemake-args \"cluster_graph\" "
             )
             extern.run(cmd)
 
@@ -295,6 +297,7 @@ class Tests(unittest.TestCase):
                 f"--single-assembly "
                 f"--output test "
                 f"--conda-prefix {path_to_conda} "
+                f"--snakemake-args \"cluster_graph\" "
             )
             extern.run(cmd)
 
@@ -424,7 +427,7 @@ class Tests(unittest.TestCase):
                 f"--prodigal-meta "
                 f"--output test "
                 f"--conda-prefix {path_to_conda} "
-                f"--snakemake-args \" finish_mapping\" "
+                f"--snakemake-args \"finish_mapping\" "
             )
             extern.run(cmd)
 
