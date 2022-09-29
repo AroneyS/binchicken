@@ -15,19 +15,39 @@ SAMPLE_READS_FORWARD = " ".join([
     os.path.join(path_to_data, "sample_2.1.fq"),
     os.path.join(path_to_data, "sample_3.1.fq"),
 ])
-
 SAMPLE_READS_REVERSE = " ".join([
     os.path.join(path_to_data, "sample_1.2.fq"),
     os.path.join(path_to_data, "sample_2.2.fq"),
     os.path.join(path_to_data, "sample_3.2.fq"),
 ])
-
 GENOMES = " ".join([os.path.join(path_to_data, "GB_GCA_013286235.1.fna")])
 TWO_GENOMES = " ".join([
     os.path.join(path_to_data, "GB_GCA_013286235.1.fna"),
     os.path.join(path_to_data, "GB_GCA_013286235.2.fna"),
     ])
+METAPACKAGE = os.path.join(path_to_data, "singlem_metapackage.smpkg")
+
 MOCK_CLUSTER = os.path.join(path_to_data, "mock_cluster")
+
+SAMPLE_READ_SIZE = os.path.join(MOCK_CLUSTER, "read_size2.csv")
+SAMPLE_SINGLEM = ' '.join([
+    os.path.join(MOCK_CLUSTER, "pipe", "sample_1_read.otu_table.tsv"),
+    os.path.join(MOCK_CLUSTER, "pipe", "sample_2_read.otu_table.tsv"),
+    os.path.join(MOCK_CLUSTER, "pipe", "sample_3_read.otu_table.tsv"),
+    ])
+GENOME_TRANSCRIPTS = ' '.join([os.path.join(path_to_data, "GB_GCA_013286235.1_protein.fna")])
+GENOME_SINGLEM = os.path.join(MOCK_CLUSTER, "summarise", "bins_summarised.otu_table2.tsv")
+
+SAMPLE_QUERY = ' '.join([
+    os.path.join(path_to_data, "query", "sample_1_query.otu_table.tsv"),
+    os.path.join(path_to_data, "query", "sample_2_query.otu_table.tsv"),
+    os.path.join(path_to_data, "query", "sample_3_query.otu_table.tsv"),
+    ])
+SAMPLE_QUERY_SINGLEM = ' '.join([
+    os.path.join(path_to_data, "query", "sample_1_read.otu_table.tsv"),
+    os.path.join(path_to_data, "query", "sample_2_read.otu_table.tsv"),
+    os.path.join(path_to_data, "query", "sample_3_read.otu_table.tsv"),
+    ])
 
 def write_string_to_file(string, filename):
     with open(filename, "w") as f:
@@ -40,18 +60,65 @@ class Tests(unittest.TestCase):
                 f"cockatoo coassemble "
                 f"--forward {SAMPLE_READS_FORWARD} "
                 f"--reverse {SAMPLE_READS_REVERSE} "
-                f"--cluster-output {MOCK_CLUSTER} "
-                f"--assemble-unmapped "
                 f"--genomes {GENOMES} "
+                f"--genome-transcripts {GENOME_TRANSCRIPTS} "
+                f"--singlem-metapackage {METAPACKAGE} "
+                f"--assemble-unmapped "
                 f"--output test "
                 f"--conda-prefix {path_to_conda} "
             )
             extern.run(cmd)
 
-            test_dir = os.path.abspath("test")
-
             config_path = os.path.join("test", "config.yaml")
             self.assertTrue(os.path.exists(config_path))
+
+            read_size_path = os.path.join("test", "coassemble", "read_size.csv")
+            self.assertTrue(os.path.exists(read_size_path))
+            expected = "\n".join(
+                [
+                    ",".join(["sample_1", "1661"]),
+                    ",".join(["sample_2", "1208"]),
+                    ",".join(["sample_3", "1208"]),
+                    ""
+                ]
+            )
+            with open(read_size_path) as f:
+                self.assertEqual(expected, f.read())
+
+            edges_path = os.path.join("test", "coassemble", "target", "targets.tsv")
+            self.assertTrue(os.path.exists(edges_path))
+
+            edges_path = os.path.join("test", "coassemble", "target", "elusive_edges.tsv")
+            self.assertTrue(os.path.exists(edges_path))
+
+            cluster_path = os.path.join("test", "coassemble", "target", "elusive_clusters.tsv")
+            self.assertTrue(os.path.exists(cluster_path))
+
+            expected = "\n".join(
+                [
+                    "\t".join([
+                        "samples",
+                        "length",
+                        "total_weight",
+                        "total_targets",
+                        "total_size",
+                        "recover_samples",
+                        "coassembly",
+                    ]),
+                    "\t".join([
+                        "sample_1,sample_2",
+                        "2",
+                        "2",
+                        "2",
+                        "2869",
+                        "sample_1,sample_2",
+                        "coassembly_0"
+                    ]),
+                    ""
+                ]
+            )
+            with open(cluster_path) as f:
+                self.assertEqual(expected, f.read())
 
             unmapped_sample_1_path = os.path.join("test", "coassemble", "mapping", "sample_1_unmapped.1.fq.gz")
             self.assertTrue(os.path.exists(unmapped_sample_1_path))
@@ -62,6 +129,7 @@ class Tests(unittest.TestCase):
 
             coassemble_path = os.path.join("test", "coassemble", "commands", "coassemble_commands.sh")
             self.assertTrue(os.path.exists(coassemble_path))
+            test_dir = os.path.abspath("test")
             expected = "\n".join(
                 [
                     " ".join([
@@ -105,15 +173,224 @@ class Tests(unittest.TestCase):
             with open(recover_path) as f:
                 self.assertEqual(expected, f.read())
 
+    def test_coassemble_singlem_inputs(self):
+        with in_tempdir():
+            cmd = (
+                f"cockatoo coassemble "
+                f"--forward {SAMPLE_READS_FORWARD} "
+                f"--reverse {SAMPLE_READS_REVERSE} "
+                f"--genomes {GENOMES} "
+                f"--genome-transcripts {GENOME_TRANSCRIPTS} "
+                f"--sample-singlem {SAMPLE_SINGLEM} "
+                f"--sample-read-size {SAMPLE_READ_SIZE} "
+                f"--genome-singlem {GENOME_SINGLEM} "
+                f"--singlem-metapackage {METAPACKAGE} "
+                f"--output test "
+                f"--conda-prefix {path_to_conda} "
+                f"--dryrun "
+                f"--snakemake-args \" --quiet\" "
+            )
+            output = extern.run(cmd)
+
+            self.assertTrue("singlem_pipe_reads" not in output)
+            self.assertTrue("singlem_pipe_bins" not in output)
+            self.assertTrue("singlem_summarise_bins" not in output)
+            self.assertTrue("singlem_appraise" in output)
+            self.assertTrue("query_processing" not in output)
+            self.assertTrue("single_assembly" not in output)
+            self.assertTrue("count_bp_reads" not in output)
+            self.assertTrue("target_elusive" in output)
+            self.assertTrue("cluster_graph" in output)
+            self.assertTrue("collect_bins" not in output)
+            self.assertTrue("map_reads" not in output)
+            self.assertTrue("finish_mapping" not in output)
+            self.assertTrue("aviary_commands" in output)
+
+    def test_coassemble_taxa_of_interest(self):
+        with in_tempdir():
+            cmd = (
+                f"cockatoo coassemble "
+                f"--forward {SAMPLE_READS_FORWARD} "
+                f"--reverse {SAMPLE_READS_REVERSE} "
+                f"--genomes {GENOMES} "
+                f"--genome-transcripts {GENOME_TRANSCRIPTS} "
+                f"--sample-singlem {SAMPLE_SINGLEM} "
+                f"--sample-read-size {SAMPLE_READ_SIZE} "
+                f"--genome-singlem {GENOME_SINGLEM} "
+                f"--singlem-metapackage {METAPACKAGE} "
+                f"--output test "
+                f"--taxa-of-interest \"p__Actinobacteriota\" "
+                f"--conda-prefix {path_to_conda} "
+            )
+            extern.run(cmd)
+
+            config_path = os.path.join("test", "config.yaml")
+            self.assertTrue(os.path.exists(config_path))
+
+            edges_path = os.path.join("test", "coassemble", "target", "targets.tsv")
+            self.assertTrue(os.path.exists(edges_path))
+
+            edges_path = os.path.join("test", "coassemble", "target", "elusive_edges.tsv")
+            self.assertTrue(os.path.exists(edges_path))
+
+            cluster_path = os.path.join("test", "coassemble", "target", "elusive_clusters.tsv")
+            self.assertTrue(os.path.exists(cluster_path))
+
+            expected = "\n".join(
+                [
+                    "\t".join([
+                        "samples",
+                        "length",
+                        "total_weight",
+                        "total_targets",
+                        "total_size",
+                        "recover_samples",
+                        "coassembly",
+                    ]),
+                    "\t".join([
+                        "sample_1,sample_3",
+                        "2",
+                        "2",
+                        "2",
+                        "2869",
+                        "sample_1,sample_3",
+                        "coassembly_0"
+                    ]),
+                    ""
+                ]
+            )
+            with open(cluster_path) as f:
+                self.assertEqual(expected, f.read())
+
+    def test_coassemble_query_input(self):
+        with in_tempdir():
+            cmd = (
+                f"cockatoo coassemble "
+                f"--forward {SAMPLE_READS_FORWARD} "
+                f"--reverse {SAMPLE_READS_REVERSE} "
+                f"--genomes {GENOMES} "
+                f"--genome-transcripts {GENOME_TRANSCRIPTS} "
+                f"--sample-query {SAMPLE_QUERY} "
+                f"--sample-singlem {SAMPLE_QUERY_SINGLEM} "
+                f"--sample-read-size {SAMPLE_READ_SIZE} "
+                f"--output test "
+                f"--conda-prefix {path_to_conda} "
+            )
+            extern.run(cmd)
+
+            config_path = os.path.join("test", "config.yaml")
+            self.assertTrue(os.path.exists(config_path))
+
+            edges_path = os.path.join("test", "coassemble", "target", "targets.tsv")
+            self.assertTrue(os.path.exists(edges_path))
+
+            edges_path = os.path.join("test", "coassemble", "target", "elusive_edges.tsv")
+            self.assertTrue(os.path.exists(edges_path))
+
+            cluster_path = os.path.join("test", "coassemble", "target", "elusive_clusters.tsv")
+            self.assertTrue(os.path.exists(cluster_path))
+
+            expected = "\n".join(
+                [
+                    "\t".join([
+                        "samples",
+                        "length",
+                        "total_weight",
+                        "total_targets",
+                        "total_size",
+                        "recover_samples",
+                        "coassembly",
+                    ]),
+                    "\t".join([
+                        "sample_1,sample_2",
+                        "2",
+                        "2",
+                        "2",
+                        "2869",
+                        "sample_1,sample_2",
+                        "coassembly_0"
+                    ]),
+                    ""
+                ]
+            )
+            with open(cluster_path) as f:
+                self.assertEqual(expected, f.read())
+
+    def test_coassemble_single_assembly(self):
+        with in_tempdir():
+            cmd = (
+                f"cockatoo coassemble "
+                f"--forward {SAMPLE_READS_FORWARD} "
+                f"--reverse {SAMPLE_READS_REVERSE} "
+                f"--genomes {GENOMES} "
+                f"--genome-transcripts {GENOME_TRANSCRIPTS} "
+                f"--singlem-metapackage {METAPACKAGE} "
+                f"--single-assembly "
+                f"--output test "
+                f"--conda-prefix {path_to_conda} "
+            )
+            extern.run(cmd)
+
+            config_path = os.path.join("test", "config.yaml")
+            self.assertTrue(os.path.exists(config_path))
+
+            cluster_path = os.path.join("test", "coassemble", "target", "elusive_clusters.tsv")
+            self.assertTrue(os.path.exists(cluster_path))
+
+            expected = "\n".join(
+                [
+                    "\t".join([
+                        "samples",
+                        "length",
+                        "total_weight",
+                        "total_targets",
+                        "total_size",
+                        "recover_samples",
+                        "coassembly",
+                    ]),
+                    "\t".join([
+                        "sample_3",
+                        "1",
+                        "0",
+                        "0",
+                        "1208",
+                        "sample_3",
+                        "coassembly_0"
+                    ]),
+                    "\t".join([
+                        "sample_2",
+                        "1",
+                        "0",
+                        "0",
+                        "1208",
+                        "sample_1,sample_2",
+                        "coassembly_1"
+                    ]),
+                    "\t".join([
+                        "sample_1",
+                        "1",
+                        "0",
+                        "0",
+                        "1661",
+                        "sample_1,sample_2",
+                        "coassembly_2"
+                    ]),
+                    ""
+                ]
+            )
+            with open(cluster_path) as f:
+                self.assertEqual(expected, f.read())
+
     def test_coassemble_abstract_options(self):
         with in_tempdir():
             cmd = (
                 f"cockatoo coassemble "
                 f"--forward {SAMPLE_READS_FORWARD} "
                 f"--reverse {SAMPLE_READS_REVERSE} "
-                f"--cluster-output {MOCK_CLUSTER} "
-                f"--assemble-unmapped "
                 f"--genomes {GENOMES} "
+                f"--genome-transcripts {GENOME_TRANSCRIPTS} "
+                f"--singlem-metapackage {METAPACKAGE} "
+                f"--assemble-unmapped "
                 f"--abstract-options "
                 f"--output test "
                 f"--conda-prefix {path_to_conda} "
@@ -169,7 +446,9 @@ class Tests(unittest.TestCase):
                 f"cockatoo coassemble "
                 f"--forward {SAMPLE_READS_FORWARD} "
                 f"--reverse {SAMPLE_READS_REVERSE} "
-                f"--cluster-output {MOCK_CLUSTER} "
+                f"--genomes {GENOMES} "
+                f"--genome-transcripts {GENOME_TRANSCRIPTS} "
+                f"--singlem-metapackage {METAPACKAGE} "
                 f"--output test "
                 f"--conda-prefix {path_to_conda} "
             )
@@ -227,16 +506,14 @@ class Tests(unittest.TestCase):
 
     def test_coassemble_genome_trim(self):
         with in_tempdir():
-            extern.run(f"cp -R {MOCK_CLUSTER} mock_cluster")
-            extern.run(f"cp {MOCK_CLUSTER}/appraise/binned.otu_table2.tsv mock_cluster/appraise/binned.otu_table.tsv")
-
             cmd = (
                 f"cockatoo coassemble "
                 f"--forward {SAMPLE_READS_FORWARD} "
                 f"--reverse {SAMPLE_READS_REVERSE} "
-                f"--cluster-output mock_cluster "
-                f"--assemble-unmapped "
                 f"--genomes {TWO_GENOMES} "
+                f"--genome-transcripts {GENOME_TRANSCRIPTS} "
+                f"--singlem-metapackage {METAPACKAGE} "
+                f"--assemble-unmapped "
                 f"--output test "
                 f"--conda-prefix {path_to_conda} "
                 f"--snakemake-args \" finish_mapping\" "
@@ -259,7 +536,9 @@ class Tests(unittest.TestCase):
                 f"cockatoo coassemble "
                 f"--forward {SAMPLE_READS_FORWARD} "
                 f"--reverse {SAMPLE_READS_REVERSE} "
-                f"--cluster-output {MOCK_CLUSTER} "
+                f"--genomes {GENOMES} "
+                f"--genome-transcripts {GENOME_TRANSCRIPTS} "
+                f"--singlem-metapackage {METAPACKAGE} "
                 f"--output test "
                 f"--conda-prefix {path_to_conda} "
                 f"--dryrun "
@@ -268,62 +547,46 @@ class Tests(unittest.TestCase):
 
             config = load_configfile(os.path.join("test", "config.yaml"))
             self.assertEqual(config["max_threads"], 8)
+            self.assertEqual(config["taxa_of_interest"], "")
+            self.assertEqual(config["assemble_unmapped"], False)
             self.assertEqual(config["aviary_threads"], 16)
             self.assertEqual(config["aviary_memory"], 250)
-            self.assertEqual(config["assemble_unmapped"], False)
 
-    def test_coassemble_file_of_paths(self):
+    def test_coassemble_files_of_paths(self):
         with in_tempdir():
             write_string_to_file(SAMPLE_READS_FORWARD, "sample_reads_forward")
             write_string_to_file(SAMPLE_READS_REVERSE, "sample_reads_reverse")
             write_string_to_file(GENOMES, "genomes")
+            write_string_to_file(GENOME_TRANSCRIPTS, "genome_transcripts")
 
             cmd = (
                 f"cockatoo coassemble "
                 f"--forward-list sample_reads_forward "
                 f"--reverse-list sample_reads_reverse "
-                f"--cluster-output {MOCK_CLUSTER} "
-                f"--assemble-unmapped "
                 f"--genomes-list genomes "
-                f"--output test "
-                f"--conda-prefix {path_to_conda} "
-                f"--dryrun "
-                f"--snakemake-args \" --quiet\" "
-            )
-            output = extern.run(cmd)
-
-            self.assertTrue("collect_bins" in output)
-            self.assertTrue("map_reads" in output)
-            self.assertTrue("finish_mapping" in output)
-            self.assertTrue("coassemble_commands" in output)
-            self.assertTrue("aviary_assemble" not in output)
-            self.assertTrue("aviary_recover" not in output)
-            self.assertTrue("collate_coassemblies" not in output)
-
-    def test_coassemble_run_aviary(self):
-        with in_tempdir():
-            cmd = (
-                f"cockatoo coassemble "
-                f"--forward {SAMPLE_READS_FORWARD} "
-                f"--reverse {SAMPLE_READS_REVERSE} "
-                f"--cluster-output {MOCK_CLUSTER} "
+                f"--genome-transcripts-list genome_transcripts "
+                f"--singlem-metapackage {METAPACKAGE} "
                 f"--assemble-unmapped "
-                f"--genomes {GENOMES} "
                 f"--output test "
-                f"--run-aviary "
                 f"--conda-prefix {path_to_conda} "
                 f"--dryrun "
                 f"--snakemake-args \" --quiet\" "
             )
             output = extern.run(cmd)
 
+            self.assertTrue("singlem_pipe_reads" in output)
+            self.assertTrue("singlem_pipe_bins" in output)
+            self.assertTrue("singlem_summarise_bins" in output)
+            self.assertTrue("singlem_appraise" in output)
+            self.assertTrue("query_processing" not in output)
+            self.assertTrue("single_assembly" not in output)
+            self.assertTrue("count_bp_reads" in output)
+            self.assertTrue("target_elusive" in output)
+            self.assertTrue("cluster_graph" in output)
             self.assertTrue("collect_bins" in output)
             self.assertTrue("map_reads" in output)
             self.assertTrue("finish_mapping" in output)
-            self.assertTrue("coassemble_commands" not in output)
-            self.assertTrue("aviary_assemble" in output)
-            self.assertTrue("aviary_recover" in output)
-            self.assertTrue("collate_coassemblies" in output)
+            self.assertTrue("aviary_commands" in output)
 
 
 if __name__ == '__main__':

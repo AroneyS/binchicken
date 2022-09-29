@@ -1,47 +1,204 @@
 #############
 ### Setup ###
 #############
+ruleorder: single_assembly > query_processing > singlem_appraise
+
 import os
 
 output_dir = os.path.abspath("coassemble")
 logs_dir = output_dir + "/logs"
 
-wildcard_constraints:
-    coassembly = "coassembly_\d+"
-
 mapped_reads_1 = {read: output_dir + f"/mapping/{read}_unmapped.1.fq.gz" for read in config["reads_1"]}
 mapped_reads_2 = {read: output_dir + f"/mapping/{read}_unmapped.2.fq.gz" for read in config["reads_2"]}
 
-def get_coassemblies():
-    with open(config["elusive_clusters"]) as f:
-        coassemblies = [line.strip().split("\t")[6] for line in f if not line.endswith("coassembly\n")]
-    return coassemblies
-
-def get_reads(coassembly, read_type, reads_dict):
-    if read_type == "assemble":
-        column = 0
-    elif read_type == "recover":
-        column = 5
-    else:
-        raise ValueError("read_type must be 'assemble' or 'recover'")
-    with open(config["elusive_clusters"]) as f:
-        cluster = [line.strip() for line in f if line.endswith(coassembly + "\n")][0]
-
-    read_files = [reads_dict[read] for read in cluster.split("\t")[column].split(",")]
-    return read_files
-
 rule all:
     input:
-        output_dir + "/commands/coassemble_commands.sh" if not config["run_aviary"] else [],
-        output_dir + "/commands/recover_commands.sh" if not config["run_aviary"] else [],
-        output_dir + "/coassemblies.done" if config["run_aviary"] else [],
+        output_dir + "/target/elusive_edges.tsv",
+        output_dir + "/target/targets.tsv",
+        output_dir + "/target/elusive_clusters.tsv",
+        output_dir + "/commands/coassemble_commands.sh",
+        output_dir + "/commands/recover_commands.sh",
+
+#####################
+### SingleM reads ###
+#####################
+rule singlem_pipe_reads:
+    input:
+        reads_1=lambda wildcards: config["reads_1"][wildcards.read],
+        reads_2=lambda wildcards: config["reads_2"][wildcards.read],
+    output:
+        output_dir + "/pipe/{read}_read.otu_table.tsv"
+    log:
+        logs_dir + "/pipe/{read}_read.log"
+    params:
+        singlem_metapackage=config["singlem_metapackage"]
+    conda:
+        "env/singlem.yml"
+    shell:
+        "singlem pipe "
+        "--forward {input.reads_1} "
+        "--reverse {input.reads_2} "
+        "--otu-table {output} "
+        "--metapackage {params.singlem_metapackage} "
+        "&> {log}"
+
+####################
+### SingleM bins ###
+####################
+rule singlem_pipe_bins:
+    input:
+        lambda wildcards: config["bin_transcripts"][wildcards.bin]
+    output:
+        output_dir + "/pipe/{bin}_bin.otu_table.tsv"
+    log:
+        logs_dir + "/pipe/{bin}_bin.log"
+    params:
+        singlem_metapackage=config["singlem_metapackage"]
+    conda:
+        "env/singlem.yml"
+    shell:
+        "singlem pipe "
+        "--forward {input} "
+        "--otu-table {output} "
+        "--metapackage {params.singlem_metapackage} "
+        "&> {log}"
+
+rule singlem_summarise_bins:
+    input:
+        expand(output_dir + "/pipe/{bin}_bin.otu_table.tsv", bin=config["bin_transcripts"])
+    output:
+        output_dir + "/summarise/bins_summarised.otu_table.tsv"
+    log:
+        logs_dir + "/summarise/bins.log"
+    params:
+        singlem_metapackage=config["singlem_metapackage"]
+    conda:
+        "env/singlem.yml"
+    shell:
+        "singlem summarise "
+        "--input-otu-tables {input} "
+        "--output-otu-table {output} "
+        "--exclude-off-target-hits "
+        "--metapackage {params.singlem_metapackage} "
+        "&> {log}"
+
+########################
+### SingleM appraise ###
+########################
+rule singlem_appraise:
+    input:
+        reads=expand(output_dir + "/pipe/{read}_read.otu_table.tsv", read=config["reads_1"]),
+        bins=output_dir + "/summarise/bins_summarised.otu_table.tsv",
+    output:
+        unbinned=output_dir + "/appraise/unbinned.otu_table.tsv",
+        binned=output_dir + "/appraise/binned.otu_table.tsv",
+    log:
+        logs_dir + "/appraise/appraise.log"
+    params:
+        sequence_identity=config["appraise_sequence_identity"],
+        singlem_metapackage=config["singlem_metapackage"],
+    conda:
+        "env/singlem.yml"
+    shell:
+        "singlem appraise "
+        "--metagenome-otu-tables {input.reads} "
+        "--genome-otu-tables {input.bins} "
+        "--metapackage {params.singlem_metapackage} "
+        "--output-unaccounted-for-otu-table {output.unbinned} "
+        "--output-binned-otu-table {output.binned} "
+        "--imperfect "
+        "--sequence-identity {params.sequence_identity} "
+        "--output-found-in "
+        "&> {log}"
+
+###################################
+### SingleM query (alternative) ###
+###################################
+rule query_processing:
+    input:
+        pipe_reads=expand(output_dir + "/pipe/{read}_read.otu_table.tsv", read=config["reads_1"]),
+        query_reads=expand(output_dir + "/query/{read}_query.otu_table.tsv", read=config["reads_1"]),
+    output:
+        unbinned=output_dir + "/appraise/unbinned.otu_table.tsv",
+        binned=output_dir + "/appraise/binned.otu_table.tsv",
+    log:
+        logs_dir + "/query/processing.log"
+    params:
+        sequence_identity=config["appraise_sequence_identity"],
+        window_size=60,
+    script:
+        "scripts/query_processing.py"
+
+#####################################
+### Single assembly (alternative) ###
+#####################################
+rule single_assembly:
+    input:
+        reads=expand(output_dir + "/pipe/{read}_read.otu_table.tsv", read=config["reads_1"]),
+    output:
+        unbinned=output_dir + "/appraise/unbinned.otu_table.tsv" if config["single_assembly"] else [],
+        binned=output_dir + "/appraise/binned.otu_table.tsv" if config["single_assembly"] else [],
+    log:
+        logs_dir + "/appraise/appraise.log"
+    script:
+        "scripts/single_assembly.py"
+
+######################
+### Target elusive ###
+######################
+rule count_bp_reads:
+    input:
+        config["reads_1"].values()
+    output:
+        output_dir + "/read_size.csv"
+    params:
+        names=list(config["reads_1"].keys()),
+        cat="zcat" if [r for r in config["reads_1"].values()][0].endswith(".gz") else "cat",
+    threads:
+        8
+    shell:
+        "parallel -k -j {threads} "
+        "echo -n {{1}}, '&&' "
+        "{params.cat} {{2}} '|' sed -n 2~4p '|' tr -d '\"\n\"' '|' wc -m "
+        "::: {params.names} :::+ {input} "
+        "> {output}"
+
+rule target_elusive:
+    input:
+        unbinned=output_dir + "/appraise/unbinned.otu_table.tsv"
+    output:
+        output_edges=output_dir + "/target/elusive_edges.tsv",
+        output_targets=output_dir + "/target/targets.tsv",
+    log:
+        logs_dir + "/elusive_targets.log"
+    params:
+        min_coassembly_coverage=config["min_coassembly_coverage"],
+        taxa_of_interest=config["taxa_of_interest"],
+    script:
+        "scripts/target_elusive.py"
+
+rule cluster_graph:
+    input:
+        elusive_edges=output_dir + "/target/elusive_edges.tsv",
+        read_size=output_dir + "/read_size.csv",
+    output:
+        elusive_clusters=output_dir + "/target/elusive_clusters.tsv"
+    log:
+        logs_dir + "/cluster_graph.log"
+    params:
+        max_coassembly_size=config["max_coassembly_size"],
+        num_coassembly_samples=config["num_coassembly_samples"],
+        max_coassembly_samples=config["max_coassembly_samples"],
+        max_recovery_samples=config["max_recovery_samples"],
+    script:
+        "scripts/cluster_graph.py"
 
 ##################################
 ### Map reads to matching bins ###
 ##################################
 rule collect_bins:
     input:
-        appraise_binned=config["appraise_binned"],
+        appraise_binned=output_dir + "/appraise/binned.otu_table.tsv",
     output:
         output_dir + "/mapping/{read}_reference.fna",
     params:
@@ -109,10 +266,10 @@ rule finish_mapping:
 ##############################
 ### Create Aviary commands ###
 ##############################
-rule coassemble_commands:
+rule aviary_commands:
     input:
         output_dir + "/mapping/done" if config["assemble_unmapped"] else [],
-        elusive_clusters=config["elusive_clusters"],
+        elusive_clusters=output_dir + "/target/elusive_clusters.tsv",
     output:
         coassemble_commands=output_dir + "/commands/coassemble_commands.sh",
         recover_commands=output_dir + "/commands/recover_commands.sh"
@@ -128,72 +285,3 @@ rule coassemble_commands:
         logs_dir + "/coassemble_commands.log"
     script:
         "scripts/coassemble_commands.py"
-
-###########################
-### Run Aviary commands ###
-###########################
-rule aviary_assemble:
-    input:
-        output_dir + "/mapping/done" if config["assemble_unmapped"] else [],
-        reads_1=lambda wildcards: get_reads(wildcards.coassembly, 'assemble',
-                                            mapped_reads_1 if config["assemble_unmapped"] else config["reads_1"]
-                                            ),
-        reads_2=lambda wildcards: get_reads(wildcards.coassembly, 'assemble',
-                                            mapped_reads_2 if config["assemble_unmapped"] else config["reads_2"]
-                                            ),
-    output:
-        dir=directory(output_dir + "/assemble/{coassembly}"),
-        assembly=output_dir + "/assemble/{coassembly}/assembly/final_contigs.fasta",
-    log:
-        logs_dir + "/assemble/{coassembly}.log"
-    threads:
-        64
-    params:
-        memory=config["aviary_memory"],
-    conda:
-        "env/aviary.yml"
-    shell:
-        "aviary assemble "
-        "-1 {input.reads_1} "
-        "-2 {input.reads_2} "
-        "--output {output.dir} "
-        "-n {threads} "
-        "-m {params.memory} "
-        "&> {log} "
-
-rule aviary_recover:
-    input:
-        assembly=output_dir + "/assemble/{coassembly}/assembly/final_contigs.fasta",
-        reads_1=lambda wildcards: get_reads(wildcards.coassembly, 'recover',
-                                            mapped_reads_1 if config["assemble_unmapped"] else config["reads_1"]
-                                            ),
-        reads_2=lambda wildcards: get_reads(wildcards.coassembly, 'recover',
-                                            mapped_reads_2 if config["assemble_unmapped"] else config["reads_2"]
-                                            ),
-    output:
-        directory(output_dir + "/recover/{coassembly}"),
-    log:
-        logs_dir + "/recover/{coassembly}.log"
-    threads:
-        64
-    params:
-        memory=config["aviary_memory"],
-    conda:
-        "env/aviary.yml"
-    shell:
-        "aviary recover "
-        "--assembly {input.assembly} "
-        "-1 {input.reads_1} "
-        "-2 {input.reads_2} "
-        "--output {output} "
-        "-n {threads} "
-        "-m {params.memory} "
-        "&> {log} "
-
-rule collate_coassemblies:
-    input:
-        expand(output_dir + "/recover/{coassembly}", coassembly=get_coassemblies()),
-    output:
-        output_dir + "/coassemblies.done"
-    shell:
-        "touch {output}"

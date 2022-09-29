@@ -90,46 +90,55 @@ def run_workflow(config, workflow, output_dir, cores=16, dryrun=False,
     logging.info(f"Executing: {cmd}")
     subprocess.check_call(cmd, shell=True)
 
-def cluster(args):
-    if not args.forward and not args.sample_singlem and not args.sample_query:
-        raise Exception("Input reads (--forward) or SingleM otu tables (--sample-singlem and/or --sample-query) must be provided")
+def coassemble(args):
+    if not args.forward and not args.forward_list:
+        raise Exception("Input reads must be provided")
     if args.sample_query and not args.sample_singlem:
         raise Exception("Input SingleM query (--sample-query) requires SingleM otu tables (--sample-singlem) for coverage")
-    if not args.forward and not args.sample_read_size:
-        raise Exception("Input reads (--forward) or read sizes (--sample-read-size) must be provided")
-    if args.reverse and not args.forward:
-        raise Exception("Reverse reads cannot be provided without forward reads")
-    if not args.genome_transcripts and not args.genome_singlem and not args.sample_query and not args.single_assembly:
-            raise Exception("Genome transcripts (--genome-transcripts) or SingleM otu tables (--genome-singlem or --sample-query) must be provided")
-    if not args.singlem_metapackage and (not args.sample_singlem or not args.genome_singlem) and not args.sample_query:
-        raise Exception("SingleM metapackage (--singlem-metapackage) must be provided when SingleM otu tables not provided")
+    if not args.genomes and not args.genomes_list and not args.single_assembly:
+        raise Exception("Reference genomes must be provided")
+    if not args.singlem_metapackage and not args.sample_query:
+        raise Exception("SingleM metapackage (--singlem-metapackage) must be provided when SingleM query otu tables are not provided")
+    if (args.forward and args.forward_list) or (args.reverse and args.reverse_list) or (args.genomes and args.genomes_list):
+        raise Exception("General argument cannot be provided with list argument")
 
     output = os.path.abspath(args.output)
     if not os.path.exists(output):
         os.makedirs(output)
 
-    if args.sample_read_size:
-        with open(args.sample_read_size) as f:
-            forward_reads = {line.split(",")[0]: "" for line in f}
-            reverse_reads = forward_reads.copy()
-        copy_input(
-            os.path.abspath(args.sample_read_size),
-            os.path.join(output, "cluster", "read_size.csv"),
-        )
-    if args.forward:
-        forward_reads, reverse_reads = build_reads_list(args.forward, args.reverse)
+    # Load sample info
+    if args.forward_list:
+        args.forward = read_list(args.forward_list)
+    if args.reverse_list:
+        args.reverse = read_list(args.reverse_list)
+    forward_reads, reverse_reads = build_reads_list(args.forward, args.reverse)
     if args.sample_singlem:
         for table in args.sample_singlem:
             copy_input(
                 os.path.abspath(table),
-                os.path.join(output, "cluster", "pipe", os.path.basename(table))
+                os.path.join(output, "coassemble", "pipe", os.path.basename(table))
             )
     if args.sample_query:
         for table in args.sample_query:
             copy_input(
                 os.path.abspath(table),
-                os.path.join(output, "cluster", "query", os.path.basename(table))
+                os.path.join(output, "coassemble", "query", os.path.basename(table))
             )
+    if args.sample_read_size:
+        copy_input(
+            os.path.abspath(args.sample_read_size),
+            os.path.join(output, "coassemble", "read_size.csv"),
+        )
+
+    # Load genome info
+    if args.genomes_list:
+        args.genomes = read_list(args.genomes_list)
+    if args.genomes:
+        genomes = {
+            os.path.splitext(os.path.basename(genome))[0]: os.path.abspath(genome) for genome in args.genomes
+            }
+    if args.genome_transcripts_list:
+        args.genome_transcripts = read_list(args.genome_transcripts_list)
     if args.genome_transcripts:
         genome_transcripts = {
             os.path.splitext(os.path.basename(transcript))[0]: os.path.abspath(transcript) for transcript in args.genome_transcripts
@@ -137,85 +146,37 @@ def cluster(args):
     if args.genome_singlem:
         copy_input(
             os.path.abspath(args.genome_singlem),
-            os.path.join(output, "cluster", "summarise", "bins_summarised.otu_table.tsv")
+            os.path.join(output, "coassemble", "summarise", "bins_summarised.otu_table.tsv")
         )
+
+    # Load other info
     if args.single_assembly:
         args.num_coassembly_samples = 1
         args.max_coassembly_samples = 1
 
     config_items = {
+        # Sample config
         "reads_1": forward_reads,
         "reads_2": reverse_reads,
         "singlem_metapackage": os.path.abspath(args.singlem_metapackage) if args.singlem_metapackage else None,
+        # Genome config
+        "genomes": genomes if args.genomes else None,
         "bin_transcripts": genome_transcripts if args.genome_transcripts else None,
+        # Clustering config
         "taxa_of_interest": args.taxa_of_interest if args.taxa_of_interest else None,
         "appraise_sequence_identity": args.appraise_sequence_identity / 100 if args.appraise_sequence_identity > 1 else args.appraise_sequence_identity,
         "min_coassembly_coverage": args.min_sequence_coverage,
+        "single_assembly": args.single_assembly,
         "num_coassembly_samples": args.num_coassembly_samples,
         "max_coassembly_samples": args.max_coassembly_samples if args.max_coassembly_samples else args.num_coassembly_samples,
         "max_coassembly_size": args.max_coassembly_size,
         "max_recovery_samples": args.max_recovery_samples,
-        "single_assembly": args.single_assembly,
-    }
-
-    config_path = make_config(
-        importlib.resources.files("cockatoo.config").joinpath("template_cluster.yaml"),
-        output,
-        config_items
-        )
-
-    run_workflow(
-        config = config_path,
-        workflow = "cluster.smk",
-        output_dir = output,
-        cores = args.cores,
-        dryrun = args.dryrun,
-        conda_prefix = args.conda_prefix,
-        snakemake_args = args.snakemake_args,
-    )
-
-def coassemble(args):
-    if not args.forward and not args.forward_list:
-        raise Exception("Input reads must be provided")
-    if (args.reverse or args.reverse_list) and not (args.forward or args.forward_list):
-        raise Exception("Reverse reads must be provided with forward reads")
-    if args.assemble_unmapped and not (args.genomes or args.genomes_list):
-        raise Exception("Genomes must be provided for mapping reference with --assemble-unmapped")
-    if (args.forward and args.forward_list) or (args.reverse and args.reverse_list) or (args.genomes and args.genomes_list):
-        raise Exception("General argument cannot be provided with list argument")
-
-    if args.forward_list:
-        args.forward = read_list(args.forward_list)
-    if args.reverse_list:
-        args.reverse = read_list(args.reverse_list)
-    forward_reads, reverse_reads = build_reads_list(args.forward, args.reverse)
-
-    cluster_target_dir = os.path.abspath(os.path.join(args.cluster_output, "target"))
-    cluster_appraise_binned = os.path.abspath(os.path.join(args.cluster_output, "appraise", "binned.otu_table.tsv"))
-
-    if args.genomes_list:
-        args.genomes = read_list(args.genomes_list)
-    if args.genomes:
-        genomes = {
-            os.path.splitext(os.path.basename(genome))[0]: os.path.abspath(genome) for genome in args.genomes
-            }
-
-    config_items = {
-        "reads_1": forward_reads,
-        "reads_2": reverse_reads,
-        "elusive_clusters": os.path.join(cluster_target_dir, "elusive_clusters.tsv"),
+        # Coassembly config
         "assemble_unmapped": args.assemble_unmapped,
-        "appraise_binned": cluster_appraise_binned,
-        "genomes": genomes if args.genomes else None,
-        "aviary_memory": args.aviary_memory,
-        "aviary_threads": args.aviary_cores,
         "abstract_options": args.abstract_options,
-        "run_aviary": args.run_aviary,
+        "aviary_threads": args.aviary_cores,
+        "aviary_memory": args.aviary_memory,
     }
-
-    output = os.path.abspath(args.output)
-    if not os.path.exists(output):
-        os.makedirs(output)
 
     config_path = make_config(
         importlib.resources.files("cockatoo.config").joinpath("template_coassemble.yaml"),
@@ -327,44 +288,37 @@ def main():
 
     ###########################################################################
 
-    cluster_parser = main_parser.new_subparser("cluster", "Cluster reads into suggested coassemblies by unbinned single-copy marker genes")
-    cluster_parser.add_argument("--forward", "--reads", "--sequences", nargs='+', help="input forward/unpaired nucleotide read sequence(s)")
-    cluster_parser.add_argument("--reverse", nargs='+', help="input reverse nucleotide read sequence(s)")
-    cluster_parser.add_argument("--sample-singlem", nargs='+', help="SingleM otu tables for each sample, in the form \"[sample name]_read.otu_table.tsv\". If provided, SingleM pipe sample is skipped")
-    cluster_parser.add_argument("--sample-query", nargs='+', help="Queried SingleM otu tables for each sample against genome database, in the form \"[sample name]_query.otu_table.tsv\". If provided, SingleM pipe and appraise are skipped")
-    cluster_parser.add_argument("--sample-read-size", help="Comma separated list of sample name and size (bp). If provided, sample read counting is skipped")
-    cluster_parser.add_argument("--genome-transcripts", nargs='+', help="Genome transcripts for reference database")
-    cluster_parser.add_argument("--genome-singlem", help="Combined SingleM otu tables for genome transcripts. If provided, genome SingleM is skipped")
-    cluster_parser.add_argument("--singlem-metapackage", help="SingleM metapackage for sequence searching")
-    cluster_parser.add_argument("--output", help="Output directory [default: .]", default="./")
-    cluster_parser.add_argument("--taxa-of-interest", help="Only consider sequences from this GTDB taxa (e.g. p__Planctomycetota) [default: all]")
-    cluster_parser.add_argument("--appraise-sequence-identity", type=int, help="Minimum sequence identity for SingleM appraise against reference database [default: 89%]", default=0.89)
-    cluster_parser.add_argument("--min-sequence-coverage", type=int, help="Minimum combined coverage for sequence inclusion [default: 10]", default=10)
-    cluster_parser.add_argument("--single-assembly", action="store_true", help="Skip appraise to discover samples to differential abundance binning. Forces --num-coassembly-samples and --max-coassembly-samples to 1")
-    cluster_parser.add_argument("--num-coassembly-samples", type=int, help="Number of samples per coassembly cluster [default: 2]", default=2)
-    cluster_parser.add_argument("--max-coassembly-samples", type=int, help="Upper bound for number of samples per coassembly cluster [default: --num-coassembly-samples]", default=None)
-    cluster_parser.add_argument("--max-coassembly-size", type=int, help="Maximum size (Gbp) of coassembly cluster [default: None]", default=None)
-    cluster_parser.add_argument("--max-recovery-samples", type=int, help="Upper bound for number of related samples to use for differential abundance binning [default: 20]", default=20)
-    cluster_parser.add_argument("--conda-prefix", help="Path to conda environment install location", default=None)
-    cluster_parser.add_argument("--cores", type=int, help="Maximum number of cores to use", default=1)
-    cluster_parser.add_argument("--dryrun", action="store_true", help="dry run workflow")
-    cluster_parser.add_argument("--snakemake-args", help="Additional commands to be supplied to snakemake in the form of a space-prefixed single string e.g. \" --quiet\"", default="")
-
-    ###########################################################################
-
-    coassemble_parser = main_parser.new_subparser("coassemble", "Coassemble suggested coassemblies using Aviary (optionally remove reads mapping to reference genomes)")
-    coassemble_parser.add_argument("--cluster-output", help="Output dir from cluster subcommand", required=True)
+    coassemble_parser = main_parser.new_subparser("coassemble", "Coassemble reads clustered by unbinned single-copy marker genes")
+    # Base arguments
     coassemble_parser.add_argument("--forward", "--reads", "--sequences", nargs='+', help="input forward/unpaired nucleotide read sequence(s)")
     coassemble_parser.add_argument("--forward-list", "--reads-list", "--sequences-list", help="input forward/unpaired nucleotide read sequence(s) newline separated")
     coassemble_parser.add_argument("--reverse", nargs='+', help="input reverse nucleotide read sequence(s)")
     coassemble_parser.add_argument("--reverse-list", help="input reverse nucleotide read sequence(s) newline separated")
-    coassemble_parser.add_argument("--assemble-unmapped", action="store_true", help="Only assemble reads to do not map to reference genomes")
     coassemble_parser.add_argument("--genomes", nargs='+', help="Reference genomes for read mapping")
     coassemble_parser.add_argument("--genomes-list", help="Reference genomes for read mapping newline separated")
+    coassemble_parser.add_argument("--singlem-metapackage", help="SingleM metapackage for sequence searching")
+    # Midpoint arguments
+    coassemble_parser.add_argument("--sample-singlem", nargs='+', help="SingleM otu tables for each sample, in the form \"[sample name]_read.otu_table.tsv\". If provided, SingleM pipe sample is skipped")
+    coassemble_parser.add_argument("--sample-query", nargs='+', help="Queried SingleM otu tables for each sample against genome database, in the form \"[sample name]_query.otu_table.tsv\". If provided, SingleM pipe and appraise are skipped")
+    coassemble_parser.add_argument("--sample-read-size", help="Comma separated list of sample name and size (bp). If provided, sample read counting is skipped")
+    coassemble_parser.add_argument("--genome-transcripts", nargs='+', help="Genome transcripts for reference database")
+    coassemble_parser.add_argument("--genome-transcripts-list", help="Genome transcripts for reference database newline separated")
+    coassemble_parser.add_argument("--genome-singlem", help="Combined SingleM otu tables for genome transcripts. If provided, genome SingleM is skipped")
+    # Clustering options
+    coassemble_parser.add_argument("--taxa-of-interest", help="Only consider sequences from this GTDB taxa (e.g. p__Planctomycetota) [default: all]")
+    coassemble_parser.add_argument("--appraise-sequence-identity", type=int, help="Minimum sequence identity for SingleM appraise against reference database [default: 89%]", default=0.89)
+    coassemble_parser.add_argument("--min-sequence-coverage", type=int, help="Minimum combined coverage for sequence inclusion [default: 10]", default=10)
+    coassemble_parser.add_argument("--single-assembly", action="store_true", help="Skip appraise to discover samples to differential abundance binning. Forces --num-coassembly-samples and --max-coassembly-samples to 1")
+    coassemble_parser.add_argument("--num-coassembly-samples", type=int, help="Number of samples per coassembly cluster [default: 2]", default=2)
+    coassemble_parser.add_argument("--max-coassembly-samples", type=int, help="Upper bound for number of samples per coassembly cluster [default: --num-coassembly-samples]", default=None)
+    coassemble_parser.add_argument("--max-coassembly-size", type=int, help="Maximum size (Gbp) of coassembly cluster [default: None]", default=None)
+    coassemble_parser.add_argument("--max-recovery-samples", type=int, help="Upper bound for number of related samples to use for differential abundance binning [default: 20]", default=20)
+    # Coassembly options
+    coassemble_parser.add_argument("--assemble-unmapped", action="store_true", help="Only assemble reads that do not map to reference genomes")
     coassemble_parser.add_argument("--abstract-options", action="store_true", help="Print Aviary commands with bash variables for OUTPUT_DIR, CPUS and MEMORY [default: hardcode arguments]")
-    coassemble_parser.add_argument("--run-aviary", action="store_true", help="Run Aviary assemble/recover commands [default: print commands to file]")
     coassemble_parser.add_argument("--aviary-cores", type=int, help="Maximum number of cores for Aviary to use", default=16)
     coassemble_parser.add_argument("--aviary-memory", type=int, help="Maximum amount of memory for Aviary to use (Gigabytes)", default=250)
+    # General options
     coassemble_parser.add_argument("--output", help="Output directory [default: .]", default="./")
     coassemble_parser.add_argument("--conda-prefix", help="Path to conda environment install location", default=None)
     coassemble_parser.add_argument("--cores", type=int, help="Maximum number of cores to use", default=1)
@@ -392,9 +346,7 @@ def main():
     logging.info(f"Cockatoo v{__version__}")
     logging.info(f"Command: {' '.join(['cockatoo'] + sys.argv[1:])}")
 
-    if args.subparser_name == "cluster":
-        cluster(args)
-    elif args.subparser_name == "coassemble":
+    if args.subparser_name == "coassemble":
         coassemble(args)
     elif args.subparser_name == "evaluate":
         evaluate(args)

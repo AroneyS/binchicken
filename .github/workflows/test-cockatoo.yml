@@ -30,5 +30,4 @@ jobs:
           pip install -e .
       - name: Run unit tests
         run: |
-          python test/test_cluster.py
           python test/test_coassemble.py
