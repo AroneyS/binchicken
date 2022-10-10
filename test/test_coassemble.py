@@ -462,7 +462,7 @@ class Tests(unittest.TestCase):
                 f"--prodigal-meta "
                 f"--output test "
                 f"--conda-prefix {path_to_conda} "
-                f"--snakemake-args \"finish_mapping\" "
+                f"--snakemake-args \"--notemp finish_mapping\" "
             )
             extern.run(cmd)
 
