@@ -238,7 +238,7 @@ rule collect_genomes:
     input:
         appraise_binned=output_dir + "/appraise/binned.otu_table.tsv",
     output:
-        output_dir + "/mapping/{read}_reference.fna",
+        temp(output_dir + "/mapping/{read}_reference.fna"),
     params:
         genomes=config["genomes"],
         sample="{read}",
@@ -251,8 +251,8 @@ rule map_reads:
         reads_2=lambda wildcards: config["reads_2"][wildcards.read],
         genomes=output_dir + "/mapping/{read}_reference.fna",
     output:
-        dir=directory(output_dir + "/mapping/{read}_coverm"),
-        unmapped_bam=output_dir + "/mapping/{read}_unmapped.bam",
+        dir=temp(directory(output_dir + "/mapping/{read}_coverm")),
+        unmapped_bam=temp(output_dir + "/mapping/{read}_unmapped.bam"),
         reads_1=output_dir + "/mapping/{read}_unmapped.1.fq.gz",
         reads_2=output_dir + "/mapping/{read}_unmapped.2.fq.gz",
     log:
