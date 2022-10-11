@@ -101,8 +101,8 @@ def coassemble(args):
         raise Exception("Assemble unmapped is incompatible with single-sample assembly")
     if args.assemble_unmapped and not args.genomes and not args.genomes_list:
         raise Exception("Reference genomes must be provided to assemble unmapped reads")
-    if not args.singlem_metapackage and not args.sample_query:
-        raise Exception("SingleM metapackage (--singlem-metapackage) must be provided when SingleM query otu tables are not provided")
+    if not args.singlem_metapackage and not os.environ['SINGLEM_METAPACKAGE_PATH'] and not args.sample_query:
+        raise Exception("SingleM metapackage (--singlem-metapackage or SINGLEM_METAPACKAGE_PATH environment variable, see SingleM data) must be provided when SingleM query otu tables are not provided")
     if (args.forward and args.forward_list) or (args.reverse and args.reverse_list) or (args.genomes and args.genomes_list):
         raise Exception("General argument cannot be provided with list argument")
 
@@ -154,6 +154,13 @@ def coassemble(args):
             os.path.abspath(args.genome_singlem),
             os.path.join(output, "coassemble", "summarise", "bins_summarised.otu_table.tsv")
         )
+    if args.singlem_metapackage:
+        metapackage = os.path.abspath(args.singlem_metapackage)
+    else:
+        try:
+            metapackage = os.environ['SINGLEM_METAPACKAGE_PATH']
+        except KeyError:
+            metapackage = None
 
     # Load other info
     if args.single_assembly:
@@ -165,7 +172,7 @@ def coassemble(args):
         "reads_1": forward_reads,
         "reads_2": reverse_reads,
         "genomes": genomes if args.genomes else None,
-        "singlem_metapackage": os.path.abspath(args.singlem_metapackage) if args.singlem_metapackage else None,
+        "singlem_metapackage": metapackage,
         # Clustering config
         "taxa_of_interest": args.taxa_of_interest if args.taxa_of_interest else None,
         "appraise_sequence_identity": args.appraise_sequence_identity / 100 if args.appraise_sequence_identity > 1 else args.appraise_sequence_identity,
