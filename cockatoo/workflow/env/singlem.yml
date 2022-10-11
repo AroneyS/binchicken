@@ -2,9 +2,8 @@ channels:
   - conda-forge
   - bioconda
   - defaults
-  - masonite
 dependencies:
-  - python>=3.6 # stuck at 3.6 for orator
+  - python>=3.7, <3.10 # https://github.com/google-research/google-research/issues/779 means scann (at least 1.2.8) fails to install via pip for 3.10. Older python versions than 3.7 may also work, not tested.
   - diamond>2.0.11
   - biopython
   - hmmer
@@ -17,28 +16,25 @@ dependencies:
   - sra-tools
   - ncbi-ngs-sdk
   - sqlite
-  - masonite-orm
   - numba
   - python-annoy
-  - orator
   - squarify
   - nose
   - mafft
   - seqmagick
-  - vsearch
-  - smafa
   - expressbetadiversity
   - cd-hit
   - fasttree
   - fastalite
   - jinja2
-  - bird_tool_utils_python
   - pip
   - sqlalchemy
+  - pandas
   - git
   - git-lfs
   - pip:
+    - cmake # Required so scann can be installed and run via pip. Without this, get LD_LIBRARY_PATH error when running pipe.
     - scann
-    - nmslib
-    - --no-binary nmslib
-    - git+https://github.com/AroneyS/singlem.git@199c66195f5335ce364117f0375f74f560453f9d
+    - zenodo_backpack
+    - bird-tool-utils >= 0.3.0
+    - git+https://github.com/AroneyS/singlem.git@2b1b4dc749cc1f1b825a8ded178e7099f181fcbc

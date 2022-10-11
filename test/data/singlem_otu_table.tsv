@@ -1,0 +1,6 @@
+gene	sample	sequence	num_hits	coverage	taxonomy
+S3.7.ribosomal_protein_S7	RS_GCF_018688335.1_protein	TACCAGGTTCCTGTTGAAGTTCGCCCATCACGCCGTTCTGCTTTGGCAATGCGCTGGGTG	1	1.14	Root; d__Bacteria; p__Proteobacteria; c__Gammaproteobacteria; o__Burkholderiales; f__Burkholderiaceae; g__Polynucleobacter; s__Polynucleobacter_sp018688335
+S3.7.ribosomal_protein_S7	GB_GCA_013286235.1_protein	TTCCAGGTGCCTACTGAAGTTCGTCCCGAGCGTAAAATTGCATTGGGTATGAAATGGCTG	1	1.14	Root; d__Bacteria; p__Bacteroidota; c__Bacteroidia; o__Sphingobacteriales; f__Sphingobacteriaceae; g__Mucilaginibacter; s__Mucilaginibacter_sp013286235
+S3.7.ribosomal_protein_S7	GB_GCA_015485715.1_protein	TACCAGATACCTTTTCCAGTGAAAGGAGACAGGCAAAAAACATTAGCCTATAGATGGATT	1	1.14	Root; d__Bacteria; p__Patescibacteria; c__ABY1; o__UBA2196; f__S139-112; g__S139-112; s__S139-112_sp015485715
+S3.7.ribosomal_protein_S7	GB_GCA_013141425.1_protein	TATCAAGTGCCAGTTGAAGTGCGTCCAAATCGTCGTAGTGCTTTGGCAATGCGTTGGATG	1	1.14	Root; d__Bacteria; p__Proteobacteria; c__Gammaproteobacteria; o__Burkholderiales; f__Methylophilaceae; g__Methylotenera; s__Methylotenera_sp013141425
+S3.7.ribosomal_protein_S7	RS_GCF_001613445.1_protein	TATCAGGTTCCGGTCGAGGTCCGTCCCGGACGGTCCAACACTCTCGCGCTGCGCTGGCTG	1	1.14	Root; d__Bacteria; p__Actinobacteriota; c__Actinomycetia; o__Mycobacteriales; f__Mycobacteriaceae; g__Nocardia; s__Nocardia_grenadensis
