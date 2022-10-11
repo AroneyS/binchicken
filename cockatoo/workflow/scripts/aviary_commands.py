@@ -18,7 +18,7 @@ def produce_command(row):
     all_samples_2 = [snakemake.params.reads_2[sample] for sample in all_samples_names]
 
     coassembly = row["coassembly"]
-    output_dir = snakemake.params.dir
+    output_dir = snakemake.params.dir + "/coassemble"
     threads = snakemake.params.threads
     memory = snakemake.params.memory
 

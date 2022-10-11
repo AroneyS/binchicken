@@ -148,9 +148,9 @@ class Tests(unittest.TestCase):
                         "-2",
                         os.path.join(test_dir, "coassemble", "mapping", "sample_1_unmapped.2.fq.gz"),
                         os.path.join(test_dir, "coassemble", "mapping", "sample_2_unmapped.2.fq.gz"),
-                        "--output", os.path.join(test_dir, "coassemble", "coassembly_0", "assemble"),
+                        "--output", os.path.join(test_dir, "coassemble", "coassemble", "coassembly_0", "assemble"),
                         "-n 16 -m 250 &>",
-                        os.path.join(test_dir, "coassemble", "logs", "coassembly_0_assemble.log"),
+                        os.path.join(test_dir, "coassemble", "coassemble", "logs", "coassembly_0_assemble.log"),
                         ""
                     ]),
                     ""
@@ -164,16 +164,16 @@ class Tests(unittest.TestCase):
             expected = "\n".join(
                 [
                     " ".join([
-                        "aviary recover --assembly", os.path.join(test_dir, "coassemble", "coassembly_0", "assemble", "assembly", "final_contigs.fasta"),
+                        "aviary recover --assembly", os.path.join(test_dir, "coassemble", "coassemble", "coassembly_0", "assemble", "assembly", "final_contigs.fasta"),
                         "-1",
                         os.path.join(test_dir, "coassemble", "mapping", "sample_1_unmapped.1.fq.gz"),
                         os.path.join(test_dir, "coassemble", "mapping", "sample_2_unmapped.1.fq.gz"),
                         "-2",
                         os.path.join(test_dir, "coassemble", "mapping", "sample_1_unmapped.2.fq.gz"),
                         os.path.join(test_dir, "coassemble", "mapping", "sample_2_unmapped.2.fq.gz"),
-                        "--output", os.path.join(test_dir, "coassemble", "coassembly_0", "recover"),
+                        "--output", os.path.join(test_dir, "coassemble", "coassemble", "coassembly_0", "recover"),
                         "-n 16 -m 250 &>",
-                        os.path.join(test_dir, "coassemble", "logs", "coassembly_0_recover.log"),
+                        os.path.join(test_dir, "coassemble", "coassemble", "logs", "coassembly_0_recover.log"),
                         ""
                     ]),
                     ""
