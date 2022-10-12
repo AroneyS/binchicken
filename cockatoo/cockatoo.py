@@ -6,7 +6,6 @@ __author__ = "Samuel Aroney"
 import os
 import sys
 import logging
-import shutil
 import subprocess
 import importlib.resources
 import bird_tool_utils as btu
@@ -56,11 +55,12 @@ def make_config(template, output_dir, config_items):
 
     return config_path
 
-def copy_input(input, output):
+def copy_input(input, output, suppress=False):
     os.makedirs(os.path.dirname(output), exist_ok=True)
 
-    logging.info(f"Copying input file {input} to {output}")
-    shutil.copyfile(input, output)
+    if not suppress:
+        logging.info(f"Symbolic-linking input file {input} to {output}")
+    os.symlink(input, output)
 
 def read_list(path):
     with open(path) as f:
@@ -149,7 +149,8 @@ def coassemble(args):
         for tr in args.genome_transcripts:
             copy_input(
                 os.path.abspath(tr),
-                os.path.join(output, "coassemble", "transcripts", os.path.basename(tr))
+                os.path.join(output, "coassemble", "transcripts", os.path.basename(tr)),
+                suppress=True,
             )
     if args.genome_singlem:
         copy_input(
