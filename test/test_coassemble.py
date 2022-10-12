@@ -569,6 +569,46 @@ class Tests(unittest.TestCase):
             self.assertTrue("finish_mapping" in output)
             self.assertTrue("aviary_commands" in output)
 
+    def test_coassemble_singlem_inputs_files_of_paths(self):
+        with in_tempdir():
+            write_string_to_file(SAMPLE_READS_FORWARD, "sample_reads_forward")
+            write_string_to_file(SAMPLE_READS_REVERSE, "sample_reads_reverse")
+            write_string_to_file(GENOMES, "genomes")
+            write_string_to_file(GENOME_TRANSCRIPTS, "genome_transcripts")
+            write_string_to_file(SAMPLE_SINGLEM, "sample_singlem")
+
+            cmd = (
+                f"cockatoo coassemble "
+                f"--forward-list sample_reads_forward "
+                f"--reverse-list sample_reads_reverse "
+                f"--genomes-list genomes "
+                f"--genome-transcripts-list genome_transcripts "
+                f"--sample-singlem-list sample_singlem "
+                f"--sample-read-size {SAMPLE_READ_SIZE} "
+                f"--genome-singlem {GENOME_SINGLEM} "
+                f"--singlem-metapackage {METAPACKAGE} "
+                f"--output test "
+                f"--conda-prefix {path_to_conda} "
+                f"--dryrun "
+                f"--snakemake-args \" --quiet\" "
+            )
+            output = extern.run(cmd)
+
+            self.assertTrue("singlem_pipe_reads" not in output)
+            self.assertTrue("genome_transcripts" not in output)
+            self.assertTrue("singlem_pipe_genomes" not in output)
+            self.assertTrue("singlem_summarise_genomes" not in output)
+            self.assertTrue("singlem_appraise" in output)
+            self.assertTrue("query_processing" not in output)
+            self.assertTrue("single_assembly" not in output)
+            self.assertTrue("count_bp_reads" not in output)
+            self.assertTrue("target_elusive" in output)
+            self.assertTrue("cluster_graph" in output)
+            self.assertTrue("collect_genomes" not in output)
+            self.assertTrue("map_reads" not in output)
+            self.assertTrue("finish_mapping" not in output)
+            self.assertTrue("aviary_commands" in output)
+
     def test_coassemble_metapackage_env_variable(self):
         with in_tempdir():
             os.environ['SINGLEM_METAPACKAGE_PATH'] = METAPACKAGE

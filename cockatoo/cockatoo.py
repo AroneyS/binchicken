@@ -93,7 +93,7 @@ def run_workflow(config, workflow, output_dir, cores=16, dryrun=False,
 def coassemble(args):
     if not args.forward and not args.forward_list:
         raise Exception("Input reads must be provided")
-    if args.sample_query and not args.sample_singlem:
+    if args.sample_query and not args.sample_singlem and not args.sample_singlem_list:
         raise Exception("Input SingleM query (--sample-query) requires SingleM otu tables (--sample-singlem) for coverage")
     if not args.genomes and not args.genomes_list and not args.genome_transcripts and not args.genome_transcripts_list and not args.single_assembly:
         raise Exception("Input genomes must be provided")
@@ -103,7 +103,7 @@ def coassemble(args):
         raise Exception("Reference genomes must be provided to assemble unmapped reads")
     if not args.singlem_metapackage and not os.environ['SINGLEM_METAPACKAGE_PATH'] and not args.sample_query:
         raise Exception("SingleM metapackage (--singlem-metapackage or SINGLEM_METAPACKAGE_PATH environment variable, see SingleM data) must be provided when SingleM query otu tables are not provided")
-    if (args.forward and args.forward_list) or (args.reverse and args.reverse_list) or (args.genomes and args.genomes_list):
+    if (args.forward and args.forward_list) or (args.reverse and args.reverse_list) or (args.genomes and args.genomes_list) or (args.sample_singlem and args.sample_singlem_list):
         raise Exception("General argument cannot be provided with list argument")
 
     output = os.path.abspath(args.output)
@@ -118,6 +118,12 @@ def coassemble(args):
     forward_reads, reverse_reads = build_reads_list(args.forward, args.reverse)
     if args.sample_singlem:
         for table in args.sample_singlem:
+            copy_input(
+                os.path.abspath(table),
+                os.path.join(output, "coassemble", "pipe", os.path.basename(table))
+            )
+    if args.sample_singlem_list:
+        for table in read_list(args.sample_singlem_list):
             copy_input(
                 os.path.abspath(table),
                 os.path.join(output, "coassemble", "pipe", os.path.basename(table))
@@ -300,6 +306,7 @@ def main():
     coassemble_parser.add_argument("--singlem-metapackage", help="SingleM metapackage for sequence searching")
     # Midpoint arguments
     coassemble_parser.add_argument("--sample-singlem", nargs='+', help="SingleM otu tables for each sample, in the form \"[sample name]_read.otu_table.tsv\". If provided, SingleM pipe sample is skipped")
+    coassemble_parser.add_argument("--sample-singlem-list", help="SingleM otu tables for each sample, in the form \"[sample name]_read.otu_table.tsv\" newline separated. If provided, SingleM pipe sample is skipped")
     coassemble_parser.add_argument("--sample-query", nargs='+', help="Queried SingleM otu tables for each sample against genome database, in the form \"[sample name]_query.otu_table.tsv\". If provided, SingleM pipe and appraise are skipped")
     coassemble_parser.add_argument("--sample-read-size", help="Comma separated list of sample name and size (bp). If provided, sample read counting is skipped")
     coassemble_parser.add_argument("--genome-transcripts", nargs='+', help="Genome transcripts for reference database, in the form \"[genome]_protein.fna\"")
