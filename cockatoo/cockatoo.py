@@ -206,8 +206,8 @@ def coassemble(args):
     )
 
 def evaluate(args):
-    if not args.singlem_metapackage:
-        raise Exception("SingleM metapackage must be provided")
+    if not args.singlem_metapackage and not os.environ['SINGLEM_METAPACKAGE_PATH']:
+        raise Exception("SingleM metapackage (--singlem-metapackage or SINGLEM_METAPACKAGE_PATH environment variable, see SingleM data) must be provided")
 
     coassemble_target_dir = os.path.abspath(os.path.join(args.coassemble_output, "target"))
     recovered_bins = {
@@ -220,12 +220,16 @@ def evaluate(args):
             os.path.abspath(os.path.join(coassembly, "recover", "bins", "checkm_minimal.tsv"))
             for coassembly in args.aviary_outputs
         }
+    if args.singlem_metapackage:
+        metapackage = os.path.abspath(args.singlem_metapackage)
+    else:
+        metapackage = os.environ['SINGLEM_METAPACKAGE_PATH']
 
     config_items = {
         "targets": os.path.join(coassemble_target_dir, "targets.tsv"),
         "elusive_edges": os.path.join(coassemble_target_dir, "elusive_edges.tsv"),
         "elusive_clusters": os.path.join(coassemble_target_dir, "elusive_clusters.tsv"),
-        "singlem_metapackage": os.path.abspath(args.singlem_metapackage),
+        "singlem_metapackage": metapackage,
         "recovered_bins": recovered_bins,
         "checkm_out": checkm_out,
         "checkm_version": args.checkm_version,
