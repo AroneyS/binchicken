@@ -116,14 +116,10 @@ def coassemble(args):
     if args.reverse_list:
         args.reverse = read_list(args.reverse_list)
     forward_reads, reverse_reads = build_reads_list(args.forward, args.reverse)
+    if args.sample_singlem_list:
+        args.sample_singlem = read_list(args.sample_singlem_list)
     if args.sample_singlem:
         for table in args.sample_singlem:
-            copy_input(
-                os.path.abspath(table),
-                os.path.join(output, "coassemble", "pipe", os.path.basename(table))
-            )
-    if args.sample_singlem_list:
-        for table in read_list(args.sample_singlem_list):
             copy_input(
                 os.path.abspath(table),
                 os.path.join(output, "coassemble", "pipe", os.path.basename(table))
