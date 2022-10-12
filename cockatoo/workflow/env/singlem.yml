@@ -37,4 +37,4 @@ dependencies:
     - scann
     - zenodo_backpack
     - bird-tool-utils >= 0.3.0
-    - git+https://github.com/AroneyS/singlem.git@2b1b4dc749cc1f1b825a8ded178e7099f181fcbc
+    - git+https://github.com/wwood/singlem.git@3a1bfc0b8b9ff273fc454bba44e6f4d9076325b3
