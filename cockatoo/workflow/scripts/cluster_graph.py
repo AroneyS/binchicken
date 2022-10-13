@@ -72,6 +72,16 @@ for iteration in comp:
         clusters = pd.concat([clusters, df], ignore_index=True)
 
 clusters.drop_duplicates(inplace=True)
+if MAX_COASSEMBLY_SAMPLES == 1:
+    def find_top_samples(sample):
+        sample_edges = elusive_edges[(elusive_edges["sample1"] == sample) | (elusive_edges["sample2"] == sample)].copy()
+        sample_edges.sort_values(by="weight", ascending=False, inplace=True)
+        recover_samples = sample_edges.head(MAX_RECOVERY_SAMPLES - 1)
+        recover_samples = recover_samples["sample1"].to_list() + recover_samples["sample2"].to_list()
+        return ",".join(sorted(set(recover_samples)))
+
+    clusters["recover_samples"] = clusters["samples"].apply(find_top_samples)
+
 clusters.sort_values(by=["total_targets", "samples"], ascending=False, inplace=True)
 clusters.reset_index(drop=True, inplace=True)
 clusters["coassembly"] = (clusters.reset_index()["index"].apply(lambda x: "coassembly_" + str(x)))
