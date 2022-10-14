@@ -111,7 +111,7 @@ class Tests(unittest.TestCase):
                         "2",
                         "2",
                         "2869",
-                        "sample_1,sample_2",
+                        "sample_1,sample_2,sample_3",
                         "coassembly_0"
                     ]),
                     ""
@@ -168,9 +168,11 @@ class Tests(unittest.TestCase):
                         "-1",
                         os.path.join(test_dir, "coassemble", "mapping", "sample_1_unmapped.1.fq.gz"),
                         os.path.join(test_dir, "coassemble", "mapping", "sample_2_unmapped.1.fq.gz"),
+                        os.path.join(test_dir, "coassemble", "mapping", "sample_3_unmapped.1.fq.gz"),
                         "-2",
                         os.path.join(test_dir, "coassemble", "mapping", "sample_1_unmapped.2.fq.gz"),
                         os.path.join(test_dir, "coassemble", "mapping", "sample_2_unmapped.2.fq.gz"),
+                        os.path.join(test_dir, "coassemble", "mapping", "sample_3_unmapped.2.fq.gz"),
                         "--output", os.path.join(test_dir, "coassemble", "coassemble", "coassembly_0", "recover"),
                         "-n 16 -m 250 &>",
                         os.path.join(test_dir, "coassemble", "coassemble", "logs", "coassembly_0_recover.log"),
@@ -258,7 +260,7 @@ class Tests(unittest.TestCase):
                         "2",
                         "2",
                         "2869",
-                        "sample_1,sample_3",
+                        "sample_1,sample_2,sample_3",
                         "coassembly_0"
                     ]),
                     ""
@@ -313,7 +315,7 @@ class Tests(unittest.TestCase):
                         "2",
                         "2",
                         "2869",
-                        "sample_1,sample_2",
+                        "sample_1,sample_2,sample_3",
                         "coassembly_0"
                     ]),
                     ""
@@ -436,9 +438,11 @@ class Tests(unittest.TestCase):
                         "-1",
                         os.path.join(os.path.abspath(path_to_data), "sample_1.1.fq"),
                         os.path.join(os.path.abspath(path_to_data), "sample_2.1.fq"),
+                        os.path.join(os.path.abspath(path_to_data), "sample_3.1.fq"),
                         "-2",
                         os.path.join(os.path.abspath(path_to_data), "sample_1.2.fq"),
                         os.path.join(os.path.abspath(path_to_data), "sample_2.2.fq"),
+                        os.path.join(os.path.abspath(path_to_data), "sample_3.2.fq"),
                         "--output", os.path.join(test_dir, "coassemble", "coassemble", "coassembly_0", "recover"),
                         "-n 16 -m 250 &>",
                         os.path.join(test_dir, "coassemble", "coassemble", "logs", "coassembly_0_recover.log"),

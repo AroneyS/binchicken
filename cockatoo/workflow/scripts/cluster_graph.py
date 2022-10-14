@@ -7,7 +7,9 @@ import pandas as pd
 import re
 import networkx as nx
 from networkx.algorithms import community
+from networkx.algorithms import components
 from operator import itemgetter
+import itertools
 
 def pipeline(
         elusive_edges,
@@ -16,14 +18,15 @@ def pipeline(
         MAX_COASSEMBLY_SAMPLES=2,
         MIN_COASSEMBLY_SAMPLES=2,
         MAX_RECOVERY_SAMPLES=20):
-    # Fix sample names and prepare read_size
+
     elusive_edges["sample1"] = elusive_edges["sample1"].apply(lambda x: re.sub("\.1$", "", x))
     elusive_edges["sample2"] = elusive_edges["sample2"].apply(lambda x: re.sub("\.1$", "", x))
 
-    node_attributes = {k: {"read_size": v} for k,v in zip(read_size["sample"], read_size["read_size"])}
+    clusters = pd.DataFrame(columns=["samples", "length", "total_weight", "total_targets", "total_size", "recover_samples"])
 
     # Create weighted graph and cluster with Girvan-Newman algorithm, removing edges from lightest to heaviest
     graph = nx.from_pandas_edgelist(elusive_edges, source="sample1", target="sample2", edge_attr=True)
+    node_attributes = {k: {"read_size": v} for k,v in zip(read_size["sample"], read_size["read_size"])}
     nx.set_node_attributes(graph, node_attributes)
 
     def lightest(graph):
@@ -31,9 +34,9 @@ def pipeline(
         return (u, v)
 
     comp = community.girvan_newman(graph, most_valuable_edge=lightest)
-    clusters = pd.DataFrame(columns=["samples", "length", "total_weight", "total_targets", "total_size", "recover_samples"])
+    first_community = [[c for c in components.connected_components(graph)]]
     umbrellas = []
-    for iteration in comp:
+    for iteration in itertools.chain(first_community, comp):
         communities = tuple(sorted(c) for c in iteration)
         for c in communities:
             if len(c) <= MAX_RECOVERY_SAMPLES and len(c) >= MIN_COASSEMBLY_SAMPLES and not c in umbrellas:
