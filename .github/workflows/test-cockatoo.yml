@@ -32,3 +32,4 @@ jobs:
         run: |
           python test/test_coassemble.py
           python test/test_evaluate.py
+          python test/test_cluster_graph.py
