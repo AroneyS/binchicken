@@ -105,6 +105,12 @@ def coassemble(args):
         raise Exception("SingleM metapackage (--singlem-metapackage or SINGLEM_METAPACKAGE_PATH environment variable, see SingleM data) must be provided when SingleM query otu tables are not provided")
     if (args.forward and args.forward_list) or (args.reverse and args.reverse_list) or (args.genomes and args.genomes_list) or (args.sample_singlem and args.sample_singlem_list):
         raise Exception("General argument cannot be provided with list argument")
+    if args.max_coassembly_samples:
+        if args.max_coassembly_samples > args.max_recovery_samples:
+            raise Exception("Max recovery samples (--max-recovery-samples) must be greater than or equal to max coassembly samples (--max-coassembly-samples)")
+    else:
+        if args.num_coassembly_samples > args.max_recovery_samples:
+            raise Exception("Max recovery samples (--max-recovery-samples) must be greater than or equal to number of coassembly samples (--num-coassembly-samples)")
 
     output = os.path.abspath(args.output)
     if not os.path.exists(output):
