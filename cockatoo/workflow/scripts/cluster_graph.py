@@ -72,15 +72,32 @@ def pipeline(
             clusters = pd.concat([clusters, df], ignore_index=True)
 
     clusters.drop_duplicates(inplace=True)
-    if MAX_COASSEMBLY_SAMPLES == 1:
-        def find_top_samples(sample):
-            sample_edges = elusive_edges[(elusive_edges["sample1"] == sample) | (elusive_edges["sample2"] == sample)].copy()
-            sample_edges.sort_values(by="weight", ascending=False, inplace=True)
-            recover_samples = sample_edges.head(MAX_RECOVERY_SAMPLES - 1)
-            recover_samples = recover_samples["sample1"].to_list() + recover_samples["sample2"].to_list()
-            return ",".join(sorted(set(recover_samples)))
 
-        clusters["recover_samples"] = clusters["samples"].apply(find_top_samples)
+    def find_top_samples(row):
+        samples = row["samples"].split(",")
+        recover_samples = row["recover_samples"].split(",")
+        if len(recover_samples) >= MAX_RECOVERY_SAMPLES:
+            return ",".join(recover_samples)
+
+        relevant_edges = elusive_edges[(elusive_edges["sample1"].isin(samples)) != (elusive_edges["sample2"].isin(samples))].copy()
+        relevant_edges["other_sample"] = relevant_edges.apply(lambda x: x["sample1"] if x["sample1"] not in samples else x["sample2"], axis=1)
+        relevant_edges = relevant_edges[~relevant_edges["other_sample"].isin(recover_samples)]
+
+        if MAX_COASSEMBLY_SAMPLES > 1:
+            relevant_targets = elusive_edges[(elusive_edges["sample1"].isin(samples)) & (elusive_edges["sample2"].isin(samples))].copy()
+            relevant_targets = set([i for l in [l.split(",") for l in relevant_targets["target_ids"].to_list()] for i in l])
+            relevant_edges["target_ids"] = relevant_edges["target_ids"].apply(lambda x: [i for i in x.split(",") if i in relevant_targets])
+        else:
+            relevant_edges["target_ids"] = relevant_edges["target_ids"].apply(lambda x: x.split(","))
+
+        relevant_samples = relevant_edges.groupby("other_sample").agg({"target_ids": lambda x: set(itertools.chain(*x))}).reset_index()
+        relevant_samples["length"] = relevant_samples["target_ids"].apply(lambda x: len(x))
+        relevant_samples.sort_values(by="length", ascending=False, inplace=True)
+
+        recover_samples += relevant_samples.head(MAX_RECOVERY_SAMPLES - len(recover_samples))["other_sample"].to_list()
+        return ",".join(sorted(recover_samples))
+
+    clusters["recover_samples"] = clusters[["samples", "recover_samples"]].apply(find_top_samples, axis=1)
 
     clusters.sort_values(by=["total_targets", "samples"], ascending=False, inplace=True)
     clusters.reset_index(drop=True, inplace=True)

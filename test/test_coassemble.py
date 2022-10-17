@@ -361,7 +361,7 @@ class Tests(unittest.TestCase):
                         "0",
                         "0",
                         "1208",
-                        "sample_1,sample_3",
+                        "sample_1,sample_2,sample_3",
                         "coassembly_0"
                     ]),
                     "\t".join([
@@ -370,7 +370,7 @@ class Tests(unittest.TestCase):
                         "0",
                         "0",
                         "1208",
-                        "sample_1,sample_2",
+                        "sample_1,sample_2,sample_3",
                         "coassembly_1"
                     ]),
                     "\t".join([
