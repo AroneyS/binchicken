@@ -59,7 +59,7 @@ def copy_input(input, output, suppress=False):
     os.makedirs(os.path.dirname(output), exist_ok=True)
 
     if not suppress:
-        logging.info(f"Symbolic-linking input file {input} to {output}")
+        logging.debug(f"Symbolic-linking input file {input} to {output}")
     os.symlink(input, output)
 
 def read_list(path):
@@ -116,7 +116,7 @@ def coassemble(args):
     if not os.path.exists(output):
         os.makedirs(output)
 
-    # Load sample info
+    logging.info("Loading sample info")
     if args.forward_list:
         args.forward = read_list(args.forward_list)
     if args.reverse_list:
@@ -144,7 +144,7 @@ def coassemble(args):
             os.path.join(output, "coassemble", "read_size.csv"),
         )
 
-    # Load genome info
+    logging.info("Loading genome info")
     if args.genomes_list:
         args.genomes = read_list(args.genomes_list)
     if args.genomes:
