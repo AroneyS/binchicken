@@ -21,16 +21,16 @@ Optionally, reads can be mapped to the matched bins with only unmapped reads bei
 
 ```bash
 # Example: cluster reads into proposed coassemblies based on unbinned sequences
-cockatoo coassemble --forward reads_1.1.fq ... --reverse reads_1.2.fq ... --genomes genome_1.fna ... --singlem-metapackage metapackage.smpkg
+cockatoo coassemble --forward reads_1.1.fq ... --reverse reads_1.2.fq ... --genomes genome_1.fna ...
 
 # Example: cluster reads into proposed coassemblies based on unbinned sequences and coassemble only unbinned reads
-cockatoo coassemble --forward reads_1.1.fq ... --reverse reads_1.2.fq ... --genomes genome_1.fna ... --singlem-metapackage metapackage.smpkg --assemble-unmapped
+cockatoo coassemble --forward reads_1.1.fq ... --reverse reads_1.2.fq ... --genomes genome_1.fna ... --assemble-unmapped
 
 # Example: cluster reads into proposed coassemblies based on unbinned sequences from a specific taxa
-cockatoo coassemble --forward reads_1.1.fq ... --reverse reads_1.2.fq ... --genomes genome_1.fna ... --singlem-metapackage metapackage.smpkg --taxa-of-interest "p__Planctomycetota"
+cockatoo coassemble --forward reads_1.1.fq ... --reverse reads_1.2.fq ... --genomes genome_1.fna ... --taxa-of-interest "p__Planctomycetota"
 
 # Example: find relevant samples for differential coverage binning (no coassembly)
-cockatoo coassemble --forward reads_1.1.fq ... --reverse reads_1.2.fq ... --singlem-metapackage metapackage.smpkg --single-assembly
+cockatoo coassemble --forward reads_1.1.fq ... --reverse reads_1.2.fq ... --single-assembly
 ```
 
 ## Cockatoo evaluate
@@ -40,5 +40,5 @@ Compares the recovery by phyla and by single-copy marker gene.
 
 ```bash
 # Example: evaluate a completed coassembly
-cockatoo evaluate --coassemble-output coassemble_dir --aviary-outputs coassembly_0_dir ... --singlem-metapackage metapackage.smpkg
+cockatoo evaluate --coassemble-output coassemble_dir --aviary-outputs coassembly_0_dir ...
 ```
