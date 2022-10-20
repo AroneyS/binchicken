@@ -93,6 +93,8 @@ def run_workflow(config, workflow, output_dir, cores=16, dryrun=False,
 def coassemble(args):
     if not args.forward and not args.forward_list:
         raise Exception("Input reads must be provided")
+    if not args.reverse and not args.reverse_list:
+        raise Exception("Interleaved and long-reads not yet implemented")
     if args.sample_query and not args.sample_singlem and not args.sample_singlem_list:
         raise Exception("Input SingleM query (--sample-query) requires SingleM otu tables (--sample-singlem) for coverage")
     if not args.genomes and not args.genomes_list and not args.genome_transcripts and not args.genome_transcripts_list and not args.single_assembly:
