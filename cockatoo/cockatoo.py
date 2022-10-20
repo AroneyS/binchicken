@@ -60,7 +60,12 @@ def copy_input(input, output, suppress=False):
 
     if not suppress:
         logging.debug(f"Symbolic-linking input file {input} to {output}")
-    os.symlink(input, output)
+
+    try:
+        os.symlink(input, output)
+    except FileExistsError:
+        os.remove(output)
+        os.symlink(input, output)
 
 def read_list(path):
     with open(path) as f:
