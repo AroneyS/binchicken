@@ -54,6 +54,8 @@ if __name__ == "__main__":
     WINDOW_SIZE = snakemake.params.window_size
     query_reads = snakemake.input.query_reads
     pipe_reads = snakemake.input.pipe_reads
+    binned_path = snakemake.output.binned
+    unbinned_path = snakemake.output.unbinned
 
     outputs = pipeline(
         query_reads,
@@ -64,6 +66,6 @@ if __name__ == "__main__":
 
     first = True
     for binned, unbinned in outputs:
-        binned.to_csv(snakemake.output.binned, sep = "\t", mode = "a", header = first, index = False)
-        unbinned.to_csv(snakemake.output.unbinned, sep = "\t", mode = "a", header = first, index = False)
+        binned.to_csv(binned_path, sep = "\t", mode = "a", header = first, index = False)
+        unbinned.to_csv(unbinned_path, sep = "\t", mode = "a", header = first, index = False)
         first = False
