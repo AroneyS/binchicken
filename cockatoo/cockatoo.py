@@ -100,9 +100,9 @@ def coassemble(args):
         raise Exception("Input reads must be provided")
     if not args.reverse and not args.reverse_list:
         raise Exception("Interleaved and long-reads not yet implemented")
-    if args.sample_query and not args.sample_singlem and not args.sample_singlem_list:
+    if (args.sample_query or args.sample_query_list or args.sample_query_dir) and not (args.sample_singlem or args.sample_singlem_list or args.sample_singlem_dir):
         raise Exception("Input SingleM query (--sample-query) requires SingleM otu tables (--sample-singlem) for coverage")
-    if not args.genomes and not args.genomes_list and not args.genome_transcripts and not args.genome_transcripts_list and not args.single_assembly:
+    if not (args.genomes or args.genomes_list or args.genome_transcripts or args.genome_transcripts_list or args.single_assembly):
         raise Exception("Input genomes must be provided")
     if args.assemble_unmapped and args.single_assembly:
         raise Exception("Assemble unmapped is incompatible with single-sample assembly")
@@ -110,8 +110,12 @@ def coassemble(args):
         raise Exception("Reference genomes must be provided to assemble unmapped reads")
     if not args.singlem_metapackage and not os.environ['SINGLEM_METAPACKAGE_PATH'] and not args.sample_query and not args.sample_query_list:
         raise Exception("SingleM metapackage (--singlem-metapackage or SINGLEM_METAPACKAGE_PATH environment variable, see SingleM data) must be provided when SingleM query otu tables are not provided")
-    if (args.forward and args.forward_list) or (args.reverse and args.reverse_list) or (args.genomes and args.genomes_list) or (args.sample_singlem and args.sample_singlem_list) or (args.sample_query and args.sample_query_list):
-        raise Exception("General argument cannot be provided with list argument")
+    if (args.forward and args.forward_list) or \
+        (args.reverse and args.reverse_list) or \
+        (args.genomes and args.genomes_list) or \
+        (args.sample_singlem and args.sample_singlem_list) or (args.sample_singlem_dir and args.sample_singlem_list) or (args.sample_singlem and args.sample_singlem_dir) or \
+        (args.sample_query and args.sample_query_list) or (args.sample_query_dir and args.sample_query_list) or (args.sample_query and args.sample_query_dir):
+        raise Exception("General, list and directory arguments are mutually exclusive")
     if args.max_coassembly_samples:
         if args.max_coassembly_samples > args.max_recovery_samples:
             raise Exception("Max recovery samples (--max-recovery-samples) must be greater than or equal to max coassembly samples (--max-coassembly-samples)")
@@ -137,6 +141,11 @@ def coassemble(args):
                 os.path.abspath(table),
                 os.path.join(output, "coassemble", "pipe", os.path.basename(table))
             )
+    if args.sample_singlem_dir:
+        copy_input(
+            os.path.abspath(args.sample_singlem_dir),
+            os.path.join(output, "coassemble", "pipe")
+        )
     if args.sample_query_list:
         args.sample_query = read_list(args.sample_query_list)
     if args.sample_query:
@@ -145,6 +154,11 @@ def coassemble(args):
                 os.path.abspath(table),
                 os.path.join(output, "coassemble", "query", os.path.basename(table))
             )
+    if args.sample_query_dir:
+        copy_input(
+            os.path.abspath(args.sample_query_dir),
+            os.path.join(output, "coassemble", "query")
+        )
     if args.sample_read_size:
         copy_input(
             os.path.abspath(args.sample_read_size),
@@ -319,8 +333,10 @@ def main():
     # Midpoint arguments
     coassemble_parser.add_argument("--sample-singlem", nargs='+', help="SingleM otu tables for each sample, in the form \"[sample name]_read.otu_table.tsv\". If provided, SingleM pipe sample is skipped")
     coassemble_parser.add_argument("--sample-singlem-list", help="SingleM otu tables for each sample, in the form \"[sample name]_read.otu_table.tsv\" newline separated. If provided, SingleM pipe sample is skipped")
+    coassemble_parser.add_argument("--sample-singlem-dir", help="Directory containing SingleM otu tables for each sample, in the form \"[sample name]_read.otu_table.tsv\". If provided, SingleM pipe sample is skipped")
     coassemble_parser.add_argument("--sample-query", nargs='+', help="Queried SingleM otu tables for each sample against genome database, in the form \"[sample name]_query.otu_table.tsv\". If provided, SingleM pipe and appraise are skipped")
     coassemble_parser.add_argument("--sample-query-list", help="Queried SingleM otu tables for each sample against genome database, in the form \"[sample name]_query.otu_table.tsv\" newline separated. If provided, SingleM pipe and appraise are skipped")
+    coassemble_parser.add_argument("--sample-query-dir", help="Directory containing Queried SingleM otu tables for each sample against genome database, in the form \"[sample name]_query.otu_table.tsv\". If provided, SingleM pipe and appraise are skipped")
     coassemble_parser.add_argument("--sample-read-size", help="Comma separated list of sample name and size (bp). If provided, sample read counting is skipped")
     coassemble_parser.add_argument("--genome-transcripts", nargs='+', help="Genome transcripts for reference database, in the form \"[genome]_protein.fna\"")
     coassemble_parser.add_argument("--genome-transcripts-list", help="Genome transcripts for reference database, in the form \"[genome]_protein.fna\" newline separated")

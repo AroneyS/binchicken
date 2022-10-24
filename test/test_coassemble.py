@@ -38,6 +38,7 @@ SAMPLE_SINGLEM = ' '.join([
 GENOME_TRANSCRIPTS = ' '.join([os.path.join(path_to_data, "GB_GCA_013286235.1_protein.fna")])
 GENOME_SINGLEM = os.path.join(MOCK_COASSEMBLE, "summarise", "bins_summarised.otu_table2.tsv")
 
+SAMPLE_QUERY_DIR = os.path.join(path_to_data, "query")
 SAMPLE_QUERY = ' '.join([
     os.path.join(path_to_data, "query", "sample_1_query.otu_table.tsv"),
     os.path.join(path_to_data, "query", "sample_2_query.otu_table.tsv"),
@@ -604,6 +605,38 @@ class Tests(unittest.TestCase):
             self.assertTrue("singlem_summarise_genomes" not in output)
             self.assertTrue("singlem_appraise" in output)
             self.assertTrue("query_processing" not in output)
+            self.assertTrue("single_assembly" not in output)
+            self.assertTrue("count_bp_reads" not in output)
+            self.assertTrue("target_elusive" in output)
+            self.assertTrue("cluster_graph" in output)
+            self.assertTrue("collect_genomes" not in output)
+            self.assertTrue("map_reads" not in output)
+            self.assertTrue("finish_mapping" not in output)
+            self.assertTrue("aviary_commands" in output)
+
+    def test_coassemble_singlem_inputs_dir(self):
+        with in_tempdir():
+            cmd = (
+                f"cockatoo coassemble "
+                f"--forward {SAMPLE_READS_FORWARD} "
+                f"--reverse {SAMPLE_READS_REVERSE} "
+                f"--genomes {GENOMES} "
+                f"--sample-singlem-dir {SAMPLE_QUERY_DIR} "
+                f"--sample-query-dir {SAMPLE_QUERY_DIR} "
+                f"--sample-read-size {SAMPLE_READ_SIZE} "
+                f"--output test "
+                f"--conda-prefix {path_to_conda} "
+                f"--dryrun "
+                f"--snakemake-args \" --quiet\" "
+            )
+            output = extern.run(cmd)
+
+            self.assertTrue("singlem_pipe_reads" not in output)
+            self.assertTrue("genome_transcripts" not in output)
+            self.assertTrue("singlem_pipe_genomes" not in output)
+            self.assertTrue("singlem_summarise_genomes" not in output)
+            self.assertTrue("singlem_appraise" not in output)
+            self.assertTrue("query_processing" in output)
             self.assertTrue("single_assembly" not in output)
             self.assertTrue("count_bp_reads" not in output)
             self.assertTrue("target_elusive" in output)
