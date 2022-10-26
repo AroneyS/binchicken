@@ -17,7 +17,7 @@ def processing(
         # Appraise output: gene, sample, sequence, num_hits, coverage, taxonomy, found_in
         .rename(columns = {"marker": "gene", "query_name":"sample", "query_sequence": "sequence", "sample": "found_in"})
         # Query taxonomy, num_hits and coverage are from database (e.g. the genomes)
-        .drop(["taxonomy", "num_hits", "coverage"], axis = 1)
+        .drop(["taxonomy", "num_hits", "coverage"], axis=1, errors="ignore")
         .set_index(["gene", "sample", "sequence"])
         .join(pipe_read.set_index(["gene", "sample", "sequence"]), on = ["gene", "sample", "sequence"])
         .reset_index()
