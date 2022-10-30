@@ -630,7 +630,6 @@ class Tests(unittest.TestCase):
                 f"--snakemake-args \" --quiet\" "
             )
             output = extern.run(cmd)
-            print(output)
 
             self.assertTrue("singlem_pipe_reads" not in output)
             self.assertTrue("genome_transcripts" not in output)
