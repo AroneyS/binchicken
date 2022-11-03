@@ -11,12 +11,18 @@ logs_dir = output_dir + "/logs"
 mapped_reads_1 = {read: output_dir + f"/mapping/{read}_unmapped.1.fq.gz" for read in config["reads_1"]}
 mapped_reads_2 = {read: output_dir + f"/mapping/{read}_unmapped.2.fq.gz" for read in config["reads_2"]}
 
-def get_reads(wildcards):
+def get_reads(wildcards, forward = True):
     version = wildcards.version
     if version == "":
-        return config["reads_1"].values()
+        if forward:
+            return config["reads_1"].values()
+        else:
+            return config["reads_2"].values()
     elif version == "unmapped_":
-        return mapped_reads_1.values()
+        if forward:
+            return mapped_reads_1.values()
+        else:
+            return mapped_reads_2.values()
     else:
         raise ValueError("Version should be empty or unmapped")
 
@@ -186,7 +192,8 @@ rule single_assembly:
 ######################
 rule count_bp_reads:
     input:
-        get_reads
+        reads_1 = lambda wildcards: get_reads(wildcards),
+        reads_2 = lambda wildcards: get_reads(wildcards, forward = False)
     output:
         output_dir + "/{version,.*}read_size.csv"
     params:
@@ -197,8 +204,8 @@ rule count_bp_reads:
     shell:
         "parallel -k -j {threads} "
         "echo -n {{1}}, '&&' "
-        "{params.cat} {{2}} '|' sed -n 2~4p '|' tr -d '\"\n\"' '|' wc -m "
-        "::: {params.names} :::+ {input} "
+        "{params.cat} {{2}} {{3}} '|' sed -n 2~4p '|' tr -d '\"\n\"' '|' wc -m "
+        "::: {params.names} :::+ {input.reads_1} :::+ {input.reads_2} "
         "> {output}"
 
 rule target_elusive:

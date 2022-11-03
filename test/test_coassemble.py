@@ -77,9 +77,9 @@ class Tests(unittest.TestCase):
             self.assertTrue(os.path.exists(read_size_path))
             expected = "\n".join(
                 [
-                    ",".join(["sample_1", "1661"]),
-                    ",".join(["sample_2", "1208"]),
-                    ",".join(["sample_3", "1208"]),
+                    ",".join(["sample_1", "3322"]),
+                    ",".join(["sample_2", "2416"]),
+                    ",".join(["sample_3", "2416"]),
                     ""
                 ]
             )
@@ -111,7 +111,7 @@ class Tests(unittest.TestCase):
                         "2",
                         "2",
                         "2",
-                        "2869",
+                        "5738",
                         "sample_1,sample_2,sample_3",
                         "coassembly_0"
                     ]),
@@ -204,8 +204,8 @@ class Tests(unittest.TestCase):
                         "2",
                         "2",
                         "2",
-                        "2869",
-                        "2416",
+                        "5738",
+                        "4832",
                     ]),
                     ""
                 ]
@@ -361,7 +361,7 @@ class Tests(unittest.TestCase):
                         "1",
                         "0",
                         "0",
-                        "1208",
+                        "2416",
                         "sample_1,sample_2,sample_3",
                         "coassembly_0"
                     ]),
@@ -370,7 +370,7 @@ class Tests(unittest.TestCase):
                         "1",
                         "0",
                         "0",
-                        "1208",
+                        "2416",
                         "sample_1,sample_2,sample_3",
                         "coassembly_1"
                     ]),
@@ -379,7 +379,7 @@ class Tests(unittest.TestCase):
                         "1",
                         "0",
                         "0",
-                        "1661",
+                        "3322",
                         "sample_1,sample_2,sample_3",
                         "coassembly_2"
                     ]),
