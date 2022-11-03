@@ -96,55 +96,25 @@ def run_workflow(config, workflow, output_dir, cores=16, dryrun=False,
     subprocess.check_call(cmd, shell=True)
 
 def coassemble(args):
-    if not args.forward and not args.forward_list:
-        raise Exception("Input reads must be provided")
-    if not args.reverse and not args.reverse_list:
-        raise Exception("Interleaved and long-reads not yet implemented")
-    if (args.sample_query or args.sample_query_list or args.sample_query_dir) and not (args.sample_singlem or args.sample_singlem_list or args.sample_singlem_dir):
-        raise Exception("Input SingleM query (--sample-query) requires SingleM otu tables (--sample-singlem) for coverage")
-    if not (args.genomes or args.genomes_list or args.genome_transcripts or args.genome_transcripts_list or args.single_assembly):
-        raise Exception("Input genomes must be provided")
-    if args.assemble_unmapped and args.single_assembly:
-        raise Exception("Assemble unmapped is incompatible with single-sample assembly")
-    if args.assemble_unmapped and not args.genomes and not args.genomes_list:
-        raise Exception("Reference genomes must be provided to assemble unmapped reads")
-    if not args.singlem_metapackage and not os.environ['SINGLEM_METAPACKAGE_PATH'] and not args.sample_query and not args.sample_query_list:
-        raise Exception("SingleM metapackage (--singlem-metapackage or SINGLEM_METAPACKAGE_PATH environment variable, see SingleM data) must be provided when SingleM query otu tables are not provided")
-    if (args.forward and args.forward_list) or \
-        (args.reverse and args.reverse_list) or \
-        (args.genomes and args.genomes_list) or \
-        (args.sample_singlem and args.sample_singlem_list) or (args.sample_singlem_dir and args.sample_singlem_list) or (args.sample_singlem and args.sample_singlem_dir) or \
-        (args.sample_query and args.sample_query_list) or (args.sample_query_dir and args.sample_query_list) or (args.sample_query and args.sample_query_dir):
-        raise Exception("General, list and directory arguments are mutually exclusive")
-    if args.max_coassembly_samples:
-        if args.max_coassembly_samples > args.max_recovery_samples:
-            raise Exception("Max recovery samples (--max-recovery-samples) must be greater than or equal to max coassembly samples (--max-coassembly-samples)")
-    else:
-        if args.num_coassembly_samples > args.max_recovery_samples:
-            raise Exception("Max recovery samples (--max-recovery-samples) must be greater than or equal to number of coassembly samples (--num-coassembly-samples)")
-
-    output = os.path.abspath(args.output)
-    if not os.path.exists(output):
-        os.makedirs(output)
-
     logging.info("Loading sample info")
     if args.forward_list:
         args.forward = read_list(args.forward_list)
     if args.reverse_list:
         args.reverse = read_list(args.reverse_list)
     forward_reads, reverse_reads = build_reads_list(args.forward, args.reverse)
+
     if args.sample_singlem_list:
         args.sample_singlem = read_list(args.sample_singlem_list)
     if args.sample_singlem:
         for table in args.sample_singlem:
             copy_input(
                 os.path.abspath(table),
-                os.path.join(output, "coassemble", "pipe", os.path.basename(table))
+                os.path.join(args.output, "coassemble", "pipe", os.path.basename(table))
             )
     if args.sample_singlem_dir:
         copy_input(
             os.path.abspath(args.sample_singlem_dir),
-            os.path.join(output, "coassemble", "pipe")
+            os.path.join(args.output, "coassemble", "pipe")
         )
     if args.sample_query_list:
         args.sample_query = read_list(args.sample_query_list)
@@ -152,17 +122,17 @@ def coassemble(args):
         for table in args.sample_query:
             copy_input(
                 os.path.abspath(table),
-                os.path.join(output, "coassemble", "query", os.path.basename(table))
+                os.path.join(args.output, "coassemble", "query", os.path.basename(table))
             )
     if args.sample_query_dir:
         copy_input(
             os.path.abspath(args.sample_query_dir),
-            os.path.join(output, "coassemble", "query")
+            os.path.join(args.output, "coassemble", "query")
         )
     if args.sample_read_size:
         copy_input(
             os.path.abspath(args.sample_read_size),
-            os.path.join(output, "coassemble", "read_size.csv"),
+            os.path.join(args.output, "coassemble", "read_size.csv"),
         )
 
     logging.info("Loading genome info")
@@ -178,13 +148,13 @@ def coassemble(args):
         for tr in args.genome_transcripts:
             copy_input(
                 os.path.abspath(tr),
-                os.path.join(output, "coassemble", "transcripts", os.path.basename(tr)),
+                os.path.join(args.output, "coassemble", "transcripts", os.path.basename(tr)),
                 suppress=True,
             )
     if args.genome_singlem:
         copy_input(
             os.path.abspath(args.genome_singlem),
-            os.path.join(output, "coassemble", "summarise", "bins_summarised.otu_table.tsv")
+            os.path.join(args.output, "coassemble", "summarise", "bins_summarised.otu_table.tsv")
         )
     if args.singlem_metapackage:
         metapackage = os.path.abspath(args.singlem_metapackage)
@@ -223,14 +193,14 @@ def coassemble(args):
 
     config_path = make_config(
         importlib.resources.files("cockatoo.config").joinpath("template_coassemble.yaml"),
-        output,
+        args.output,
         config_items
         )
 
     run_workflow(
         config = config_path,
         workflow = "coassemble.smk",
-        output_dir = output,
+        output_dir = args.output,
         cores = args.cores,
         dryrun = args.dryrun,
         conda_prefix = args.conda_prefix,
@@ -238,9 +208,6 @@ def coassemble(args):
     )
 
 def evaluate(args):
-    if not args.singlem_metapackage and not os.environ['SINGLEM_METAPACKAGE_PATH']:
-        raise Exception("SingleM metapackage (--singlem-metapackage or SINGLEM_METAPACKAGE_PATH environment variable, see SingleM data) must be provided")
-
     coassemble_target_dir = os.path.abspath(os.path.join(args.coassemble_output, "target"))
     recovered_bins = {
         os.path.basename(coassembly.rstrip("/")): 
@@ -269,20 +236,16 @@ def evaluate(args):
         "max_contamination": args.max_contamination,
     }
 
-    output = os.path.abspath(args.output)
-    if not os.path.exists(output):
-        os.makedirs(output)
-
     config_path = make_config(
         importlib.resources.files("cockatoo.config").joinpath("template_evaluate.yaml"),
-        output,
+        args.output,
         config_items
         )
 
     run_workflow(
         config = config_path,
         workflow = "evaluate.smk",
-        output_dir = output,
+        output_dir = args.output,
         cores = args.cores,
         dryrun = args.dryrun,
         conda_prefix = args.conda_prefix,
@@ -386,9 +349,42 @@ def main():
     logging.info(f"Cockatoo v{__version__}")
     logging.info(f"Command: {' '.join(['cockatoo'] + sys.argv[1:])}")
 
+    args.output = os.path.abspath(args.output)
+    if not os.path.exists(args.output):
+        os.makedirs(args.output)
+
     if args.subparser_name == "coassemble":
+        if not args.forward and not args.forward_list:
+            raise Exception("Input reads must be provided")
+        if not args.reverse and not args.reverse_list:
+            raise Exception("Interleaved and long-reads not yet implemented")
+        if (args.sample_query or args.sample_query_list or args.sample_query_dir) and not (args.sample_singlem or args.sample_singlem_list or args.sample_singlem_dir):
+            raise Exception("Input SingleM query (--sample-query) requires SingleM otu tables (--sample-singlem) for coverage")
+        if not (args.genomes or args.genomes_list or args.genome_transcripts or args.genome_transcripts_list or args.single_assembly):
+            raise Exception("Input genomes must be provided")
+        if args.assemble_unmapped and args.single_assembly:
+            raise Exception("Assemble unmapped is incompatible with single-sample assembly")
+        if args.assemble_unmapped and not args.genomes and not args.genomes_list:
+            raise Exception("Reference genomes must be provided to assemble unmapped reads")
+        if not args.singlem_metapackage and not os.environ['SINGLEM_METAPACKAGE_PATH'] and not args.sample_query and not args.sample_query_list:
+            raise Exception("SingleM metapackage (--singlem-metapackage or SINGLEM_METAPACKAGE_PATH environment variable, see SingleM data) must be provided when SingleM query otu tables are not provided")
+        if (args.forward and args.forward_list) or \
+            (args.reverse and args.reverse_list) or \
+            (args.genomes and args.genomes_list) or \
+            (args.sample_singlem and args.sample_singlem_list) or (args.sample_singlem_dir and args.sample_singlem_list) or (args.sample_singlem and args.sample_singlem_dir) or \
+            (args.sample_query and args.sample_query_list) or (args.sample_query_dir and args.sample_query_list) or (args.sample_query and args.sample_query_dir):
+            raise Exception("General, list and directory arguments are mutually exclusive")
+        if args.max_coassembly_samples:
+            if args.max_coassembly_samples > args.max_recovery_samples:
+                raise Exception("Max recovery samples (--max-recovery-samples) must be greater than or equal to max coassembly samples (--max-coassembly-samples)")
+        else:
+            if args.num_coassembly_samples > args.max_recovery_samples:
+                raise Exception("Max recovery samples (--max-recovery-samples) must be greater than or equal to number of coassembly samples (--num-coassembly-samples)")
         coassemble(args)
+
     elif args.subparser_name == "evaluate":
+        if not args.singlem_metapackage and not os.environ['SINGLEM_METAPACKAGE_PATH']:
+            raise Exception("SingleM metapackage (--singlem-metapackage or SINGLEM_METAPACKAGE_PATH environment variable, see SingleM data) must be provided")
         evaluate(args)
 
 if __name__ == "__main__":
