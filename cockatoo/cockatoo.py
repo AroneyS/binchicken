@@ -252,6 +252,47 @@ def evaluate(args):
         snakemake_args = args.snakemake_args,
     )
 
+def unmap(args):
+    logging.info("Loading Cockatoo coassemble info")
+    if args.coassemble_output:
+        args.elusive_clusters = os.path.join(args.coassemble_output, "target", "elusive_clusters.tsv")
+        args.appraise_binned = os.path.join(args.coassemble_output, "appraise", "binned.otu_table.tsv")
+    if args.elusive_clusters:
+        copy_input(
+            os.path.abspath(args.elusive_clusters),
+            os.path.join(args.output, "coassemble", "target", "elusive_clusters.tsv")
+        )
+    if args.appraise_binned:
+        copy_input(
+            os.path.abspath(args.appraise_binned),
+            os.path.join(args.output, "coassemble", "appraise", "binned.otu_table.tsv")
+        )
+    args.snakemake_args = args.snakemake_args + " --rerun-triggers mtime -- aviary_commands" if args.snakemake_args else "--rerun-triggers mtime -- aviary_commands"
+
+    args.singlem_metapackage = None
+    args.sample_singlem = None
+    args.sample_singlem_list = None
+    args.sample_singlem_dir = None
+    args.sample_query = None
+    args.sample_query_list = None
+    args.sample_query_dir = None
+    args.sample_read_size = None
+    args.genome_transcripts = None
+    args.genome_transcripts_list = None
+    args.genome_singlem = None
+    args.taxa_of_interest = None
+    args.appraise_sequence_identity = 1
+    args.min_sequence_coverage = 1
+    args.single_assembly = False
+    args.num_coassembly_samples = 1
+    args.max_coassembly_samples = None
+    args.max_coassembly_size = None
+    args.max_recovery_samples = 1
+    args.prodigal_meta = False
+    args.assemble_unmapped = True
+
+    coassemble(args)
+
 def main():
     main_parser = btu.BirdArgparser(program="Cockatoo", version = __version__,
         examples = {
@@ -277,6 +318,12 @@ def main():
                 btu.Example(
                     "evaluate a completed coassembly",
                     "cockatoo evaluate --coassemble-output coassemble_dir --aviary-outputs coassembly_0_dir ..."
+                ),
+            ],
+            "unmap": [
+                btu.Example(
+                    "generate unmapped reads and commands for completed coassembly",
+                    "cockatoo unmap --coassemble-output coassemble_dir --forward reads_1.1.fq ... --reverse reads_1.2.fq ... --genomes genome_1.fna ..."
                 ),
             ]
         }
@@ -345,6 +392,29 @@ def main():
 
     ###########################################################################
 
+    unmap_parser = main_parser.new_subparser("unmap", "Coassemble reads clustered by unbinned single-copy marker genes")
+    # Base arguments
+    unmap_parser.add_argument("--forward", "--reads", "--sequences", nargs='+', help="input forward/unpaired nucleotide read sequence(s)")
+    unmap_parser.add_argument("--forward-list", "--reads-list", "--sequences-list", help="input forward/unpaired nucleotide read sequence(s) newline separated")
+    unmap_parser.add_argument("--reverse", nargs='+', help="input reverse nucleotide read sequence(s)")
+    unmap_parser.add_argument("--reverse-list", help="input reverse nucleotide read sequence(s) newline separated")
+    unmap_parser.add_argument("--genomes", nargs='+', help="Reference genomes for read mapping")
+    unmap_parser.add_argument("--genomes-list", help="Reference genomes for read mapping newline separated")
+    # Coassembly options
+    unmap_parser.add_argument("--coassemble-output", help="Output dir from cluster subcommand")
+    unmap_parser.add_argument("--appraise-binned", help="SingleM appraise binned output from Cockatoo coassemble (alternative to --coassemble-output)")
+    unmap_parser.add_argument("--elusive-clusters", help="Elusive clusters output from Cockatoo coassemble (alternative to --coassemble-output)")
+    unmap_parser.add_argument("--aviary-cores", type=int, help="Maximum number of cores for Aviary to use", default=16)
+    unmap_parser.add_argument("--aviary-memory", type=int, help="Maximum amount of memory for Aviary to use (Gigabytes)", default=250)
+    # General options
+    unmap_parser.add_argument("--output", help="Output directory [default: .]", default="./")
+    unmap_parser.add_argument("--conda-prefix", help="Path to conda environment install location", default=None)
+    unmap_parser.add_argument("--cores", type=int, help="Maximum number of cores to use", default=1)
+    unmap_parser.add_argument("--dryrun", action="store_true", help="dry run workflow")
+    unmap_parser.add_argument("--snakemake-args", help="Additional commands to be supplied to snakemake in the form of a space-prefixed single string e.g. \" --quiet\"", default="")
+
+    ###########################################################################
+
     args = main_parser.parse_the_args()
     logging.info(f"Cockatoo v{__version__}")
     logging.info(f"Command: {' '.join(['cockatoo'] + sys.argv[1:])}")
@@ -386,6 +456,19 @@ def main():
         if not args.singlem_metapackage and not os.environ['SINGLEM_METAPACKAGE_PATH']:
             raise Exception("SingleM metapackage (--singlem-metapackage or SINGLEM_METAPACKAGE_PATH environment variable, see SingleM data) must be provided")
         evaluate(args)
+
+    elif args.subparser_name == "unmap":
+        if not args.coassemble_output and not (args.appraise_binned and args.elusive_clusters):
+            raise Exception("Either Cockatoo coassemble output (--coassemble-output) or specific input files (--appraise-binned and --elusive-clusters) must be provided")
+        if not args.forward and not args.forward_list:
+            raise Exception("Input reads must be provided")
+        if not args.reverse and not args.reverse_list:
+            raise Exception("Interleaved and long-reads not yet implemented")
+        if not (args.genomes or args.genomes_list):
+            raise Exception("Input genomes must be provided")
+        if (args.forward and args.forward_list) or (args.reverse and args.reverse_list) or (args.genomes and args.genomes_list):
+            raise Exception("General and list arguments are mutually exclusive")
+        unmap(args)
 
 if __name__ == "__main__":
     sys.exit(main())
