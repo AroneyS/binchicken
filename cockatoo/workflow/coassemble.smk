@@ -244,11 +244,13 @@ rule cluster_graph:
 rule collect_genomes:
     input:
         appraise_binned=output_dir + "/appraise/binned.otu_table.tsv",
+        appraise_unbinned=output_dir + "/appraise/unbinned.otu_table.tsv",
     output:
         temp(output_dir + "/mapping/{read}_reference.fna"),
     params:
         genomes=config["genomes"],
         sample="{read}",
+        min_appraised=config["unmapping_min_appraised"],
     script:
         "scripts/collect_reference_bins.py"
 

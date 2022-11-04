@@ -27,7 +27,7 @@ TWO_GENOMES = " ".join([
 
 MOCK_COASSEMBLE = os.path.join(path_to_data, "mock_coassemble")
 APPRAISE_BINNED = os.path.join(MOCK_COASSEMBLE, "appraise", "binned.otu_table.tsv")
-TWO_APPRAISE_BINNED = os.path.join(MOCK_COASSEMBLE, "appraise", "binned.otu_table2.tsv")
+APPRAISE_UNBINNED = os.path.join(MOCK_COASSEMBLE, "appraise", "unbinned.otu_table.tsv")
 ELUSIVE_CLUSTERS = os.path.join(MOCK_COASSEMBLE, "target", "elusive_clusters.tsv")
 
 
@@ -120,6 +120,7 @@ class Tests(unittest.TestCase):
                 f"--reverse {SAMPLE_READS_REVERSE} "
                 f"--genomes {GENOMES} "
                 f"--appraise-binned {APPRAISE_BINNED} "
+                f"--appraise-unbinned {APPRAISE_UNBINNED} "
                 f"--elusive-clusters {ELUSIVE_CLUSTERS} "
                 f"--output test "
                 f"--conda-prefix {path_to_conda} "

@@ -187,6 +187,7 @@ def coassemble(args):
         "prodigal_meta": args.prodigal_meta,
         # Coassembly config
         "assemble_unmapped": args.assemble_unmapped,
+        "unmapping_min_appraised": args.unmapping_min_appraised,
         "aviary_threads": args.aviary_cores,
         "aviary_memory": args.aviary_memory,
     }
@@ -257,6 +258,7 @@ def unmap(args):
     if args.coassemble_output:
         args.elusive_clusters = os.path.join(args.coassemble_output, "target", "elusive_clusters.tsv")
         args.appraise_binned = os.path.join(args.coassemble_output, "appraise", "binned.otu_table.tsv")
+        args.appraise_unbinned = os.path.join(args.coassemble_output, "appraise", "unbinned.otu_table.tsv")
     if args.elusive_clusters:
         copy_input(
             os.path.abspath(args.elusive_clusters),
@@ -266,6 +268,11 @@ def unmap(args):
         copy_input(
             os.path.abspath(args.appraise_binned),
             os.path.join(args.output, "coassemble", "appraise", "binned.otu_table.tsv")
+        )
+    if args.appraise_unbinned:
+        copy_input(
+            os.path.abspath(args.appraise_unbinned),
+            os.path.join(args.output, "coassemble", "appraise", "unbinned.otu_table.tsv")
         )
     args.snakemake_args = args.snakemake_args + " --rerun-triggers mtime -- aviary_commands" if args.snakemake_args else "--rerun-triggers mtime -- aviary_commands"
 
@@ -363,6 +370,7 @@ def main():
     coassemble_parser.add_argument("--prodigal-meta", action="store_true", help="Use prodigal \"-p meta\" argument (for testing)")
     # Coassembly options
     coassemble_parser.add_argument("--assemble-unmapped", action="store_true", help="Only assemble reads that do not map to reference genomes")
+    coassemble_parser.add_argument("--unmapping-min-appraised", type=int, help="Minimum fraction of sequences binned to justify unmapping [default: 0.1]", default=0.1)
     coassemble_parser.add_argument("--aviary-cores", type=int, help="Maximum number of cores for Aviary to use", default=16)
     coassemble_parser.add_argument("--aviary-memory", type=int, help="Maximum amount of memory for Aviary to use (Gigabytes)", default=250)
     # General options
@@ -403,7 +411,9 @@ def main():
     # Coassembly options
     unmap_parser.add_argument("--coassemble-output", help="Output dir from cluster subcommand")
     unmap_parser.add_argument("--appraise-binned", help="SingleM appraise binned output from Cockatoo coassemble (alternative to --coassemble-output)")
+    unmap_parser.add_argument("--appraise-unbinned", help="SingleM appraise unbinned output from Cockatoo coassemble (alternative to --coassemble-output)")
     unmap_parser.add_argument("--elusive-clusters", help="Elusive clusters output from Cockatoo coassemble (alternative to --coassemble-output)")
+    unmap_parser.add_argument("--unmapping-min-appraised", type=int, help="Minimum fraction of sequences binned to justify unmapping [default: 0.1]", default=0.1)
     unmap_parser.add_argument("--aviary-cores", type=int, help="Maximum number of cores for Aviary to use", default=16)
     unmap_parser.add_argument("--aviary-memory", type=int, help="Maximum amount of memory for Aviary to use (Gigabytes)", default=250)
     # General options
@@ -458,7 +468,7 @@ def main():
         evaluate(args)
 
     elif args.subparser_name == "unmap":
-        if not args.coassemble_output and not (args.appraise_binned and args.elusive_clusters):
+        if not args.coassemble_output and not (args.appraise_binned and args.appraise_unbinned and args.elusive_clusters):
             raise Exception("Either Cockatoo coassemble output (--coassemble-output) or specific input files (--appraise-binned and --elusive-clusters) must be provided")
         if not args.forward and not args.forward_list:
             raise Exception("Input reads must be provided")
