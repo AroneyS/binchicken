@@ -31,6 +31,7 @@ jobs:
       - name: Run unit tests
         run: |
           python test/test_cluster_graph.py
+          python test/test_collect_reference_bins.py
           python test/test_unmap.py
           python test/test_evaluate.py
           python test/test_coassemble.py
