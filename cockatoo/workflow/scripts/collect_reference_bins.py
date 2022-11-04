@@ -17,7 +17,7 @@ def trimmed_mean(data, trim=0.1):
 
 def pipeline(appraise_binned, sample):
 
-    appraise_binned["sample"] = appraise_binned["sample"].str.replace(".1$", "", regex=True)
+    appraise_binned["sample"] = appraise_binned["sample"].str.replace("\.1$", "", regex=True)
     appraise_binned = appraise_binned[appraise_binned["sample"] == sample]
     appraise_binned["found_in"] = appraise_binned["found_in"].str.split(",")
     appraise_binned = appraise_binned.explode("found_in")
