@@ -42,3 +42,12 @@ Compares the recovery by phyla and by single-copy marker gene.
 # Example: evaluate a completed coassembly
 cockatoo evaluate --coassemble-output coassemble_dir --aviary-outputs coassembly_0_dir ...
 ```
+
+## Cockatoo unmap
+
+Applies unmapping to a previous Cockatoo coassemble run, generating unmapped reads files and Aviary commands.
+
+```bash
+# Example: generate unmapped reads and commands for completed coassembly
+cockatoo unmap --coassemble-output coassemble_dir --forward reads_1.1.fq ... --reverse reads_1.2.fq ... --genomes genome_1.fna ...
+```
