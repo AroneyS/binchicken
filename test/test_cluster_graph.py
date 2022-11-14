@@ -226,5 +226,22 @@ class Tests(unittest.TestCase):
         observed = pipeline(elusive_edges, read_size)
         self.assertDataFrameEqual(expected, observed)
 
+    def test_cluster_no_edges(self):
+        elusive_edges = pd.DataFrame([
+        ], columns = ELUSIVE_EDGES_COLUMNS)
+        read_size = pd.DataFrame([
+            ["1", 1000],
+            ["2", 1000],
+            ["3", 1000],
+            ["4", 1000],
+            ["5", 1000],
+            ["6", 1000],
+        ], columns=READ_SIZE_COLUMNS)
+
+        expected = pd.DataFrame([
+        ], columns=ELUSIVE_CLUSTERS_COLUMNS).astype(object)
+        observed = pipeline(elusive_edges, read_size)
+        self.assertDataFrameEqual(expected, observed)
+
 if __name__ == '__main__':
     unittest.main()

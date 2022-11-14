@@ -19,6 +19,9 @@ def pipeline(
         MIN_COASSEMBLY_SAMPLES=2,
         MAX_RECOVERY_SAMPLES=20):
 
+    if len(elusive_edges) == 0:
+        return pd.DataFrame(columns=["samples", "length", "total_weight", "total_targets", "total_size", "recover_samples", "coassembly"])
+
     elusive_edges["sample1"] = elusive_edges["sample1"].apply(lambda x: re.sub("\.1$", "", x))
     elusive_edges["sample2"] = elusive_edges["sample2"].apply(lambda x: re.sub("\.1$", "", x))
 
