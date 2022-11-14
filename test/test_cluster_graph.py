@@ -207,6 +207,24 @@ class Tests(unittest.TestCase):
             )
         self.assertDataFrameEqual(expected, observed)
 
+    def test_cluster_two_samples_among_many(self):
+        elusive_edges = pd.DataFrame([
+            ["Root", 1, "some", "1", "2"],
+        ], columns = ELUSIVE_EDGES_COLUMNS)
+        read_size = pd.DataFrame([
+            ["1", 1000],
+            ["2", 1000],
+            ["3", 1000],
+            ["4", 1000],
+            ["5", 1000],
+            ["6", 1000],
+        ], columns=READ_SIZE_COLUMNS)
+
+        expected = pd.DataFrame([
+            ["1,2", 2, 1, 1, 2000, "1,2", "coassembly_0"],
+        ], columns=ELUSIVE_CLUSTERS_COLUMNS).astype(object)
+        observed = pipeline(elusive_edges, read_size)
+        self.assertDataFrameEqual(expected, observed)
 
 if __name__ == '__main__':
     unittest.main()

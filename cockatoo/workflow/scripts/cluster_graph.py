@@ -80,6 +80,9 @@ def pipeline(
             return ",".join(recover_samples)
 
         relevant_edges = elusive_edges[(elusive_edges["sample1"].isin(samples)) != (elusive_edges["sample2"].isin(samples))].copy()
+        if len(relevant_edges) == 0:
+            return ",".join(recover_samples)
+
         relevant_edges["other_sample"] = relevant_edges.apply(lambda x: x["sample1"] if x["sample1"] not in samples else x["sample2"], axis=1)
         relevant_edges = relevant_edges[~relevant_edges["other_sample"].isin(recover_samples)]
 
