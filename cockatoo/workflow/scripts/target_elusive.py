@@ -11,6 +11,9 @@ def pipeline(
     MIN_COASSEMBLY_COVERAGE = 10,
     TAXA_OF_INTEREST = ""):
 
+    if len(unbinned) == 0:
+        return unbinned.rename(columns={"found_in": "target"}), pd.DataFrame(columns=["taxa_group", "weight", "target_ids", "sample1", "sample2"])
+
     TAXA_LEVEL_SEP = "; "
     taxa_levels = {
         "d": 1,

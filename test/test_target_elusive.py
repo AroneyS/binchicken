@@ -39,6 +39,19 @@ class Tests(unittest.TestCase):
         self.assertDataFrameEqual(expected_targets, observed_targets)
         self.assertEdgesDfEqual(expected_edges, observed_edges)
 
+    def test_target_elusive_empty_input(self):
+        unbinned = pd.DataFrame([
+        ], columns=APPRAISE_COLUMNS)
+
+        expected_targets = pd.DataFrame([
+        ], columns=TARGETS_COLUMNS)
+        expected_edges = pd.DataFrame([
+        ], columns=EDGES_COLUMNS)
+
+        observed_targets, observed_edges = pipeline(unbinned)
+        self.assertDataFrameEqual(expected_targets, observed_targets)
+        self.assertEdgesDfEqual(expected_edges, observed_edges)
+
     def test_target_elusive_low_coverage(self):
         unbinned = pd.DataFrame([
             ["S3.1", "sample_1", "AAA", 5, 5, "Root", ""],
