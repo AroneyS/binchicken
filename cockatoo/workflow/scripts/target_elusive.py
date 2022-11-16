@@ -40,9 +40,6 @@ def pipeline(
     def find_pairs(df):
         if len(df) < 2: return []
 
-        df["coverage"] = df.groupby("sample")["coverage"].transform("sum")
-        df = df.drop_duplicates(subset = ["sample"])
-
         def sum_coverages(sample1, sample2, df):
             return df.loc[sample1]["coverage"] + df.loc[sample2]["coverage"]
 
