@@ -29,8 +29,8 @@ def processing(
 
     # Split dataframe into binned/unbinned
     appraised["binned"] = appraised["divergence"].apply(lambda x: x <= (1 - SEQUENCE_IDENTITY) * WINDOW_SIZE)
-    binned = appraised[appraised["binned"]].drop(["divergence", "binned"], axis = 1)
-    unbinned = appraised[~appraised["binned"]].drop(["divergence", "binned"], axis = 1)
+    binned = appraised[appraised["binned"]].drop(["divergence", "binned"], axis = 1).reset_index(drop = True)
+    unbinned = appraised[~appraised["binned"]].drop(["divergence", "binned"], axis = 1).reset_index(drop = True)
     unbinned["found_in"] = None
 
     return binned, unbinned
