@@ -11,6 +11,10 @@ def processing(
     SEQUENCE_IDENTITY=0.86,
     WINDOW_SIZE=60):
 
+    if len(query_read) == 0:
+        empty_output = pd.DataFrame(columns=["gene", "sample", "sequence", "num_hits", "coverage", "taxonomy", "found_in"])
+        return empty_output, empty_output
+
     appraised = (query_read
         # Rename to match appraise output
         # Query output: query_name, query_sequence, divergence, num_hits, coverage, sample, marker, hit_sequence, taxonomy

@@ -34,6 +34,21 @@ class Tests(unittest.TestCase):
         self.assertDataFrameEqual(expected_binned, observed_binned)
         self.assertDataFrameEqual(expected_unbinned, observed_unbinned)
 
+    def test_query_processing_empty_input(self):
+        query = pd.DataFrame([
+        ], columns=QUERY_COLUMNS)
+        pipe = pd.DataFrame([
+        ], columns=PIPE_COLUMNS)
+
+        expected_binned = pd.DataFrame([
+        ], columns=APPRAISE_COLUMNS)
+        expected_unbinned = pd.DataFrame([
+        ], columns=APPRAISE_COLUMNS)
+
+        observed_binned, observed_unbinned = processing(query, pipe)
+        self.assertDataFrameEqual(expected_binned, observed_binned)
+        self.assertDataFrameEqual(expected_unbinned, observed_unbinned)
+
 
 if __name__ == '__main__':
     unittest.main()
