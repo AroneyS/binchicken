@@ -5,3 +5,4 @@ genomes:
 taxa_of_interest: ""
 max_coassembly_size: 
 assemble_unmapped: false
+sra: false

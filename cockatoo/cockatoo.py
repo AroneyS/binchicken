@@ -95,6 +95,33 @@ def run_workflow(config, workflow, output_dir, cores=16, dryrun=False,
     logging.info(f"Executing: {cmd}")
     subprocess.check_call(cmd, shell=True)
 
+def download_sra(args):
+    args.snakemake_args = args.snakemake_args + " -- download_sra" if args.snakemake_args else "-- download_sra"
+    config_items = {
+        "reads_1": args.forward,
+    }
+
+    config_path = make_config(
+        importlib.resources.files("cockatoo.config").joinpath("template_coassemble.yaml"),
+        args.output,
+        config_items
+        )
+
+    run_workflow(
+        config = config_path,
+        workflow = "coassemble.smk",
+        output_dir = args.output,
+        cores = args.cores,
+        dryrun = args.dryrun,
+        conda_prefix = args.conda_prefix,
+        snakemake_args = args.snakemake_args,
+    )
+
+    forward = [f for f in os.listdir(args.output + "/sra") if f.endswith(".fastq.gz")]
+    reverse = forward
+
+    return forward, reverse
+
 def coassemble(args):
     logging.info("Loading sample info")
     if args.forward_list:
@@ -274,6 +301,10 @@ def unmap(args):
             os.path.abspath(args.appraise_unbinned),
             os.path.join(args.output, "coassemble", "appraise", "unbinned.otu_table.tsv")
         )
+
+    if args.sra:
+        args.forward, args.reverse = download_sra(args)
+
     args.snakemake_args = args.snakemake_args + " --rerun-triggers mtime -- aviary_commands" if args.snakemake_args else "--rerun-triggers mtime -- aviary_commands"
 
     args.singlem_metapackage = None
@@ -406,6 +437,7 @@ def main():
     unmap_parser.add_argument("--forward-list", "--reads-list", "--sequences-list", help="input forward/unpaired nucleotide read sequence(s) newline separated")
     unmap_parser.add_argument("--reverse", nargs='+', help="input reverse nucleotide read sequence(s)")
     unmap_parser.add_argument("--reverse-list", help="input reverse nucleotide read sequence(s) newline separated")
+    unmap_parser.add_argument("--sra", action="store_true", help="Download reads from SRA (reads still required)")
     unmap_parser.add_argument("--genomes", nargs='+', help="Reference genomes for read mapping")
     unmap_parser.add_argument("--genomes-list", help="Reference genomes for read mapping newline separated")
     # Coassembly options
@@ -472,7 +504,7 @@ def main():
             raise Exception("Either Cockatoo coassemble output (--coassemble-output) or specific input files (--appraise-binned and --elusive-clusters) must be provided")
         if not args.forward and not args.forward_list:
             raise Exception("Input reads must be provided")
-        if not args.reverse and not args.reverse_list:
+        if not args.reverse and not args.reverse_list and not args.sra:
             raise Exception("Interleaved and long-reads not yet implemented")
         if not (args.genomes or args.genomes_list):
             raise Exception("Input genomes must be provided")
