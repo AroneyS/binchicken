@@ -1,6 +1,6 @@
 [project]
 name = "cockatoo-genome"
-dynamic = ["version"]
+dynamic = ["version", "readme"]
 authors = [
   { name="Samuel Aroney", email="samuel.aroney@outlook.com" },
 ]
@@ -8,6 +8,13 @@ description = "Cockatoo - intelligent clustering of metagenomic samples for coas
 readme = "README.md"
 license = { file="LICENSE" }
 requires-python = ">=3.7"
+dependencies = ["snakemake>=6.0.5",
+  "pandas",
+  "biopython",
+  "networkx",
+  "bird_tool_utils_python",
+  "extern",
+  "ruamel.yaml>=0.15.99"]
 classifiers = [
     "Topic :: Scientific/Engineering :: Bio-Informatics",
 ]
@@ -21,3 +28,4 @@ cockatoo = "cockatoo.cockatoo:main"
 
 [tool.setuptools.dynamic]
 version = {attr = "cockatoo.__version__"}
+readme = {file = ["README.md"]}
