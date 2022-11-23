@@ -1,6 +1,18 @@
 # Cockatoo
 
-## Install from source
+## Installation options
+
+### Install from pip
+
+Install latest release via pip.
+
+```bash
+pip install cockatoo-genome
+```
+
+### Install from source
+
+Create conda env from `cockatoo.yml` and install from source.
 
 ```bash
 git clone https://github.com/AroneyS/cockatoo.git
