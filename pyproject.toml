@@ -16,7 +16,7 @@ dependencies = ["snakemake>=6.0.5",
   "pandas",
   "biopython",
   "networkx",
-  "bird_tool_utils_python",
+  "bird_tool_utils",
   "extern",
   "ruamel.yaml>=0.15.99"]
 classifiers = [
