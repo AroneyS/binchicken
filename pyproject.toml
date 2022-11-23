@@ -9,7 +9,6 @@ authors = [
   { name="Samuel Aroney", email="samuel.aroney@outlook.com" },
 ]
 description = "Cockatoo - intelligent clustering of metagenomic samples for coassembly"
-readme = "README.md"
 license = { file="LICENSE" }
 requires-python = ">=3.7"
 dependencies = ["snakemake>=6.0.5",
