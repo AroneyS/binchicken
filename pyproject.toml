@@ -4,11 +4,12 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "cockatoo-genome"
-dynamic = ["version", "readme"]
+dynamic = ["version"]
 authors = [
   { name="Samuel Aroney", email="samuel.aroney@outlook.com" },
 ]
 description = "Cockatoo - intelligent clustering of metagenomic samples for coassembly"
+readme = "README.md"
 license = { file="LICENSE" }
 requires-python = ">=3.7"
 dependencies = ["snakemake>=6.0.5",
@@ -31,4 +32,3 @@ cockatoo = "cockatoo.cockatoo:main"
 
 [tool.setuptools.dynamic]
 version = {attr = "cockatoo.__version__"}
-readme = {file = ["README.md"]}
