@@ -4,3 +4,4 @@ __pycache__/
 .conda/
 .vscode/
 example/
+dist/
