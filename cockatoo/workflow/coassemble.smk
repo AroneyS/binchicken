@@ -281,7 +281,7 @@ rule map_reads:
         view_log=logs_dir + "/mapping/{read}_view.log",
         fastq_log=logs_dir + "/mapping/{read}_fastq.log",
     threads:
-        8
+        32
     conda:
         "env/coverm.yml"
     shell:
