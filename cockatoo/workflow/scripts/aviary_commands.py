@@ -27,6 +27,7 @@ def produce_command(row):
     f"-2 {' '.join(coassembly_samples_2)} "
     f"--output {output_dir}/{coassembly}/assemble "
     f"-n {threads} "
+    f"-t {threads} "
     f"-m {memory} "
     f"&> {output_dir}/logs/{coassembly}_assemble.log ")
 
@@ -36,6 +37,7 @@ def produce_command(row):
     f"-2 {' '.join(all_samples_2)} "
     f"--output {output_dir}/{coassembly}/recover "
     f"-n {threads} "
+    f"-t {threads} "
     f"-m {memory} "
     f"&> {output_dir}/logs/{coassembly}_recover.log ")
 
