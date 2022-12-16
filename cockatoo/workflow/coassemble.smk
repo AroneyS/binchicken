@@ -78,6 +78,8 @@ rule singlem_pipe_reads:
         logs_dir + "/pipe/{read}_read.log"
     params:
         singlem_metapackage=config["singlem_metapackage"]
+    threads:
+        8
     conda:
         "env/singlem.yml"
     shell:
@@ -118,6 +120,8 @@ rule singlem_pipe_genomes:
         logs_dir + "/pipe/{genome}_bin.log"
     params:
         singlem_metapackage=config["singlem_metapackage"]
+    threads:
+        8
     conda:
         "env/singlem.yml"
     shell:
@@ -136,6 +140,8 @@ rule singlem_summarise_genomes:
         logs_dir + "/summarise/genomes.log"
     params:
         singlem_metapackage=config["singlem_metapackage"]
+    threads:
+        8
     conda:
         "env/singlem.yml"
     shell:
@@ -161,6 +167,8 @@ rule singlem_appraise:
     params:
         sequence_identity=config["appraise_sequence_identity"],
         singlem_metapackage=config["singlem_metapackage"],
+    threads:
+        8
     conda:
         "env/singlem.yml"
     shell:
@@ -293,7 +301,7 @@ rule map_reads:
         view_log=logs_dir + "/mapping/{read}_view.log",
         fastq_log=logs_dir + "/mapping/{read}_fastq.log",
     threads:
-        8
+        32
     conda:
         "env/coverm.yml"
     shell:
