@@ -49,20 +49,21 @@ rule summary:
 ### SingleM reads ###
 #####################
 rule download_sra:
-    input:
-        " ".join(config["sra"]) if config["sra"] else ""
     output:
-        directory(output_dir + "/sra") if config["sra"] else []
+        directory(output_dir + "/sra")
     threads:
         64
+    params:
+        sra=" ".join(config["sra"]) if config["sra"] else ""
     conda:
         "env/kingfisher.yml"
     log:
-        logs_dir + "/sra/{sample}.log"
+        logs_dir + "/sra/kingfisher.log"
     shell:
+        "mkdir -p {output} && "
         "cd {output} && "
         "kingfisher get "
-        "-r {input} "
+        "-r {params.sra} "
         "-f fastq.gz "
         "-m ena-ascp ena-ftp prefetch aws-http aws-cp "
         "-t {threads} "

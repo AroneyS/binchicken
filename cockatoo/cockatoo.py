@@ -98,7 +98,9 @@ def run_workflow(config, workflow, output_dir, cores=16, dryrun=False,
 def download_sra(args):
     args.snakemake_args = args.snakemake_args + " -- download_sra" if args.snakemake_args else "-- download_sra"
     config_items = {
-        "reads_1": args.forward,
+        "sra": args.forward,
+        "reads_1": {},
+        "reads_2": {},
     }
 
     config_path = make_config(
@@ -117,7 +119,13 @@ def download_sra(args):
         snakemake_args = args.snakemake_args,
     )
 
-    forward = [f for f in os.listdir(args.output + "/sra") if f.endswith(".fastq.gz")]
+    sra_dir = args.output + "/sra/"
+    if args.dryrun:
+        os.makedirs(sra_dir, exist_ok=True)
+        for sra in args.forward:
+            subprocess.check_call(f"touch {sra_dir + sra}", shell=True)
+
+    forward = [sra_dir + f for f in os.listdir(args.output + "/sra") if f.endswith(".fastq.gz")]
     reverse = forward
 
     return forward, reverse
