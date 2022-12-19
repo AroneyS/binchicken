@@ -157,10 +157,13 @@ class Tests(unittest.TestCase):
                 f"--dryrun "
                 f"--snakemake-args \" --quiet\" "
             )
-            output = extern.run(cmd)
+            output_comb = extern.run(cmd)
 
-            self.assertTrue("download_sra" in output)
+            output_sra = output_comb.split("Building DAG of jobs...")[1]
+            self.assertTrue("download_sra" in output_sra)
+            self.assertTrue("aviary_commands" not in output_sra)
 
+            output = output_comb.split("Building DAG of jobs...")[2]
             self.assertTrue("singlem_pipe_reads" not in output)
             self.assertTrue("genome_transcripts" not in output)
             self.assertTrue("singlem_pipe_genomes" not in output)
