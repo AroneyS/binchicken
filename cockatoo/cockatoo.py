@@ -118,17 +118,17 @@ def download_sra(args):
         snakemake_args = args.snakemake_args + " -- download_sra" if args.snakemake_args else "-- download_sra",
     )
 
-    sra_dir = args.output + "/sra/"
+    sra_dir = args.output + "/coassemble/sra/"
     SRA_SUFFIX = ".fastq.gz"
     # Need to convince Snakemake that the SRA data predates the completed outputs
     # Otherwise it will rerun all the rules with reason "updated input files"
     # Using Jan 1 2000 as pre-date
     os.makedirs(sra_dir, exist_ok=True)
-    for sra in args.forward:
+    for sra in [f + s for f in args.forward for s in ["_1", "_2"]]:
         subprocess.check_call(f"touch -t 200001011200 {sra_dir + sra + SRA_SUFFIX}", shell=True)
 
-    forward = [sra_dir + f for f in os.listdir(args.output + "/sra") if f.endswith(SRA_SUFFIX)]
-    reverse = forward
+    forward = [sra_dir + f for f in os.listdir(sra_dir) if f.endswith("_1" + SRA_SUFFIX)]
+    reverse = [sra_dir + f for f in os.listdir(sra_dir) if f.endswith("_2" + SRA_SUFFIX)]
 
     return forward, reverse
 
