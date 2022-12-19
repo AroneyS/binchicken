@@ -120,10 +120,12 @@ def download_sra(args):
 
     sra_dir = args.output + "/sra/"
     SRA_SUFFIX = ".fastq.gz"
-    if args.dryrun:
-        os.makedirs(sra_dir, exist_ok=True)
-        for sra in args.forward:
-            subprocess.check_call(f"touch {sra_dir + sra + SRA_SUFFIX}", shell=True)
+    # Need to convince Snakemake that the SRA data predates the completed outputs
+    # Otherwise it will rerun all the rules with reason "updated input files"
+    # Using Jan 1 2000 as pre-date
+    os.makedirs(sra_dir, exist_ok=True)
+    for sra in args.forward:
+        subprocess.check_call(f"touch -t 200001011200 {sra_dir + sra + SRA_SUFFIX}", shell=True)
 
     forward = [sra_dir + f for f in os.listdir(args.output + "/sra") if f.endswith(SRA_SUFFIX)]
     reverse = forward
