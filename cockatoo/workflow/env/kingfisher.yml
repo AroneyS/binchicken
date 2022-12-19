@@ -3,19 +3,4 @@ channels:
   - bioconda
   - defaults
 dependencies:
-  - python>=3.9
-  - pigz
-  - extern
-  - curl
-  - sra-tools
-  - pandas
-  - requests
-  - aria2>=1.36.0
-  - sracat
-  - bird_tool_utils_python
-  - awscli
-  - pyarrow
-  - tqdm
-  - pip
-  - pip:
-    - git+https://github.com/wwood/kingfisher-download.git@73ddf62d10e7ea9ad745099bfba0a2e73446457f
+  - kingfisher
