@@ -96,7 +96,6 @@ def run_workflow(config, workflow, output_dir, cores=16, dryrun=False,
     subprocess.check_call(cmd, shell=True)
 
 def download_sra(args):
-    args.snakemake_args = args.snakemake_args + " -- download_sra" if args.snakemake_args else "-- download_sra"
     config_items = {
         "sra": args.forward,
         "reads_1": {},
@@ -116,7 +115,7 @@ def download_sra(args):
         cores = args.cores,
         dryrun = args.dryrun,
         conda_prefix = args.conda_prefix,
-        snakemake_args = args.snakemake_args,
+        snakemake_args = args.snakemake_args + " -- download_sra" if args.snakemake_args else "-- download_sra",
     )
 
     sra_dir = args.output + "/sra/"
