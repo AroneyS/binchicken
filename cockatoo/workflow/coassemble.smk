@@ -15,19 +15,19 @@ def get_reads(wildcards, forward = True):
     version = wildcards.version
     if version == "":
         if forward:
-            return config["reads_1"].values()
+            return config["reads_1"]
         else:
-            return config["reads_2"].values()
+            return config["reads_2"]
     elif version == "unmapped_":
         if forward:
-            return mapped_reads_1.values()
+            return mapped_reads_1
         else:
-            return mapped_reads_2.values()
+            return mapped_reads_2
     else:
         raise ValueError("Version should be empty or unmapped")
 
 def get_cat(wildcards):
-    return "zcat" if [r for r in get_reads(wildcards)][0].endswith(".gz") else "cat"
+    return "zcat" if [r for r in get_reads(wildcards).values()][0].endswith(".gz") else "cat"
 
 rule all:
     input:
@@ -200,8 +200,8 @@ rule single_assembly:
 ######################
 rule count_bp_reads:
     input:
-        reads_1 = lambda wildcards: get_reads(wildcards),
-        reads_2 = lambda wildcards: get_reads(wildcards, forward = False)
+        reads_1 = lambda wildcards: get_reads(wildcards).values(),
+        reads_2 = lambda wildcards: get_reads(wildcards, forward = False).values()
     output:
         output_dir + "/{version,.*}read_size.csv"
     params:
