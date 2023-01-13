@@ -20,7 +20,6 @@ jobs:
           environment-file: cockatoo.yml
           python-version: ${{ matrix.python-version }}
           auto-activate-base: false
-          mamba-version: "*"
           channels: conda-forge,bioconda,defaults
       - run: |
           conda info
