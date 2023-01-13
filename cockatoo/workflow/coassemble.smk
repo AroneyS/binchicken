@@ -230,7 +230,7 @@ rule target_elusive:
     script:
         "scripts/target_elusive.py"
 
-rule cluster_graph:
+checkpoint cluster_graph:
     input:
         elusive_edges=output_dir + "/target/elusive_edges.tsv",
         read_size=output_dir + "/read_size.csv",
