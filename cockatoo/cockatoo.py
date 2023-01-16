@@ -225,6 +225,7 @@ def coassemble(args):
         # Coassembly config
         "assemble_unmapped": args.assemble_unmapped,
         "unmapping_min_appraised": args.unmapping_min_appraised,
+        "run_aviary": args.run_aviary,
         "aviary_threads": args.aviary_cores,
         "aviary_memory": args.aviary_memory,
     }
@@ -315,7 +316,10 @@ def unmap(args):
     if args.sra:
         args.forward, args.reverse = download_sra(args)
 
-    args.snakemake_args = args.snakemake_args + " --rerun-triggers mtime -- aviary_commands" if args.snakemake_args else "--rerun-triggers mtime -- aviary_commands"
+    if args.run_aviary:
+        args.snakemake_args = args.snakemake_args + " --rerun-triggers mtime -- aviary_combine" if args.snakemake_args else "--rerun-triggers mtime -- aviary_combine"
+    else:
+        args.snakemake_args = args.snakemake_args + " --rerun-triggers mtime -- aviary_commands" if args.snakemake_args else "--rerun-triggers mtime -- aviary_commands"
 
     args.singlem_metapackage = None
     args.sample_singlem = None
@@ -412,6 +416,7 @@ def main():
     # Coassembly options
     coassemble_parser.add_argument("--assemble-unmapped", action="store_true", help="Only assemble reads that do not map to reference genomes")
     coassemble_parser.add_argument("--unmapping-min-appraised", type=int, help="Minimum fraction of sequences binned to justify unmapping [default: 0.1]", default=0.1)
+    coassemble_parser.add_argument("--run-aviary", action="store_true", help="Run Aviary commands for all identified coassemblies")
     coassemble_parser.add_argument("--aviary-cores", type=int, help="Maximum number of cores for Aviary to use", default=16)
     coassemble_parser.add_argument("--aviary-memory", type=int, help="Maximum amount of memory for Aviary to use (Gigabytes)", default=250)
     # General options
@@ -447,7 +452,7 @@ def main():
     unmap_parser.add_argument("--forward-list", "--reads-list", "--sequences-list", help="input forward/unpaired nucleotide read sequence(s) newline separated")
     unmap_parser.add_argument("--reverse", nargs='+', help="input reverse nucleotide read sequence(s)")
     unmap_parser.add_argument("--reverse-list", help="input reverse nucleotide read sequence(s) newline separated")
-    unmap_parser.add_argument("--sra", action="store_true", help="Download reads from SRA (reads still required)")
+    unmap_parser.add_argument("--sra", action="store_true", help="Download reads from SRA (read argument still required)")
     unmap_parser.add_argument("--genomes", nargs='+', help="Reference genomes for read mapping")
     unmap_parser.add_argument("--genomes-list", help="Reference genomes for read mapping newline separated")
     # Coassembly options
@@ -456,6 +461,7 @@ def main():
     unmap_parser.add_argument("--appraise-unbinned", help="SingleM appraise unbinned output from Cockatoo coassemble (alternative to --coassemble-output)")
     unmap_parser.add_argument("--elusive-clusters", help="Elusive clusters output from Cockatoo coassemble (alternative to --coassemble-output)")
     unmap_parser.add_argument("--unmapping-min-appraised", type=int, help="Minimum fraction of sequences binned to justify unmapping [default: 0.1]", default=0.1)
+    unmap_parser.add_argument("--run-aviary", action="store_true", help="Run Aviary commands for all identified coassemblies")
     unmap_parser.add_argument("--aviary-cores", type=int, help="Maximum number of cores for Aviary to use", default=16)
     unmap_parser.add_argument("--aviary-memory", type=int, help="Maximum amount of memory for Aviary to use (Gigabytes)", default=250)
     # General options
