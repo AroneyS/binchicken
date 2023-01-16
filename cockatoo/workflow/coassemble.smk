@@ -454,6 +454,7 @@ rule aviary_combine:
     input:
         get_coassemblies,
         elusive_clusters=output_dir + "/target/elusive_clusters.tsv",
+        mapping=output_dir + "/mapping/done" if config["assemble_unmapped"] else [],
     output:
         output_dir + "/commands/done",
     shell:

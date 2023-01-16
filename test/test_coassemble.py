@@ -571,8 +571,8 @@ class Tests(unittest.TestCase):
             self.assertTrue("map_reads" not in output)
             self.assertTrue("finish_mapping" not in output)
             self.assertTrue("aviary_commands" not in output)
-            self.assertTrue("aviary_assemble" in output)
-            self.assertTrue("aviary_recover" in output)
+            self.assertTrue("aviary_assemble" not in output)
+            self.assertTrue("aviary_recover" not in output)
             self.assertTrue("aviary_combine" in output)
 
     def test_coassemble_run_aviary_unmapped(self):
@@ -610,8 +610,8 @@ class Tests(unittest.TestCase):
             self.assertTrue("map_reads" in output)
             self.assertTrue("finish_mapping" in output)
             self.assertTrue("aviary_commands" not in output)
-            self.assertTrue("aviary_assemble" in output)
-            self.assertTrue("aviary_recover" in output)
+            self.assertTrue("aviary_assemble" not in output)
+            self.assertTrue("aviary_recover" not in output)
             self.assertTrue("aviary_combine" in output)
 
     def test_coassemble_files_of_paths(self):
