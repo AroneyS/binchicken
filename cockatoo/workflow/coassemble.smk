@@ -444,7 +444,7 @@ rule aviary_recover:
         "--assembly {input} "
         "-1 {params.reads_1} "
         "-2 {params.reads_2} "
-        "--output {output.dir} "
+        "--output {output} "
         "-n {threads} "
         "-t {threads} "
         "-m {params.memory} "
