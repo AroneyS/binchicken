@@ -425,7 +425,7 @@ rule aviary_assemble:
 
 rule aviary_recover:
     input:
-        output_dir + "/coassemble/{coassembly}/assemble/assembly/final_contigs.fasta",
+        assembly=output_dir + "/coassemble/{coassembly}/assemble/assembly/final_contigs.fasta",
         elusive_clusters=output_dir + "/target/elusive_clusters.tsv",
     output:
         directory(output_dir + "/coassemble/{coassembly}/recover")
@@ -441,7 +441,7 @@ rule aviary_recover:
         "env/aviary.yml"
     shell:
         "aviary recover "
-        "--assembly {input} "
+        "--assembly {input.assembly} "
         "-1 {params.reads_1} "
         "-2 {params.reads_2} "
         "--output {output} "
