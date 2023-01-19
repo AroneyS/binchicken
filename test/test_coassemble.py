@@ -542,6 +542,7 @@ class Tests(unittest.TestCase):
             cmd = (
                 f"cockatoo coassemble "
                 f"--run-aviary "
+                f"--aviary-conda aviary "
                 f"--forward {SAMPLE_READS_FORWARD} "
                 f"--reverse {SAMPLE_READS_REVERSE} "
                 f"--genomes {GENOMES} "
@@ -581,6 +582,7 @@ class Tests(unittest.TestCase):
                 f"cockatoo coassemble "
                 f"--assemble-unmapped "
                 f"--run-aviary "
+                f"--aviary-conda aviary "
                 f"--forward {SAMPLE_READS_FORWARD} "
                 f"--reverse {SAMPLE_READS_REVERSE} "
                 f"--genomes {GENOMES} "

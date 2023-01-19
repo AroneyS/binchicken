@@ -15,5 +15,6 @@ max_coassembly_samples: 1
 max_recovery_samples: 1
 unmapping_min_appraised: 1
 run_aviary: false
+aviary_conda: ""
 aviary_memory: 1
 aviary_threads: 1

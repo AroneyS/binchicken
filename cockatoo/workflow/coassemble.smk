@@ -412,7 +412,7 @@ rule aviary_assemble:
     log:
         logs_dir + "/aviary/{coassembly}_assemble.log"
     conda:
-        "env/aviary.yml"
+        config["aviary_conda"]
     shell:
         "aviary assemble "
         "-1 {params.reads_1} "
@@ -438,7 +438,7 @@ rule aviary_recover:
     log:
         logs_dir + "/aviary/{coassembly}_recover.log"
     conda:
-        "env/aviary.yml"
+        config["aviary_conda"]
     shell:
         "aviary recover "
         "--assembly {input.assembly} "

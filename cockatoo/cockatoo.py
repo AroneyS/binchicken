@@ -226,6 +226,7 @@ def coassemble(args):
         "assemble_unmapped": args.assemble_unmapped,
         "unmapping_min_appraised": args.unmapping_min_appraised,
         "run_aviary": args.run_aviary,
+        "aviary_conda": args.aviary_conda,
         "aviary_threads": args.aviary_cores,
         "aviary_memory": args.aviary_memory,
     }
@@ -417,6 +418,7 @@ def main():
     coassemble_parser.add_argument("--assemble-unmapped", action="store_true", help="Only assemble reads that do not map to reference genomes")
     coassemble_parser.add_argument("--unmapping-min-appraised", type=int, help="Minimum fraction of sequences binned to justify unmapping [default: 0.1]", default=0.1)
     coassemble_parser.add_argument("--run-aviary", action="store_true", help="Run Aviary commands for all identified coassemblies")
+    coassemble_parser.add_argument("--aviary-conda", help="Pre-built Aviary conda env path")
     coassemble_parser.add_argument("--aviary-cores", type=int, help="Maximum number of cores for Aviary to use", default=16)
     coassemble_parser.add_argument("--aviary-memory", type=int, help="Maximum amount of memory for Aviary to use (Gigabytes)", default=250)
     # General options
@@ -462,6 +464,7 @@ def main():
     unmap_parser.add_argument("--elusive-clusters", help="Elusive clusters output from Cockatoo coassemble (alternative to --coassemble-output)")
     unmap_parser.add_argument("--unmapping-min-appraised", type=int, help="Minimum fraction of sequences binned to justify unmapping [default: 0.1]", default=0.1)
     unmap_parser.add_argument("--run-aviary", action="store_true", help="Run Aviary commands for all identified coassemblies")
+    unmap_parser.add_argument("--aviary-conda", help="Pre-built Aviary conda env path")
     unmap_parser.add_argument("--aviary-cores", type=int, help="Maximum number of cores for Aviary to use", default=16)
     unmap_parser.add_argument("--aviary-memory", type=int, help="Maximum amount of memory for Aviary to use (Gigabytes)", default=250)
     # General options
@@ -508,6 +511,8 @@ def main():
         else:
             if args.num_coassembly_samples > args.max_recovery_samples:
                 raise Exception("Max recovery samples (--max-recovery-samples) must be greater than or equal to number of coassembly samples (--num-coassembly-samples)")
+        if args.run_aviary and not args.aviary_conda:
+            raise Exception("Run Aviary (--run-aviary) requires pre-build conda env path to be provided (--aviary-conda)")
         coassemble(args)
 
     elif args.subparser_name == "evaluate":
@@ -526,6 +531,8 @@ def main():
             raise Exception("Input genomes must be provided")
         if (args.forward and args.forward_list) or (args.reverse and args.reverse_list) or (args.genomes and args.genomes_list):
             raise Exception("General and list arguments are mutually exclusive")
+        if args.run_aviary and not args.aviary_conda:
+            raise Exception("Run Aviary (--run-aviary) requires pre-build conda env path to be provided (--aviary-conda)")
         unmap(args)
 
 if __name__ == "__main__":
