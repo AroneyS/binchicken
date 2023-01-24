@@ -11,7 +11,7 @@ path_to_conda = os.path.join(path_to_data,'.conda')
 
 METAPACKAGE = os.path.join(path_to_data, "singlem_metapackage.smpkg")
 MOCK_COASSEMBLE = os.path.join(path_to_data, "mock_coassemble")
-MOCK_COASSEMBLIES = ' '.join([os.path.join(MOCK_COASSEMBLE, "coassembly_0")])
+MOCK_COASSEMBLIES = ' '.join([os.path.join(MOCK_COASSEMBLE, "coassemble", "coassembly_0")])
 
 class Tests(unittest.TestCase):
     def test_evaluate(self):
