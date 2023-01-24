@@ -19,9 +19,9 @@ jobs:
           activate-environment: test
           environment-file: cockatoo.yml
           python-version: ${{ matrix.python-version }}
+          miniforge-variant: Mambaforge
           auto-activate-base: false
-          mamba-version: "*"
-          channels: conda-forge,bioconda,defaults
+          channels: conda-forge,bioconda
       - run: |
           conda info
           conda list
