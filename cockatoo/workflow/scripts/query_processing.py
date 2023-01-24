@@ -11,8 +11,10 @@ def processing(
     SEQUENCE_IDENTITY=0.86,
     WINDOW_SIZE=60):
 
+    output_columns = ["gene", "sample", "sequence", "num_hits", "coverage", "taxonomy", "found_in"]
+
     if len(query_read) == 0:
-        empty_output = pd.DataFrame(columns=["gene", "sample", "sequence", "num_hits", "coverage", "taxonomy", "found_in"])
+        empty_output = pd.DataFrame(columns=output_columns)
         return empty_output, empty_output
 
     appraised = (query_read
@@ -34,7 +36,8 @@ def processing(
     # Split dataframe into binned/unbinned
     appraised["binned"] = appraised["divergence"].apply(lambda x: x <= (1 - SEQUENCE_IDENTITY) * WINDOW_SIZE)
     binned = appraised[appraised["binned"]].drop(["divergence", "binned"], axis = 1).reset_index(drop = True)
-    unbinned = appraised[~appraised["binned"]].drop(["divergence", "binned"], axis = 1).reset_index(drop = True)
+    unbinned = pipe_read.join(appraised.set_index(output_columns[0:-1]), on = output_columns[0:-1])
+    unbinned = unbinned[~unbinned["binned"].fillna(False)].drop(["divergence", "binned"], axis = 1).reset_index(drop = True)
     unbinned["found_in"] = None
 
     return binned, unbinned
