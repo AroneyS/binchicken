@@ -337,16 +337,27 @@ def main():
         )
 
     ###########################################################################
+    def add_general_snakemake_options(argument_group):
+        argument_group.add_argument("--output", help="Output directory [default: .]", default="./")
+        argument_group.add_argument("--conda-prefix", help="Path to conda environment install location", default=None)
+        argument_group.add_argument("--cores", type=int, help="Maximum number of cores to use", default=1)
+        argument_group.add_argument("--dryrun", action="store_true", help="dry run workflow")
+        argument_group.add_argument("--snakemake-args", help="Additional commands to be supplied to snakemake in the form of a space-prefixed single string e.g. \" --quiet\"", default="")
+    
+    def add_base_arguments(argument_group):
+        argument_group.add_argument("--forward", "--reads", "--sequences", nargs='+', help="input forward/unpaired nucleotide read sequence(s)")
+        argument_group.add_argument("--forward-list", "--reads-list", "--sequences-list", help="input forward/unpaired nucleotide read sequence(s) newline separated")
+        argument_group.add_argument("--reverse", nargs='+', help="input reverse nucleotide read sequence(s)")
+        argument_group.add_argument("--reverse-list", help="input reverse nucleotide read sequence(s) newline separated")
+        argument_group.add_argument("--genomes", nargs='+', help="Reference genomes for read mapping")
+        argument_group.add_argument("--genomes-list", help="Reference genomes for read mapping newline separated")
+
+    ###########################################################################
 
     coassemble_parser = main_parser.new_subparser("coassemble", "Coassemble reads clustered by unbinned single-copy marker genes")
     # Base arguments
     coassemble_base = coassemble_parser.add_argument_group("Base input arguments")
-    coassemble_base.add_argument("--forward", "--reads", "--sequences", nargs='+', help="input forward/unpaired nucleotide read sequence(s)")
-    coassemble_base.add_argument("--forward-list", "--reads-list", "--sequences-list", help="input forward/unpaired nucleotide read sequence(s) newline separated")
-    coassemble_base.add_argument("--reverse", nargs='+', help="input reverse nucleotide read sequence(s)")
-    coassemble_base.add_argument("--reverse-list", help="input reverse nucleotide read sequence(s) newline separated")
-    coassemble_base.add_argument("--genomes", nargs='+', help="Reference genomes for read mapping")
-    coassemble_base.add_argument("--genomes-list", help="Reference genomes for read mapping newline separated")
+    add_base_arguments(coassemble_base)
     coassemble_base.add_argument("--singlem-metapackage", help="SingleM metapackage for sequence searching")
     # Midpoint arguments
     coassemble_midpoint = coassemble_parser.add_argument_group("Intermediate results input arguments")
@@ -379,11 +390,7 @@ def main():
     coassemble_coassembly.add_argument("--aviary-memory", type=int, help="Maximum amount of memory for Aviary to use (Gigabytes)", default=250)
     # General options
     coassemble_general = coassemble_parser.add_argument_group("General options")
-    coassemble_general.add_argument("--output", help="Output directory [default: .]", default="./")
-    coassemble_general.add_argument("--conda-prefix", help="Path to conda environment install location", default=None)
-    coassemble_general.add_argument("--cores", type=int, help="Maximum number of cores to use", default=1)
-    coassemble_general.add_argument("--dryrun", action="store_true", help="dry run workflow")
-    coassemble_general.add_argument("--snakemake-args", help="Additional commands to be supplied to snakemake in the form of a space-prefixed single string e.g. \" --quiet\"", default="")
+    add_general_snakemake_options(coassemble_general)
 
     ###########################################################################
 
@@ -400,23 +407,14 @@ def main():
     evaluate_evaluation.add_argument("--max-contamination", type=int, help="Include bins with at most this maximum contamination [default: 10]", default=10)
     # General options
     evaluate_general = evaluate_parser.add_argument_group("General options")
-    evaluate_general.add_argument("--output", help="Output directory [default: .]", default="./")
-    evaluate_general.add_argument("--conda-prefix", help="Path to conda environment install location", default=None)
-    evaluate_general.add_argument("--cores", type=int, help="Maximum number of cores to use", default=1)
-    evaluate_general.add_argument("--dryrun", action="store_true", help="dry run workflow")
-    evaluate_general.add_argument("--snakemake-args", help="Additional commands to be supplied to snakemake in the form of a space-prefixed single string e.g. \" --quiet\"", default="")
+    add_general_snakemake_options(evaluate_general)
 
     ###########################################################################
 
     unmap_parser = main_parser.new_subparser("unmap", "Coassemble reads clustered by unbinned single-copy marker genes")
     # Base arguments
     unmap_base = unmap_parser.add_argument_group("Input arguments")
-    unmap_base.add_argument("--forward", "--reads", "--sequences", nargs='+', help="input forward/unpaired nucleotide read sequence(s)")
-    unmap_base.add_argument("--forward-list", "--reads-list", "--sequences-list", help="input forward/unpaired nucleotide read sequence(s) newline separated")
-    unmap_base.add_argument("--reverse", nargs='+', help="input reverse nucleotide read sequence(s)")
-    unmap_base.add_argument("--reverse-list", help="input reverse nucleotide read sequence(s) newline separated")
-    unmap_base.add_argument("--genomes", nargs='+', help="Reference genomes for read mapping")
-    unmap_base.add_argument("--genomes-list", help="Reference genomes for read mapping newline separated")
+    add_base_arguments(unmap_base)
     # Coassembly options
     unmap_coassembly = unmap_parser.add_argument_group("Coassembly options")
     unmap_coassembly.add_argument("--coassemble-output", help="Output dir from cluster subcommand")
@@ -428,11 +426,7 @@ def main():
     unmap_coassembly.add_argument("--aviary-memory", type=int, help="Maximum amount of memory for Aviary to use (Gigabytes)", default=250)
     # General options
     unmap_general = unmap_parser.add_argument_group("General options")
-    unmap_general.add_argument("--output", help="Output directory [default: .]", default="./")
-    unmap_general.add_argument("--conda-prefix", help="Path to conda environment install location", default=None)
-    unmap_general.add_argument("--cores", type=int, help="Maximum number of cores to use", default=1)
-    unmap_general.add_argument("--dryrun", action="store_true", help="dry run workflow")
-    unmap_general.add_argument("--snakemake-args", help="Additional commands to be supplied to snakemake in the form of a space-prefixed single string e.g. \" --quiet\"", default="")
+    add_general_snakemake_options(unmap_general)
 
     ###########################################################################
 
