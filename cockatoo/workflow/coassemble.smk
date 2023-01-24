@@ -433,6 +433,7 @@ rule aviary_recover:
         reads_1 = lambda wildcards: get_reads_coassembly(wildcards, recover=True),
         reads_2 = lambda wildcards: get_reads_coassembly(wildcards, forward=False, recover=True),
         memory=config["aviary_memory"],
+        skip_binners = "--skip-binners rosella semibin metabat1 vamb concoct maxbin2 maxbin" if config["test"] else "",
     threads:
         config["aviary_threads"]
     log:
@@ -445,6 +446,7 @@ rule aviary_recover:
         "-1 {params.reads_1} "
         "-2 {params.reads_2} "
         "--output {output} "
+        "{params.skip_binners} "
         "-n {threads} "
         "-t {threads} "
         "-m {params.memory} "

@@ -269,8 +269,10 @@ class Tests(unittest.TestCase):
                 f"--elusive-clusters {os.path.join(MOCK_COASSEMBLE, 'target', 'elusive_clusters_sra.tsv')} "
                 f"--output test "
                 f"--conda-prefix {path_to_conda} "
+                f"--snakemake-args \" --config test=True\" "
             )
-            extern.run(cmd)
+            output = extern.run(cmd)
+            print(output)
 
             config_path = os.path.join("test", "config.yaml")
             self.assertTrue(os.path.exists(config_path))
@@ -287,6 +289,8 @@ class Tests(unittest.TestCase):
             self.assertTrue(os.path.exists(os.path.join("test", "coassemble", "sra", "SRR8334324_2.fastq.gz")))
 
             self.assertTrue(os.path.exists(os.path.join("test", "coassemble", "coassemble", "coassembly_0", "assemble", "assembly", "final_contigs.fna")))
+
+            self.assertTrue(os.path.exists(os.path.join("test", "coassemble", "coassemble", "coassembly_0", "recover", "bins", "checkm_minimal.tsv")))
 
 
 if __name__ == '__main__':

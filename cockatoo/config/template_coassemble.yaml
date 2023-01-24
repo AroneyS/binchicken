@@ -18,3 +18,4 @@ run_aviary: false
 aviary_conda: ""
 aviary_memory: 1
 aviary_threads: 1
+test: false
