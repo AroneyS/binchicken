@@ -123,7 +123,7 @@ def evaluate_bins(aviary_outputs, checkm_version, min_completeness, max_contamin
         passed_bins = checkm_out[(checkm_out[completeness_col] >= min_completeness) & (checkm_out[contamination_col] <= max_contamination)]["Bin Id"].to_list()
         coassembly_bins[coassembly] = passed_bins
 
-    return {"-".join([c, b]): os.path.join(recovered_bins[c], b + ".fna") for c in coassembly_bins for b in coassembly_bins[c]}
+    return {"-".join([c, str(i)]): os.path.join(recovered_bins[c], b + ".fna") for c in coassembly_bins for i, b in enumerate(coassembly_bins[c])}
 
 def coassemble(args):
     logging.info("Loading sample info")
