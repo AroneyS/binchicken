@@ -300,6 +300,9 @@ def unmap(args):
 
     coassemble(args)
 
+def iterate(args):
+    pass
+
 def main():
     main_parser = btu.BirdArgparser(program="Cockatoo", version = __version__,
         examples = {
@@ -332,6 +335,12 @@ def main():
                     "generate unmapped reads and commands for completed coassembly",
                     "cockatoo unmap --coassemble-output coassemble_dir --forward reads_1.1.fq ... --reverse reads_1.2.fq ... --genomes genome_1.fna ..."
                 ),
+            ],
+            "iterate": [
+                btu.Example(
+                    "rerun coassemble, adding new bins to database",
+                    "cockatoo iterate --aviary-outputs coassembly_0_dir ... --forward reads_1.1.fq ... --reverse reads_1.2.fq ... --genomes genome_1.fna ..."
+                ),
             ]
         }
         )
@@ -355,42 +364,46 @@ def main():
     ###########################################################################
 
     coassemble_parser = main_parser.new_subparser("coassemble", "Coassemble reads clustered by unbinned single-copy marker genes")
-    # Base arguments
-    coassemble_base = coassemble_parser.add_argument_group("Base input arguments")
-    add_base_arguments(coassemble_base)
-    coassemble_base.add_argument("--singlem-metapackage", help="SingleM metapackage for sequence searching")
-    # Midpoint arguments
-    coassemble_midpoint = coassemble_parser.add_argument_group("Intermediate results input arguments")
-    coassemble_midpoint.add_argument("--sample-singlem", nargs='+', help="SingleM otu tables for each sample, in the form \"[sample name]_read.otu_table.tsv\". If provided, SingleM pipe sample is skipped")
-    coassemble_midpoint.add_argument("--sample-singlem-list", help="SingleM otu tables for each sample, in the form \"[sample name]_read.otu_table.tsv\" newline separated. If provided, SingleM pipe sample is skipped")
-    coassemble_midpoint.add_argument("--sample-singlem-dir", help="Directory containing SingleM otu tables for each sample, in the form \"[sample name]_read.otu_table.tsv\". If provided, SingleM pipe sample is skipped")
-    coassemble_midpoint.add_argument("--sample-query", nargs='+', help="Queried SingleM otu tables for each sample against genome database, in the form \"[sample name]_query.otu_table.tsv\". If provided, SingleM pipe and appraise are skipped")
-    coassemble_midpoint.add_argument("--sample-query-list", help="Queried SingleM otu tables for each sample against genome database, in the form \"[sample name]_query.otu_table.tsv\" newline separated. If provided, SingleM pipe and appraise are skipped")
-    coassemble_midpoint.add_argument("--sample-query-dir", help="Directory containing Queried SingleM otu tables for each sample against genome database, in the form \"[sample name]_query.otu_table.tsv\". If provided, SingleM pipe and appraise are skipped")
-    coassemble_midpoint.add_argument("--sample-read-size", help="Comma separated list of sample name and size (bp). If provided, sample read counting is skipped")
-    coassemble_midpoint.add_argument("--genome-transcripts", nargs='+', help="Genome transcripts for reference database, in the form \"[genome]_protein.fna\"")
-    coassemble_midpoint.add_argument("--genome-transcripts-list", help="Genome transcripts for reference database, in the form \"[genome]_protein.fna\" newline separated")
-    coassemble_midpoint.add_argument("--genome-singlem", help="Combined SingleM otu tables for genome transcripts. If provided, genome SingleM is skipped")
-    # Clustering options
-    coassemble_clustering = coassemble_parser.add_argument_group("Clustering options")
-    coassemble_clustering.add_argument("--taxa-of-interest", help="Only consider sequences from this GTDB taxa (e.g. p__Planctomycetota) [default: all]")
-    coassemble_clustering.add_argument("--appraise-sequence-identity", type=int, help="Minimum sequence identity for SingleM appraise against reference database [default: 86%, Genus-level]", default=0.86)
-    coassemble_clustering.add_argument("--min-sequence-coverage", type=int, help="Minimum combined coverage for sequence inclusion [default: 10]", default=10)
-    coassemble_clustering.add_argument("--single-assembly", action="store_true", help="Skip appraise to discover samples to differential abundance binning. Forces --num-coassembly-samples and --max-coassembly-samples to 1")
-    coassemble_clustering.add_argument("--num-coassembly-samples", type=int, help="Number of samples per coassembly cluster [default: 2]", default=2)
-    coassemble_clustering.add_argument("--max-coassembly-samples", type=int, help="Upper bound for number of samples per coassembly cluster [default: --num-coassembly-samples]", default=None)
-    coassemble_clustering.add_argument("--max-coassembly-size", type=int, help="Maximum size (Gbp) of coassembly cluster [default: None]", default=None)
-    coassemble_clustering.add_argument("--max-recovery-samples", type=int, help="Upper bound for number of related samples to use for differential abundance binning [default: 20]", default=20)
-    coassemble_clustering.add_argument("--prodigal-meta", action="store_true", help="Use prodigal \"-p meta\" argument (for testing)")
-    # Coassembly options
-    coassemble_coassembly = coassemble_parser.add_argument_group("Coassembly options")
-    coassemble_coassembly.add_argument("--assemble-unmapped", action="store_true", help="Only assemble reads that do not map to reference genomes")
-    coassemble_coassembly.add_argument("--unmapping-min-appraised", type=int, help="Minimum fraction of sequences binned to justify unmapping [default: 0.1]", default=0.1)
-    coassemble_coassembly.add_argument("--aviary-cores", type=int, help="Maximum number of cores for Aviary to use", default=16)
-    coassemble_coassembly.add_argument("--aviary-memory", type=int, help="Maximum amount of memory for Aviary to use (Gigabytes)", default=250)
-    # General options
-    coassemble_general = coassemble_parser.add_argument_group("General options")
-    add_general_snakemake_options(coassemble_general)
+
+    def add_coassemble_arguments(parser):
+        # Base arguments
+        coassemble_base = parser.add_argument_group("Base input arguments")
+        add_base_arguments(coassemble_base)
+        coassemble_base.add_argument("--singlem-metapackage", help="SingleM metapackage for sequence searching")
+        # Midpoint arguments
+        coassemble_midpoint = parser.add_argument_group("Intermediate results input arguments")
+        coassemble_midpoint.add_argument("--sample-singlem", nargs='+', help="SingleM otu tables for each sample, in the form \"[sample name]_read.otu_table.tsv\". If provided, SingleM pipe sample is skipped")
+        coassemble_midpoint.add_argument("--sample-singlem-list", help="SingleM otu tables for each sample, in the form \"[sample name]_read.otu_table.tsv\" newline separated. If provided, SingleM pipe sample is skipped")
+        coassemble_midpoint.add_argument("--sample-singlem-dir", help="Directory containing SingleM otu tables for each sample, in the form \"[sample name]_read.otu_table.tsv\". If provided, SingleM pipe sample is skipped")
+        coassemble_midpoint.add_argument("--sample-query", nargs='+', help="Queried SingleM otu tables for each sample against genome database, in the form \"[sample name]_query.otu_table.tsv\". If provided, SingleM pipe and appraise are skipped")
+        coassemble_midpoint.add_argument("--sample-query-list", help="Queried SingleM otu tables for each sample against genome database, in the form \"[sample name]_query.otu_table.tsv\" newline separated. If provided, SingleM pipe and appraise are skipped")
+        coassemble_midpoint.add_argument("--sample-query-dir", help="Directory containing Queried SingleM otu tables for each sample against genome database, in the form \"[sample name]_query.otu_table.tsv\". If provided, SingleM pipe and appraise are skipped")
+        coassemble_midpoint.add_argument("--sample-read-size", help="Comma separated list of sample name and size (bp). If provided, sample read counting is skipped")
+        coassemble_midpoint.add_argument("--genome-transcripts", nargs='+', help="Genome transcripts for reference database, in the form \"[genome]_protein.fna\"")
+        coassemble_midpoint.add_argument("--genome-transcripts-list", help="Genome transcripts for reference database, in the form \"[genome]_protein.fna\" newline separated")
+        coassemble_midpoint.add_argument("--genome-singlem", help="Combined SingleM otu tables for genome transcripts. If provided, genome SingleM is skipped")
+        # Clustering options
+        coassemble_clustering = parser.add_argument_group("Clustering options")
+        coassemble_clustering.add_argument("--taxa-of-interest", help="Only consider sequences from this GTDB taxa (e.g. p__Planctomycetota) [default: all]")
+        coassemble_clustering.add_argument("--appraise-sequence-identity", type=int, help="Minimum sequence identity for SingleM appraise against reference database [default: 86%, Genus-level]", default=0.86)
+        coassemble_clustering.add_argument("--min-sequence-coverage", type=int, help="Minimum combined coverage for sequence inclusion [default: 10]", default=10)
+        coassemble_clustering.add_argument("--single-assembly", action="store_true", help="Skip appraise to discover samples to differential abundance binning. Forces --num-coassembly-samples and --max-coassembly-samples to 1")
+        coassemble_clustering.add_argument("--num-coassembly-samples", type=int, help="Number of samples per coassembly cluster [default: 2]", default=2)
+        coassemble_clustering.add_argument("--max-coassembly-samples", type=int, help="Upper bound for number of samples per coassembly cluster [default: --num-coassembly-samples]", default=None)
+        coassemble_clustering.add_argument("--max-coassembly-size", type=int, help="Maximum size (Gbp) of coassembly cluster [default: None]", default=None)
+        coassemble_clustering.add_argument("--max-recovery-samples", type=int, help="Upper bound for number of related samples to use for differential abundance binning [default: 20]", default=20)
+        coassemble_clustering.add_argument("--prodigal-meta", action="store_true", help="Use prodigal \"-p meta\" argument (for testing)")
+        # Coassembly options
+        coassemble_coassembly = parser.add_argument_group("Coassembly options")
+        coassemble_coassembly.add_argument("--assemble-unmapped", action="store_true", help="Only assemble reads that do not map to reference genomes")
+        coassemble_coassembly.add_argument("--unmapping-min-appraised", type=int, help="Minimum fraction of sequences binned to justify unmapping [default: 0.1]", default=0.1)
+        coassemble_coassembly.add_argument("--aviary-cores", type=int, help="Maximum number of cores for Aviary to use", default=16)
+        coassemble_coassembly.add_argument("--aviary-memory", type=int, help="Maximum amount of memory for Aviary to use (Gigabytes)", default=250)
+        # General options
+        coassemble_general = parser.add_argument_group("General options")
+        add_general_snakemake_options(coassemble_general)
+
+    add_coassemble_arguments(coassemble_parser)
 
     ###########################################################################
 
@@ -411,7 +424,7 @@ def main():
 
     ###########################################################################
 
-    unmap_parser = main_parser.new_subparser("unmap", "Coassemble reads clustered by unbinned single-copy marker genes")
+    unmap_parser = main_parser.new_subparser("unmap", "Coassemble pre-clustered reads")
     # Base arguments
     unmap_base = unmap_parser.add_argument_group("Input arguments")
     add_base_arguments(unmap_base)
@@ -427,6 +440,15 @@ def main():
     # General options
     unmap_general = unmap_parser.add_argument_group("General options")
     add_general_snakemake_options(unmap_general)
+
+    ###########################################################################
+
+    iterate_parser = main_parser.new_subparser("iterate", "Iterate coassemble using new bins")
+    # Iterate options
+    iterate_iteration = iterate_parser.add_argument_group("Iteration options")
+    iterate_iteration.add_argument("--aviary-outputs", nargs='+', help="Output dir from Aviary coassembly and recover commands produced by coassemble subcommand", required=True)
+    # Coassembly options
+    add_coassemble_arguments(iterate_parser)
 
     ###########################################################################
 
@@ -448,7 +470,7 @@ def main():
         if (args.forward and args.forward_list) or (args.reverse and args.reverse_list) or (args.genomes and args.genomes_list):
             raise Exception("General and list arguments are mutually exclusive")
 
-    if args.subparser_name == "coassemble":
+    def coassemble_argument_verification(args):
         base_argument_verification(args)
         if (args.sample_query or args.sample_query_list or args.sample_query_dir) and not (args.sample_singlem or args.sample_singlem_list or args.sample_singlem_dir):
             raise Exception("Input SingleM query (--sample-query) requires SingleM otu tables (--sample-singlem) for coverage")
@@ -467,6 +489,9 @@ def main():
         else:
             if args.num_coassembly_samples > args.max_recovery_samples:
                 raise Exception("Max recovery samples (--max-recovery-samples) must be greater than or equal to number of coassembly samples (--num-coassembly-samples)")
+
+    if args.subparser_name == "coassemble":
+        coassemble_argument_verification(args)
         coassemble(args)
 
     elif args.subparser_name == "evaluate":
@@ -479,6 +504,14 @@ def main():
         if not args.coassemble_output and not (args.appraise_binned and args.appraise_unbinned and args.elusive_clusters):
             raise Exception("Either Cockatoo coassemble output (--coassemble-output) or specific input files (--appraise-binned and --elusive-clusters) must be provided")
         unmap(args)
+
+    elif args.subparser_name == "iterate":
+        if args.sample_query or args.sample_query_list or args.sample_query_dir:
+            raise Exception("Query arguments are incompatible with Cockatoo iterate")
+        if args.sample_singlem_dir or args.sample_query_dir:
+            raise Exception("Directory arguments are incompatible with Cockatoo iterate")
+        coassemble_argument_verification(args)
+        iterate(args)
 
 if __name__ == "__main__":
     sys.exit(main())
