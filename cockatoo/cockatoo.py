@@ -9,6 +9,7 @@ import logging
 import subprocess
 import importlib.resources
 import bird_tool_utils as btu
+import pandas as pd
 from snakemake.io import load_configfile
 from ruamel.yaml import YAML
 
@@ -94,6 +95,35 @@ def run_workflow(config, workflow, output_dir, cores=16, dryrun=False,
 
     logging.info(f"Executing: {cmd}")
     subprocess.check_call(cmd, shell=True)
+
+def evaluate_bins(aviary_outputs, checkm_version, min_completeness, max_contamination):
+    recovered_bins = {
+        os.path.basename(coassembly.rstrip("/")): 
+            os.path.abspath(os.path.join(coassembly, "recover", "bins", "final_bins"))
+            for coassembly in aviary_outputs
+        }
+    checkm_out = {
+        os.path.basename(coassembly.rstrip("/")): 
+            os.path.abspath(os.path.join(coassembly, "recover", "bins", "checkm_minimal.tsv"))
+            for coassembly in aviary_outputs
+        }
+
+    if checkm_version == 1:
+        completeness_col = "Completeness (CheckM1)"
+        contamination_col = "Contamination (CheckM1)"
+    elif checkm_version == 2:
+        completeness_col = "Completeness (CheckM2)"
+        contamination_col = "Contamination (CheckM2)"
+    else:
+        raise ValueError("Invalid CheckM version")
+
+    coassembly_bins = {}
+    for coassembly in checkm_out:
+        checkm_out = pd.read_csv(checkm_out[coassembly], sep = "\t")
+        passed_bins = checkm_out[(checkm_out[completeness_col] >= min_completeness) & (checkm_out[contamination_col] <= max_contamination)]["Bin Id"].to_list()
+        coassembly_bins[coassembly] = passed_bins
+
+    return {"-".join([c, b]): os.path.join(recovered_bins[c], b + ".fna") for c in coassembly_bins for b in coassembly_bins[c]}
 
 def coassemble(args):
     logging.info("Loading sample info")
@@ -210,16 +240,8 @@ def coassemble(args):
 
 def evaluate(args):
     coassemble_target_dir = os.path.abspath(os.path.join(args.coassemble_output, "target"))
-    recovered_bins = {
-        os.path.basename(coassembly.rstrip("/")): 
-            os.path.abspath(os.path.join(coassembly, "recover", "bins", "final_bins"))
-            for coassembly in args.aviary_outputs
-        }
-    checkm_out = {
-        os.path.basename(coassembly.rstrip("/")): 
-            os.path.abspath(os.path.join(coassembly, "recover", "bins", "checkm_minimal.tsv"))
-            for coassembly in args.aviary_outputs
-        }
+    bins = evaluate_bins(args.aviary_outputs, args.checkm_version, args.min_completeness, args.max_contamination)
+
     if args.singlem_metapackage:
         metapackage = os.path.abspath(args.singlem_metapackage)
     else:
@@ -230,8 +252,7 @@ def evaluate(args):
         "elusive_edges": os.path.join(coassemble_target_dir, "elusive_edges.tsv"),
         "elusive_clusters": os.path.join(coassemble_target_dir, "elusive_clusters.tsv"),
         "singlem_metapackage": metapackage,
-        "recovered_bins": recovered_bins,
-        "checkm_out": checkm_out,
+        "recovered_bins": bins,
         "checkm_version": args.checkm_version,
         "min_completeness": args.min_completeness,
         "max_contamination": args.max_contamination,
