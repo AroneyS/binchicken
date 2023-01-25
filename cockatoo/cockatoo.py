@@ -438,25 +438,27 @@ def main():
     if not os.path.exists(args.output):
         os.makedirs(args.output)
 
-    if args.subparser_name == "coassemble":
+    def base_argument_verification(args):
         if not args.forward and not args.forward_list:
             raise Exception("Input reads must be provided")
         if not args.reverse and not args.reverse_list:
             raise Exception("Interleaved and long-reads not yet implemented")
-        if (args.sample_query or args.sample_query_list or args.sample_query_dir) and not (args.sample_singlem or args.sample_singlem_list or args.sample_singlem_dir):
-            raise Exception("Input SingleM query (--sample-query) requires SingleM otu tables (--sample-singlem) for coverage")
         if not (args.genomes or args.genomes_list or args.genome_transcripts or args.genome_transcripts_list or args.single_assembly):
             raise Exception("Input genomes must be provided")
+        if (args.forward and args.forward_list) or (args.reverse and args.reverse_list) or (args.genomes and args.genomes_list):
+            raise Exception("General and list arguments are mutually exclusive")
+
+    if args.subparser_name == "coassemble":
+        base_argument_verification(args)
+        if (args.sample_query or args.sample_query_list or args.sample_query_dir) and not (args.sample_singlem or args.sample_singlem_list or args.sample_singlem_dir):
+            raise Exception("Input SingleM query (--sample-query) requires SingleM otu tables (--sample-singlem) for coverage")
         if args.assemble_unmapped and args.single_assembly:
             raise Exception("Assemble unmapped is incompatible with single-sample assembly")
         if args.assemble_unmapped and not args.genomes and not args.genomes_list:
             raise Exception("Reference genomes must be provided to assemble unmapped reads")
         if not args.singlem_metapackage and not os.environ['SINGLEM_METAPACKAGE_PATH'] and not args.sample_query and not args.sample_query_list:
             raise Exception("SingleM metapackage (--singlem-metapackage or SINGLEM_METAPACKAGE_PATH environment variable, see SingleM data) must be provided when SingleM query otu tables are not provided")
-        if (args.forward and args.forward_list) or \
-            (args.reverse and args.reverse_list) or \
-            (args.genomes and args.genomes_list) or \
-            (args.sample_singlem and args.sample_singlem_list) or (args.sample_singlem_dir and args.sample_singlem_list) or (args.sample_singlem and args.sample_singlem_dir) or \
+        if (args.sample_singlem and args.sample_singlem_list) or (args.sample_singlem_dir and args.sample_singlem_list) or (args.sample_singlem and args.sample_singlem_dir) or \
             (args.sample_query and args.sample_query_list) or (args.sample_query_dir and args.sample_query_list) or (args.sample_query and args.sample_query_dir):
             raise Exception("General, list and directory arguments are mutually exclusive")
         if args.max_coassembly_samples:
@@ -473,16 +475,9 @@ def main():
         evaluate(args)
 
     elif args.subparser_name == "unmap":
+        base_argument_verification(args)
         if not args.coassemble_output and not (args.appraise_binned and args.appraise_unbinned and args.elusive_clusters):
             raise Exception("Either Cockatoo coassemble output (--coassemble-output) or specific input files (--appraise-binned and --elusive-clusters) must be provided")
-        if not args.forward and not args.forward_list:
-            raise Exception("Input reads must be provided")
-        if not args.reverse and not args.reverse_list:
-            raise Exception("Interleaved and long-reads not yet implemented")
-        if not (args.genomes or args.genomes_list):
-            raise Exception("Input genomes must be provided")
-        if (args.forward and args.forward_list) or (args.reverse and args.reverse_list) or (args.genomes and args.genomes_list):
-            raise Exception("General and list arguments are mutually exclusive")
         unmap(args)
 
 if __name__ == "__main__":
