@@ -514,6 +514,8 @@ def main():
             raise Exception("Query arguments are incompatible with Cockatoo iterate")
         if args.sample_singlem_dir or args.sample_query_dir:
             raise Exception("Directory arguments are incompatible with Cockatoo iterate")
+        if args.single_assembly:
+            raise Exception("Single assembly is incompatible with Cockatoo iterate")
         coassemble_argument_verification(args)
         iterate(args)
 
