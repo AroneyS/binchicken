@@ -361,6 +361,11 @@ def main():
         argument_group.add_argument("--genomes", nargs='+', help="Reference genomes for read mapping")
         argument_group.add_argument("--genomes-list", help="Reference genomes for read mapping newline separated")
 
+    def add_evaluation_options(argument_group):
+        argument_group.add_argument("--checkm-version", type=int, help="CheckM version to use to quality cutoffs [default: 2]", default=2)
+        argument_group.add_argument("--min-completeness", type=int, help="Include bins with at least this minimum completeness [default: 70]", default=70)
+        argument_group.add_argument("--max-contamination", type=int, help="Include bins with at most this maximum contamination [default: 10]", default=10)
+
     ###########################################################################
 
     coassemble_parser = main_parser.new_subparser("coassemble", "Coassemble reads clustered by unbinned single-copy marker genes")
@@ -415,9 +420,7 @@ def main():
     evaluate_base.add_argument("--singlem-metapackage", help="SingleM metapackage for sequence searching")
     # Evaluate options
     evaluate_evaluation = evaluate_parser.add_argument_group("Evaluation options")
-    evaluate_evaluation.add_argument("--checkm-version", type=int, help="CheckM version to use to quality cutoffs [default: 2]", default=2)
-    evaluate_evaluation.add_argument("--min-completeness", type=int, help="Include bins with at least this minimum completeness [default: 70]", default=70)
-    evaluate_evaluation.add_argument("--max-contamination", type=int, help="Include bins with at most this maximum contamination [default: 10]", default=10)
+    add_evaluation_options(evaluate_evaluation)
     # General options
     evaluate_general = evaluate_parser.add_argument_group("General options")
     add_general_snakemake_options(evaluate_general)
@@ -447,6 +450,7 @@ def main():
     # Iterate options
     iterate_iteration = iterate_parser.add_argument_group("Iteration options")
     iterate_iteration.add_argument("--aviary-outputs", nargs='+', help="Output dir from Aviary coassembly and recover commands produced by coassemble subcommand", required=True)
+    add_evaluation_options(iterate_iteration)
     # Coassembly options
     add_coassemble_arguments(iterate_parser)
 
