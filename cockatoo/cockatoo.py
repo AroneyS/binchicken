@@ -322,6 +322,31 @@ def unmap(args):
     coassemble(args)
 
 def iterate(args):
+    logging.info("Evaluating new bins")
+    bins = evaluate_bins(args.aviary_outputs, args.checkm_version, args.min_completeness, args.max_contamination)
+
+    for bin in bins:
+        copy_input(
+            os.path.abspath(bins[bin]),
+            os.path.join(args.output, "recovered_bins", bin + ".fna")
+        )
+    with open(os.path.join(args.output, "recovered_bins", "bin_provenance.tsv"), "w") as f:
+        f.writelines("\n".join(["\t".join([os.path.abspath(bins[bin]), bin + ".fna"]) for bin in bins]))
+    # Evaluate bins by checking CheckMX completeness and contamination
+    # Copy passing bins to new dir with coassembly_N_n.fna names, check unique (use args.iteration to record iteration number? iteration_0_coassembly_0_1.fna)
+    # Create record of new vs old bin names
+    # Create novel bins list
+
+    # If args.genome_singlem: get new bin transcripts, run SingleM, combine into new summarised file
+    # Elif args.genome_list: read_list() and add new bins to list stored in args.genomes, remove args.genome_list
+    # Elif args.genome_transcripts:
+    # Elif args.genome_transcript_list:
+    # Else: add new bins to args.genomes
+
+    # coassemble(args)
+
+    # Check coassemblies for previous runs (need elusive_clusters argument?)
+    # Warn if no elusive_clusters argument
     pass
 
 def main():
