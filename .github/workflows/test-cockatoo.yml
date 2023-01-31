@@ -22,6 +22,7 @@ jobs:
           miniforge-variant: Mambaforge
           auto-activate-base: false
           channels: conda-forge,bioconda
+          channel-priority: true
       - run: |
           conda info
           conda list
