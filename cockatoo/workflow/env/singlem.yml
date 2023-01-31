@@ -28,7 +28,7 @@ dependencies:
   - fastalite
   - jinja2
   - pip
-  - sqlalchemy
+  - sqlalchemy<2.0.0
   - pandas
   - bird_tool_utils_python>=0.4.1
   - zenodo_backpack
