@@ -37,4 +37,4 @@ dependencies:
   - pip:
     - cmake # Required so scann can be installed and run via pip. Without this, get LD_LIBRARY_PATH error when running pipe.
     - scann
-    - git+https://github.com/wwood/singlem.git@f8e07a6073aa8a371eb16a7e91ebba86446dce67
+    - git+https://github.com/wwood/singlem.git@5ea8625d1b3b28662ba1c1b3fc9a3f289a489a0b
