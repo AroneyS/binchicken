@@ -82,4 +82,4 @@ analysis %>%
     write_tsv(snakemake@output[["summary_stats"]])
 
 # Save R image for further processing
-save.image(file = str_c(main_dir, "evaluate.RData"))
+save.image(file = str_c(main_dir, "/evaluate.RData"))
