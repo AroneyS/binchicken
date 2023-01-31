@@ -332,10 +332,7 @@ def iterate(args):
         )
     with open(os.path.join(args.output, "recovered_bins", "bin_provenance.tsv"), "w") as f:
         f.writelines("\n".join(["\t".join([os.path.abspath(bins[bin]), bin + ".fna"]) for bin in bins]))
-    # Evaluate bins by checking CheckMX completeness and contamination
-    # Copy passing bins to new dir with coassembly_N_n.fna names, check unique (use args.iteration to record iteration number? iteration_0_coassembly_0_1.fna)
-    # Create record of new vs old bin names
-    # Create novel bins list
+    # Check bin names unique (use args.iteration to record iteration number? iteration_0_coassembly_0_1.fna)
 
     # If args.genome_singlem: get new bin transcripts, run SingleM, combine into new summarised file
     # Elif args.genome_list: read_list() and add new bins to list stored in args.genomes, remove args.genome_list
