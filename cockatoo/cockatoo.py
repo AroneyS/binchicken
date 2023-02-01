@@ -515,7 +515,7 @@ def main():
             raise Exception("Input reads must be provided")
         if not args.reverse and not args.reverse_list:
             raise Exception("Interleaved and long-reads not yet implemented")
-        if not (args.genomes or args.genomes_list or args.genome_transcripts or args.genome_transcripts_list or args.single_assembly):
+        if not (args.genomes or args.genomes_list or args.single_assembly):
             raise Exception("Input genomes must be provided")
         if (args.forward and args.forward_list) or (args.reverse and args.reverse_list) or (args.genomes and args.genomes_list):
             raise Exception("General and list arguments are mutually exclusive")
