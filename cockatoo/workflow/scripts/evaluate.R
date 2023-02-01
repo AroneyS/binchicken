@@ -80,3 +80,6 @@ analysis %>%
         recovered_percent = round(recovered / total * 100, 2)
     ) %>%
     write_tsv(snakemake@output[["summary_stats"]])
+
+# Save R image for further processing
+save.image(file = str_c(main_dir, "/evaluate.RData"))
