@@ -80,6 +80,34 @@ class Tests(unittest.TestCase):
 
             self.assertTrue("WARNING: coassembly_0 has been previously suggested" in output)
 
+            cluster_path = os.path.join("test", "coassemble", "target", "elusive_clusters.tsv")
+            self.assertTrue(os.path.exists(cluster_path))
+            expected = "\n".join(
+                [
+                    "\t".join([
+                        "samples",
+                        "length",
+                        "total_weight",
+                        "total_targets",
+                        "total_size",
+                        "recover_samples",
+                        "coassembly",
+                    ]),
+                    "\t".join([
+                        "sample_1,sample_3",
+                        "2",
+                        "1",
+                        "1",
+                        "5738",
+                        "sample_1,sample_2,sample_3",
+                        "coassembly_0"
+                    ]),
+                    ""
+                ]
+            )
+            with open(cluster_path) as f:
+                self.assertEqual(expected, f.read())
+
     def test_iterate_default_config(self):
         with in_tempdir():
             cmd = (
