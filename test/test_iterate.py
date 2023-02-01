@@ -43,6 +43,7 @@ class Tests(unittest.TestCase):
         with in_tempdir():
             cmd = (
                 f"cockatoo iterate "
+                f"--iteration 0 "
                 f"--aviary-outputs {MOCK_COASSEMBLIES} "
                 f"--forward {SAMPLE_READS_FORWARD} "
                 f"--reverse {SAMPLE_READS_REVERSE} "
@@ -54,14 +55,14 @@ class Tests(unittest.TestCase):
             )
             extern.run(cmd)
 
-            new_bin_0_path = os.path.join("test", "recovered_bins", "coassembly_0-0.fna")
+            new_bin_0_path = os.path.join("test", "recovered_bins", "iteration_0-coassembly_0-0.fna")
             self.assertTrue(os.path.exists(new_bin_0_path))
             with open(new_bin_0_path) as f:
                 file = f.read()
                 self.assertTrue(">k141_1363016" in file)
                 self.assertTrue(">k141_177318" not in file)
 
-            new_bin_1_path = os.path.join("test", "recovered_bins", "coassembly_0-1.fna")
+            new_bin_1_path = os.path.join("test", "recovered_bins", "iteration_0-coassembly_0-1.fna")
             self.assertTrue(os.path.exists(new_bin_1_path))
 
             bin_provenance_path = os.path.join("test", "recovered_bins", "bin_provenance.tsv")
