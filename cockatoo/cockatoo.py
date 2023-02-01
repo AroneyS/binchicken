@@ -96,7 +96,7 @@ def run_workflow(config, workflow, output_dir, cores=16, dryrun=False,
     logging.info(f"Executing: {cmd}")
     subprocess.check_call(cmd, shell=True)
 
-def evaluate_bins(aviary_outputs, checkm_version, min_completeness, max_contamination):
+def evaluate_bins(aviary_outputs, checkm_version, min_completeness, max_contamination, iteration=None):
     recovered_bins = {
         os.path.basename(coassembly.rstrip("/")): 
             os.path.abspath(os.path.join(coassembly, "recover", "bins", "final_bins"))
@@ -123,7 +123,10 @@ def evaluate_bins(aviary_outputs, checkm_version, min_completeness, max_contamin
         passed_bins = checkm_out[(checkm_out[completeness_col] >= min_completeness) & (checkm_out[contamination_col] <= max_contamination)]["Bin Id"].to_list()
         coassembly_bins[coassembly] = passed_bins
 
-    return {"-".join([c, str(i)]): os.path.join(recovered_bins[c], b + ".fna") for c in coassembly_bins for i, b in enumerate(coassembly_bins[c])}
+    if iteration:
+        return {"-".join(["iteration_" + iteration, c, str(i)]): os.path.join(recovered_bins[c], b + ".fna") for c in coassembly_bins for i, b in enumerate(coassembly_bins[c])}
+    else:
+        return {"-".join([c, str(i)]): os.path.join(recovered_bins[c], b + ".fna") for c in coassembly_bins for i, b in enumerate(coassembly_bins[c])}
 
 def coassemble(args):
     logging.info("Loading sample info")
@@ -323,7 +326,7 @@ def unmap(args):
 
 def iterate(args):
     logging.info("Evaluating new bins")
-    bins = evaluate_bins(args.aviary_outputs, args.checkm_version, args.min_completeness, args.max_contamination)
+    bins = evaluate_bins(args.aviary_outputs, args.checkm_version, args.min_completeness, args.max_contamination, args.iteration)
 
     for bin in bins:
         copy_input(
@@ -332,7 +335,6 @@ def iterate(args):
         )
     with open(os.path.join(args.output, "recovered_bins", "bin_provenance.tsv"), "w") as f:
         f.writelines("\n".join(["\t".join([os.path.abspath(bins[bin]), bin + ".fna"]) for bin in bins]))
-    # Check bin names unique (use args.iteration to record iteration number? iteration_0_coassembly_0_1.fna)
 
     # If args.genome_singlem: get new bin transcripts, run SingleM, combine into new summarised file
     # Elif args.genome_list: read_list() and add new bins to list stored in args.genomes, remove args.genome_list
@@ -492,6 +494,7 @@ def main():
     iterate_parser = main_parser.new_subparser("iterate", "Iterate coassemble using new bins")
     # Iterate options
     iterate_iteration = iterate_parser.add_argument_group("Iteration options")
+    iterate_iteration.add_argument("--iteration", help="Iteration number used for unique bin naming", default="0")
     iterate_iteration.add_argument("--aviary-outputs", nargs='+', help="Output dir from Aviary coassembly and recover commands produced by coassemble subcommand", required=True)
     add_evaluation_options(iterate_iteration)
     # Coassembly options
