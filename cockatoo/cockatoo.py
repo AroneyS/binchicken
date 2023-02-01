@@ -97,6 +97,7 @@ def run_workflow(config, workflow, output_dir, cores=16, dryrun=False,
     subprocess.check_call(cmd, shell=True)
 
 def evaluate_bins(aviary_outputs, checkm_version, min_completeness, max_contamination, iteration=None):
+    logging.info(f"Evaluating bins using CheckM{str(checkm_version)} with completeness >= {str(min_completeness)} and contamination <= {str(max_contamination)}")
     recovered_bins = {
         os.path.basename(coassembly.rstrip("/")): 
             os.path.abspath(os.path.join(coassembly, "recover", "bins", "final_bins"))
@@ -336,17 +337,31 @@ def iterate(args):
     with open(os.path.join(args.output, "recovered_bins", "bin_provenance.tsv"), "w") as f:
         f.writelines("\n".join(["\t".join([os.path.abspath(bins[bin]), bin + ".fna"]) for bin in bins]))
 
-    # If args.genome_singlem: get new bin transcripts, run SingleM, combine into new summarised file
-    # Elif args.genome_list: read_list() and add new bins to list stored in args.genomes, remove args.genome_list
-    # Elif args.genome_transcripts:
-    # Elif args.genome_transcript_list:
-    # Else: add new bins to args.genomes
+    if args.genomes_list:
+        args.genomes = read_list(args.genomes_list)
+        args.genomes_list = None
+    new_genomes = [os.path.join(args.output, "recovered_bins", bin + ".fna") for bin in bins]
+    args.genomes += new_genomes
 
-    # coassemble(args)
+    if args.genome_singlem:
+        # get new bin transcripts, run SingleM, combine into new summarised file
+        pass
 
-    # Check coassemblies for previous runs (need elusive_clusters argument?)
-    # Warn if no elusive_clusters argument
-    pass
+    coassemble(args)
+
+    if args.elusive_clusters:
+        new_cluster = pd.read_csv(os.path.join(args.output, "coassemble", "target", "elusive_clusters.tsv"), sep="\t")
+        for cluster in args.elusive_clusters:
+            old_cluster = pd.read_csv(cluster, sep="\t")
+            comb_cluster = (
+                new_cluster
+                .set_index("samples")[["coassembly"]]
+                .join(old_cluster.set_index("samples")[["length"]], how="inner")
+                )
+            if not comb_cluster.empty:
+                comb_cluster.apply(lambda x: logging.warn(f"{x['coassembly']} has been previously suggested"), axis=1)
+    else:
+        logging.warn("Suggested coassemblies may match those from previous iterations. To check, use `--elusive-clusters`.")
 
 def main():
     main_parser = btu.BirdArgparser(program="Cockatoo", version = __version__,
@@ -496,6 +511,7 @@ def main():
     iterate_iteration = iterate_parser.add_argument_group("Iteration options")
     iterate_iteration.add_argument("--iteration", help="Iteration number used for unique bin naming", default="0")
     iterate_iteration.add_argument("--aviary-outputs", nargs='+', help="Output dir from Aviary coassembly and recover commands produced by coassemble subcommand", required=True)
+    iterate_iteration.add_argument("--elusive-clusters", nargs='+', help="Previous elusive_clusters.tsv files produced by coassemble subcommand")
     add_evaluation_options(iterate_iteration)
     # Coassembly options
     add_coassemble_arguments(iterate_parser)

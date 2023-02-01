@@ -4,6 +4,7 @@ import unittest
 import os
 from bird_tool_utils import in_tempdir
 import extern
+import subprocess
 from snakemake.io import load_configfile
 
 path_to_data = os.path.join(os.path.dirname(os.path.realpath(__file__)),'data')
@@ -28,6 +29,7 @@ METAPACKAGE = os.path.join(path_to_data, "singlem_metapackage.smpkg")
 
 MOCK_COASSEMBLE = os.path.join(path_to_data, "mock_coassemble")
 MOCK_COASSEMBLIES = ' '.join([os.path.join(MOCK_COASSEMBLE, "coassemble", "coassembly_0")])
+ELUSIVE_CLUSTERS = ' '.join([os.path.join(MOCK_COASSEMBLE, "target", "elusive_clusters_iterate.tsv")])
 
 SAMPLE_READ_SIZE = os.path.join(MOCK_COASSEMBLE, "read_size2.csv")
 SAMPLE_SINGLEM = ' '.join([
@@ -45,6 +47,7 @@ class Tests(unittest.TestCase):
                 f"cockatoo iterate "
                 f"--iteration 0 "
                 f"--aviary-outputs {MOCK_COASSEMBLIES} "
+                f"--elusive-clusters {ELUSIVE_CLUSTERS} "
                 f"--forward {SAMPLE_READS_FORWARD} "
                 f"--reverse {SAMPLE_READS_REVERSE} "
                 f"--genomes {GENOMES} "
@@ -53,7 +56,8 @@ class Tests(unittest.TestCase):
                 f"--output test "
                 f"--conda-prefix {path_to_conda} "
             )
-            extern.run(cmd)
+            output_raw = subprocess.run(cmd, shell=True, check=True, capture_output=True)
+            output = output_raw.stderr.decode('ascii')
 
             new_bin_0_path = os.path.join("test", "recovered_bins", "iteration_0-coassembly_0-0.fna")
             self.assertTrue(os.path.exists(new_bin_0_path))
@@ -65,11 +69,16 @@ class Tests(unittest.TestCase):
             new_bin_1_path = os.path.join("test", "recovered_bins", "iteration_0-coassembly_0-1.fna")
             self.assertTrue(os.path.exists(new_bin_1_path))
 
+            new_bin_2_path = os.path.join("test", "recovered_bins", "iteration_0-coassembly_0-2.fna")
+            self.assertFalse(os.path.exists(new_bin_2_path))
+
             bin_provenance_path = os.path.join("test", "recovered_bins", "bin_provenance.tsv")
             self.assertTrue(os.path.exists(bin_provenance_path))
 
             config_path = os.path.join("test", "config.yaml")
             self.assertTrue(os.path.exists(config_path))
+
+            self.assertTrue("WARNING: coassembly_0 has been previously suggested" in output)
 
     def test_iterate_default_config(self):
         with in_tempdir():
@@ -85,7 +94,8 @@ class Tests(unittest.TestCase):
                 f"--conda-prefix {path_to_conda} "
                 f"--dryrun "
             )
-            extern.run(cmd)
+            output_raw = subprocess.run(cmd, shell=True, check=True, capture_output=True)
+            output = output_raw.stderr.decode('ascii')
 
             config_path = os.path.join("test", "config.yaml")
             self.assertTrue(os.path.exists(config_path))
@@ -95,9 +105,8 @@ class Tests(unittest.TestCase):
             self.assertEqual(config["assemble_unmapped"], False)
             self.assertEqual(config["aviary_threads"], 16)
             self.assertEqual(config["aviary_memory"], 250)
-            self.assertEqual(config["checkm_version"], 2)
-            self.assertEqual(config["min_completeness"], 70)
-            self.assertEqual(config["max_contamination"], 10)
+
+            self.assertTrue("Evaluating bins using CheckM2 with completeness >= 70 and contamination <= 10" in output)
 
 
 if __name__ == '__main__':
