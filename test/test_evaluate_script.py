@@ -16,8 +16,8 @@ class Tests(unittest.TestCase):
 
     def test_evaluate_script(self):
         targets = pd.DataFrame([
-            ["S3.1", "sample_1.1", "AAA", 5, 10.0, "Root", 10],
-            ["S3.1", "sample_2.1", "AAA", 5, 10.0, "Root", 10],
+            ["S3.1", "sample_1.1", "AAA", 5, 10.0, "Root; old", 10],
+            ["S3.1", "sample_2.1", "AAA", 5, 10.0, "Root; old", 10],
         ], columns=TARGET_COLUMNS)
         clusters = pd.DataFrame([
             ["sample_1,sample_2", 2, 1, 1, 100, "sample_1,sample_2,sample_3", "coassembly_0"],
@@ -34,7 +34,7 @@ class Tests(unittest.TestCase):
             ["coassembly_0", "S3.1", "AAA", "genome_1_transcripts", "10", "Root"],
         ], columns=OUTPUT_COLUMNS)
         expected_unmatched = pd.DataFrame([
-            ["coassembly_0", "S3.1", "AAB", "genome_1_transcripts", None, None],
+            ["coassembly_0", "S3.1", "AAB", "genome_1_transcripts", None, "Root"],
         ], columns=OUTPUT_COLUMNS)
 
         observed_matches, observed_unmatched = evaluate(targets, clusters, edges, recovered)
