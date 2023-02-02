@@ -12,6 +12,7 @@ import bird_tool_utils as btu
 import pandas as pd
 from snakemake.io import load_configfile
 from ruamel.yaml import YAML
+import copy
 
 def build_reads_list(forward, reverse):
     if reverse:
@@ -327,8 +328,27 @@ def unmap(args):
     args.snakemake_args = args.snakemake_args + " --rerun-triggers mtime -- aviary_commands" if args.snakemake_args else "--rerun-triggers mtime -- aviary_commands"
 
     args = set_standard_args(args)
-
     coassemble(args)
+
+def generate_genome_singlem(orig_args, new_genomes):
+    args = copy.deepcopy(orig_args)
+    args = set_standard_args(args)
+    args.singlem_metapackage = orig_args.singlem_metapackage
+    args.genomes = new_genomes + ["mock_genome"]
+
+    args.output = os.path.join(orig_args.output, "mock")
+    if not os.path.exists(args.output):
+        os.makedirs(args.output)
+
+    copy_input(
+        os.path.abspath(orig_args.genome_singlem),
+        os.path.join(args.output, "coassemble", "pipe", "mock_genome_bin.otu_table.tsv")
+        )
+
+    args.snakemake_args = args.snakemake_args + " --rerun-triggers mtime -- singlem_summarise_genomes" if args.snakemake_args else "--rerun-triggers mtime -- singlem_summarise_genomes"
+    coassemble(args)
+
+    return os.path.join(args.output, "coassemble", "summarise", "bins_summarised.otu_table.tsv")
 
 def iterate(args):
     logging.info("Evaluating new bins")
@@ -349,8 +369,7 @@ def iterate(args):
     args.genomes += new_genomes
 
     if args.genome_singlem:
-        # get new bin transcripts, run SingleM, combine into new summarised file
-        pass
+        args.genome_singlem = generate_genome_singlem(args, new_genomes)
 
     coassemble(args)
 

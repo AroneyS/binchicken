@@ -6,6 +6,7 @@ from bird_tool_utils import in_tempdir
 import extern
 import subprocess
 from snakemake.io import load_configfile
+import re
 
 path_to_data = os.path.join(os.path.dirname(os.path.realpath(__file__)),'data')
 path_to_conda = os.path.join(path_to_data,'.conda')
@@ -135,6 +136,32 @@ class Tests(unittest.TestCase):
             self.assertEqual(config["aviary_memory"], 250)
 
             self.assertTrue("Evaluating bins using CheckM2 with completeness >= 70 and contamination <= 10" in output)
+
+    def test_iterate_genome_singlem(self):
+        with in_tempdir():
+            cmd = (
+                f"cockatoo iterate "
+                f"--iteration 0 "
+                f"--aviary-outputs {MOCK_COASSEMBLIES} "
+                f"--elusive-clusters {ELUSIVE_CLUSTERS} "
+                f"--forward {SAMPLE_READS_FORWARD} "
+                f"--reverse {SAMPLE_READS_REVERSE} "
+                f"--genomes {GENOMES} "
+                f"--genome-singlem {GENOME_SINGLEM} "
+                f"--singlem-metapackage {METAPACKAGE} "
+                f"--output test "
+                f"--conda-prefix {path_to_conda} "
+            )
+            output_raw = subprocess.run(cmd, shell=True, check=True, capture_output=True)
+            output = output_raw.stderr.decode('ascii')
+
+            bin_provenance_path = os.path.join("test", "recovered_bins", "bin_provenance.tsv")
+            self.assertTrue(os.path.exists(bin_provenance_path))
+
+            config_path = os.path.join("test", "config.yaml")
+            self.assertTrue(os.path.exists(config_path))
+
+            self.assertTrue(re.search(r"singlem_pipe_genomes\s+2", output))
 
 
 if __name__ == '__main__':
