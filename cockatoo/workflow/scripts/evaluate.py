@@ -8,7 +8,7 @@ import re
 
 def evaluate(unbinned_otu_table, elusive_clusters, elusive_edges, recovered_otu_table):
     # Load otu table of unbinned sequences and get unique id for each sequence (to match sequences to target id)
-    unbinned_otu_table = unbinned_otu_table.groupby(["gene", "sequence"]).first()[["target"]].reset_index()
+    unbinned_otu_table = unbinned_otu_table.groupby(["gene", "sequence"]).first()[["target", "taxonomy"]].reset_index()
     unbinned_otu_table.dropna(inplace=True)
     unbinned_otu_table["target"] = unbinned_otu_table["target"].astype(str)
 
@@ -40,9 +40,12 @@ def evaluate(unbinned_otu_table, elusive_clusters, elusive_edges, recovered_otu_
     recovered_otu_table[["coassembly", "genome"]] = recovered_otu_table["sample"].str.split("-", n=1, expand=True)
     recovered_coassemblies = set(recovered_otu_table["coassembly"])
 
-    combined_otu_table = recovered_otu_table.set_index(["coassembly", "gene", "sequence"])[["genome", "taxonomy"]].join(elusive_otu_table, how="outer").reset_index()
+    combined_otu_table = recovered_otu_table.set_index(["coassembly", "gene", "sequence"])[["genome", "taxonomy"]].join(elusive_otu_table, how="outer", rsuffix="old").reset_index()
+    combined_otu_table["taxonomy"] = combined_otu_table["taxonomy"].combine(combined_otu_table["taxonomyold"], lambda a,b: a if not pd.isna(a) else b)
+    combined_otu_table = combined_otu_table.drop("taxonomyold", axis=1)
     combined_otu_table.insert(len(combined_otu_table.columns)-1, "taxonomy", combined_otu_table.pop("taxonomy"))
     combined_otu_table = combined_otu_table[combined_otu_table["coassembly"].isin(recovered_coassemblies)]
+
     matches = combined_otu_table.dropna(subset = ["target"]).reset_index(drop=True)
     unmatched = combined_otu_table[combined_otu_table["target"].isnull()].reset_index(drop=True)
 
