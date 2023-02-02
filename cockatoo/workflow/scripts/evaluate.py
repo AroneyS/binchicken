@@ -42,8 +42,8 @@ def evaluate(unbinned_otu_table, elusive_clusters, elusive_edges, recovered_otu_
 
     combined_otu_table = recovered_otu_table.set_index(["coassembly", "gene", "sequence"])[["genome"]].join(elusive_otu_table, how="outer").reset_index()
     combined_otu_table = combined_otu_table[combined_otu_table["coassembly"].isin(recovered_coassemblies)]
-    matches = combined_otu_table.dropna(subset = ["target"])
-    unmatched = combined_otu_table[combined_otu_table["target"].isnull()]
+    matches = combined_otu_table.dropna(subset = ["target"]).reset_index(drop=True)
+    unmatched = combined_otu_table[combined_otu_table["target"].isnull()].reset_index(drop=True)
 
     return matches, unmatched
 
