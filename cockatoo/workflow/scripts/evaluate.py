@@ -7,6 +7,13 @@ import pandas as pd
 import re
 
 def evaluate(unbinned_otu_table, elusive_clusters, elusive_edges, recovered_otu_table):
+
+    output_columns = ["coassembly", "gene", "sequence", "genome", "target", "taxonomy"]
+
+    if len(recovered_otu_table) == 0:
+        empty_output = pd.DataFrame(columns=output_columns)
+        return empty_output, empty_output
+
     # Load otu table of unbinned sequences and get unique id for each sequence (to match sequences to target id)
     unbinned_otu_table = unbinned_otu_table.groupby(["gene", "sequence"]).first()[["target", "taxonomy"]].reset_index()
     unbinned_otu_table.dropna(inplace=True)
