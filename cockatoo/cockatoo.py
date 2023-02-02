@@ -96,6 +96,31 @@ def run_workflow(config, workflow, output_dir, cores=16, dryrun=False,
     logging.info(f"Executing: {cmd}")
     subprocess.check_call(cmd, shell=True)
 
+def set_standard_args(args):
+    args.singlem_metapackage = None
+    args.sample_singlem = None
+    args.sample_singlem_list = None
+    args.sample_singlem_dir = None
+    args.sample_query = None
+    args.sample_query_list = None
+    args.sample_query_dir = None
+    args.sample_read_size = None
+    args.genome_transcripts = None
+    args.genome_transcripts_list = None
+    args.genome_singlem = None
+    args.taxa_of_interest = None
+    args.appraise_sequence_identity = 1
+    args.min_sequence_coverage = 1
+    args.single_assembly = False
+    args.num_coassembly_samples = 1
+    args.max_coassembly_samples = None
+    args.max_coassembly_size = None
+    args.max_recovery_samples = 1
+    args.prodigal_meta = False
+    args.assemble_unmapped = True
+
+    return(args)
+
 def evaluate_bins(aviary_outputs, checkm_version, min_completeness, max_contamination, iteration=None):
     logging.info(f"Evaluating bins using CheckM{str(checkm_version)} with completeness >= {str(min_completeness)} and contamination <= {str(max_contamination)}")
     recovered_bins = {
@@ -301,27 +326,7 @@ def unmap(args):
         )
     args.snakemake_args = args.snakemake_args + " --rerun-triggers mtime -- aviary_commands" if args.snakemake_args else "--rerun-triggers mtime -- aviary_commands"
 
-    args.singlem_metapackage = None
-    args.sample_singlem = None
-    args.sample_singlem_list = None
-    args.sample_singlem_dir = None
-    args.sample_query = None
-    args.sample_query_list = None
-    args.sample_query_dir = None
-    args.sample_read_size = None
-    args.genome_transcripts = None
-    args.genome_transcripts_list = None
-    args.genome_singlem = None
-    args.taxa_of_interest = None
-    args.appraise_sequence_identity = 1
-    args.min_sequence_coverage = 1
-    args.single_assembly = False
-    args.num_coassembly_samples = 1
-    args.max_coassembly_samples = None
-    args.max_coassembly_size = None
-    args.max_recovery_samples = 1
-    args.prodigal_meta = False
-    args.assemble_unmapped = True
+    args = set_standard_args(args)
 
     coassemble(args)
 
