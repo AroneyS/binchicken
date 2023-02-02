@@ -83,7 +83,7 @@ class Tests(unittest.TestCase):
         ], columns=SINGLEM_COLUMNS)
 
         expected_matches = pd.DataFrame([
-            ["coassembly_0", "S3.1", "AAA", None, "10", None],
+            ["coassembly_0", "S3.1", "AAA", None, "10", "Root; old"],
         ], columns=OUTPUT_COLUMNS)
         expected_unmatched = pd.DataFrame([
             ["coassembly_0", "S3.1", "AAB", "genome_1_transcripts", None, "Root"],
