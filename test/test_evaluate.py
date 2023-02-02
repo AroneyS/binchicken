@@ -11,7 +11,7 @@ path_to_conda = os.path.join(path_to_data,'.conda')
 
 METAPACKAGE = os.path.join(path_to_data, "singlem_metapackage.smpkg")
 MOCK_COASSEMBLE = os.path.join(path_to_data, "mock_coassemble")
-MOCK_COASSEMBLIES = ' '.join([os.path.join(MOCK_COASSEMBLE, "coassembly_0")])
+MOCK_COASSEMBLIES = ' '.join([os.path.join(MOCK_COASSEMBLE, "coassemble", "coassembly_0")])
 
 class Tests(unittest.TestCase):
     def test_evaluate(self):
@@ -73,6 +73,18 @@ class Tests(unittest.TestCase):
             with open(summary_path) as f:
                 self.assertEqual(expected, f.read())
 
+            summarise_path = os.path.join("test", "evaluate", "summarise", "bins_summarised.otu_table.tsv")
+            self.assertTrue(os.path.exists(summarise_path))
+            expected = "\n".join(
+                [
+                    "\t".join(["gene", "sample", "sequence", "num_hits", "coverage", "taxonomy"]),
+                    "\t".join(["S3.7.ribosomal_protein_S7", "coassembly_0-0_transcripts", "TATCAAGTTCCACAAGAAGTTAGAGGAGAAAGAAGAATCTCGTTAGCTATTAGATGGATT", "1", "1.14", "Root; d__Bacteria"]),
+                    ""
+                ]
+            )
+            with open(summarise_path) as f:
+                self.assertEqual(expected, f.read())
+
     def test_evaluate_default_config(self):
         with in_tempdir():
             cmd = (
@@ -111,7 +123,7 @@ class Tests(unittest.TestCase):
             expected = "\n".join(
                 [
                     "\t".join(["gene", "sample", "sequence", "num_hits", "coverage", "taxonomy"]),
-                    "\t".join(["S3.7.ribosomal_protein_S7", "coassembly_0-bin_1_transcripts", "TATCAAGTTCCACAAGAAGTTAGAGGAGAAAGAAGAATCTCGTTAGCTATTAGATGGATT", "1", "1.14", "Root; d__Bacteria"]),
+                    "\t".join(["S3.7.ribosomal_protein_S7", "coassembly_0-0_transcripts", "TATCAAGTTCCACAAGAAGTTAGAGGAGAAAGAAGAATCTCGTTAGCTATTAGATGGATT", "1", "1.14", "Root; d__Bacteria"]),
                     ""
                 ]
             )

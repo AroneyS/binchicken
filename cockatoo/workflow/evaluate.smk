@@ -7,23 +7,7 @@ import os
 output_dir = os.path.abspath("evaluate")
 logs_dir = output_dir + "/logs"
 
-coassembly_bins = {}
-
-if config["checkm_version"] == 1:
-    completeness_col = "Completeness (CheckM1)"
-    contamination_col = "Contamination (CheckM1)"
-elif config["checkm_version"] == 2:
-    completeness_col = "Completeness (CheckM2)"
-    contamination_col = "Contamination (CheckM2)"
-else:
-    raise ValueError("Invalid CheckM version")
-
-for coassembly in config["checkm_out"]:
-    checkm_out = pd.read_csv(config["checkm_out"][coassembly], sep = "\t")
-    passed_bins = checkm_out[(checkm_out[completeness_col] >= config["min_completeness"]) & (checkm_out[contamination_col] <= config["max_contamination"])]["Bin Id"].to_list()
-    coassembly_bins[coassembly] = passed_bins
-
-bins = {"-".join([c, b]): os.path.join(config["recovered_bins"][c], b + ".fna") for c in coassembly_bins for b in coassembly_bins[c]}
+bins = config["recovered_bins"]
 
 rule all:
     input:
