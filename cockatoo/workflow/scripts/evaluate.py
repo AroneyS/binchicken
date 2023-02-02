@@ -37,7 +37,7 @@ def evaluate(unbinned_otu_table, elusive_clusters, elusive_edges, recovered_otu_
     elusive_otu_table = coassembly_edges.join(unbinned_otu_table.set_index("target")).reset_index().set_index(["coassembly", "gene", "sequence"])
 
     # Load recovered otu table and join elusive sequences
-    recovered_otu_table[["coassembly", "genome"]] = recovered_otu_table["sample"].str.split("-", 1, expand=True)
+    recovered_otu_table[["coassembly", "genome"]] = recovered_otu_table["sample"].str.split("-", n=1, expand=True)
     recovered_coassemblies = set(recovered_otu_table["coassembly"])
 
     combined_otu_table = recovered_otu_table.set_index(["coassembly", "gene", "sequence"])[["genome", "taxonomy"]].join(elusive_otu_table, how="outer").reset_index()
