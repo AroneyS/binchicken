@@ -11,7 +11,7 @@ bins = config["recovered_bins"]
 
 rule all:
     input:
-        output_dir + "/evaluate/unbinned_hits.tsv",
+        output_dir + "/evaluate/matched_hits.tsv",
         output_dir + "/evaluate/novel_hits.tsv",
         output_dir + "/evaluate/summary_stats.tsv",
 
@@ -75,7 +75,7 @@ rule evaluate:
     input:
         recovered_otu_table = output_dir + "/summarise/bins_summarised.otu_table.tsv"
     output:
-        unbinned_hits = output_dir + "/evaluate/unbinned_hits.tsv",
+        matched_hits = output_dir + "/evaluate/matched_hits.tsv",
         novel_hits = output_dir + "/evaluate/novel_hits.tsv",
     params:
         unbinned_otu_table=config["targets"],
@@ -87,7 +87,7 @@ rule evaluate:
 
 rule evaluate_plots:
     input:
-        unbinned_hits = output_dir + "/evaluate/unbinned_hits.tsv",
+        matched_hits = output_dir + "/evaluate/matched_hits.tsv",
     output:
         plots_dir = directory(output_dir + "/evaluate/plots"),
         summary_stats = output_dir + "/evaluate/summary_stats.tsv",
