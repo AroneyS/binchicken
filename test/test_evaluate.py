@@ -32,7 +32,6 @@ class Tests(unittest.TestCase):
 
             summary_path = os.path.join("test", "evaluate", "evaluate", "summary_stats.tsv")
             self.assertTrue(os.path.exists(summary_path))
-
             expected = "\n".join(
                 [
                     "\t".join([
@@ -45,11 +44,27 @@ class Tests(unittest.TestCase):
                     ]),
                     "\t".join([
                         "coassembly_0",
-                        "sequences",
+                        "sequence_targets",
                         "1",
                         "1",
                         "2",
                         "50",
+                    ]),
+                    "\t".join([
+                        "coassembly_0",
+                        "nontarget_recovered",
+                        "2",
+                        "1",
+                        "3",
+                        "33.33",
+                    ]),
+                    "\t".join([
+                        "coassembly_0",
+                        "novel_recovered",
+                        "2",
+                        "1",
+                        "3",
+                        "33.33",
                     ]),
                     "\t".join([
                         "coassembly_0",
@@ -79,6 +94,8 @@ class Tests(unittest.TestCase):
                 [
                     "\t".join(["gene", "sample", "sequence", "num_hits", "coverage", "taxonomy"]),
                     "\t".join(["S3.7.ribosomal_protein_S7", "coassembly_0-0_transcripts", "TATCAAGTTCCACAAGAAGTTAGAGGAGAAAGAAGAATCTCGTTAGCTATTAGATGGATT", "1", "1.14", "Root; d__Bacteria"]),
+                    "\t".join(["S3.7.ribosomal_protein_S7", "coassembly_0-0_transcripts", "TTCCAGGTGCCTACTGAAGTTCGTCCCGAGCGTAAAATTGCATTGGGTATGAAATGGCTG", "1", "1.18", "Root; d__Bacteria; p__Bacteroidota; c__Bacteroidia; o__Sphingobacteriales; f__Sphingobacteriaceae; g__Mucilaginibacter; s__Mucilaginibacter_sp013286235"]),
+                    "\t".join(["S3.7.ribosomal_protein_S7", "coassembly_0-1_transcripts", "TACCAGGTTCCTGTTGAAGTTCGCCCATCACGCCGTTCTGCTTTGGCAATGCGCTGGGTG", "1", "1.14", "Root; d__Bacteria; p__Proteobacteria; c__Gammaproteobacteria; o__Burkholderiales; f__Burkholderiaceae; g__Polynucleobacter; s__Polynucleobacter_sp018688335"]),
                     ""
                 ]
             )
@@ -124,6 +141,8 @@ class Tests(unittest.TestCase):
                 [
                     "\t".join(["gene", "sample", "sequence", "num_hits", "coverage", "taxonomy"]),
                     "\t".join(["S3.7.ribosomal_protein_S7", "coassembly_0-0_transcripts", "TATCAAGTTCCACAAGAAGTTAGAGGAGAAAGAAGAATCTCGTTAGCTATTAGATGGATT", "1", "1.14", "Root; d__Bacteria"]),
+                    "\t".join(["S3.7.ribosomal_protein_S7", "coassembly_0-0_transcripts", "TTCCAGGTGCCTACTGAAGTTCGTCCCGAGCGTAAAATTGCATTGGGTATGAAATGGCTG", "1", "1.18", "Root; d__Bacteria; p__Bacteroidota; c__Bacteroidia; o__Sphingobacteriales; f__Sphingobacteriaceae; g__Mucilaginibacter; s__Mucilaginibacter_sp013286235"]),
+                    "\t".join(["S3.7.ribosomal_protein_S7", "coassembly_0-1_transcripts", "TACCAGGTTCCTGTTGAAGTTCGCCCATCACGCCGTTCTGCTTTGGCAATGCGCTGGGTG", "1", "1.14", "Root; d__Bacteria; p__Proteobacteria; c__Gammaproteobacteria; o__Burkholderiales; f__Burkholderiaceae; g__Polynucleobacter; s__Polynucleobacter_sp018688335"]),
                     ""
                 ]
             )
