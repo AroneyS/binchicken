@@ -6,14 +6,14 @@
 library(cowplot)
 library(tidyverse)
 
-unbinned_hits <- read_tsv(snakemake@input[["unbinned_hits"]])
+matched_hits <- read_tsv(snakemake@input[["matched_hits"]])
 
 # Plotting
 main_dir <- snakemake@output[["plots_dir"]]
 dir.create(main_dir, recursive = TRUE)
 taxonomy_groups <- c("Root", "Domain", "Phylum", "Class", "Order", "Family", "Genus", "Species")
 
-analysis <- unbinned_hits %>%
+analysis <- matched_hits %>%
     separate(taxonomy, into = taxonomy_groups, sep = "; ", remove = FALSE)
 
 plot_bars <- function(df, output_dir) {

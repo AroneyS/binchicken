@@ -81,7 +81,7 @@ if __name__ == "__main__":
     elusive_clusters_path = snakemake.params.elusive_clusters
     elusive_edges_path = snakemake.params.elusive_edges
     recovered_otu_table_path = snakemake.input.recovered_otu_table
-    unbinned_hits_path = snakemake.output.unbinned_hits
+    matched_hits_path = snakemake.output.matched_hits
     novel_hits_path = snakemake.output.novel_hits
 
     unbinned_otu_table = pd.read_csv(unbinned_path, sep="\t")
@@ -92,6 +92,6 @@ if __name__ == "__main__":
 
     matches, unmatched = evaluate(unbinned_otu_table, binned_otu_table, elusive_clusters, elusive_edges, recovered_otu_table)
     # Export hits matching elusive targets
-    matches.to_csv(unbinned_hits_path, sep="\t", index=False)
+    matches.to_csv(matched_hits_path, sep="\t", index=False)
     # Export non-elusive sequence hits
     unmatched.to_csv(novel_hits_path, sep="\t", index=False)
