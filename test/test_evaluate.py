@@ -69,10 +69,10 @@ class Tests(unittest.TestCase):
                     "\t".join([
                         "coassembly_0",
                         "bins",
-                        "0",
                         "1",
                         "1",
-                        "100",
+                        "2",
+                        "50",
                     ]),
                     "\t".join([
                         "coassembly_0",

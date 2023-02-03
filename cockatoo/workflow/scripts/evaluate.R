@@ -91,6 +91,10 @@ summary_stats <- analysis %>%
             summarise(novel_recovered = n())
         ) %>%
     pivot_longer(-c(coassembly, status), names_to = "statistic", values_to = "value") %>%
+    {
+        .["value"][.["statistic"] == "bins" & .["status"] == "missed"] <- length(snakemake@config$recovered_bins) - .["value"][.["statistic"] == "bins" & .["status"] == "recovered"]
+        .
+    } %>%
     pivot_wider(names_from = status, values_from = value) %>%
     mutate(
         total = recovered + missed,
