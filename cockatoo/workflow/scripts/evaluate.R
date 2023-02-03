@@ -7,6 +7,7 @@ library(cowplot)
 library(tidyverse)
 
 matched_hits <- read_tsv(snakemake@input[["matched_hits"]])
+novel_hits <- read_tsv(snakemake@input[["novel_hits"]])
 
 # Plotting
 main_dir <- snakemake@output[["plots_dir"]]
@@ -14,6 +15,7 @@ dir.create(main_dir, recursive = TRUE)
 taxonomy_groups <- c("Root", "Domain", "Phylum", "Class", "Order", "Family", "Genus", "Species")
 
 analysis <- matched_hits %>%
+    filter(!is.na(target)) %>%
     separate(taxonomy, into = taxonomy_groups, sep = "; ", remove = FALSE)
 
 plot_bars <- function(df, output_dir) {
@@ -66,19 +68,38 @@ analysis %>%
     lapply(plot_coassembly)
 
 # Summary stats
-analysis %>%
+recovered_hits <- bind_rows(
+    novel_hits,
+    matched_hits %>% filter(!is.na(genome))
+)
+
+summary_stats <- analysis %>%
     group_by(coassembly, status = c("recovered", "missed")[as.integer(is.na(genome)) + 1]) %>%
     summarise(
-        sequences = n(),
+        sequence_targets = n(),
         bins = sum(!is.na(unique(genome))),
         taxonomy = sum(!is.na(unique(taxonomy))),
     ) %>%
+    left_join(
+        recovered_hits %>%
+            group_by(coassembly, status = c("recovered", "missed")[as.integer(is.na(found_in)) + 1]) %>%
+            summarise(nontarget_recovered = n())
+        ) %>%
+    left_join(
+        recovered_hits %>%
+            group_by(coassembly, status = c("recovered", "missed")[as.integer(!is.na(found_in) | !is.na(target)) + 1]) %>%
+            summarise(novel_recovered = n())
+        ) %>%
     pivot_longer(-c(coassembly, status), names_to = "statistic", values_to = "value") %>%
     pivot_wider(names_from = status, values_from = value) %>%
     mutate(
         total = recovered + missed,
         recovered_percent = round(recovered / total * 100, 2)
-    ) %>%
+    )
+
+summary_stats %>%
+    mutate(statistic = factor(statistic, levels = c("sequence_targets", "nontarget_recovered", "novel_recovered", "bins", "taxonomy"))) %>%
+    arrange(coassembly, statistic) %>%
     write_tsv(snakemake@output[["summary_stats"]])
 
 # Save R image for further processing

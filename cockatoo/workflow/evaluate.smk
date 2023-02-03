@@ -88,6 +88,7 @@ rule evaluate:
 rule evaluate_plots:
     input:
         matched_hits = output_dir + "/evaluate/matched_hits.tsv",
+        novel_hits = output_dir + "/evaluate/novel_hits.tsv",
     output:
         plots_dir = directory(output_dir + "/evaluate/plots"),
         summary_stats = output_dir + "/evaluate/summary_stats.tsv",
