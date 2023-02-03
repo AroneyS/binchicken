@@ -73,36 +73,47 @@ recovered_hits <- bind_rows(
     matched_hits %>% filter(!is.na(genome))
 )
 
+stat_groups <- tribble(
+    ~statistic, ~within,
+    "sequences", "targets",
+    "taxonomy", "targets",
+    "nontarget_sequences", "recovery",
+    "novel_sequences", "recovery",
+    "bins", "recovery"
+)
+
 summary_stats <- analysis %>%
-    group_by(coassembly, status = c("recovered", "missed")[as.integer(is.na(genome)) + 1]) %>%
+    group_by(coassembly, status = c("match", "nonmatch")[as.integer(is.na(genome)) + 1]) %>%
     summarise(
-        sequence_targets = n(),
+        sequences = n(),
         bins = sum(!is.na(unique(genome))),
         taxonomy = sum(!is.na(unique(taxonomy))),
     ) %>%
     left_join(
         recovered_hits %>%
-            group_by(coassembly, status = c("recovered", "missed")[as.integer(is.na(found_in)) + 1]) %>%
-            summarise(nontarget_recovered = n())
+            group_by(coassembly, status = c("match", "nonmatch")[as.integer(is.na(found_in)) + 1]) %>%
+            summarise(nontarget_sequences = n())
         ) %>%
     left_join(
         recovered_hits %>%
-            group_by(coassembly, status = c("recovered", "missed")[as.integer(!is.na(found_in) | !is.na(target)) + 1]) %>%
-            summarise(novel_recovered = n())
+            group_by(coassembly, status = c("match", "nonmatch")[as.integer(!is.na(found_in) | !is.na(target)) + 1]) %>%
+            summarise(novel_sequences = n())
         ) %>%
     pivot_longer(-c(coassembly, status), names_to = "statistic", values_to = "value") %>%
     {
-        .["value"][.["statistic"] == "bins" & .["status"] == "missed"] <- length(snakemake@config$recovered_bins) - .["value"][.["statistic"] == "bins" & .["status"] == "recovered"]
+        .["value"][.["statistic"] == "bins" & .["status"] == "nonmatch"] <- length(snakemake@config$recovered_bins) - .["value"][.["statistic"] == "bins" & .["status"] == "match"]
         .
     } %>%
     pivot_wider(names_from = status, values_from = value) %>%
     mutate(
-        total = recovered + missed,
-        recovered_percent = round(recovered / total * 100, 2)
-    )
+        total = match + nonmatch,
+        match_percent = round(match / total * 100, 2)
+    ) %>%
+    left_join(stat_groups)
 
 summary_stats %>%
-    mutate(statistic = factor(statistic, levels = c("sequence_targets", "nontarget_recovered", "novel_recovered", "bins", "taxonomy"))) %>%
+    select(coassembly, statistic, within, match, nonmatch, total, match_percent) %>%
+    mutate(statistic = factor(statistic, levels = c("sequences", "taxonomy", "nontarget_sequences", "novel_sequences", "bins"))) %>%
     arrange(coassembly, statistic) %>%
     write_tsv(snakemake@output[["summary_stats"]])
 
