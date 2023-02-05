@@ -128,7 +128,7 @@ summary_stats %>%
 ### Table output ###
 ####################
 summary_table <- coassemble_summary %>%
-    select(-c(samples, total_weight, total_targets))
+    select(-c(samples, total_weight, total_targets)) %>%
     gt()
 
 gtsave(summary_table, snakemake@output[["summary_table"]])
