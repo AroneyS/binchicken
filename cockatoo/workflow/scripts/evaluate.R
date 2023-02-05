@@ -6,6 +6,7 @@
 library(gt)
 library(cowplot)
 library(tidyverse)
+if (!webshot::is_phantomjs_installed()) webshot::install_phantomjs()
 
 matched_hits <- read_tsv(snakemake@input[["matched_hits"]])
 novel_hits <- read_tsv(snakemake@input[["novel_hits"]])
@@ -126,7 +127,8 @@ summary_stats %>%
 ####################
 ### Table output ###
 ####################
-summary_table <- analysis %>%
+summary_table <- coassemble_summary %>%
+    select(-c(samples, total_weight, total_targets))
     gt()
 
 gtsave(summary_table, snakemake@output[["summary_table"]])
