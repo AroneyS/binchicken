@@ -89,9 +89,12 @@ rule evaluate_plots:
     input:
         matched_hits = output_dir + "/evaluate/matched_hits.tsv",
         novel_hits = output_dir + "/evaluate/novel_hits.tsv",
+    params:
+        coassemble_summary=config["coassemble_summary"],
     output:
         plots_dir = directory(output_dir + "/evaluate/plots"),
         summary_stats = output_dir + "/evaluate/summary_stats.tsv",
+        summary_table = output_dir + "/evaluate/summary_table.png",
     conda:
         "env/r.yml"
     script:
