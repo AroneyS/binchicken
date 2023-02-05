@@ -127,9 +127,59 @@ summary_stats %>%
 ####################
 ### Table output ###
 ####################
+target_summary <- summary_stats %>%
+    filter(statistic != "taxonomy") %>%
+    pivot_wider(id_cols = coassembly, names_from = statistic, values_from = match)
+
+target_totals <- summary_stats %>%
+    filter(!statistic %in% c("novel_sequences", "taxonomy")) %>%
+    pivot_wider(id_cols = coassembly, names_from = statistic, values_from = total) %>%
+    rename(total_targets = sequences, total_bins = bins, total_recovered = nontarget_sequences)
+
+target_percentage <- summary_stats %>%
+    filter(!statistic %in% c("bins", "nontarget_sequences", "novel_sequences", "taxonomy")) %>%
+    pivot_wider(id_cols = coassembly, names_from = statistic, values_from = match_percent) %>%
+    rename(perc_targets = sequences)
+
+if (!"unmapped_size" %in% colnames(coassemble_summary)) coassemble_summary$unmapped_size <- NA_real_
+
 summary_table <- coassemble_summary %>%
     select(-c(samples, total_weight, total_targets)) %>%
-    gt()
+    left_join(target_summary) %>%
+    left_join(target_totals) %>%
+    left_join(target_percentage) %>%
+    mutate(
+        sequences = pmap_chr(list(sequences, total_targets, perc_targets), ~ str_c(..1, "/", ..2, " (", ..3, "%)")),
+        bins = map2_chr(bins, total_bins, ~ str_c(.x, " (", .y, " total)")),
+        total_size = total_size / 10**9,
+        unmapped_size = unmapped_size / 10**9,
+        ) %>%
+    select(coassembly, length, total_size, unmapped_size, bins, sequences, nontarget_sequences, novel_sequences) %>%
+    gt() %>%
+    tab_spanner(
+        label = "Gbp",
+        columns = c(total_size, unmapped_size)
+    ) %>%
+    tab_spanner(
+        label = "Recovered sequences",
+        columns = c(sequences, nontarget_sequences, novel_sequences)
+    ) %>%
+    fmt_integer(c(length, total_size, unmapped_size, nontarget_sequences, novel_sequences)) %>%
+    cols_label(
+        coassembly = "coassembly",
+        length = "samples",
+        total_size = "size",
+        unmapped_size = "unmap",
+        bins = "target bins",
+        sequences = "targets",
+        nontarget_sequences = "nontargets",
+        novel_sequences = "novel"
+    ) %>%
+    tab_header(title = "Cockatoo coassembly evaluation") %>%
+    tab_style(
+        style = cell_fill(),
+        locations = cells_body(columns = c(length, unmapped_size, sequences, novel_sequences))
+        )
 
 gtsave(summary_table, snakemake@output[["summary_table"]])
 
