@@ -269,8 +269,9 @@ def coassemble(args):
     )
 
 def evaluate(args):
-    coassemble_target_dir = os.path.abspath(os.path.join(args.coassemble_output, "target"))
-    coassemble_appraise_dir = os.path.abspath(os.path.join(args.coassemble_output, "appraise"))
+    coassemble_dir = os.path.abspath(args.coassemble_output)
+    coassemble_target_dir = os.path.join(coassemble_dir, "target")
+    coassemble_appraise_dir = os.path.join(coassemble_dir, "appraise")
     bins = evaluate_bins(args.aviary_outputs, args.checkm_version, args.min_completeness, args.max_contamination)
 
     if args.singlem_metapackage:
@@ -283,6 +284,7 @@ def evaluate(args):
         "binned": os.path.join(coassemble_appraise_dir, "binned.otu_table.tsv"),
         "elusive_edges": os.path.join(coassemble_target_dir, "elusive_edges.tsv"),
         "elusive_clusters": os.path.join(coassemble_target_dir, "elusive_clusters.tsv"),
+        "coassemble_summary": os.path.join(coassemble_dir, "summary.tsv"),
         "singlem_metapackage": metapackage,
         "recovered_bins": bins,
         "checkm_version": args.checkm_version,

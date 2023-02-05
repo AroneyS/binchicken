@@ -3,13 +3,17 @@
 ##################
 # Author: Samuel Aroney
 
+library(gt)
 library(cowplot)
 library(tidyverse)
 
 matched_hits <- read_tsv(snakemake@input[["matched_hits"]])
 novel_hits <- read_tsv(snakemake@input[["novel_hits"]])
+coassemble_summary <- read_tsv(snakemake@params[["coassemble_summary"]])
 
-# Plotting
+################
+### Plotting ###
+################
 main_dir <- snakemake@output[["plots_dir"]]
 dir.create(main_dir, recursive = TRUE)
 taxonomy_groups <- c("Root", "Domain", "Phylum", "Class", "Order", "Family", "Genus", "Species")
@@ -67,7 +71,9 @@ analysis %>%
     `$`(coassembly) %>%
     lapply(plot_coassembly)
 
-# Summary stats
+#####################
+### Summary stats ###
+#####################
 recovered_hits <- bind_rows(
     novel_hits,
     matched_hits %>% filter(!is.na(genome))
@@ -116,6 +122,14 @@ summary_stats %>%
     mutate(statistic = factor(statistic, levels = c("sequences", "taxonomy", "nontarget_sequences", "novel_sequences", "bins"))) %>%
     arrange(coassembly, statistic) %>%
     write_tsv(snakemake@output[["summary_stats"]])
+
+####################
+### Table output ###
+####################
+summary_table <- analysis %>%
+    gt()
+
+gtsave(summary_table, snakemake@output[["summary_table"]])
 
 # Save R image for further processing
 save.image(file = str_c(main_dir, "/evaluate.RData"))
