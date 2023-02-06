@@ -12,6 +12,12 @@ matched_hits <- read_tsv(snakemake@input[["matched_hits"]])
 novel_hits <- read_tsv(snakemake@input[["novel_hits"]])
 coassemble_summary <- read_tsv(snakemake@params[["coassemble_summary"]])
 
+if (is.null(snakemake@input[["cluster_summary"]])) {
+    cluster_summary <- tibble(type = c("original", coassemble_summary$coassembly), clusters = NA_real_)
+} else {
+    cluster_summary <- read_csv(snakemake@input[["cluster_summary"]], col_names = c("type", "clusters"))
+}
+
 ################
 ### Plotting ###
 ################
@@ -141,6 +147,16 @@ target_percentage <- summary_stats %>%
     pivot_wider(id_cols = coassembly, names_from = statistic, values_from = match_percent) %>%
     rename(perc_targets = sequences)
 
+original_clusters <- cluster_summary %>%
+    filter(type == "original") %>%
+    pull(clusters)
+
+cluster_info <- cluster_summary %>%
+    pivot_wider(names_from = type, values_from = clusters) %>%
+    pivot_longer(-original, names_to = "coassembly", values_to = "clusters") %>%
+    mutate(novel_clusters = clusters - original) %>%
+    select(coassembly, novel_clusters)
+
 if (!"unmapped_size" %in% colnames(coassemble_summary)) coassemble_summary$unmapped_size <- NA_real_
 
 summary_table <- coassemble_summary %>%
@@ -148,13 +164,14 @@ summary_table <- coassemble_summary %>%
     left_join(target_summary) %>%
     left_join(target_totals) %>%
     left_join(target_percentage) %>%
+    left_join(cluster_info) %>%
     mutate(
         sequences = pmap_chr(list(sequences, total_targets, perc_targets), ~ str_c(..1, "/", ..2, " (", ..3, "%)")),
         bins = map2_chr(bins, total_bins, ~ str_c(.x, " (", .y, " total)")),
         total_size = total_size / 10**9,
         unmapped_size = unmapped_size / 10**9,
         ) %>%
-    select(coassembly, length, total_size, unmapped_size, bins, sequences, nontarget_sequences, novel_sequences) %>%
+    select(coassembly, length, total_size, unmapped_size, bins, sequences, nontarget_sequences, novel_sequences, novel_clusters) %>%
     gt() %>%
     tab_spanner(
         label = "Gbp",
@@ -164,7 +181,7 @@ summary_table <- coassemble_summary %>%
         label = "Recovered sequences",
         columns = c(sequences, nontarget_sequences, novel_sequences)
     ) %>%
-    fmt_integer(c(length, total_size, unmapped_size, nontarget_sequences, novel_sequences)) %>%
+    fmt_integer(c(length, total_size, unmapped_size, nontarget_sequences, novel_sequences, novel_clusters)) %>%
     cols_label(
         coassembly = "coassembly",
         length = "samples",
@@ -173,13 +190,19 @@ summary_table <- coassemble_summary %>%
         bins = "target bins",
         sequences = "targets",
         nontarget_sequences = "nontargets",
-        novel_sequences = "novel"
+        novel_sequences = "novel",
+        novel_clusters = "novel clusters"
     ) %>%
-    tab_header(title = "Cockatoo coassembly evaluation") %>%
+    tab_header(
+        title = "Cockatoo coassembly evaluation",
+        subtitle = str_c("Original genomes had ", original_clusters, " clusters")
+        ) %>%
     tab_style(
         style = cell_fill(),
         locations = cells_body(columns = c(length, unmapped_size, sequences, novel_sequences))
         )
+
+if (is.null(snakemake@input[["cluster_summary"]])) summary_table <- summary_table %>% cols_hide(novel_clusters)
 
 gtsave(summary_table, snakemake@output[["summary_table"]])
 
