@@ -129,7 +129,7 @@ def evaluate_bins(aviary_outputs, checkm_version, min_completeness, max_contamin
             os.path.abspath(os.path.join(coassembly, "recover", "bins", "final_bins"))
             for coassembly in aviary_outputs
         }
-    checkm_out = {
+    checkm_out_dict = {
         os.path.basename(coassembly.rstrip("/")): 
             os.path.abspath(os.path.join(coassembly, "recover", "bins", "checkm_minimal.tsv"))
             for coassembly in aviary_outputs
@@ -145,8 +145,8 @@ def evaluate_bins(aviary_outputs, checkm_version, min_completeness, max_contamin
         raise ValueError("Invalid CheckM version")
 
     coassembly_bins = {}
-    for coassembly in checkm_out:
-        checkm_out = pd.read_csv(checkm_out[coassembly], sep = "\t")
+    for coassembly in checkm_out_dict:
+        checkm_out = pd.read_csv(checkm_out_dict[coassembly], sep = "\t")
         passed_bins = checkm_out[(checkm_out[completeness_col] >= min_completeness) & (checkm_out[contamination_col] <= max_contamination)]["Bin Id"].to_list()
         coassembly_bins[coassembly] = passed_bins
 
