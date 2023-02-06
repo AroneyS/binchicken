@@ -3,7 +3,7 @@ channels:
   - bioconda
   - defaults
 dependencies:
-  - python>=3.7, <3.10 # https://github.com/google-research/google-research/issues/779 means scann (at least 1.2.8) fails to install via pip for 3.10. Older python versions than 3.7 may also work, not tested.
+  - python>=3.7
   - diamond>2.0.11
   - biopython
   - hmmer
@@ -16,8 +16,6 @@ dependencies:
   - sra-tools
   - ncbi-ngs-sdk
   - sqlite
-  - numba
-  - python-annoy
   - squarify
   - nose
   - mafft
@@ -28,13 +26,12 @@ dependencies:
   - fastalite
   - jinja2
   - pip
-  - sqlalchemy<2.0.0
+  - sqlalchemy
   - pandas
   - bird_tool_utils_python>=0.4.1
   - zenodo_backpack
+  - smafa>=0.7.0
   - git
   - git-lfs
   - pip:
-    - cmake # Required so scann can be installed and run via pip. Without this, get LD_LIBRARY_PATH error when running pipe.
-    - scann
-    - git+https://github.com/wwood/singlem.git@5ea8625d1b3b28662ba1c1b3fc9a3f289a489a0b
+    - git+https://github.com/wwood/singlem.git@c8b28b0cd6c9d4744e5310a49f893417d539f1cb
