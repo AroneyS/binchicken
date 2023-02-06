@@ -279,6 +279,15 @@ def evaluate(args):
     else:
         metapackage = os.environ['SINGLEM_METAPACKAGE_PATH']
 
+    if args.cluster:
+        cluster_ani = args.cluster_ani / 100 if args.cluster_ani > 1 else args.cluster_ani
+        if args.genomes_list:
+            args.genomes = read_list(args.genomes_list)
+        original_bins = [os.path.abspath(genome) for genome in args.genomes]
+    else:
+        cluster_ani = None
+        original_bins = None
+
     config_items = {
         "targets": os.path.join(coassemble_target_dir, "targets.tsv"),
         "binned": os.path.join(coassemble_appraise_dir, "binned.otu_table.tsv"),
@@ -290,6 +299,8 @@ def evaluate(args):
         "checkm_version": args.checkm_version,
         "min_completeness": args.min_completeness,
         "max_contamination": args.max_contamination,
+        "cluster": cluster_ani,
+        "original_bins": original_bins,
     }
 
     config_path = make_config(
@@ -509,6 +520,12 @@ def main():
     # Evaluate options
     evaluate_evaluation = evaluate_parser.add_argument_group("Evaluation options")
     add_evaluation_options(evaluate_evaluation)
+    # Cluster options
+    evaluate_cluster = evaluate_parser.add_argument_group("Cluster options")
+    evaluate_cluster.add_argument("--cluster", action="store_true", help="Cluster new and original genomes and report number of new clusters")
+    evaluate_cluster.add_argument("--cluster-ani", type=int, help="Cluster using this sequence identity [default: 86%]", default=0.86)
+    evaluate_cluster.add_argument("--genomes", nargs='+', help="Original genomes used as references for coassemble subcommand")
+    evaluate_cluster.add_argument("--genomes-list", help="Original genomes used as references for coassemble subcommand newline separated")
     # General options
     evaluate_general = evaluate_parser.add_argument_group("General options")
     add_general_snakemake_options(evaluate_general)
@@ -591,6 +608,8 @@ def main():
     elif args.subparser_name == "evaluate":
         if not args.singlem_metapackage and not os.environ['SINGLEM_METAPACKAGE_PATH']:
             raise Exception("SingleM metapackage (--singlem-metapackage or SINGLEM_METAPACKAGE_PATH environment variable, see SingleM data) must be provided")
+        if args.cluster and not (args.genomes or args.genomes_list):
+            raise Exception("Reference genomes must be provided to cluster with new genomes")
         evaluate(args)
 
     elif args.subparser_name == "unmap":
