@@ -113,10 +113,25 @@ summary_stats <- analysis %>%
             summarise(novel_sequences = n())
         ) %>%
     pivot_longer(-c(coassembly, status), names_to = "statistic", values_to = "value") %>%
-    {
-        .["value"][.["statistic"] == "bins" & .["status"] == "nonmatch"] <- length(snakemake@config$recovered_bins) - .["value"][.["statistic"] == "bins" & .["status"] == "match"]
-        .
-    } %>%
+    replace_na(list(value = 0))
+
+recovered_counts <- snakemake@config$recovered_bins %>%
+    as_tibble() %>%
+    pivot_longer(everything()) %>%
+    mutate(coassembly = str_extract(name, "coassembly_[:digit:]+")) %>%
+    group_by(coassembly) %>%
+    count() %>%
+    mutate(status = "match", statistic = "bins") %>%
+    left_join(summary_stats %>% rename(match = value)) %>%
+    mutate(
+        value = n - match,
+        status = "nonmatch"
+    ) %>%
+    select(coassembly, status, statistic, value)
+
+summary_stats <- summary_stats %>%
+    filter(statistic != "bins" | status != "nonmatch") %>%
+    bind_rows(recovered_counts) %>%
     pivot_wider(names_from = status, values_from = value) %>%
     mutate(
         total = match + nonmatch,
@@ -160,6 +175,7 @@ cluster_info <- cluster_summary %>%
 if (!"unmapped_size" %in% colnames(coassemble_summary)) coassemble_summary$unmapped_size <- NA_real_
 
 summary_table <- coassemble_summary %>%
+    filter(coassembly %in% analysis$coassembly) %>%
     select(-c(samples, total_weight, total_targets)) %>%
     left_join(target_summary) %>%
     left_join(target_totals) %>%
