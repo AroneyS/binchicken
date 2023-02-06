@@ -13,6 +13,12 @@ METAPACKAGE = os.path.join(path_to_data, "singlem_metapackage.smpkg")
 MOCK_COASSEMBLE = os.path.join(path_to_data, "mock_coassemble")
 MOCK_COASSEMBLIES = ' '.join([os.path.join(MOCK_COASSEMBLE, "coassemble", "coassembly_0")])
 
+GENOMES = " ".join([os.path.join(path_to_data, "GB_GCA_013286235.1.fna")])
+TWO_GENOMES = " ".join([
+    os.path.join(path_to_data, "GB_GCA_013286235.1.fna"),
+    os.path.join(path_to_data, "GB_GCA_013286235.2.fna"),
+    ])
+
 class Tests(unittest.TestCase):
     def test_evaluate(self):
         with in_tempdir():
@@ -153,6 +159,45 @@ class Tests(unittest.TestCase):
                 ]
             )
             with open(summarise_path) as f:
+                self.assertEqual(expected, f.read())
+
+    def test_evaluate_cluster(self):
+        with in_tempdir():
+            cmd = (
+                f"cockatoo evaluate "
+                f"--coassemble-output {MOCK_COASSEMBLE} "
+                f"--aviary-outputs {MOCK_COASSEMBLIES} "
+                f"--cluster "
+                f"--genomes {TWO_GENOMES} "
+                f"--checkm-version 2 "
+                f"--singlem-metapackage {METAPACKAGE} "
+                f"--output test "
+                f"--conda-prefix {path_to_conda} "
+            )
+            extern.run(cmd)
+
+            config_path = os.path.join("test", "config.yaml")
+            self.assertTrue(os.path.exists(config_path))
+
+            summary_path = os.path.join("test", "evaluate", "evaluate", "summary_stats.tsv")
+            self.assertTrue(os.path.exists(summary_path))
+
+            cluster_path = os.path.join("test", "evaluate", "evaluate", "cluster_stats.csv")
+            self.assertTrue(os.path.exists(cluster_path))
+            expected = "\n".join(
+                [
+                    ",".join([
+                        "original",
+                        "2",
+                    ]),
+                    ",".join([
+                        "coassembly_0",
+                        "4",
+                    ]),
+                    ""
+                ]
+            )
+            with open(cluster_path) as f:
                 self.assertEqual(expected, f.read())
 
 
