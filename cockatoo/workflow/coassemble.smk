@@ -286,6 +286,7 @@ rule filter_bam_files:
     params:
         genomes="{read}_reference.fna",
         reads_1=lambda wildcards: os.path.basename(config["reads_1"][wildcards.read]),
+        sequence_identity=config["unmapping_max_identity"],
     threads:
         32
     conda:
@@ -295,7 +296,7 @@ rule filter_bam_files:
         "-b {input}/{params.genomes}.{params.reads_1}.bam "
         "-o {output} "
         "--inverse "
-        "--min-read-percent-identity 95 "
+        "--min-read-percent-identity {params.sequence_identity} "
         "&> {log}"
 
 rule bam_to_fastq:
