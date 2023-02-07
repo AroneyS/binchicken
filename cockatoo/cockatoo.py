@@ -542,7 +542,7 @@ def main():
     unmap_coassembly.add_argument("--appraise-binned", help="SingleM appraise binned output from Cockatoo coassemble (alternative to --coassemble-output)")
     unmap_coassembly.add_argument("--appraise-unbinned", help="SingleM appraise unbinned output from Cockatoo coassemble (alternative to --coassemble-output)")
     unmap_coassembly.add_argument("--elusive-clusters", help="Elusive clusters output from Cockatoo coassemble (alternative to --coassemble-output)")
-    unmap_coassembly.add_argument("--unmapping-min-appraised", type=int, help="Minimum fraction of sequences binned to justify unmapping [default: 0.1]", default=0.1)
+    unmap_coassembly.add_argument("--unmapping-min-appraised", type=float, help="Minimum fraction of sequences binned to justify unmapping [default: 0.1]", default=0.1)
     unmap_coassembly.add_argument("--aviary-cores", type=int, help="Maximum number of cores for Aviary to use", default=16)
     unmap_coassembly.add_argument("--aviary-memory", type=int, help="Maximum amount of memory for Aviary to use (Gigabytes)", default=250)
     # General options
