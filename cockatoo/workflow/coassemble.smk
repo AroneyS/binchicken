@@ -268,13 +268,13 @@ rule map_reads:
     conda:
         "env/coverm.yml"
     shell:
-         "coverm make "
-         "-r {input.genomes} "
-         "-1 {input.reads_1} "
-         "-2 {input.reads_2} "
-         "-o {output.dir} "
-         "-t {threads} "
-         "&> {log} "
+        "coverm make "
+        "-r {input.genomes} "
+        "-1 {input.reads_1} "
+        "-2 {input.reads_2} "
+        "-o {output.dir} "
+        "-t {threads} "
+        "&> {log} "
 
 rule filter_bam_files:
     input:
@@ -291,11 +291,11 @@ rule filter_bam_files:
     conda:
         "env/coverm.yml"
     shell:
-         "samtools view "
-         "-@ $(({threads} - 1)) "
-         "-b -f12 {input}/{params.genomes}.{params.reads_1}.bam "
-         "2> {log} "
-         "> {output.unmapped_bam} "
+        "samtools view "
+        "-@ $(({threads} - 1)) "
+        "-b -f12 {input}/{params.genomes}.{params.reads_1}.bam "
+        "2> {log} "
+        "> {output.unmapped_bam} "
 
 rule bam_to_fastq:
     input:
@@ -310,15 +310,15 @@ rule bam_to_fastq:
     conda:
         "env/coverm.yml"
     shell:
-         "samtools fastq "
-         "-@ $(({threads} - 1)) "
-         "{input} "
-         "-1 {output.reads_1} "
-         "-2 {output.reads_2} "
-         "-0 /dev/null "
-         "-s /dev/null "
-         "-n "
-         "&> {log} "
+        "samtools fastq "
+        "-@ $(({threads} - 1)) "
+        "{input} "
+        "-1 {output.reads_1} "
+        "-2 {output.reads_2} "
+        "-0 /dev/null "
+        "-s /dev/null "
+        "-n "
+        "&> {log} "
 
 rule finish_mapping:
     input:
