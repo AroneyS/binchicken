@@ -280,7 +280,7 @@ rule filter_bam_files:
     input:
         output_dir + "/mapping/{read}_coverm",
     output:
-        unmapped_bam=temp(output_dir + "/mapping/{read}_unmapped.bam"),
+        temp(output_dir + "/mapping/{read}_unmapped.bam"),
     log:
         logs_dir + "/mapping/{read}_filter.log",
     params:
@@ -291,11 +291,12 @@ rule filter_bam_files:
     conda:
         "env/coverm.yml"
     shell:
-        "samtools view "
-        "-@ $(({threads} - 1)) "
-        "-b -f12 {input}/{params.genomes}.{params.reads_1}.bam "
-        "2> {log} "
-        "> {output.unmapped_bam} "
+        "coverm filter "
+        "-b {input}/{params.genomes}.{params.reads_1}.bam "
+        "-o {output} "
+        "--inverse "
+        "--min-read-percent-identity 95 "
+        "&> {log}"
 
 rule bam_to_fastq:
     input:
