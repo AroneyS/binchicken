@@ -6,6 +6,7 @@ from bird_tool_utils import in_tempdir
 import pandas as pd
 import snakemake as smk
 from ruamel.yaml import YAML
+import extern
 
 path_to_data = os.path.join(os.path.dirname(os.path.realpath(__file__)),'data')
 path_to_conda = os.path.join(path_to_data,'.conda')
@@ -27,12 +28,20 @@ ELUSIVE_EDGES = os.path.join(MOCK_COASSEMBLE, "target", "elusive_edges.tsv")
 ELUSIVE_CLUSTERS = os.path.join(MOCK_COASSEMBLE, "target", "elusive_clusters.tsv")
 COASSEMBLE_SUMMARY = os.path.join(MOCK_COASSEMBLE, "summary.tsv")
 
+MATCH_COLUMNS = ["coassembly", "gene", "sequence", "genome", "target", "found_in", "taxonomy"]
+SUM_STATS_COLUMNS = ["coassembly", "statistic", "within", "match", "nonmatch", "total", "match_percent"]
+
 class Tests(unittest.TestCase):
     def assertDataFrameEqual(self, a, b):
         pd.testing.assert_frame_equal(a, b)
 
-    def run_snakemake(self):
+    def run_snakemake(self, matched_hits, novel_hits, coassemble_summary=None, cluster_summary=None, cluster_ani=0.86):
         # copy inputs into temp folders
+        os.makedirs(os.path.join(os.getcwd(), "evaluate", "evaluate"))
+        matched_hits.to_csv(os.path.join(os.getcwd(), "evaluate", "evaluate", "matched_hits.tsv"), sep="\t")
+        novel_hits.to_csv(os.path.join(os.getcwd(), "evaluate", "evaluate", "novel_hits.tsv"), sep="\t")
+        if cluster_summary:
+            cluster_summary.to_csv(os.path.join(os.getcwd(), "evaluate", "evaluate", "cluster_stats.tsv"), sep="\t")
 
         # Load config
         yaml = YAML()
@@ -49,17 +58,51 @@ class Tests(unittest.TestCase):
         test_config["binned"] = BINNED
         test_config["elusive_edges"] = ELUSIVE_EDGES
         test_config["elusive_clusters"] = ELUSIVE_CLUSTERS
-        test_config["coassemble_summary"] = COASSEMBLE_SUMMARY
+        test_config["coassemble_summary"] = coassemble_summary if coassemble_summary else COASSEMBLE_SUMMARY
+        test_config["cluster"] = cluster_ani if cluster_summary else False
 
         # Run snakemake
         updated_files = []
-        smk.snakemake(path_to_smk, config=test_config, targets=["evaluate_plots"], updated_files=updated_files, use_conda=True, conda_prefix=path_to_conda)
+        smk.snakemake(
+            path_to_smk, config=test_config,
+            targets=["evaluate_plots"],
+            updated_files=updated_files,
+            use_conda=True, conda_prefix=path_to_conda
+            )
 
         # load outputs from temp folders and return
+        outputs = {os.path.basename(f): pd.read_csv(f, sep="\t") for f in updated_files if f.endswith(".tsv")}
+        return outputs
 
     def test_snakemake(self):
         with in_tempdir():
-            self.run_snakemake()
+            matched_hits = pd.DataFrame([
+                ["coassembly_0", "S3.1", "AAA", "genome_1_transcripts", "10", None, "Root"],
+                ["coassembly_0", "S3.1", "BBB", "genome_1_transcripts", None, "oldgenome_1", "Root"],
+                ["coassembly_1", "S3.1", "CCC", "genome_1_transcripts", "11", None, "Root"],
+                ["coassembly_1", "S3.1", "DDD", "genome_1_transcripts", None, "oldgenome_2", "Root"],
+            ], columns=MATCH_COLUMNS)
+            novel_hits = pd.DataFrame([
+                ["coassembly_0", "S3.1", "AAB", "genome_1_transcripts", None, None, "Root"],
+                ["coassembly_1", "S3.1", "CCD", "genome_1_transcripts", None, None, "Root"],
+            ], columns=MATCH_COLUMNS)
+
+            expected_sum_stats = pd.DataFrame([
+                ["coassembly_0", "sequences", "targets", "1", "1", "2", "50"],
+                ["coassembly_0", "taxonomy", "targets", "1", "1", "2", "50"],
+                ["coassembly_0", "nontarget_sequences", "recovery", "1", "2", "3", "33.33"],
+                ["coassembly_0", "novel_sequences", "recovery", "1", "2", "3", "33.33"],
+                ["coassembly_0", "bins", "recovery", "1", "1", "2", "50"],
+                ["coassembly_1", "sequences", "targets", "1", "1", "2", "50"],
+                ["coassembly_1", "taxonomy", "targets", "1", "1", "2", "50"],
+                ["coassembly_1", "nontarget_sequences", "recovery", "1", "2", "3", "33.33"],
+                ["coassembly_1", "novel_sequences", "recovery", "1", "2", "3", "33.33"],
+                ["coassembly_1", "bins", "recovery", "1", "1", "2", "50"],
+            ], columns=SUM_STATS_COLUMNS)
+            observed = self.run_snakemake(matched_hits, novel_hits)
+            #print(observed["summary_stats.tsv"])
+            #observed_sum_stats = observed["summary_stats.tsv"]
+            #self.assertDataFrameEqual(expected_sum_stats, observed_sum_stats)
 
 
 if __name__ == '__main__':
