@@ -8,20 +8,35 @@ library(cowplot)
 library(tidyverse)
 if (!webshot::is_phantomjs_installed()) webshot::install_phantomjs()
 
-matched_hits <- read_tsv(snakemake@input[["matched_hits"]])
-novel_hits <- read_tsv(snakemake@input[["novel_hits"]])
-coassemble_summary <- read_tsv(snakemake@params[["coassemble_summary"]])
+args <- commandArgs(TRUE)
+if (length(args) == 0) {
+    matched_hits_path <- snakemake@input[["matched_hits"]]
+    novel_hits_path <- snakemake@input[["novel_hits"]]
+    cluster_summary_path <- snakemake@input[["cluster_summary"]]
 
-if (is.null(snakemake@input[["cluster_summary"]])) {
+    coassemble_summary_path <- snakemake@params[["coassemble_summary"]]
+    recovered_bins <- snakemake@config$recovered_bins
+
+    main_dir <- snakemake@output[["plots_dir"]]
+    summary_stats_path <- snakemake@output[["summary_stats"]]
+    summary_table_path <- snakemake@output[["summary_table"]]
+} else {
+    q()
+}
+
+matched_hits <- read_tsv(matched_hits_path)
+novel_hits <- read_tsv(novel_hits_path)
+coassemble_summary <- read_tsv(coassemble_summary_path)
+
+if (is.null(cluster_summary_path)) {
     cluster_summary <- tibble(type = c("original", coassemble_summary$coassembly), clusters = NA_real_)
 } else {
-    cluster_summary <- read_csv(snakemake@input[["cluster_summary"]], col_names = c("type", "clusters"))
+    cluster_summary <- read_csv(cluster_summary_path, col_names = c("type", "clusters"))
 }
 
 ################
 ### Plotting ###
 ################
-main_dir <- snakemake@output[["plots_dir"]]
 dir.create(main_dir, recursive = TRUE)
 taxonomy_groups <- c("Root", "Domain", "Phylum", "Class", "Order", "Family", "Genus", "Species")
 
@@ -115,7 +130,7 @@ summary_stats <- analysis %>%
     pivot_longer(-c(coassembly, status), names_to = "statistic", values_to = "value") %>%
     replace_na(list(value = 0))
 
-recovered_counts <- snakemake@config$recovered_bins %>%
+recovered_counts <- recovered_bins %>%
     as_tibble() %>%
     pivot_longer(everything()) %>%
     mutate(coassembly = str_extract(name, "coassembly_[:digit:]+")) %>%
@@ -143,7 +158,7 @@ summary_stats %>%
     select(coassembly, statistic, within, match, nonmatch, total, match_percent) %>%
     mutate(statistic = factor(statistic, levels = c("sequences", "taxonomy", "nontarget_sequences", "novel_sequences", "bins"))) %>%
     arrange(coassembly, statistic) %>%
-    write_tsv(snakemake@output[["summary_stats"]])
+    write_tsv(summary_stats_path)
 
 ####################
 ### Table output ###
@@ -218,9 +233,9 @@ summary_table <- coassemble_summary %>%
         locations = cells_body(columns = c(length, unmapped_size, sequences, novel_sequences))
         )
 
-if (is.null(snakemake@input[["cluster_summary"]])) summary_table <- summary_table %>% cols_hide(novel_clusters)
+if (is.null(cluster_summary_path)) summary_table <- summary_table %>% cols_hide(novel_clusters)
 
-gtsave(summary_table, snakemake@output[["summary_table"]])
+gtsave(summary_table, summary_table_path)
 
 # Save R image for further processing
 save.image(file = str_c(main_dir, "/evaluate.RData"))
