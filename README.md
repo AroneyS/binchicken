@@ -45,6 +45,15 @@ ibis coassemble --forward reads_1.1.fq ... --reverse reads_1.2.fq ... --genomes 
 ibis coassemble --forward reads_1.1.fq ... --reverse reads_1.2.fq ... --single-assembly
 ```
 
+## Ibis iterate
+
+Run a further iteration of coassemble, including newly recovered bins.
+
+```bash
+# Example: rerun coassemble, adding new bins to database
+ibis iterate --aviary-outputs coassembly_0_dir ... --forward reads_1.1.fq ... --reverse reads_1.2.fq ... --genomes genome_1.fna ...
+```
+
 ## Ibis evaluate
 
 Evaluates the recovery of target genes by coassemblies suggested by above, finding the number of target genes present in the newly recovered genomes.
