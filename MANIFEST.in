@@ -1,2 +1,2 @@
 include LICENSE
-recursive-include cockatoo *.yaml *.yml *.smk
+recursive-include ibis *.yaml *.yml *.smk

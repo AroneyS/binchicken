@@ -1,4 +1,4 @@
-name: cockatoo
+name: ibis
 channels:
   - conda-forge
   - bioconda

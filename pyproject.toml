@@ -3,12 +3,12 @@ requires = ["setuptools"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "cockatoo-genome"
+name = "ibis-genome"
 dynamic = ["version"]
 authors = [
   { name="Samuel Aroney", email="samuel.aroney@outlook.com" },
 ]
-description = "Cockatoo - intelligent clustering of metagenomic samples for coassembly"
+description = "Ibis (bin chicken) - targeted recovery of low abundance genomes through intelligent coassembly"
 readme = "README.md"
 license = { file="LICENSE" }
 requires-python = ">=3.7"
@@ -24,11 +24,11 @@ classifiers = [
 ]
 
 [project.urls]
-"Homepage" = "https://github.com/AroneyS/cockatoo"
-"Bug Tracker" = "https://github.com/AroneyS/cockatoo/issues"
+"Homepage" = "https://github.com/AroneyS/ibis"
+"Bug Tracker" = "https://github.com/AroneyS/ibis/issues"
 
 [project.scripts]
-cockatoo = "cockatoo.cockatoo:main"
+ibis = "ibis.ibis:main"
 
 [tool.setuptools.dynamic]
-version = {attr = "cockatoo.__version__"}
+version = {attr = "ibis.__version__"}

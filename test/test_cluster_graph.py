@@ -2,7 +2,7 @@
 
 import unittest
 import pandas as pd
-from cockatoo.workflow.scripts.cluster_graph import pipeline
+from ibis.workflow.scripts.cluster_graph import pipeline
 
 ELUSIVE_EDGES_COLUMNS=["taxa_group", "weight", "target_ids", "sample1", "sample2"]
 READ_SIZE_COLUMNS=["sample", "read_size"]

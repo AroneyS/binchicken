@@ -2,7 +2,7 @@
 
 import unittest
 import pandas as pd
-from cockatoo.workflow.scripts.evaluate import evaluate
+from ibis.workflow.scripts.evaluate import evaluate
 
 SINGLEM_COLUMNS=["gene", "sample", "sequence", "num_hits", "coverage", "taxonomy"]
 TARGET_COLUMNS=SINGLEM_COLUMNS+["target"]

@@ -2,7 +2,7 @@
 
 import unittest
 import pandas as pd
-from cockatoo.workflow.scripts.target_elusive import pipeline
+from ibis.workflow.scripts.target_elusive import pipeline
 
 APPRAISE_COLUMNS=["gene", "sample", "sequence", "num_hits", "coverage", "taxonomy", "found_in"]
 
