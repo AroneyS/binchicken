@@ -3,27 +3,26 @@
 ##################
 # Author: Samuel Aroney
 
+if (!is.null(snakemake@config$test)) sink(file("/dev/null", "w"), type = "message")
+
 library(gt)
 library(cowplot)
 library(tidyverse)
 if (!webshot::is_phantomjs_installed()) webshot::install_phantomjs()
 
-args <- commandArgs(TRUE)
-if (length(args) == 0) {
-    matched_hits_path <- snakemake@input[["matched_hits"]]
-    novel_hits_path <- snakemake@input[["novel_hits"]]
-    cluster_summary_path <- snakemake@input[["cluster_summary"]]
+# Snakemake inputs
+matched_hits_path <- snakemake@input[["matched_hits"]]
+novel_hits_path <- snakemake@input[["novel_hits"]]
+cluster_summary_path <- snakemake@input[["cluster_summary"]]
 
-    coassemble_summary_path <- snakemake@params[["coassemble_summary"]]
-    recovered_bins <- snakemake@config$recovered_bins
+coassemble_summary_path <- snakemake@params[["coassemble_summary"]]
+recovered_bins <- snakemake@config$recovered_bins
 
-    main_dir <- snakemake@output[["plots_dir"]]
-    summary_stats_path <- snakemake@output[["summary_stats"]]
-    summary_table_path <- snakemake@output[["summary_table"]]
-} else {
-    q()
-}
+main_dir <- snakemake@output[["plots_dir"]]
+summary_stats_path <- snakemake@output[["summary_stats"]]
+summary_table_path <- snakemake@output[["summary_table"]]
 
+# Load inputs
 matched_hits <- read_tsv(matched_hits_path)
 novel_hits <- read_tsv(novel_hits_path)
 coassemble_summary <- read_tsv(coassemble_summary_path)
@@ -78,6 +77,8 @@ plot_bars <- function(df, output_dir) {
         ggplot(aes(reorder(gene, gene_number, FUN = sum), count, fill = outcome)) +
         bar_layers
     ggsave(str_c(output_dir, "/gene_recovered.png"), dpi = 900, height = 8, width = 13)
+
+    return(invisible(NULL))
 }
 
 plot_bars(analysis, str_c(main_dir, "/combined"))
@@ -86,12 +87,14 @@ plot_coassembly <- function(coassembly) {
     analysis %>%
         filter(coassembly == {{coassembly}}) %>%
         plot_bars(str_c(main_dir, coassembly, sep = "/"))
+
+    return(invisible(NULL))
 }
 
-analysis %>%
+coassembly_plots <- analysis %>%
     distinct(coassembly) %>%
-    `$`(coassembly) %>%
-    lapply(plot_coassembly)
+    pull(coassembly) %>%
+    map(plot_coassembly)
 
 #####################
 ### Summary stats ###
