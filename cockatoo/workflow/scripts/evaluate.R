@@ -3,7 +3,8 @@
 ##################
 # Author: Samuel Aroney
 
-if (!is.null(snakemake@config$test)) sink(file("/dev/null", "w"), type = "message")
+test <- !is.null(snakemake@config$test)
+if (test) sink(file("/dev/null", "w"), type = "message")
 
 library(gt)
 library(cowplot)
@@ -33,16 +34,9 @@ if (is.null(cluster_summary_path)) {
     cluster_summary <- read_csv(cluster_summary_path, col_names = c("type", "clusters"))
 }
 
-################
-### Plotting ###
-################
-dir.create(main_dir, recursive = TRUE)
-taxonomy_groups <- c("Root", "Domain", "Phylum", "Class", "Order", "Family", "Genus", "Species")
-
-analysis <- matched_hits %>%
-    filter(!is.na(target)) %>%
-    separate(taxonomy, into = taxonomy_groups, sep = "; ", remove = FALSE)
-
+#################
+### Functions ###
+#################
 plot_bars <- function(df, output_dir) {
     dir.create(output_dir, recursive = TRUE)
 
@@ -81,8 +75,6 @@ plot_bars <- function(df, output_dir) {
     return(invisible(NULL))
 }
 
-plot_bars(analysis, str_c(main_dir, "/combined"))
-
 plot_coassembly <- function(coassembly) {
     analysis %>%
         filter(coassembly == {{coassembly}}) %>%
@@ -90,6 +82,20 @@ plot_coassembly <- function(coassembly) {
 
     return(invisible(NULL))
 }
+
+################
+### Plotting ###
+################
+dir.create(main_dir, recursive = TRUE)
+taxonomy_groups <- c("Root", "Domain", "Phylum", "Class", "Order", "Family", "Genus", "Species")
+
+analysis <- matched_hits %>%
+    filter(!is.na(target)) %>%
+    separate(taxonomy, into = taxonomy_groups, sep = "; ", remove = FALSE)
+
+if (test) warning(analysis)
+
+plot_bars(analysis, str_c(main_dir, "/combined"))
 
 coassembly_plots <- analysis %>%
     distinct(coassembly) %>%
@@ -133,6 +139,7 @@ summary_stats <- analysis %>%
     pivot_longer(-c(coassembly, status), names_to = "statistic", values_to = "value") %>%
     replace_na(list(value = 0))
 
+
 recovered_counts <- recovered_bins %>%
     as_tibble() %>%
     pivot_longer(everything()) %>%
@@ -156,6 +163,8 @@ summary_stats <- summary_stats %>%
         match_percent = round(match / total * 100, 2)
     ) %>%
     left_join(stat_groups)
+
+if (test) warning(summary_stats)
 
 summary_stats %>%
     select(coassembly, statistic, within, match, nonmatch, total, match_percent) %>%
