@@ -122,18 +122,20 @@ stat_groups <- tribble(
 summary_stats <- analysis %>%
     group_by(coassembly, status = c("match", "nonmatch")[as.integer(is.na(genome)) + 1]) %>%
     summarise(
-        sequences = n(),
+        sequences = length(unique(sequence)),
         bins = sum(!is.na(unique(genome))),
         taxonomy = sum(!is.na(unique(taxonomy))),
     ) %>%
     left_join(
         recovered_hits %>%
             group_by(coassembly, status = c("match", "nonmatch")[as.integer(is.na(found_in)) + 1]) %>%
+            # Duplicate sequences are counted multiple times to give a proportion at bin level
             summarise(nontarget_sequences = n())
         ) %>%
     left_join(
         recovered_hits %>%
             group_by(coassembly, status = c("match", "nonmatch")[as.integer(!is.na(found_in) | !is.na(target)) + 1]) %>%
+            # Duplicate sequences are counted multiple times to give a proportion at bin level
             summarise(novel_sequences = n())
         ) %>%
     pivot_longer(-c(coassembly, status), names_to = "statistic", values_to = "value") %>%

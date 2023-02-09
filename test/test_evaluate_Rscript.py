@@ -69,7 +69,7 @@ class Tests(unittest.TestCase):
         outputs = {os.path.basename(f): pd.read_csv(f, sep="\t") for f in updated_files if f.endswith(".tsv")}
         return outputs
 
-    def test_snakemake(self):
+    def test_evaluate_Rscript(self):
         with in_tempdir():
             matched_hits = pd.DataFrame([
                 ["coassembly_0", "S3.1", "AAA", "genome_1_transcripts", "10", None, "Root"],
@@ -101,6 +101,49 @@ class Tests(unittest.TestCase):
                 ["coassembly_0", "nontarget_sequences", "recovery", 1, 2, 3, 33.33],
                 ["coassembly_0", "novel_sequences", "recovery", 1, 2, 3, 33.33],
                 ["coassembly_0", "bins", "recovery", 1, 1, 2, 50],
+                ["coassembly_1", "sequences", "targets", 1, 1, 2, 50],
+                ["coassembly_1", "taxonomy", "targets", 1, 1, 2, 50],
+                ["coassembly_1", "nontarget_sequences", "recovery", 1, 2, 3, 33.33],
+                ["coassembly_1", "novel_sequences", "recovery", 1, 2, 3, 33.33],
+                ["coassembly_1", "bins", "recovery", 1, 2, 3, 33.33],
+            ], columns=SUM_STATS_COLUMNS)
+            observed = self.run_snakemake(matched_hits, novel_hits, coassemble_summary, recovered_bins)
+            observed_sum_stats = observed["summary_stats.tsv"]
+            self.assertDataFrameEqual(expected_sum_stats, observed_sum_stats)
+
+    def test_evaluate_Rscript_duplicates(self):
+        with in_tempdir():
+            matched_hits = pd.DataFrame([
+                ["coassembly_0", "S3.1", "AAA", "genome_0_transcripts", "10", None, "Root"],
+                ["coassembly_0", "S3.1", "AAA", "genome_1_transcripts", "10", None, "Root"],
+                ["coassembly_0", "S3.1", "BBB", "genome_1_transcripts", None, "oldgenome_1", "Root"],
+                ["coassembly_0", "S3.1", "ZZZ", None, "99", None, "Root"],
+                ["coassembly_1", "S3.1", "CCC", "genome_1_transcripts", "11", None, "Root"],
+                ["coassembly_1", "S3.1", "DDD", "genome_1_transcripts", None, "oldgenome_2", "Root"],
+                ["coassembly_1", "S3.1", "YYY", None, "98", None, "Root"],
+            ], columns=MATCH_COLUMNS)
+            novel_hits = pd.DataFrame([
+                ["coassembly_0", "S3.1", "AAB", "genome_1_transcripts", None, None, "Root"],
+                ["coassembly_1", "S3.1", "CCD", "genome_1_transcripts", None, None, "Root"],
+            ], columns=MATCH_COLUMNS)
+            coassemble_summary = pd.DataFrame([
+                ["coassembly_0", "sample_1,sample_2,sample_3", 3, 2, 2, 3000, 300],
+                ["coassembly_1", "sample_1,sample_2", 2, 2, 2, 2000, 200],
+            ], columns=COASSEMBLE_SUM_COLUMNS)
+            recovered_bins = {
+                "coassembly_0-genome_0": "genome_0.fna",
+                "coassembly_0-genome_1": "genome_1.fna",
+                "coassembly_1-genome_0": "genome_0.fna",
+                "coassembly_1-genome_1": "genome_1.fna",
+                "coassembly_1-genome_2": "genome_2.fna",
+                }
+
+            expected_sum_stats = pd.DataFrame([
+                ["coassembly_0", "sequences", "targets", 1, 1, 2, 50],
+                ["coassembly_0", "taxonomy", "targets", 1, 1, 2, 50],
+                ["coassembly_0", "nontarget_sequences", "recovery", 1, 3, 4, 25],
+                ["coassembly_0", "novel_sequences", "recovery", 1, 3, 4, 25],
+                ["coassembly_0", "bins", "recovery", 2, 0, 2, 100],
                 ["coassembly_1", "sequences", "targets", 1, 1, 2, 50],
                 ["coassembly_1", "taxonomy", "targets", 1, 1, 2, 50],
                 ["coassembly_1", "nontarget_sequences", "recovery", 1, 2, 3, 33.33],
