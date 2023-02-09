@@ -49,6 +49,7 @@ class Tests(unittest.TestCase):
         yaml.default_flow_style = False
         with open(path_to_config) as f:
             test_config = yaml.load(f)
+        test_config["test"] = True
         test_config["recovered_bins"] = {
                 "coassembly_0-0": '/mnt/hpccs01/scratch/microbiome/aroneys/src/cockatoo_dev/test/data/mock_coassemble/coassemble/coassembly_0/recover/bins/final_bins/bin_1.fna',
                 "coassembly_0-1": "/mnt/hpccs01/scratch/microbiome/aroneys/src/cockatoo_dev/test/data/mock_coassemble/coassemble/coassembly_0/recover/bins/final_bins/bin_3.fna",
@@ -73,6 +74,50 @@ class Tests(unittest.TestCase):
         # load outputs from temp folders and return
         outputs = {os.path.basename(f): pd.read_csv(f, sep="\t") for f in updated_files if f.endswith(".tsv")}
         return outputs
+
+    def run_rscript(self, matched_hits, novel_hits, coassemble_summary=None, cluster_summary=None):
+        matched_hits_path = os.path.join(os.getcwd(), "matched_hits.tsv")
+        matched_hits.to_csv(matched_hits_path, sep="\t")
+
+        novel_hits_path = os.path.join(os.getcwd(), "novel_hits.tsv")
+        novel_hits.to_csv(novel_hits_path, sep="\t")
+
+        if cluster_summary:
+            cluster_summary_path = os.path.join(os.getcwd(), "cluster_stats.tsv")
+            cluster_summary.to_csv(cluster_summary_path, sep="\t")
+        else:
+            cluster_summary_path = "NA"
+
+        if coassemble_summary:
+            coassemble_summary_path = os.path.join(os.getcwd(), "coassemble_summary.tsv")
+            coassemble_summary.to_csv(coassemble_summary_path, sep="\t")
+        else:
+            coassemble_summary_path = COASSEMBLE_SUMMARY
+
+        recovered_bins = {
+                "coassembly_0-0": '/mnt/hpccs01/scratch/microbiome/aroneys/src/cockatoo_dev/test/data/mock_coassemble/coassemble/coassembly_0/recover/bins/final_bins/bin_1.fna',
+                "coassembly_0-1": "/mnt/hpccs01/scratch/microbiome/aroneys/src/cockatoo_dev/test/data/mock_coassemble/coassemble/coassembly_0/recover/bins/final_bins/bin_3.fna",
+                }
+
+        main_dir = os.path.join(os.getcwd(), "plots")
+        summary_stats_path = os.path.join(os.getcwd(), "summary_stats.tsv")
+        summary_table_path = os.path.join(os.getcwd(), "summary_table.png")
+
+        cmd = (
+            f"conda run -p {path_to_conda}/a29444b44cc7faccbc9bb084f77b29b0_ "
+            f"Rscript "
+            f"{path_to_cockatoo}/workflow/scripts/evaluate.R "
+            f"matched_hits_path={matched_hits_path} "
+            f"novel_hits_path={novel_hits_path} "
+            f"cluster_summary_path={cluster_summary_path} "
+            f"coassemble_summary_path={coassemble_summary_path} "
+            f"main_dir={main_dir} "
+            f"summary_stats_path={summary_stats_path} "
+            f"summary_table_path={summary_table_path} "
+        )
+            #f"recovered_bins={recovered_bins} "
+        extern.run(cmd)
+
 
     def test_snakemake(self):
         with in_tempdir():
@@ -100,8 +145,8 @@ class Tests(unittest.TestCase):
                 ["coassembly_1", "bins", "recovery", "1", "1", "2", "50"],
             ], columns=SUM_STATS_COLUMNS)
             observed = self.run_snakemake(matched_hits, novel_hits)
-            #print(observed["summary_stats.tsv"])
-            #observed_sum_stats = observed["summary_stats.tsv"]
+            print(observed["summary_stats.tsv"])
+            observed_sum_stats = observed["summary_stats.tsv"]
             #self.assertDataFrameEqual(expected_sum_stats, observed_sum_stats)
 
 
