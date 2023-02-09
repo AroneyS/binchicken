@@ -50,8 +50,8 @@ def evaluate(unbinned_otu_table, binned_otu_table, elusive_clusters, elusive_edg
         .set_index(["sample"])[["gene", "sequence", "taxonomy", "found_in"]]
         .join(elusive_clusters)
         .dropna(subset=["coassembly"])
-        .set_index(["coassembly", "gene", "sequence"])
         .drop_duplicates()
+        .set_index(["coassembly", "gene", "sequence"])
         )
     nontarget_otu_table["target"] = None
 
