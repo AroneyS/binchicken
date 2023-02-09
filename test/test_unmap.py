@@ -35,7 +35,7 @@ class Tests(unittest.TestCase):
     def test_unmap(self):
         with in_tempdir():
             cmd = (
-                f"cockatoo unmap "
+                f"ibis unmap "
                 f"--coassemble-output {MOCK_COASSEMBLE} "
                 f"--forward {SAMPLE_READS_FORWARD} "
                 f"--reverse {SAMPLE_READS_REVERSE} "
@@ -115,7 +115,7 @@ class Tests(unittest.TestCase):
     def test_unmap_specified_files(self):
         with in_tempdir():
             cmd = (
-                f"cockatoo unmap "
+                f"ibis unmap "
                 f"--forward {SAMPLE_READS_FORWARD} "
                 f"--reverse {SAMPLE_READS_REVERSE} "
                 f"--genomes {GENOMES} "
@@ -147,7 +147,7 @@ class Tests(unittest.TestCase):
     def test_unmap_read_identity(self):
         with in_tempdir():
             cmd = (
-                f"cockatoo unmap "
+                f"ibis unmap "
                 f"--unmapping-max-identity 99 "
                 f"--coassemble-output {MOCK_COASSEMBLE} "
                 f"--forward {SAMPLE_READS_FORWARD} "

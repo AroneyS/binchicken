@@ -2,7 +2,7 @@
 
 import unittest
 import pandas as pd
-from cockatoo.workflow.scripts.query_processing import processing
+from ibis.workflow.scripts.query_processing import processing
 
 QUERY_COLUMNS = ["query_name", "query_sequence", "divergence", "num_hits", "coverage", "sample", "marker", "hit_sequence", "taxonomy"]
 PIPE_COLUMNS = ["gene", "sample", "sequence", "num_hits", "coverage", "taxonomy"]

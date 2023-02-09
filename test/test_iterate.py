@@ -45,7 +45,7 @@ class Tests(unittest.TestCase):
     def test_iterate(self):
         with in_tempdir():
             cmd = (
-                f"cockatoo iterate "
+                f"ibis iterate "
                 f"--iteration 0 "
                 f"--aviary-outputs {MOCK_COASSEMBLIES} "
                 f"--elusive-clusters {ELUSIVE_CLUSTERS} "
@@ -112,7 +112,7 @@ class Tests(unittest.TestCase):
     def test_iterate_default_config(self):
         with in_tempdir():
             cmd = (
-                f"cockatoo iterate "
+                f"ibis iterate "
                 f"--aviary-outputs {MOCK_COASSEMBLIES} "
                 f"--forward {SAMPLE_READS_FORWARD} "
                 f"--reverse {SAMPLE_READS_REVERSE} "
@@ -140,7 +140,7 @@ class Tests(unittest.TestCase):
     def test_iterate_genome_singlem(self):
         with in_tempdir():
             cmd = (
-                f"cockatoo iterate "
+                f"ibis iterate "
                 f"--iteration 0 "
                 f"--aviary-outputs {MOCK_COASSEMBLIES} "
                 f"--elusive-clusters {ELUSIVE_CLUSTERS} "

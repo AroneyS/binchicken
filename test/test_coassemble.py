@@ -58,7 +58,7 @@ class Tests(unittest.TestCase):
     def test_coassemble(self):
         with in_tempdir():
             cmd = (
-                f"cockatoo coassemble "
+                f"ibis coassemble "
                 f"--forward {SAMPLE_READS_FORWARD} "
                 f"--reverse {SAMPLE_READS_REVERSE} "
                 f"--genomes {GENOMES} "
@@ -216,7 +216,7 @@ class Tests(unittest.TestCase):
     def test_coassemble_taxa_of_interest(self):
         with in_tempdir():
             cmd = (
-                f"cockatoo coassemble "
+                f"ibis coassemble "
                 f"--forward {SAMPLE_READS_FORWARD} "
                 f"--reverse {SAMPLE_READS_REVERSE} "
                 f"--genomes {GENOMES} "
@@ -273,7 +273,7 @@ class Tests(unittest.TestCase):
     def test_coassemble_query_input(self):
         with in_tempdir():
             cmd = (
-                f"cockatoo coassemble "
+                f"ibis coassemble "
                 f"--forward {SAMPLE_READS_FORWARD} "
                 f"--reverse {SAMPLE_READS_REVERSE} "
                 f"--genomes {GENOMES} "
@@ -328,7 +328,7 @@ class Tests(unittest.TestCase):
     def test_coassemble_single_assembly(self):
         with in_tempdir():
             cmd = (
-                f"cockatoo coassemble "
+                f"ibis coassemble "
                 f"--forward {SAMPLE_READS_FORWARD} "
                 f"--reverse {SAMPLE_READS_REVERSE} "
                 f"--singlem-metapackage {METAPACKAGE} "
@@ -392,7 +392,7 @@ class Tests(unittest.TestCase):
     def test_coassemble_no_mapping(self):
         with in_tempdir():
             cmd = (
-                f"cockatoo coassemble "
+                f"ibis coassemble "
                 f"--forward {SAMPLE_READS_FORWARD} "
                 f"--reverse {SAMPLE_READS_REVERSE} "
                 f"--genomes {GENOMES} "
@@ -458,7 +458,7 @@ class Tests(unittest.TestCase):
     def test_coassemble_genome_trim(self):
         with in_tempdir():
             cmd = (
-                f"cockatoo coassemble "
+                f"ibis coassemble "
                 f"--forward {SAMPLE_READS_FORWARD} "
                 f"--reverse {SAMPLE_READS_REVERSE} "
                 f"--genomes {TWO_GENOMES} "
@@ -484,7 +484,7 @@ class Tests(unittest.TestCase):
     def test_coassemble_default_config(self):
         with in_tempdir():
             cmd = (
-                f"cockatoo coassemble "
+                f"ibis coassemble "
                 f"--forward {SAMPLE_READS_FORWARD} "
                 f"--reverse {SAMPLE_READS_REVERSE} "
                 f"--genomes {GENOMES} "
@@ -506,7 +506,7 @@ class Tests(unittest.TestCase):
     def test_coassemble_singlem_inputs(self):
         with in_tempdir():
             cmd = (
-                f"cockatoo coassemble "
+                f"ibis coassemble "
                 f"--forward {SAMPLE_READS_FORWARD} "
                 f"--reverse {SAMPLE_READS_REVERSE} "
                 f"--genomes {GENOMES} "
@@ -545,7 +545,7 @@ class Tests(unittest.TestCase):
             write_string_to_file(GENOME_TRANSCRIPTS, "genome_transcripts")
 
             cmd = (
-                f"cockatoo coassemble "
+                f"ibis coassemble "
                 f"--forward-list sample_reads_forward "
                 f"--reverse-list sample_reads_reverse "
                 f"--genomes-list genomes "
@@ -583,7 +583,7 @@ class Tests(unittest.TestCase):
             write_string_to_file(SAMPLE_SINGLEM, "sample_singlem")
 
             cmd = (
-                f"cockatoo coassemble "
+                f"ibis coassemble "
                 f"--forward-list sample_reads_forward "
                 f"--reverse-list sample_reads_reverse "
                 f"--genomes-list genomes "
@@ -617,7 +617,7 @@ class Tests(unittest.TestCase):
     def test_coassemble_singlem_inputs_dir(self):
         with in_tempdir():
             cmd = (
-                f"cockatoo coassemble "
+                f"ibis coassemble "
                 f"--forward {SAMPLE_READS_FORWARD} "
                 f"--reverse {SAMPLE_READS_REVERSE} "
                 f"--genomes {GENOMES} "
@@ -650,7 +650,7 @@ class Tests(unittest.TestCase):
         with in_tempdir():
             os.environ['SINGLEM_METAPACKAGE_PATH'] = METAPACKAGE
             cmd = (
-                f"cockatoo coassemble "
+                f"ibis coassemble "
                 f"--forward {SAMPLE_READS_FORWARD} "
                 f"--reverse {SAMPLE_READS_REVERSE} "
                 f"--genomes {GENOMES} "

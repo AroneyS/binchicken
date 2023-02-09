@@ -23,7 +23,7 @@ class Tests(unittest.TestCase):
     def test_evaluate(self):
         with in_tempdir():
             cmd = (
-                f"cockatoo evaluate "
+                f"ibis evaluate "
                 f"--coassemble-output {MOCK_COASSEMBLE} "
                 f"--aviary-outputs {MOCK_COASSEMBLIES} "
                 f"--checkm-version 2 "
@@ -117,7 +117,7 @@ class Tests(unittest.TestCase):
     def test_evaluate_default_config(self):
         with in_tempdir():
             cmd = (
-                f"cockatoo evaluate "
+                f"ibis evaluate "
                 f"--coassemble-output {MOCK_COASSEMBLE} "
                 f"--aviary-outputs {MOCK_COASSEMBLIES} "
                 f"--singlem-metapackage {METAPACKAGE} "
@@ -137,7 +137,7 @@ class Tests(unittest.TestCase):
         with in_tempdir():
             os.environ['SINGLEM_METAPACKAGE_PATH'] = METAPACKAGE
             cmd = (
-                f"cockatoo evaluate "
+                f"ibis evaluate "
                 f"--coassemble-output {MOCK_COASSEMBLE} "
                 f"--aviary-outputs {MOCK_COASSEMBLIES} "
                 f"--output test "
@@ -164,7 +164,7 @@ class Tests(unittest.TestCase):
     def test_evaluate_cluster(self):
         with in_tempdir():
             cmd = (
-                f"cockatoo evaluate "
+                f"ibis evaluate "
                 f"--coassemble-output {MOCK_COASSEMBLE} "
                 f"--aviary-outputs {MOCK_COASSEMBLIES} "
                 f"--cluster "
