@@ -404,7 +404,7 @@ def iterate(args):
         logging.warn("Suggested coassemblies may match those from previous iterations. To check, use `--elusive-clusters`.")
 
 def main():
-    main_parser = btu.BirdArgparser(program="Ibis (bin chicken)", version = __version__,
+    main_parser = btu.BirdArgparser(program="Ibis (bin chicken)", version = __version__, program_invocation="ibis",
         examples = {
             "coassemble": [
                 btu.Example(
