@@ -9,9 +9,9 @@ from ruamel.yaml import YAML
 
 path_to_data = os.path.join(os.path.dirname(os.path.realpath(__file__)),'data')
 path_to_conda = os.path.join(path_to_data,'.conda')
-path_to_cockatoo = os.path.join(os.path.dirname(os.path.dirname(os.path.realpath(__file__))), "cockatoo")
-path_to_smk = os.path.join(path_to_cockatoo, "workflow", "evaluate.smk")
-path_to_config = os.path.join(path_to_cockatoo, "config", "template_evaluate.yaml")
+path_to_ibis = os.path.join(os.path.dirname(os.path.dirname(os.path.realpath(__file__))), "ibis")
+path_to_smk = os.path.join(path_to_ibis, "workflow", "evaluate.smk")
+path_to_config = os.path.join(path_to_ibis, "config", "template_evaluate.yaml")
 
 METAPACKAGE = os.path.join(path_to_data, "singlem_metapackage.smpkg")
 

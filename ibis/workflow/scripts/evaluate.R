@@ -239,7 +239,7 @@ summary_table <- coassemble_summary %>%
         novel_clusters = "novel clusters"
     ) %>%
     tab_header(
-        title = "Cockatoo coassembly evaluation",
+        title = "Ibis coassembly evaluation",
         subtitle = str_c("Original genomes had ", original_clusters, " clusters")
         ) %>%
     tab_style(
