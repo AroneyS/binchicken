@@ -1,6 +1,6 @@
 # Ibis
 
-Ibis (bin chicken) - targeted recovery of low abundance genomes through intelligent coassembly.
+Ibis (Australian bin chicken) - targeted recovery of low abundance genomes through intelligent coassembly.
 
 ## Installation options
 

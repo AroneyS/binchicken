@@ -8,7 +8,7 @@ dynamic = ["version"]
 authors = [
   { name="Samuel Aroney", email="samuel.aroney@outlook.com" },
 ]
-description = "Ibis (bin chicken) - targeted recovery of low abundance genomes through intelligent coassembly"
+description = "Ibis (Australian bin chicken) - targeted recovery of low abundance genomes through intelligent coassembly"
 readme = "README.md"
 license = { file="LICENSE" }
 requires-python = ">=3.7"
