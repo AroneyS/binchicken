@@ -1,0 +1,37 @@
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  - python>=3.7
+  - diamond>2.0.11
+  - biopython
+  - hmmer
+  - orfm
+  - mfqe
+  - extern
+  - graftm>=0.14.0
+  - krona
+  - pplacer
+  - sra-tools
+  - ncbi-ngs-sdk
+  - sqlite
+  - squarify
+  - nose
+  - mafft
+  - seqmagick
+  - expressbetadiversity
+  - cd-hit
+  - fasttree
+  - fastalite
+  - jinja2
+  - pip
+  - sqlalchemy
+  - pandas
+  - bird_tool_utils_python>=0.4.1
+  - zenodo_backpack
+  - smafa>=0.7.0
+  - git
+  - git-lfs
+  - pip:
+    - git+https://github.com/wwood/singlem.git@c8b28b0cd6c9d4744e5310a49f893417d539f1cb

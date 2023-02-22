@@ -35,7 +35,7 @@ class Tests(unittest.TestCase):
     def test_unmap(self):
         with in_tempdir():
             cmd = (
-                f"cockatoo unmap "
+                f"ibis unmap "
                 f"--coassemble-output {MOCK_COASSEMBLE} "
                 f"--forward {SAMPLE_READS_FORWARD} "
                 f"--reverse {SAMPLE_READS_REVERSE} "
@@ -115,7 +115,7 @@ class Tests(unittest.TestCase):
     def test_unmap_specified_files(self):
         with in_tempdir():
             cmd = (
-                f"cockatoo unmap "
+                f"ibis unmap "
                 f"--forward {SAMPLE_READS_FORWARD} "
                 f"--reverse {SAMPLE_READS_REVERSE} "
                 f"--genomes {GENOMES} "
@@ -144,10 +144,43 @@ class Tests(unittest.TestCase):
             self.assertTrue("finish_mapping" in output)
             self.assertTrue("aviary_commands" in output)
 
+    def test_unmap_read_identity(self):
+        with in_tempdir():
+            cmd = (
+                f"ibis unmap "
+                f"--unmapping-max-identity 99 "
+                f"--coassemble-output {MOCK_COASSEMBLE} "
+                f"--forward {SAMPLE_READS_FORWARD} "
+                f"--reverse {SAMPLE_READS_REVERSE} "
+                f"--genomes {GENOMES} "
+                f"--output test "
+                f"--conda-prefix {path_to_conda} "
+            )
+            extern.run(cmd)
+
+            config_path = os.path.join("test", "config.yaml")
+            self.assertTrue(os.path.exists(config_path))
+
+            bins_reference_path = os.path.join("test", "coassemble", "mapping", "sample_1_reference.fna")
+            self.assertFalse(os.path.exists(bins_reference_path))
+
+            output_bam_files = os.path.join("test", "coassemble", "mapping", "sample_1_unmapped.bam")
+            self.assertFalse(os.path.exists(output_bam_files))
+
+            coverm_working_dir = os.path.join("test", "coassemble", "mapping", "sample_1_coverm")
+            self.assertFalse(os.path.exists(coverm_working_dir))
+
+            unmapped_sample_1_path = os.path.join("test", "coassemble", "mapping", "sample_1_unmapped.1.fq.gz")
+            self.assertTrue(os.path.exists(unmapped_sample_1_path))
+            with gzip.open(unmapped_sample_1_path) as f:
+                file = f.read().decode()
+                self.assertTrue("@A00178:112:HMNM5DSXX:4:1622:16405:19194" in file)
+                self.assertTrue("@A00178:118:HTHTVDSXX:1:1249:16740:14105" in file)
+
     def test_unmap_sra_download(self):
         with in_tempdir():
             cmd = (
-                f"cockatoo unmap "
+                f"ibis unmap "
                 f"--forward SRR8334323 SRR8334324 "
                 f"--sra "
                 f"--genomes {GENOMES} "
@@ -183,7 +216,7 @@ class Tests(unittest.TestCase):
     def test_unmap_sra_download_real(self):
         with in_tempdir():
             cmd = (
-                f"cockatoo unmap "
+                f"ibis unmap "
                 f"--forward SRR8334323 SRR8334324 "
                 f"--sra "
                 f"--genomes {GENOMES} "
@@ -212,7 +245,7 @@ class Tests(unittest.TestCase):
     def test_unmap_aviary_run(self):
         with in_tempdir():
             cmd = (
-                f"cockatoo unmap "
+                f"ibis unmap "
                 f"--forward SRR8334323 SRR8334324 "
                 f"--sra "
                 f"--run-aviary "
@@ -255,7 +288,7 @@ class Tests(unittest.TestCase):
     def test_unmap_aviary_run_real(self):
         with in_tempdir():
             cmd = (
-                f"cockatoo unmap "
+                f"ibis unmap "
                 f"--forward SRR8334323 SRR8334324 "
                 f"--sra "
                 f"--run-aviary "

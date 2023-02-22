@@ -105,7 +105,7 @@ def download_sra(args):
     }
 
     config_path = make_config(
-        importlib.resources.files("cockatoo.config").joinpath("template_coassemble.yaml"),
+        importlib.resources.files("ibis.config").joinpath("template_coassemble.yaml"),
         args.output,
         config_items
         )
@@ -166,7 +166,7 @@ def evaluate_bins(aviary_outputs, checkm_version, min_completeness, max_contamin
             os.path.abspath(os.path.join(coassembly, "recover", "bins", "final_bins"))
             for coassembly in aviary_outputs
         }
-    checkm_out = {
+    checkm_out_dict = {
         os.path.basename(coassembly.rstrip("/")): 
             os.path.abspath(os.path.join(coassembly, "recover", "bins", "checkm_minimal.tsv"))
             for coassembly in aviary_outputs
@@ -182,8 +182,8 @@ def evaluate_bins(aviary_outputs, checkm_version, min_completeness, max_contamin
         raise ValueError("Invalid CheckM version")
 
     coassembly_bins = {}
-    for coassembly in checkm_out:
-        checkm_out = pd.read_csv(checkm_out[coassembly], sep = "\t")
+    for coassembly in checkm_out_dict:
+        checkm_out = pd.read_csv(checkm_out_dict[coassembly], sep = "\t")
         passed_bins = checkm_out[(checkm_out[completeness_col] >= min_completeness) & (checkm_out[contamination_col] <= max_contamination)]["Bin Id"].to_list()
         coassembly_bins[coassembly] = passed_bins
 
@@ -285,6 +285,7 @@ def coassemble(args):
         # Coassembly config
         "assemble_unmapped": args.assemble_unmapped,
         "unmapping_min_appraised": args.unmapping_min_appraised,
+        "unmapping_max_identity": args.unmapping_max_identity,
         "run_aviary": args.run_aviary,
         "aviary_conda": args.aviary_conda,
         "aviary_threads": args.aviary_cores,
@@ -292,7 +293,7 @@ def coassemble(args):
     }
 
     config_path = make_config(
-        importlib.resources.files("cockatoo.config").joinpath("template_coassemble.yaml"),
+        importlib.resources.files("ibis.config").joinpath("template_coassemble.yaml"),
         args.output,
         config_items
         )
@@ -308,7 +309,9 @@ def coassemble(args):
     )
 
 def evaluate(args):
-    coassemble_target_dir = os.path.abspath(os.path.join(args.coassemble_output, "target"))
+    coassemble_dir = os.path.abspath(args.coassemble_output)
+    coassemble_target_dir = os.path.join(coassemble_dir, "target")
+    coassemble_appraise_dir = os.path.join(coassemble_dir, "appraise")
     bins = evaluate_bins(args.aviary_outputs, args.checkm_version, args.min_completeness, args.max_contamination)
 
     if args.singlem_metapackage:
@@ -316,19 +319,32 @@ def evaluate(args):
     else:
         metapackage = os.environ['SINGLEM_METAPACKAGE_PATH']
 
+    if args.cluster:
+        cluster_ani = args.cluster_ani / 100 if args.cluster_ani > 1 else args.cluster_ani
+        if args.genomes_list:
+            args.genomes = read_list(args.genomes_list)
+        original_bins = [os.path.abspath(genome) for genome in args.genomes]
+    else:
+        cluster_ani = None
+        original_bins = None
+
     config_items = {
         "targets": os.path.join(coassemble_target_dir, "targets.tsv"),
+        "binned": os.path.join(coassemble_appraise_dir, "binned.otu_table.tsv"),
         "elusive_edges": os.path.join(coassemble_target_dir, "elusive_edges.tsv"),
         "elusive_clusters": os.path.join(coassemble_target_dir, "elusive_clusters.tsv"),
+        "coassemble_summary": os.path.join(coassemble_dir, "summary.tsv"),
         "singlem_metapackage": metapackage,
         "recovered_bins": bins,
         "checkm_version": args.checkm_version,
         "min_completeness": args.min_completeness,
         "max_contamination": args.max_contamination,
+        "cluster": cluster_ani,
+        "original_bins": original_bins,
     }
 
     config_path = make_config(
-        importlib.resources.files("cockatoo.config").joinpath("template_evaluate.yaml"),
+        importlib.resources.files("ibis.config").joinpath("template_evaluate.yaml"),
         args.output,
         config_items
         )
@@ -344,7 +360,7 @@ def evaluate(args):
     )
 
 def unmap(args):
-    logging.info("Loading Cockatoo coassemble info")
+    logging.info("Loading Ibis coassemble info")
     if args.coassemble_output:
         args.elusive_clusters = os.path.join(args.coassemble_output, "target", "elusive_clusters.tsv")
         args.appraise_binned = os.path.join(args.coassemble_output, "appraise", "binned.otu_table.tsv")
@@ -434,42 +450,42 @@ def iterate(args):
         logging.warn("Suggested coassemblies may match those from previous iterations. To check, use `--elusive-clusters`.")
 
 def main():
-    main_parser = btu.BirdArgparser(program="Cockatoo", version = __version__,
+    main_parser = btu.BirdArgparser(program="Ibis (bin chicken)", version = __version__, program_invocation="ibis",
         examples = {
             "coassemble": [
                 btu.Example(
                     "cluster reads into proposed coassemblies based on unbinned sequences",
-                    "cockatoo coassemble --forward reads_1.1.fq ... --reverse reads_1.2.fq ... --genomes genome_1.fna ..."
+                    "ibis coassemble --forward reads_1.1.fq ... --reverse reads_1.2.fq ... --genomes genome_1.fna ..."
                 ),
                 btu.Example(
                     "cluster reads into proposed coassemblies based on unbinned sequences and coassemble only unbinned reads",
-                    "cockatoo coassemble --forward reads_1.1.fq ... --reverse reads_1.2.fq ... --genomes genome_1.fna ... --assemble-unmapped"
+                    "ibis coassemble --forward reads_1.1.fq ... --reverse reads_1.2.fq ... --genomes genome_1.fna ... --assemble-unmapped"
                 ),
                 btu.Example(
                     "cluster reads into proposed coassemblies based on unbinned sequences from a specific taxa",
-                    "cockatoo coassemble --forward reads_1.1.fq ... --reverse reads_1.2.fq ... --genomes genome_1.fna ... --taxa-of-interest \"p__Planctomycetota\""
+                    "ibis coassemble --forward reads_1.1.fq ... --reverse reads_1.2.fq ... --genomes genome_1.fna ... --taxa-of-interest \"p__Planctomycetota\""
                 ),
                 btu.Example(
                     "find relevant samples for differential coverage binning (no coassembly)",
-                    "cockatoo coassemble --forward reads_1.1.fq ... --reverse reads_1.2.fq ... --single-assembly"
+                    "ibis coassemble --forward reads_1.1.fq ... --reverse reads_1.2.fq ... --single-assembly"
                 ),
             ],
             "evaluate": [
                 btu.Example(
                     "evaluate a completed coassembly",
-                    "cockatoo evaluate --coassemble-output coassemble_dir --aviary-outputs coassembly_0_dir ..."
+                    "ibis evaluate --coassemble-output coassemble_dir --aviary-outputs coassembly_0_dir ..."
                 ),
             ],
             "unmap": [
                 btu.Example(
                     "generate unmapped reads and commands for completed coassembly",
-                    "cockatoo unmap --coassemble-output coassemble_dir --forward reads_1.1.fq ... --reverse reads_1.2.fq ... --genomes genome_1.fna ..."
+                    "ibis unmap --coassemble-output coassemble_dir --forward reads_1.1.fq ... --reverse reads_1.2.fq ... --genomes genome_1.fna ..."
                 ),
             ],
             "iterate": [
                 btu.Example(
                     "rerun coassemble, adding new bins to database",
-                    "cockatoo iterate --aviary-outputs coassembly_0_dir ... --forward reads_1.1.fq ... --reverse reads_1.2.fq ... --genomes genome_1.fna ..."
+                    "ibis iterate --aviary-outputs coassembly_0_dir ... --forward reads_1.1.fq ... --reverse reads_1.2.fq ... --genomes genome_1.fna ..."
                 ),
             ]
         }
@@ -538,6 +554,7 @@ def main():
         coassemble_coassembly = parser.add_argument_group("Coassembly options")
         coassemble_coassembly.add_argument("--assemble-unmapped", action="store_true", help="Only assemble reads that do not map to reference genomes")
         coassemble_coassembly.add_argument("--unmapping-min-appraised", type=int, help="Minimum fraction of sequences binned to justify unmapping [default: 0.1]", default=0.1)
+        coassemble_coassembly.add_argument("--unmapping-max-identity", type=float, help="Maximum sequence identity of mapped sequences kept for coassembly [default: 95%]", default=95)
         add_aviary_options(coassemble_coassembly)
         # General options
         coassemble_general = parser.add_argument_group("General options")
@@ -556,6 +573,12 @@ def main():
     # Evaluate options
     evaluate_evaluation = evaluate_parser.add_argument_group("Evaluation options")
     add_evaluation_options(evaluate_evaluation)
+    # Cluster options
+    evaluate_cluster = evaluate_parser.add_argument_group("Cluster options")
+    evaluate_cluster.add_argument("--cluster", action="store_true", help="Cluster new and original genomes and report number of new clusters")
+    evaluate_cluster.add_argument("--cluster-ani", type=int, help="Cluster using this sequence identity [default: 86%]", default=0.86)
+    evaluate_cluster.add_argument("--genomes", nargs='+', help="Original genomes used as references for coassemble subcommand")
+    evaluate_cluster.add_argument("--genomes-list", help="Original genomes used as references for coassemble subcommand newline separated")
     # General options
     evaluate_general = evaluate_parser.add_argument_group("General options")
     add_general_snakemake_options(evaluate_general)
@@ -570,10 +593,11 @@ def main():
     # Coassembly options
     unmap_coassembly = unmap_parser.add_argument_group("Coassembly options")
     unmap_coassembly.add_argument("--coassemble-output", help="Output dir from cluster subcommand")
-    unmap_coassembly.add_argument("--appraise-binned", help="SingleM appraise binned output from Cockatoo coassemble (alternative to --coassemble-output)")
-    unmap_coassembly.add_argument("--appraise-unbinned", help="SingleM appraise unbinned output from Cockatoo coassemble (alternative to --coassemble-output)")
-    unmap_coassembly.add_argument("--elusive-clusters", help="Elusive clusters output from Cockatoo coassemble (alternative to --coassemble-output)")
-    unmap_coassembly.add_argument("--unmapping-min-appraised", type=int, help="Minimum fraction of sequences binned to justify unmapping [default: 0.1]", default=0.1)
+    unmap_coassembly.add_argument("--appraise-binned", help="SingleM appraise binned output from Ibis coassemble (alternative to --coassemble-output)")
+    unmap_coassembly.add_argument("--appraise-unbinned", help="SingleM appraise unbinned output from Ibis coassemble (alternative to --coassemble-output)")
+    unmap_coassembly.add_argument("--elusive-clusters", help="Elusive clusters output from Ibis coassemble (alternative to --coassemble-output)")
+    unmap_coassembly.add_argument("--unmapping-min-appraised", type=float, help="Minimum fraction of sequences binned to justify unmapping [default: 0.1]", default=0.1)
+    unmap_coassembly.add_argument("--unmapping-max-identity", type=float, help="Maximum sequence identity of mapped sequences kept for coassembly [default: 95%]", default=95)
     add_aviary_options(unmap_coassembly)
     # General options
     unmap_general = unmap_parser.add_argument_group("General options")
@@ -594,8 +618,8 @@ def main():
     ###########################################################################
 
     args = main_parser.parse_the_args()
-    logging.info(f"Cockatoo v{__version__}")
-    logging.info(f"Command: {' '.join(['cockatoo'] + sys.argv[1:])}")
+    logging.info(f"Ibis v{__version__}")
+    logging.info(f"Command: {' '.join(['ibis'] + sys.argv[1:])}")
 
     args.output = os.path.abspath(args.output)
     if not os.path.exists(args.output):
@@ -640,23 +664,25 @@ def main():
     elif args.subparser_name == "evaluate":
         if not args.singlem_metapackage and not os.environ['SINGLEM_METAPACKAGE_PATH']:
             raise Exception("SingleM metapackage (--singlem-metapackage or SINGLEM_METAPACKAGE_PATH environment variable, see SingleM data) must be provided")
+        if args.cluster and not (args.genomes or args.genomes_list):
+            raise Exception("Reference genomes must be provided to cluster with new genomes")
         evaluate(args)
 
     elif args.subparser_name == "unmap":
         base_argument_verification(args)
         if not args.coassemble_output and not (args.appraise_binned and args.appraise_unbinned and args.elusive_clusters):
-            raise Exception("Either Cockatoo coassemble output (--coassemble-output) or specific input files (--appraise-binned and --elusive-clusters) must be provided")
+            raise Exception("Either Ibis coassemble output (--coassemble-output) or specific input files (--appraise-binned and --elusive-clusters) must be provided")
         if args.run_aviary and not args.aviary_conda:
             raise Exception("Run Aviary (--run-aviary) requires pre-build conda env path to be provided (--aviary-conda)")
         unmap(args)
 
     elif args.subparser_name == "iterate":
         if args.sample_query or args.sample_query_list or args.sample_query_dir:
-            raise Exception("Query arguments are incompatible with Cockatoo iterate")
+            raise Exception("Query arguments are incompatible with Ibis iterate")
         if args.sample_singlem_dir or args.sample_query_dir:
-            raise Exception("Directory arguments are incompatible with Cockatoo iterate")
+            raise Exception("Directory arguments are incompatible with Ibis iterate")
         if args.single_assembly:
-            raise Exception("Single assembly is incompatible with Cockatoo iterate")
+            raise Exception("Single assembly is incompatible with Ibis iterate")
         coassemble_argument_verification(args)
         iterate(args)
 

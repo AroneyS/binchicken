@@ -86,8 +86,6 @@ rule singlem_pipe_reads:
         logs_dir + "/pipe/{read}_read.log"
     params:
         singlem_metapackage=config["singlem_metapackage"]
-    threads:
-        8
     conda:
         "env/singlem.yml"
     shell:
@@ -128,8 +126,6 @@ rule singlem_pipe_genomes:
         logs_dir + "/pipe/{genome}_bin.log"
     params:
         singlem_metapackage=config["singlem_metapackage"]
-    threads:
-        8
     conda:
         "env/singlem.yml"
     shell:
@@ -148,8 +144,6 @@ rule singlem_summarise_genomes:
         logs_dir + "/summarise/genomes.log"
     params:
         singlem_metapackage=config["singlem_metapackage"]
-    threads:
-        8
     conda:
         "env/singlem.yml"
     shell:
@@ -175,8 +169,6 @@ rule singlem_appraise:
     params:
         sequence_identity=config["appraise_sequence_identity"],
         singlem_metapackage=config["singlem_metapackage"],
-    threads:
-        8
     conda:
         "env/singlem.yml"
     shell:
@@ -321,45 +313,66 @@ rule map_reads:
         genomes=output_dir + "/mapping/{read}_reference.fna",
     output:
         dir=temp(directory(output_dir + "/mapping/{read}_coverm")),
-        unmapped_bam=temp(output_dir + "/mapping/{read}_unmapped.bam"),
-        reads_1=output_dir + "/mapping/{read}_unmapped.1.fq.gz",
-        reads_2=output_dir + "/mapping/{read}_unmapped.2.fq.gz",
     log:
-        logs_dir + "/mapping/{read}.log",
-    params:
-        genomes="{read}_reference.fna",
-        reads_1=lambda wildcards: os.path.basename(config["reads_1"][wildcards.read]),
-        coverm_log=logs_dir + "/mapping/{read}_coverm.log",
-        view_log=logs_dir + "/mapping/{read}_view.log",
-        fastq_log=logs_dir + "/mapping/{read}_fastq.log",
+        logs_dir + "/mapping/{read}_coverm.log",
     threads:
         32
     conda:
         "env/coverm.yml"
     shell:
-         "coverm make "
-         "-r {input.genomes} "
-         "-1 {input.reads_1} "
-         "-2 {input.reads_2} "
-         "-o {output.dir} "
-         "-t {threads} "
-         "&> {params.coverm_log} "
-         "&& "
-         "samtools view "
-         "-@ $(({threads} - 1)) "
-         "-b -f12 {output.dir}/{params.genomes}.{params.reads_1}.bam "
-         "2> {params.view_log} "
-         "> {output.unmapped_bam} "
-         "&& "
-         "samtools fastq "
-         "-@ $(({threads} - 1)) "
-         "{output.unmapped_bam} "
-         "-1 {output.reads_1} "
-         "-2 {output.reads_2} "
-         "-0 /dev/null "
-         "-s /dev/null "
-         "-n "
-         "&> {params.fastq_log} "
+        "coverm make "
+        "-r {input.genomes} "
+        "-1 {input.reads_1} "
+        "-2 {input.reads_2} "
+        "-o {output.dir} "
+        "-t {threads} "
+        "&> {log} "
+
+rule filter_bam_files:
+    input:
+        output_dir + "/mapping/{read}_coverm",
+    output:
+        temp(output_dir + "/mapping/{read}_unmapped.bam"),
+    log:
+        logs_dir + "/mapping/{read}_filter.log",
+    params:
+        genomes="{read}_reference.fna",
+        reads_1=lambda wildcards: os.path.basename(config["reads_1"][wildcards.read]),
+        sequence_identity=config["unmapping_max_identity"],
+    threads:
+        32
+    conda:
+        "env/coverm.yml"
+    shell:
+        "coverm filter "
+        "-b {input}/{params.genomes}.{params.reads_1}.bam "
+        "-o {output} "
+        "--inverse "
+        "--min-read-percent-identity {params.sequence_identity} "
+        "&> {log}"
+
+rule bam_to_fastq:
+    input:
+        output_dir + "/mapping/{read}_unmapped.bam",
+    output:
+        reads_1=output_dir + "/mapping/{read}_unmapped.1.fq.gz",
+        reads_2=output_dir + "/mapping/{read}_unmapped.2.fq.gz",
+    log:
+        logs_dir + "/mapping/{read}_fastq.log",
+    threads:
+        32
+    conda:
+        "env/coverm.yml"
+    shell:
+        "samtools fastq "
+        "-@ $(({threads} - 1)) "
+        "{input} "
+        "-1 {output.reads_1} "
+        "-2 {output.reads_2} "
+        "-0 /dev/null "
+        "-s /dev/null "
+        "-n "
+        "&> {log} "
 
 rule finish_mapping:
     input:

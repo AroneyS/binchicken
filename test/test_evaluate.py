@@ -13,11 +13,17 @@ METAPACKAGE = os.path.join(path_to_data, "singlem_metapackage.smpkg")
 MOCK_COASSEMBLE = os.path.join(path_to_data, "mock_coassemble")
 MOCK_COASSEMBLIES = ' '.join([os.path.join(MOCK_COASSEMBLE, "coassemble", "coassembly_0")])
 
+GENOMES = " ".join([os.path.join(path_to_data, "GB_GCA_013286235.1.fna")])
+TWO_GENOMES = " ".join([
+    os.path.join(path_to_data, "GB_GCA_013286235.1.fna"),
+    os.path.join(path_to_data, "GB_GCA_013286235.2.fna"),
+    ])
+
 class Tests(unittest.TestCase):
     def test_evaluate(self):
         with in_tempdir():
             cmd = (
-                f"cockatoo evaluate "
+                f"ibis evaluate "
                 f"--coassemble-output {MOCK_COASSEMBLE} "
                 f"--aviary-outputs {MOCK_COASSEMBLIES} "
                 f"--checkm-version 2 "
@@ -32,20 +38,21 @@ class Tests(unittest.TestCase):
 
             summary_path = os.path.join("test", "evaluate", "evaluate", "summary_stats.tsv")
             self.assertTrue(os.path.exists(summary_path))
-
             expected = "\n".join(
                 [
                     "\t".join([
                         "coassembly",
                         "statistic",
-                        "missed",
-                        "recovered",
+                        "within",
+                        "match",
+                        "nonmatch",
                         "total",
-                        "recovered_percent",
+                        "match_percent",
                     ]),
                     "\t".join([
                         "coassembly_0",
                         "sequences",
+                        "targets",
                         "1",
                         "1",
                         "2",
@@ -53,15 +60,35 @@ class Tests(unittest.TestCase):
                     ]),
                     "\t".join([
                         "coassembly_0",
-                        "bins",
-                        "0",
+                        "taxonomy",
+                        "targets",
                         "1",
                         "1",
-                        "100",
+                        "2",
+                        "50",
                     ]),
                     "\t".join([
                         "coassembly_0",
-                        "taxonomy",
+                        "nontarget_sequences",
+                        "recovery",
+                        "1",
+                        "2",
+                        "3",
+                        "33.33",
+                    ]),
+                    "\t".join([
+                        "coassembly_0",
+                        "novel_sequences",
+                        "recovery",
+                        "1",
+                        "2",
+                        "3",
+                        "33.33",
+                    ]),
+                    "\t".join([
+                        "coassembly_0",
+                        "bins",
+                        "recovery",
                         "1",
                         "1",
                         "2",
@@ -79,6 +106,8 @@ class Tests(unittest.TestCase):
                 [
                     "\t".join(["gene", "sample", "sequence", "num_hits", "coverage", "taxonomy"]),
                     "\t".join(["S3.7.ribosomal_protein_S7", "coassembly_0-0_transcripts", "TATCAAGTTCCACAAGAAGTTAGAGGAGAAAGAAGAATCTCGTTAGCTATTAGATGGATT", "1", "1.14", "Root; d__Bacteria"]),
+                    "\t".join(["S3.7.ribosomal_protein_S7", "coassembly_0-0_transcripts", "TTCCAGGTGCCTACTGAAGTTCGTCCCGAGCGTAAAATTGCATTGGGTATGAAATGGCTG", "1", "1.18", "Root; d__Bacteria; p__Bacteroidota; c__Bacteroidia; o__Sphingobacteriales; f__Sphingobacteriaceae; g__Mucilaginibacter; s__Mucilaginibacter_sp013286235"]),
+                    "\t".join(["S3.7.ribosomal_protein_S7", "coassembly_0-1_transcripts", "TACCAGGTTCCTGTTGAAGTTCGCCCATCACGCCGTTCTGCTTTGGCAATGCGCTGGGTG", "1", "1.14", "Root; d__Bacteria; p__Proteobacteria; c__Gammaproteobacteria; o__Burkholderiales; f__Burkholderiaceae; g__Polynucleobacter; s__Polynucleobacter_sp018688335"]),
                     ""
                 ]
             )
@@ -88,7 +117,7 @@ class Tests(unittest.TestCase):
     def test_evaluate_default_config(self):
         with in_tempdir():
             cmd = (
-                f"cockatoo evaluate "
+                f"ibis evaluate "
                 f"--coassemble-output {MOCK_COASSEMBLE} "
                 f"--aviary-outputs {MOCK_COASSEMBLIES} "
                 f"--singlem-metapackage {METAPACKAGE} "
@@ -108,7 +137,7 @@ class Tests(unittest.TestCase):
         with in_tempdir():
             os.environ['SINGLEM_METAPACKAGE_PATH'] = METAPACKAGE
             cmd = (
-                f"cockatoo evaluate "
+                f"ibis evaluate "
                 f"--coassemble-output {MOCK_COASSEMBLE} "
                 f"--aviary-outputs {MOCK_COASSEMBLIES} "
                 f"--output test "
@@ -124,10 +153,51 @@ class Tests(unittest.TestCase):
                 [
                     "\t".join(["gene", "sample", "sequence", "num_hits", "coverage", "taxonomy"]),
                     "\t".join(["S3.7.ribosomal_protein_S7", "coassembly_0-0_transcripts", "TATCAAGTTCCACAAGAAGTTAGAGGAGAAAGAAGAATCTCGTTAGCTATTAGATGGATT", "1", "1.14", "Root; d__Bacteria"]),
+                    "\t".join(["S3.7.ribosomal_protein_S7", "coassembly_0-0_transcripts", "TTCCAGGTGCCTACTGAAGTTCGTCCCGAGCGTAAAATTGCATTGGGTATGAAATGGCTG", "1", "1.18", "Root; d__Bacteria; p__Bacteroidota; c__Bacteroidia; o__Sphingobacteriales; f__Sphingobacteriaceae; g__Mucilaginibacter; s__Mucilaginibacter_sp013286235"]),
+                    "\t".join(["S3.7.ribosomal_protein_S7", "coassembly_0-1_transcripts", "TACCAGGTTCCTGTTGAAGTTCGCCCATCACGCCGTTCTGCTTTGGCAATGCGCTGGGTG", "1", "1.14", "Root; d__Bacteria; p__Proteobacteria; c__Gammaproteobacteria; o__Burkholderiales; f__Burkholderiaceae; g__Polynucleobacter; s__Polynucleobacter_sp018688335"]),
                     ""
                 ]
             )
             with open(summarise_path) as f:
+                self.assertEqual(expected, f.read())
+
+    def test_evaluate_cluster(self):
+        with in_tempdir():
+            cmd = (
+                f"ibis evaluate "
+                f"--coassemble-output {MOCK_COASSEMBLE} "
+                f"--aviary-outputs {MOCK_COASSEMBLIES} "
+                f"--cluster "
+                f"--genomes {TWO_GENOMES} "
+                f"--checkm-version 2 "
+                f"--singlem-metapackage {METAPACKAGE} "
+                f"--output test "
+                f"--conda-prefix {path_to_conda} "
+            )
+            extern.run(cmd)
+
+            config_path = os.path.join("test", "config.yaml")
+            self.assertTrue(os.path.exists(config_path))
+
+            summary_path = os.path.join("test", "evaluate", "evaluate", "summary_stats.tsv")
+            self.assertTrue(os.path.exists(summary_path))
+
+            cluster_path = os.path.join("test", "evaluate", "evaluate", "cluster_stats.csv")
+            self.assertTrue(os.path.exists(cluster_path))
+            expected = "\n".join(
+                [
+                    ",".join([
+                        "original",
+                        "2",
+                    ]),
+                    ",".join([
+                        "coassembly_0",
+                        "4",
+                    ]),
+                    ""
+                ]
+            )
+            with open(cluster_path) as f:
                 self.assertEqual(expected, f.read())
 
 

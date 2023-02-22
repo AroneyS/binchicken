@@ -1,0 +1,4 @@
+max_threads: 8
+cluster: false
+cluster_ani: 
+original_bins: ""
