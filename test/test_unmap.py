@@ -177,6 +177,154 @@ class Tests(unittest.TestCase):
                 self.assertTrue("@A00178:112:HMNM5DSXX:4:1622:16405:19194" in file)
                 self.assertTrue("@A00178:118:HTHTVDSXX:1:1249:16740:14105" in file)
 
+    def test_unmap_sra_download(self):
+        with in_tempdir():
+            cmd = (
+                f"ibis unmap "
+                f"--forward SRR8334323 SRR8334324 "
+                f"--sra "
+                f"--genomes {GENOMES} "
+                f"--coassemble-output {MOCK_COASSEMBLE} "
+                f"--output test "
+                f"--conda-prefix {path_to_conda} "
+                f"--dryrun "
+                f"--snakemake-args \" --quiet\" "
+            )
+            output_comb = extern.run(cmd)
+
+            output_sra = output_comb.split("Building DAG of jobs...")[1]
+            self.assertTrue("download_sra" in output_sra)
+            self.assertTrue("aviary_commands" not in output_sra)
+
+            output = output_comb.split("Building DAG of jobs...")[2]
+            self.assertTrue("singlem_pipe_reads" not in output)
+            self.assertTrue("genome_transcripts" not in output)
+            self.assertTrue("singlem_pipe_genomes" not in output)
+            self.assertTrue("singlem_summarise_genomes" not in output)
+            self.assertTrue("singlem_appraise" not in output)
+            self.assertTrue("query_processing" not in output)
+            self.assertTrue("single_assembly" not in output)
+            self.assertTrue("count_bp_reads" not in output)
+            self.assertTrue("target_elusive" not in output)
+            self.assertTrue("cluster_graph" not in output)
+            self.assertTrue("collect_genomes" in output)
+            self.assertTrue("map_reads" in output)
+            self.assertTrue("finish_mapping" in output)
+            self.assertTrue("aviary_commands" in output)
+
+    @unittest.skip("Downloads SRA data using Kingfisher. Test manually")
+    def test_unmap_sra_download_real(self):
+        with in_tempdir():
+            cmd = (
+                f"ibis unmap "
+                f"--forward SRR8334323 SRR8334324 "
+                f"--sra "
+                f"--genomes {GENOMES} "
+                f"--appraise-binned {os.path.join(MOCK_COASSEMBLE, 'appraise', 'binned_sra.otu_table.tsv')} "
+                f"--appraise-unbinned {os.path.join(MOCK_COASSEMBLE, 'appraise', 'unbinned_sra.otu_table.tsv')} "
+                f"--elusive-clusters {os.path.join(MOCK_COASSEMBLE, 'target', 'elusive_clusters_sra.tsv')} "
+                f"--output test "
+                f"--conda-prefix {path_to_conda} "
+            )
+            extern.run(cmd)
+
+            config_path = os.path.join("test", "config.yaml")
+            self.assertTrue(os.path.exists(config_path))
+
+            sra_1_path = os.path.join("test", "coassemble", "sra", "SRR8334323_1.fastq.gz")
+            self.assertTrue(os.path.exists(sra_1_path))
+            with gzip.open(sra_1_path) as f:
+                file = f.readline().decode()
+                self.assertTrue("@SRR8334323.1 HS2:487:H80UEADXX:1:1101:1148:1986/1" in file)
+                self.assertTrue("@SRR8334323.2 HS2:487:H80UEADXX:1:1101:1148:1986/2" not in file)
+
+            self.assertTrue(os.path.exists(os.path.join("test", "coassemble", "sra", "SRR8334323_2.fastq.gz")))
+            self.assertTrue(os.path.exists(os.path.join("test", "coassemble", "sra", "SRR8334324_1.fastq.gz")))
+            self.assertTrue(os.path.exists(os.path.join("test", "coassemble", "sra", "SRR8334324_2.fastq.gz")))
+
+    def test_unmap_aviary_run(self):
+        with in_tempdir():
+            cmd = (
+                f"ibis unmap "
+                f"--forward SRR8334323 SRR8334324 "
+                f"--sra "
+                f"--run-aviary "
+                f"--aviary-conda aviary "
+                f"--genomes {GENOMES} "
+                f"--appraise-binned {os.path.join(MOCK_COASSEMBLE, 'appraise', 'binned_sra.otu_table.tsv')} "
+                f"--appraise-unbinned {os.path.join(MOCK_COASSEMBLE, 'appraise', 'unbinned_sra.otu_table.tsv')} "
+                f"--elusive-clusters {os.path.join(MOCK_COASSEMBLE, 'target', 'elusive_clusters_sra.tsv')} "
+                f"--output test "
+                f"--conda-prefix {path_to_conda} "
+                f"--dryrun "
+                f"--snakemake-args \" --quiet\" "
+            )
+            output_comb = extern.run(cmd)
+
+            output_sra = output_comb.split("Building DAG of jobs...")[1]
+            self.assertTrue("download_sra" in output_sra)
+            self.assertTrue("aviary_commands" not in output_sra)
+
+            output = output_comb.split("Building DAG of jobs...")[2]
+            self.assertTrue("singlem_pipe_reads" not in output)
+            self.assertTrue("genome_transcripts" not in output)
+            self.assertTrue("singlem_pipe_genomes" not in output)
+            self.assertTrue("singlem_summarise_genomes" not in output)
+            self.assertTrue("singlem_appraise" not in output)
+            self.assertTrue("query_processing" not in output)
+            self.assertTrue("single_assembly" not in output)
+            self.assertTrue("count_bp_reads" not in output)
+            self.assertTrue("target_elusive" not in output)
+            self.assertTrue("cluster_graph" not in output)
+            self.assertTrue("collect_genomes" in output)
+            self.assertTrue("map_reads" in output)
+            self.assertTrue("finish_mapping" in output)
+            self.assertTrue("aviary_commands" not in output)
+            self.assertTrue("aviary_assemble" in output)
+            self.assertTrue("aviary_recover" in output)
+            self.assertTrue("aviary_combine" in output)
+
+    @unittest.skip("Downloads SRA data using Kingfisher and runs Aviary. Test manually")
+    def test_unmap_aviary_run_real(self):
+        with in_tempdir():
+            cmd = (
+                f"ibis unmap "
+                f"--forward SRR8334323 SRR8334324 "
+                f"--sra "
+                f"--run-aviary "
+                f"--cores 32 "
+                f"--aviary-cores 32 "
+                f"--aviary-memory 500 "
+                f"--aviary-conda /mnt/hpccs01/work/microbiome/conda/envs/aviary-v0.5.7 "
+                f"--genomes {GENOMES} "
+                f"--appraise-binned {os.path.join(MOCK_COASSEMBLE, 'appraise', 'binned_sra.otu_table.tsv')} "
+                f"--appraise-unbinned {os.path.join(MOCK_COASSEMBLE, 'appraise', 'unbinned_sra.otu_table.tsv')} "
+                f"--elusive-clusters {os.path.join(MOCK_COASSEMBLE, 'target', 'elusive_clusters_sra.tsv')} "
+                f"--output test "
+                f"--conda-prefix {path_to_conda} "
+                f"--snakemake-args \" --config test=True\" "
+            )
+            output = extern.run(cmd)
+            print(output)
+
+            config_path = os.path.join("test", "config.yaml")
+            self.assertTrue(os.path.exists(config_path))
+
+            sra_1_path = os.path.join("test", "coassemble", "sra", "SRR8334323_1.fastq.gz")
+            self.assertTrue(os.path.exists(sra_1_path))
+            with gzip.open(sra_1_path) as f:
+                file = f.readline().decode()
+                self.assertTrue("@SRR8334323.1 1/1" in file)
+                self.assertTrue("@SRR8334323.1 1/2" not in file)
+
+            self.assertTrue(os.path.exists(os.path.join("test", "coassemble", "sra", "SRR8334323_2.fastq.gz")))
+            self.assertTrue(os.path.exists(os.path.join("test", "coassemble", "sra", "SRR8334324_1.fastq.gz")))
+            self.assertTrue(os.path.exists(os.path.join("test", "coassemble", "sra", "SRR8334324_2.fastq.gz")))
+
+            self.assertTrue(os.path.exists(os.path.join("test", "coassemble", "coassemble", "coassembly_0", "assemble", "assembly", "final_contigs.fna")))
+
+            self.assertTrue(os.path.exists(os.path.join("test", "coassemble", "coassemble", "coassembly_0", "recover", "bins", "checkm_minimal.tsv")))
+
 
 if __name__ == '__main__':
     unittest.main()

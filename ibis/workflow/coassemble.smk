@@ -4,6 +4,7 @@
 ruleorder: single_assembly > query_processing > singlem_appraise
 
 import os
+import pandas as pd
 
 output_dir = os.path.abspath("coassemble")
 logs_dir = output_dir + "/logs"
@@ -11,29 +12,56 @@ logs_dir = output_dir + "/logs"
 mapped_reads_1 = {read: output_dir + f"/mapping/{read}_unmapped.1.fq.gz" for read in config["reads_1"]}
 mapped_reads_2 = {read: output_dir + f"/mapping/{read}_unmapped.2.fq.gz" for read in config["reads_2"]}
 
-def get_reads(wildcards, forward = True):
-    version = wildcards.version
+def get_reads(wildcards, forward=True, version=None):
+    version = version if version else wildcards.version
     if version == "":
         if forward:
-            return config["reads_1"].values()
+            return config["reads_1"]
         else:
-            return config["reads_2"].values()
+            return config["reads_2"]
     elif version == "unmapped_":
         if forward:
-            return mapped_reads_1.values()
+            return mapped_reads_1
         else:
-            return mapped_reads_2.values()
+            return mapped_reads_2
     else:
         raise ValueError("Version should be empty or unmapped")
 
 def get_cat(wildcards):
-    return "zcat" if [r for r in get_reads(wildcards)][0].endswith(".gz") else "cat"
+    return "zcat" if [r for r in get_reads(wildcards).values()][0].endswith(".gz") else "cat"
+
+def get_reads_coassembly(wildcards, forward=True, recover=False):
+    checkpoint_output = checkpoints.cluster_graph.get(**wildcards).output[0]
+    elusive_clusters = pd.read_csv(checkpoint_output, sep = "\t")
+
+    if recover:
+        sample_names = elusive_clusters[elusive_clusters["coassembly"] == wildcards.coassembly]["recover_samples"].iloc[0]
+    else:
+        sample_names = elusive_clusters[elusive_clusters["coassembly"] == wildcards.coassembly]["samples"].iloc[0]
+
+    sample_names = sample_names.split(",")
+
+    if config["assemble_unmapped"]:
+        version = "unmapped_"
+    else:
+        version = ""
+
+    reads = get_reads(wildcards, forward=forward, version=version)
+    return [reads[n] for n in sample_names]
+
+def get_coassemblies(wildcards):
+    checkpoint_output = checkpoints.cluster_graph.get().output[0]
+    elusive_clusters = pd.read_csv(checkpoint_output, sep = "\t")
+    coassemblies = elusive_clusters["coassembly"].to_list()
+
+    return [output_dir + f"/coassemble/{c}/recover" for c in coassemblies]
 
 rule all:
     input:
         output_dir + "/target/elusive_clusters.tsv",
-        output_dir + "/commands/coassemble_commands.sh",
-        output_dir + "/commands/recover_commands.sh",
+        output_dir + "/commands/coassemble_commands.sh" if not config["run_aviary"] else [],
+        output_dir + "/commands/recover_commands.sh" if not config["run_aviary"] else [],
+        output_dir + "/commands/done" if config["run_aviary"] else [],
         output_dir + "/summary.tsv",
 
 rule summary:
@@ -192,8 +220,8 @@ rule single_assembly:
 ######################
 rule count_bp_reads:
     input:
-        reads_1 = lambda wildcards: get_reads(wildcards),
-        reads_2 = lambda wildcards: get_reads(wildcards, forward = False)
+        reads_1 = lambda wildcards: get_reads(wildcards).values(),
+        reads_2 = lambda wildcards: get_reads(wildcards, forward = False).values()
     output:
         output_dir + "/{version,.*}read_size.csv"
     params:
@@ -222,7 +250,7 @@ rule target_elusive:
     script:
         "scripts/target_elusive.py"
 
-rule cluster_graph:
+checkpoint cluster_graph:
     input:
         elusive_edges=output_dir + "/target/elusive_edges.tsv",
         read_size=output_dir + "/read_size.csv",
@@ -237,6 +265,30 @@ rule cluster_graph:
         max_recovery_samples=config["max_recovery_samples"],
     script:
         "scripts/cluster_graph.py"
+
+#######################
+### SRA downloading ###
+#######################
+rule download_sra:
+    output:
+        directory(output_dir + "/sra")
+    threads:
+        64
+    params:
+        sra=" ".join(config["sra"]) if config["sra"] else ""
+    conda:
+        "env/kingfisher.yml"
+    log:
+        logs_dir + "/sra/kingfisher.log"
+    shell:
+        "mkdir -p {output} && "
+        "cd {output} && "
+        "kingfisher get "
+        "-r {params.sra} "
+        "-f fastq.gz "
+        "-m ena-ascp ena-ftp prefetch aws-http aws-cp "
+        "-t {threads} "
+        "&> {log} "
 
 #####################################
 ### Map reads to matching genomes ###
@@ -353,3 +405,72 @@ rule aviary_commands:
         logs_dir + "/aviary_commands.log"
     script:
         "scripts/aviary_commands.py"
+
+#########################################
+### Run Aviary commands (alternative) ###
+#########################################
+rule aviary_assemble:
+    input:
+        output_dir + "/mapping/done" if config["assemble_unmapped"] else [],
+        elusive_clusters=output_dir + "/target/elusive_clusters.tsv",
+    output:
+        dir=directory(output_dir + "/coassemble/{coassembly}/assemble"),
+        assembly=output_dir + "/coassemble/{coassembly}/assemble/assembly/final_contigs.fasta",
+    params:
+        reads_1 = lambda wildcards: get_reads_coassembly(wildcards),
+        reads_2 = lambda wildcards: get_reads_coassembly(wildcards, forward=False),
+        memory=config["aviary_memory"],
+    threads:
+        threads=config["aviary_threads"]
+    log:
+        logs_dir + "/aviary/{coassembly}_assemble.log"
+    conda:
+        config["aviary_conda"]
+    shell:
+        "aviary assemble "
+        "-1 {params.reads_1} "
+        "-2 {params.reads_2} "
+        "--output {output.dir} "
+        "-n {threads} "
+        "-t {threads} "
+        "-m {params.memory} "
+        "&> {log} "
+
+rule aviary_recover:
+    input:
+        assembly=output_dir + "/coassemble/{coassembly}/assemble/assembly/final_contigs.fasta",
+        elusive_clusters=output_dir + "/target/elusive_clusters.tsv",
+    output:
+        directory(output_dir + "/coassemble/{coassembly}/recover")
+    params:
+        reads_1 = lambda wildcards: get_reads_coassembly(wildcards, recover=True),
+        reads_2 = lambda wildcards: get_reads_coassembly(wildcards, forward=False, recover=True),
+        memory=config["aviary_memory"],
+        skip_binners = "--skip-binners rosella semibin metabat1 vamb concoct maxbin2 maxbin" if config["test"] else "",
+    threads:
+        config["aviary_threads"]
+    log:
+        logs_dir + "/aviary/{coassembly}_recover.log"
+    conda:
+        config["aviary_conda"]
+    shell:
+        "aviary recover "
+        "--assembly {input.assembly} "
+        "-1 {params.reads_1} "
+        "-2 {params.reads_2} "
+        "--output {output} "
+        "{params.skip_binners} "
+        "-n {threads} "
+        "-t {threads} "
+        "-m {params.memory} "
+        "&> {log} "
+
+rule aviary_combine:
+    input:
+        get_coassemblies,
+        elusive_clusters=output_dir + "/target/elusive_clusters.tsv",
+        mapping=output_dir + "/mapping/done" if config["assemble_unmapped"] else [],
+    output:
+        output_dir + "/commands/done",
+    shell:
+        "touch {output} "

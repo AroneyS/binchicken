@@ -97,6 +97,43 @@ def run_workflow(config, workflow, output_dir, cores=16, dryrun=False,
     logging.info(f"Executing: {cmd}")
     subprocess.check_call(cmd, shell=True)
 
+def download_sra(args):
+    config_items = {
+        "sra": args.forward,
+        "reads_1": {},
+        "reads_2": {},
+    }
+
+    config_path = make_config(
+        importlib.resources.files("ibis.config").joinpath("template_coassemble.yaml"),
+        args.output,
+        config_items
+        )
+
+    run_workflow(
+        config = config_path,
+        workflow = "coassemble.smk",
+        output_dir = args.output,
+        cores = args.cores,
+        dryrun = args.dryrun,
+        conda_prefix = args.conda_prefix,
+        snakemake_args = args.snakemake_args + " -- download_sra" if args.snakemake_args else "-- download_sra",
+    )
+
+    sra_dir = args.output + "/coassemble/sra/"
+    SRA_SUFFIX = ".fastq.gz"
+    # Need to convince Snakemake that the SRA data predates the completed outputs
+    # Otherwise it will rerun all the rules with reason "updated input files"
+    # Using Jan 1 2000 as pre-date
+    os.makedirs(sra_dir, exist_ok=True)
+    for sra in [f + s for f in args.forward for s in ["_1", "_2"]]:
+        subprocess.check_call(f"touch -t 200001011200 {sra_dir + sra + SRA_SUFFIX}", shell=True)
+
+    forward = sorted([sra_dir + f for f in os.listdir(sra_dir) if f.endswith("_1" + SRA_SUFFIX)])
+    reverse = sorted([sra_dir + f for f in os.listdir(sra_dir) if f.endswith("_2" + SRA_SUFFIX)])
+
+    return forward, reverse
+
 def set_standard_args(args):
     args.singlem_metapackage = None
     args.sample_singlem = None
@@ -249,6 +286,8 @@ def coassemble(args):
         "assemble_unmapped": args.assemble_unmapped,
         "unmapping_min_appraised": args.unmapping_min_appraised,
         "unmapping_max_identity": args.unmapping_max_identity,
+        "run_aviary": args.run_aviary,
+        "aviary_conda": args.aviary_conda,
         "aviary_threads": args.aviary_cores,
         "aviary_memory": args.aviary_memory,
     }
@@ -341,7 +380,14 @@ def unmap(args):
             os.path.abspath(args.appraise_unbinned),
             os.path.join(args.output, "coassemble", "appraise", "unbinned.otu_table.tsv")
         )
-    args.snakemake_args = args.snakemake_args + " --rerun-triggers mtime -- aviary_commands" if args.snakemake_args else "--rerun-triggers mtime -- aviary_commands"
+
+    if args.sra:
+        args.forward, args.reverse = download_sra(args)
+
+    if args.run_aviary:
+        args.snakemake_args = args.snakemake_args + " --rerun-triggers mtime -- aviary_combine" if args.snakemake_args else "--rerun-triggers mtime -- aviary_combine"
+    else:
+        args.snakemake_args = args.snakemake_args + " --rerun-triggers mtime -- aviary_commands" if args.snakemake_args else "--rerun-triggers mtime -- aviary_commands"
 
     args = set_standard_args(args)
     coassemble(args)
@@ -466,6 +512,12 @@ def main():
         argument_group.add_argument("--min-completeness", type=int, help="Include bins with at least this minimum completeness [default: 70]", default=70)
         argument_group.add_argument("--max-contamination", type=int, help="Include bins with at most this maximum contamination [default: 10]", default=10)
 
+    def add_aviary_options(argument_group):
+        argument_group.add_argument("--run-aviary", action="store_true", help="Run Aviary commands for all identified coassemblies")
+        argument_group.add_argument("--aviary-conda", help="Pre-built Aviary conda env path")
+        argument_group.add_argument("--aviary-cores", type=int, help="Maximum number of cores for Aviary to use", default=16)
+        argument_group.add_argument("--aviary-memory", type=int, help="Maximum amount of memory for Aviary to use (Gigabytes)", default=250)
+
     ###########################################################################
 
     coassemble_parser = main_parser.new_subparser("coassemble", "Coassemble reads clustered by unbinned single-copy marker genes")
@@ -503,8 +555,7 @@ def main():
         coassemble_coassembly.add_argument("--assemble-unmapped", action="store_true", help="Only assemble reads that do not map to reference genomes")
         coassemble_coassembly.add_argument("--unmapping-min-appraised", type=int, help="Minimum fraction of sequences binned to justify unmapping [default: 0.1]", default=0.1)
         coassemble_coassembly.add_argument("--unmapping-max-identity", type=float, help="Maximum sequence identity of mapped sequences kept for coassembly [default: 95%]", default=95)
-        coassemble_coassembly.add_argument("--aviary-cores", type=int, help="Maximum number of cores for Aviary to use", default=16)
-        coassemble_coassembly.add_argument("--aviary-memory", type=int, help="Maximum amount of memory for Aviary to use (Gigabytes)", default=250)
+        add_aviary_options(coassemble_coassembly)
         # General options
         coassemble_general = parser.add_argument_group("General options")
         add_general_snakemake_options(coassemble_general)
@@ -538,6 +589,7 @@ def main():
     # Base arguments
     unmap_base = unmap_parser.add_argument_group("Input arguments")
     add_base_arguments(unmap_base)
+    unmap_base.add_argument("--sra", action="store_true", help="Download reads from SRA (read argument still required)")
     # Coassembly options
     unmap_coassembly = unmap_parser.add_argument_group("Coassembly options")
     unmap_coassembly.add_argument("--coassemble-output", help="Output dir from cluster subcommand")
@@ -546,8 +598,7 @@ def main():
     unmap_coassembly.add_argument("--elusive-clusters", help="Elusive clusters output from Ibis coassemble (alternative to --coassemble-output)")
     unmap_coassembly.add_argument("--unmapping-min-appraised", type=float, help="Minimum fraction of sequences binned to justify unmapping [default: 0.1]", default=0.1)
     unmap_coassembly.add_argument("--unmapping-max-identity", type=float, help="Maximum sequence identity of mapped sequences kept for coassembly [default: 95%]", default=95)
-    unmap_coassembly.add_argument("--aviary-cores", type=int, help="Maximum number of cores for Aviary to use", default=16)
-    unmap_coassembly.add_argument("--aviary-memory", type=int, help="Maximum amount of memory for Aviary to use (Gigabytes)", default=250)
+    add_aviary_options(unmap_coassembly)
     # General options
     unmap_general = unmap_parser.add_argument_group("General options")
     add_general_snakemake_options(unmap_general)
@@ -577,7 +628,7 @@ def main():
     def base_argument_verification(args):
         if not args.forward and not args.forward_list:
             raise Exception("Input reads must be provided")
-        if not args.reverse and not args.reverse_list:
+        if not args.reverse and not args.reverse_list and not args.sra:
             raise Exception("Interleaved and long-reads not yet implemented")
         if not (args.genomes or args.genomes_list or args.single_assembly):
             raise Exception("Input genomes must be provided")
@@ -603,6 +654,8 @@ def main():
         else:
             if args.num_coassembly_samples > args.max_recovery_samples:
                 raise Exception("Max recovery samples (--max-recovery-samples) must be greater than or equal to number of coassembly samples (--num-coassembly-samples)")
+        if args.run_aviary and not args.aviary_conda:
+            raise Exception("Run Aviary (--run-aviary) requires pre-build conda env path to be provided (--aviary-conda)")
 
     if args.subparser_name == "coassemble":
         coassemble_argument_verification(args)
@@ -619,6 +672,8 @@ def main():
         base_argument_verification(args)
         if not args.coassemble_output and not (args.appraise_binned and args.appraise_unbinned and args.elusive_clusters):
             raise Exception("Either Ibis coassemble output (--coassemble-output) or specific input files (--appraise-binned and --elusive-clusters) must be provided")
+        if args.run_aviary and not args.aviary_conda:
+            raise Exception("Run Aviary (--run-aviary) requires pre-build conda env path to be provided (--aviary-conda)")
         unmap(args)
 
     elif args.subparser_name == "iterate":
