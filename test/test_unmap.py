@@ -29,6 +29,7 @@ MOCK_COASSEMBLE = os.path.join(path_to_data, "mock_coassemble")
 APPRAISE_BINNED = os.path.join(MOCK_COASSEMBLE, "appraise", "binned.otu_table.tsv")
 APPRAISE_UNBINNED = os.path.join(MOCK_COASSEMBLE, "appraise", "unbinned.otu_table.tsv")
 ELUSIVE_CLUSTERS = os.path.join(MOCK_COASSEMBLE, "target", "elusive_clusters.tsv")
+ELUSIVE_CLUSTERS_TWO = os.path.join(MOCK_COASSEMBLE, 'target', 'elusive_clusters_two.tsv')
 
 
 class Tests(unittest.TestCase):
@@ -305,7 +306,6 @@ class Tests(unittest.TestCase):
                 f"--snakemake-args \" --config test=True\" "
             )
             output = extern.run(cmd)
-            print(output)
 
             config_path = os.path.join("test", "config.yaml")
             self.assertTrue(os.path.exists(config_path))
@@ -320,6 +320,68 @@ class Tests(unittest.TestCase):
             self.assertTrue(os.path.exists(os.path.join("test", "coassemble", "sra", "SRR8334323_2.fastq.gz")))
             self.assertTrue(os.path.exists(os.path.join("test", "coassemble", "sra", "SRR8334324_1.fastq.gz")))
             self.assertTrue(os.path.exists(os.path.join("test", "coassemble", "sra", "SRR8334324_2.fastq.gz")))
+
+            self.assertTrue(os.path.exists(os.path.join("test", "coassemble", "coassemble", "coassembly_0", "assemble", "assembly", "final_contigs.fna")))
+
+            self.assertTrue(os.path.exists(os.path.join("test", "coassemble", "coassemble", "coassembly_0", "recover", "bins", "checkm_minimal.tsv")))
+
+    def test_unmap_specific_coassembly(self):
+        with in_tempdir():
+            cmd = (
+                f"ibis unmap "
+                f"--forward {SAMPLE_READS_FORWARD} "
+                f"--reverse {SAMPLE_READS_REVERSE} "
+                f"--genomes {GENOMES} "
+                f"--appraise-binned {APPRAISE_BINNED} "
+                f"--appraise-unbinned {APPRAISE_UNBINNED} "
+                f"--elusive-clusters {ELUSIVE_CLUSTERS_TWO} "
+                f"--coassemblies coassembly_0 "
+                f"--output test "
+                f"--conda-prefix {path_to_conda} "
+            )
+            extern.run(cmd)
+
+            config_path = os.path.join("test", "config.yaml")
+            self.assertTrue(os.path.exists(config_path))
+
+            self.assertTrue(os.path.exists(os.path.join("test", "coassemble", "mapping", "sample_1_unmapped.1.fq.gz")))
+            self.assertTrue(os.path.exists(os.path.join("test", "coassemble", "mapping", "sample_1_unmapped.2.fq.gz")))
+            self.assertTrue(os.path.exists(os.path.join("test", "coassemble", "mapping", "sample_2_unmapped.1.fq.gz")))
+            self.assertTrue(os.path.exists(os.path.join("test", "coassemble", "mapping", "sample_2_unmapped.2.fq.gz")))
+            self.assertTrue(os.path.exists(os.path.join("test", "coassemble", "mapping", "sample_3_unmapped.1.fq.gz")))
+            self.assertTrue(os.path.exists(os.path.join("test", "coassemble", "mapping", "sample_3_unmapped.2.fq.gz")))
+            self.assertFalse(os.path.exists(os.path.join("test", "coassemble", "mapping", "sample_4_unmapped.1.fq.gz")))
+            self.assertFalse(os.path.exists(os.path.join("test", "coassemble", "mapping", "sample_4_unmapped.2.fq.gz")))
+
+    @unittest.skip("Downloads SRA data using Kingfisher. Test manually")
+    def test_unmap_specific_coassembly_sra(self):
+        with in_tempdir():
+            cmd = (
+                f"ibis unmap "
+                f"--forward SRR8334323 SRR8334324 "
+                f"--sra "
+                f"--genomes {GENOMES} "
+                f"--appraise-binned {os.path.join(MOCK_COASSEMBLE, 'appraise', 'binned_sra.otu_table.tsv')} "
+                f"--appraise-unbinned {os.path.join(MOCK_COASSEMBLE, 'appraise', 'unbinned_sra.otu_table.tsv')} "
+                f"--elusive-clusters {os.path.join(MOCK_COASSEMBLE, 'target', 'elusive_clusters_sra_two.tsv')} "
+                f"--coassemblies coassembly_0 "
+                f"--output test "
+                f"--conda-prefix {path_to_conda} "
+            )
+            output = extern.run(cmd)
+
+            config_path = os.path.join("test", "config.yaml")
+            self.assertTrue(os.path.exists(config_path))
+
+            self.assertTrue(os.path.exists(os.path.join("test", "coassemble", "sra", "SRR8334323_1.fastq.gz")))
+            self.assertTrue(os.path.exists(os.path.join("test", "coassemble", "sra", "SRR8334323_2.fastq.gz")))
+            self.assertTrue(os.path.exists(os.path.join("test", "coassemble", "sra", "SRR8334324_1.fastq.gz")))
+            self.assertTrue(os.path.exists(os.path.join("test", "coassemble", "sra", "SRR8334324_2.fastq.gz")))
+
+            self.assertFalse(os.path.exists(os.path.join("test", "coassemble", "sra", "SRR8334320_1.fastq.gz")))
+            self.assertFalse(os.path.exists(os.path.join("test", "coassemble", "sra", "SRR8334320_2.fastq.gz")))
+            self.assertFalse(os.path.exists(os.path.join("test", "coassemble", "sra", "SRR8334321_1.fastq.gz")))
+            self.assertFalse(os.path.exists(os.path.join("test", "coassemble", "sra", "SRR8334321_2.fastq.gz")))
 
             self.assertTrue(os.path.exists(os.path.join("test", "coassemble", "coassemble", "coassembly_0", "assemble", "assembly", "final_contigs.fna")))
 

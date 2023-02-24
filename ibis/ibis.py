@@ -365,11 +365,18 @@ def unmap(args):
         args.elusive_clusters = os.path.join(args.coassemble_output, "target", "elusive_clusters.tsv")
         args.appraise_binned = os.path.join(args.coassemble_output, "appraise", "binned.otu_table.tsv")
         args.appraise_unbinned = os.path.join(args.coassemble_output, "appraise", "unbinned.otu_table.tsv")
-    if args.elusive_clusters:
+    if args.elusive_clusters and not args.coassemblies:
         copy_input(
             os.path.abspath(args.elusive_clusters),
             os.path.join(args.output, "coassemble", "target", "elusive_clusters.tsv")
         )
+    elif args.elusive_clusters and args.coassemblies:
+        elusive_clusters = pd.read_csv(os.path.abspath(args.elusive_clusters), sep="\t")
+        elusive_clusters = elusive_clusters[elusive_clusters["coassembly"].isin(args.coassemblies)]
+
+        os.makedirs(os.path.join(args.output, "coassemble", "target"), exist_ok=True)
+        elusive_clusters.to_csv(os.path.join(args.output, "coassemble", "target", "elusive_clusters.tsv"), sep="\t", index=False)
+
     if args.appraise_binned:
         copy_input(
             os.path.abspath(args.appraise_binned),
@@ -596,6 +603,7 @@ def main():
     unmap_coassembly.add_argument("--appraise-binned", help="SingleM appraise binned output from Ibis coassemble (alternative to --coassemble-output)")
     unmap_coassembly.add_argument("--appraise-unbinned", help="SingleM appraise unbinned output from Ibis coassemble (alternative to --coassemble-output)")
     unmap_coassembly.add_argument("--elusive-clusters", help="Elusive clusters output from Ibis coassemble (alternative to --coassemble-output)")
+    unmap_coassembly.add_argument("--coassemblies", nargs='+', help="Choose specific coassemblies from elusive clusters (e.g. coassembly_0)")
     unmap_coassembly.add_argument("--unmapping-min-appraised", type=float, help="Minimum fraction of sequences binned to justify unmapping [default: 0.1]", default=0.1)
     unmap_coassembly.add_argument("--unmapping-max-identity", type=float, help="Maximum sequence identity of mapped sequences kept for coassembly [default: 95%]", default=95)
     add_aviary_options(unmap_coassembly)
