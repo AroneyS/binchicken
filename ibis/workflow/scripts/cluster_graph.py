@@ -3,7 +3,7 @@
 ########################
 # Author: Samuel Aroney
 
-import pandas as pd
+import polars as pl
 import re
 import networkx as nx
 from networkx.algorithms import community
@@ -22,15 +22,17 @@ def pipeline(
     output_columns = ["samples", "length", "total_weight", "total_targets", "total_size", "recover_samples", "coassembly"]
 
     if len(elusive_edges) == 0:
-        return pd.DataFrame(columns=output_columns)
+        return pl.DataFrame(schema=output_columns)
 
-    elusive_edges["sample1"] = elusive_edges["sample1"].apply(lambda x: re.sub("\.1$", "", x))
-    elusive_edges["sample2"] = elusive_edges["sample2"].apply(lambda x: re.sub("\.1$", "", x))
+    elusive_edges.with_columns(
+        pl.col("sample1").str.replace(r"\.1$", ""),
+        pl.col("sample2").str.replace(r"\.1$", ""),
+        )
 
-    clusters = pd.DataFrame(columns=["samples", "length", "total_weight", "total_targets", "total_size", "recover_samples"])
+    clusters = pl.DataFrame(schema=["samples", "length", "total_weight", "total_targets", "total_size", "recover_samples"])
 
     # Create weighted graph and cluster with Girvan-Newman algorithm, removing edges from lightest to heaviest
-    graph = nx.from_pandas_edgelist(elusive_edges, source="sample1", target="sample2", edge_attr=True)
+    graph = nx.from_pandas_edgelist(elusive_edges.to_pandas(), source="sample1", target="sample2", edge_attr=True)
     node_attributes = {k: {"read_size": v} for k,v in zip(read_size["sample"], read_size["read_size"])}
     nx.set_node_attributes(graph, node_attributes)
 
@@ -79,7 +81,7 @@ def pipeline(
     clusters.drop_duplicates(inplace=True)
 
     if len(clusters) == 0:
-        return pd.DataFrame(columns=output_columns)
+        return pd.DataFrame(schema=output_columns)
 
     def find_top_samples(row):
         samples = row["samples"].split(",")
