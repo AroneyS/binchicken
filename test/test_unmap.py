@@ -305,7 +305,6 @@ class Tests(unittest.TestCase):
                 f"--snakemake-args \" --config test=True\" "
             )
             output = extern.run(cmd)
-            print(output)
 
             config_path = os.path.join("test", "config.yaml")
             self.assertTrue(os.path.exists(config_path))
@@ -320,6 +319,46 @@ class Tests(unittest.TestCase):
             self.assertTrue(os.path.exists(os.path.join("test", "coassemble", "sra", "SRR8334323_2.fastq.gz")))
             self.assertTrue(os.path.exists(os.path.join("test", "coassemble", "sra", "SRR8334324_1.fastq.gz")))
             self.assertTrue(os.path.exists(os.path.join("test", "coassemble", "sra", "SRR8334324_2.fastq.gz")))
+
+            self.assertTrue(os.path.exists(os.path.join("test", "coassemble", "coassemble", "coassembly_0", "assemble", "assembly", "final_contigs.fna")))
+
+            self.assertTrue(os.path.exists(os.path.join("test", "coassemble", "coassemble", "coassembly_0", "recover", "bins", "checkm_minimal.tsv")))
+
+    @unittest.skip("Downloads SRA data using Kingfisher. Test manually")
+    def test_unmap_specific_coassembly(self):
+        with in_tempdir():
+            cmd = (
+                f"ibis unmap "
+                f"--forward SRR8334323 SRR8334324 "
+                f"--sra "
+                f"--genomes {GENOMES} "
+                f"--appraise-binned {os.path.join(MOCK_COASSEMBLE, 'appraise', 'binned_sra.otu_table.tsv')} "
+                f"--appraise-unbinned {os.path.join(MOCK_COASSEMBLE, 'appraise', 'unbinned_sra.otu_table.tsv')} "
+                f"--elusive-clusters {os.path.join(MOCK_COASSEMBLE, 'target', 'elusive_clusters_two.tsv')} "
+                f"--coassemblies coassembly_0 "
+                f"--output test "
+                f"--conda-prefix {path_to_conda} "
+            )
+            output = extern.run(cmd)
+
+            config_path = os.path.join("test", "config.yaml")
+            self.assertTrue(os.path.exists(config_path))
+
+            sra_1_path = os.path.join("test", "coassemble", "sra", "SRR8334323_1.fastq.gz")
+            self.assertTrue(os.path.exists(sra_1_path))
+            with gzip.open(sra_1_path) as f:
+                file = f.readline().decode()
+                self.assertTrue("@SRR8334323.1 1/1" in file)
+                self.assertTrue("@SRR8334323.1 1/2" not in file)
+
+            self.assertTrue(os.path.exists(os.path.join("test", "coassemble", "sra", "SRR8334323_2.fastq.gz")))
+            self.assertTrue(os.path.exists(os.path.join("test", "coassemble", "sra", "SRR8334324_1.fastq.gz")))
+            self.assertTrue(os.path.exists(os.path.join("test", "coassemble", "sra", "SRR8334324_2.fastq.gz")))
+
+            self.assertFalse(os.path.exists(os.path.join("test", "coassemble", "sra", "SRR8334320_1.fastq.gz")))
+            self.assertFalse(os.path.exists(os.path.join("test", "coassemble", "sra", "SRR8334320_2.fastq.gz")))
+            self.assertFalse(os.path.exists(os.path.join("test", "coassemble", "sra", "SRR8334321_1.fastq.gz")))
+            self.assertFalse(os.path.exists(os.path.join("test", "coassemble", "sra", "SRR8334321_2.fastq.gz")))
 
             self.assertTrue(os.path.exists(os.path.join("test", "coassemble", "coassemble", "coassembly_0", "assemble", "assembly", "final_contigs.fna")))
 
