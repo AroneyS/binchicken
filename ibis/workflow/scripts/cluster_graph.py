@@ -67,7 +67,7 @@ def pipeline(
             suitable_umbrellas = [umbrellas[i] for i in suitable_indices]
             best_umbrella = suitable_umbrellas[0]
 
-            df = pd.DataFrame({
+            df = pl.DataFrame({
                 "samples": ",".join(c),
                 "length": int(len(c)),
                 "total_weight": total_weight,
@@ -76,12 +76,12 @@ def pipeline(
                 "recover_samples": ",".join(best_umbrella)
                 },
                 index = [0])
-            clusters = pd.concat([clusters, df], ignore_index=True)
+            clusters = pl.concat([clusters, df], ignore_index=True)
 
     clusters.drop_duplicates(inplace=True)
 
     if len(clusters) == 0:
-        return pd.DataFrame(schema=output_columns)
+        return pl.DataFrame(schema=output_columns)
 
     def find_top_samples(row):
         samples = row["samples"].split(",")
