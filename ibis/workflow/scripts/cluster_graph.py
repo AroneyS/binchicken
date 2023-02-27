@@ -29,7 +29,15 @@ def pipeline(
         pl.col("sample2").str.replace(r"\.1$", ""),
         )
 
-    clusters = pl.DataFrame(schema=["samples", "length", "total_weight", "total_targets", "total_size", "recover_samples"])
+    clusters = pl.DataFrame(
+        schema=[
+            ("samples", str),
+            ("length", int),
+            ("total_weight", int),
+            ("total_targets", int),
+            ("total_size", int),
+            ("recover_samples", str)
+        ])
 
     # Create weighted graph and cluster with Girvan-Newman algorithm, removing edges from lightest to heaviest
     graph = nx.from_pandas_edgelist(elusive_edges.to_pandas(), source="sample1", target="sample2", edge_attr=True)
@@ -74,9 +82,8 @@ def pipeline(
                 "total_targets": total_targets,
                 "total_size": total_size,
                 "recover_samples": ",".join(best_umbrella)
-                },
-                index = [0])
-            clusters = pl.concat([clusters, df], ignore_index=True)
+                })
+            clusters = pl.concat([clusters, df])
 
     clusters.drop_duplicates(inplace=True)
 
