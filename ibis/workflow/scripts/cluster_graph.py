@@ -137,7 +137,7 @@ def pipeline(
             .arr.sort()
             .arr.head(MAX_RECOVERY_SAMPLES)
             .arr.join(",")
-            .alias("recover_samples2"),
+            .alias("recover_samples"),
         pl.lit("coassembly_").alias("coassembly") + pl.arange(0, clusters.height).cast(pl.Utf8),
     ]).sort(["total_targets", "samples"])
 
