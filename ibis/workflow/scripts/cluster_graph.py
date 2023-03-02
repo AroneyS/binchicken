@@ -136,7 +136,7 @@ def pipeline(
             .arr.head(MAX_RECOVERY_SAMPLES)
             .arr.join(",")
             .alias("recover_samples"),
-    ]).sort(["total_targets", "samples"]).with_columns(
+    ]).sort(["total_targets", "samples"], descending=True).with_columns(
         pl.lit("coassembly_").alias("coassembly") + pl.arange(0, clusters.height).cast(pl.Utf8)
         )
 
