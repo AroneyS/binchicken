@@ -24,7 +24,7 @@ def pipeline(
     if len(elusive_edges) == 0:
         return pl.DataFrame(schema=output_columns)
 
-    elusive_edges.with_columns(
+    elusive_edges = elusive_edges.with_columns(
         pl.col("sample1").str.replace(r"\.1$", ""),
         pl.col("sample2").str.replace(r"\.1$", ""),
         )
@@ -85,43 +85,61 @@ def pipeline(
                 })
             clusters = pl.concat([clusters, df])
 
-    clusters.drop_duplicates(inplace=True)
+    #clusters.drop_duplicates(inplace=True)
 
     if len(clusters) == 0:
-        return pl.DataFrame(schema=output_columns)
+        return pl.DataFrame(schema=output_columns)        
 
-    def find_top_samples(row):
-        samples = row["samples"].split(",")
-        recover_samples = row["recover_samples"].split(",")
-        if len(recover_samples) >= MAX_RECOVERY_SAMPLES:
-            return ",".join(recover_samples)
+    clusters = clusters.with_columns(
+        pl.col("samples").str.split(",").alias("samples_list"),
+        pl.col("recover_samples").str.split(",").alias("recover_samples_list"),
+    ).with_columns(
+        pl.col("samples_list").apply(
+            lambda x: elusive_edges.with_columns(
+                    pl.col("sample1").is_in(x).alias("sample1_bool"),
+                    pl.col("sample2").is_in(x).alias("sample2_bool"),
+                ).filter(pl.col("sample1_bool") != pl.col("sample2_bool")
+                ).with_columns(
+                    pl.when(pl.col("sample1_bool")).then(pl.col("sample2")).otherwise(pl.col("sample1")).alias("other_sample"),
+                )
+            ).alias("relevant_edges"),
+        pl.col("samples_list").apply(
+            lambda x: elusive_edges.with_columns(
+                    pl.col("sample1").is_in(x).alias("sample1_bool"),
+                    pl.col("sample2").is_in(x).alias("sample2_bool"),
+                ).filter(pl.col("sample1_bool") & pl.col("sample2_bool")
+                ).select(
+                    pl.col("target_ids").str.split(",").flatten().alias("target_ids"),
+                ).get_column("target_ids")
+            ).alias("relevant_targets"),
+    ).with_columns(
+        pl.when(
+            (pl.col("recover_samples_list").arr.lengths().first() >= MAX_RECOVERY_SAMPLES) | (pl.col("relevant_edges").apply(lambda x: x.height) == 0)
+        ).then(
+            pl.Series("other_samples", [[""]])
+        ).otherwise(
+            pl.col("relevant_edges").apply(
+                lambda x: x.with_columns(pl.col("target_ids").str.split(","))
+                    .explode("target_ids")
+                    .groupby("other_sample")
+                    .agg(pl.count())
+                    .sort("count", descending=True)
+                    .get_column("other_sample")
+                )
+        ).alias("recover_candidates"),
+    )
 
-        relevant_edges = elusive_edges[(elusive_edges["sample1"].isin(samples)) != (elusive_edges["sample2"].isin(samples))].copy()
-        if len(relevant_edges) == 0:
-            return ",".join(recover_samples)
-
-        relevant_edges["other_sample"] = relevant_edges.apply(lambda x: x["sample1"] if x["sample1"] not in samples else x["sample2"], axis=1)
-        relevant_edges = relevant_edges[~relevant_edges["other_sample"].isin(recover_samples)]
-
-        if MAX_COASSEMBLY_SAMPLES > 1:
-            relevant_targets = elusive_edges[(elusive_edges["sample1"].isin(samples)) & (elusive_edges["sample2"].isin(samples))].copy()
-            relevant_targets = set([i for l in [l.split(",") for l in relevant_targets["target_ids"].to_list()] for i in l])
-            relevant_edges["target_ids"] = relevant_edges["target_ids"].apply(lambda x: [i for i in x.split(",") if i in relevant_targets])
-        else:
-            relevant_edges["target_ids"] = relevant_edges["target_ids"].apply(lambda x: x.split(","))
-
-        relevant_samples = relevant_edges.groupby("other_sample").agg({"target_ids": lambda x: set(itertools.chain(*x))}).reset_index()
-        relevant_samples["length"] = relevant_samples["target_ids"].apply(lambda x: len(x))
-        relevant_samples.sort_values(by="length", ascending=False, inplace=True)
-
-        recover_samples += relevant_samples.head(MAX_RECOVERY_SAMPLES - len(recover_samples))["other_sample"].to_list()
-        return ",".join(sorted(recover_samples))
-
-    clusters["recover_samples"] = clusters[["samples", "recover_samples"]].apply(find_top_samples, axis=1)
-
-    clusters.sort_values(by=["total_targets", "samples"], ascending=False, inplace=True)
-    clusters.reset_index(drop=True, inplace=True)
-    clusters["coassembly"] = (clusters.reset_index()["index"].apply(lambda x: "coassembly_" + str(x)))
+    clusters = clusters.select([
+        "samples", "length", "total_weight", "total_targets", "total_size", 
+        pl.col("recover_samples_list")
+            .arr.concat(pl.col("recover_candidates"))
+            .arr.unique()
+            .arr.sort()
+            .arr.head(MAX_RECOVERY_SAMPLES)
+            .arr.join(",")
+            .alias("recover_samples2"),
+        pl.lit("coassembly_").alias("coassembly") + pl.arange(0, clusters.height).cast(pl.Utf8),
+    ]).sort(["total_targets", "samples"])
 
     return clusters
 
