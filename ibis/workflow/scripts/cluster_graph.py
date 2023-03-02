@@ -85,12 +85,10 @@ def pipeline(
                 })
             clusters = pl.concat([clusters, df])
 
-    #clusters.drop_duplicates(inplace=True)
-
     if len(clusters) == 0:
         return pl.DataFrame(schema=output_columns)        
 
-    clusters = clusters.with_columns(
+    clusters = clusters.unique().with_columns(
         pl.col("samples").str.split(",").alias("samples_list"),
         pl.col("recover_samples").str.split(",").alias("recover_samples_list"),
     ).with_columns(
