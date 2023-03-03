@@ -263,6 +263,8 @@ checkpoint cluster_graph:
         num_coassembly_samples=config["num_coassembly_samples"],
         max_coassembly_samples=config["max_coassembly_samples"],
         max_recovery_samples=config["max_recovery_samples"],
+    threads:
+        64
     script:
         "scripts/cluster_graph.py"
 

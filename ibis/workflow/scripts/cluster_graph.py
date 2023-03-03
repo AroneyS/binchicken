@@ -4,7 +4,7 @@
 # Author: Samuel Aroney
 
 import polars as pl
-import re
+import os
 import networkx as nx
 from networkx.algorithms import community
 from networkx.algorithms import components
@@ -18,6 +18,8 @@ def pipeline(
         MAX_COASSEMBLY_SAMPLES=2,
         MIN_COASSEMBLY_SAMPLES=2,
         MAX_RECOVERY_SAMPLES=20):
+
+    print(f"Polars using {str(pl.threadpool_size())} threads")
 
     output_columns = ["samples", "length", "total_weight", "total_targets", "total_size", "recover_samples", "coassembly"]
 
@@ -146,6 +148,9 @@ def pipeline(
     return clusters
 
 if __name__ == "__main__":
+    os.environ["POLARS_MAX_THREADS"] = str(snakemake.threads)
+    import polars as pl
+
     MAX_COASSEMBLY_SIZE = snakemake.params.max_coassembly_size * 10**9 if snakemake.params.max_coassembly_size else None
     MAX_COASSEMBLY_SAMPLES = snakemake.params.max_coassembly_samples
     MIN_COASSEMBLY_SAMPLES = snakemake.params.num_coassembly_samples
@@ -154,7 +159,7 @@ if __name__ == "__main__":
     read_size_path = snakemake.input.read_size
     elusive_clusters_path = snakemake.output.elusive_clusters
 
-    elusive_edges = pl.read_csv(elusive_edges_path, sep="\t", dtype={"target_ids": "string"})
+    elusive_edges = pl.read_csv(elusive_edges_path, sep="\t", dtypes={"target_ids": "string"})
     read_size = pl.read_csv(read_size_path, names = ["sample", "read_size"])
 
     clusters = pipeline(
