@@ -125,15 +125,18 @@ def pipeline(
                     .get_column("other_sample")
                 )
         ).alias("recover_candidates"),
+    ).with_columns(
+        pl.col("recover_samples_list")
+            .arr.concat(pl.col("recover_candidates"))
+            .alias("recover_samples"),
     )
 
     clusters = clusters.select([
         "samples", "length", "total_weight", "total_targets", "total_size", 
-        pl.col("recover_samples_list")
-            .arr.concat(pl.col("recover_candidates"))
-            .arr.unique()
-            .arr.sort()
+        pl.col("recover_samples")
+            .apply(lambda s: s.to_frame("s").groupby("s", maintain_order=True).first().to_series())
             .arr.head(MAX_RECOVERY_SAMPLES)
+            .arr.sort()
             .arr.join(",")
             .alias("recover_samples"),
     ]).sort(["total_targets", "samples"], descending=True).with_columns(
