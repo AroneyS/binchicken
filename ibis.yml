@@ -15,3 +15,4 @@ dependencies:
   - ruamel.yaml>=0.15.99
   - polars
   - pyarrow
+  - parallel
