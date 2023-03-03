@@ -198,7 +198,7 @@ class Tests(unittest.TestCase):
         ], schema=READ_SIZE_COLUMNS)
 
         expected = pl.DataFrame([
-            ["4,5", 2, 3, 3, 2000, "1,4,5", "coassembly_0"],
+            ["4,5", 2, 3, 3, 2000, "3,4,5", "coassembly_0"],
             ["1,2", 2, 3, 3, 2000, "1,2,3", "coassembly_1"],
         ], schema=ELUSIVE_CLUSTERS_COLUMNS)
         observed = pipeline(

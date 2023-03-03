@@ -121,7 +121,7 @@ def pipeline(
                     .explode("target_ids")
                     .groupby("other_sample")
                     .agg(pl.count())
-                    .sort("count", descending=True)
+                    .sort(["count", "other_sample"], descending=True)
                     .get_column("other_sample")
                 )
         ).alias("recover_candidates"),
