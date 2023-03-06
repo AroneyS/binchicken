@@ -160,7 +160,7 @@ if __name__ == "__main__":
     elusive_clusters_path = snakemake.output.elusive_clusters
 
     elusive_edges = pl.read_csv(elusive_edges_path, sep="\t", dtypes={"target_ids": str})
-    read_size = pl.read_csv(read_size_path, new_columns = ["sample", "read_size"])
+    read_size = pl.read_csv(read_size_path, has_header=False, new_columns=["sample", "read_size"])
 
     clusters = pipeline(
         elusive_edges,
@@ -170,4 +170,4 @@ if __name__ == "__main__":
         MIN_COASSEMBLY_SAMPLES=MIN_COASSEMBLY_SAMPLES,
         MAX_RECOVERY_SAMPLES=MAX_RECOVERY_SAMPLES
         )
-    clusters.to_csv(elusive_clusters_path, sep="\t", index=False)
+    clusters.write_csv(elusive_clusters_path, sep="\t")
