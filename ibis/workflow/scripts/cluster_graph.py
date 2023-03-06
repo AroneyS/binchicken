@@ -88,7 +88,7 @@ def pipeline(
             clusters = pl.concat([clusters, df])
 
     if len(clusters) == 0:
-        return pl.DataFrame(schema=output_columns)        
+        return pl.DataFrame(schema=output_columns)
 
     clusters = clusters.unique().with_columns(
         pl.col("samples").str.split(",").alias("samples_list"),
