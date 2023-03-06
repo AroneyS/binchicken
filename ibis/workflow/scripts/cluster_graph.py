@@ -159,7 +159,7 @@ if __name__ == "__main__":
     read_size_path = snakemake.input.read_size
     elusive_clusters_path = snakemake.output.elusive_clusters
 
-    elusive_edges = pl.read_csv(elusive_edges_path, sep="\t", dtypes={"target_ids": "string"})
+    elusive_edges = pl.read_csv(elusive_edges_path, sep="\t", dtypes={"target_ids": str})
     read_size = pl.read_csv(read_size_path, new_columns = ["sample", "read_size"])
 
     clusters = pipeline(
