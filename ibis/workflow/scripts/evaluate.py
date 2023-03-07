@@ -121,6 +121,6 @@ if __name__ == "__main__":
 
     matches, unmatched = evaluate(unbinned_otu_table, binned_otu_table, elusive_clusters, elusive_edges, recovered_otu_table)
     # Export hits matching elusive targets
-    matches.write_csv(matched_hits_path, sep="\t", index=False)
+    matches.write_csv(matched_hits_path, sep="\t")
     # Export non-elusive sequence hits
-    unmatched.write_csv(novel_hits_path, sep="\t", index=False)
+    unmatched.write_csv(novel_hits_path, sep="\t")
