@@ -4,6 +4,7 @@
 # Author: Samuel Aroney
 
 import polars as pl
+import os
 
 OUTPUT_COLUMNS={
     "gene": str,
