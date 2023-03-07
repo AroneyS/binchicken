@@ -148,6 +148,8 @@ rule evaluate:
         binned_otu_table=config["binned"],
         elusive_edges=config["elusive_edges"],
         elusive_clusters=config["elusive_clusters"],
+    threads:
+        64
     script:
         "scripts/evaluate.py"
 

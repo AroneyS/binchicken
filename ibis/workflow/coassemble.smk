@@ -198,6 +198,8 @@ rule query_processing:
     params:
         sequence_identity=config["appraise_sequence_identity"],
         window_size=60,
+    threads:
+        64
     script:
         "scripts/query_processing.py"
 
@@ -247,6 +249,8 @@ rule target_elusive:
     params:
         min_coassembly_coverage=config["min_coassembly_coverage"],
         taxa_of_interest=config["taxa_of_interest"],
+    threads:
+        64
     script:
         "scripts/target_elusive.py"
 

@@ -21,6 +21,8 @@ def processing(
     SEQUENCE_IDENTITY=0.86,
     WINDOW_SIZE=60):
 
+    print(f"Polars using {str(pl.threadpool_size())} threads")
+
     if len(query_read) == 0:
         empty_output = pl.DataFrame(schema=OUTPUT_COLUMNS)
         return empty_output, empty_output
@@ -70,6 +72,9 @@ def pipeline(
         yield binned, unbinned
 
 if __name__ == "__main__":
+    os.environ["POLARS_MAX_THREADS"] = str(snakemake.threads)
+    import polars as pl
+
     SEQUENCE_IDENTITY = snakemake.params.sequence_identity
     WINDOW_SIZE = snakemake.params.window_size
     query_reads = snakemake.input.query_reads

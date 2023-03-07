@@ -82,6 +82,9 @@ def pipeline(
     return unbinned, sparse_edges
 
 if __name__ == "__main__":
+    os.environ["POLARS_MAX_THREADS"] = str(snakemake.threads)
+    import polars as pl
+
     MIN_COASSEMBLY_COVERAGE = snakemake.params.min_coassembly_coverage
     TAXA_OF_INTEREST = snakemake.params.taxa_of_interest
     unbinned_path = snakemake.input.unbinned

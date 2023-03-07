@@ -17,6 +17,8 @@ OUTPUT_COLUMNS={
 
 def evaluate(unbinned_otu_table, binned_otu_table, elusive_clusters, elusive_edges, recovered_otu_table):
 
+    print(f"Polars using {str(pl.threadpool_size())} threads")
+
     if len(recovered_otu_table) == 0:
         empty_output = pl.DataFrame(schema=OUTPUT_COLUMNS)
         return empty_output, empty_output
@@ -105,6 +107,9 @@ def evaluate(unbinned_otu_table, binned_otu_table, elusive_clusters, elusive_edg
 
 
 if __name__ == "__main__":
+    os.environ["POLARS_MAX_THREADS"] = str(snakemake.threads)
+    import polars as pl
+
     unbinned_path = snakemake.params.unbinned_otu_table
     binned_path = snakemake.params.binned_otu_table
     elusive_clusters_path = snakemake.params.elusive_clusters
