@@ -51,7 +51,7 @@ def pipeline(
     )
 
     # Within each target cluster, find pairs of samples with combined coverage > MIN_COVERAGE
-    sample_pairs = unbinned.join(unbinned, how="cross", suffix="_2"
+    sample_pairs = unbinned.lazy().join(unbinned, how="cross", suffix="_2"
     ).filter(
         (pl.col("target") == pl.col("target_2")) &
         (pl.col("sample").str.encode("hex") < pl.col("sample_2").str.encode("hex")) &
@@ -65,7 +65,7 @@ def pipeline(
         (pl.col("taxa_group").is_not_null()) &
         ((TAXA_OF_INTEREST == "") |
         (pl.col("taxa_group") == TAXA_OF_INTEREST))
-    )
+    ).collect(streaming=True)
 
     # Create weighted graph with nodes as samples and edges weighted by the number of clusters supporting that co-assembly (networkx)
     # Output sparse matrix with taxa_group/sample1/sample2/edge weight (number of supporting clusters with coverage > threshold)
