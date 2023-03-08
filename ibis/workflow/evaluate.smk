@@ -143,11 +143,13 @@ rule evaluate:
     output:
         matched_hits = output_dir + "/evaluate/matched_hits.tsv",
         novel_hits = output_dir + "/evaluate/novel_hits.tsv",
+        summary_stats = output_dir + "/evaluate/summary_stats.tsv",
     params:
         unbinned_otu_table=config["targets"],
         binned_otu_table=config["binned"],
         elusive_edges=config["elusive_edges"],
         elusive_clusters=config["elusive_clusters"],
+        recovered_bins=config["recovered_bins"],
     threads:
         64
     script:
@@ -158,11 +160,11 @@ rule evaluate_plots:
         matched_hits = output_dir + "/evaluate/matched_hits.tsv",
         novel_hits = output_dir + "/evaluate/novel_hits.tsv",
         cluster_summary = output_dir + "/evaluate/cluster_stats.csv" if config["cluster"] else [],
+        summary_stats = output_dir + "/evaluate/summary_stats.tsv",
     params:
         coassemble_summary=config["coassemble_summary"],
     output:
         plots_dir = directory(output_dir + "/evaluate/plots"),
-        summary_stats = output_dir + "/evaluate/summary_stats.tsv",
         summary_table = output_dir + "/evaluate/summary_table.png",
     conda:
         "env/r.yml"
