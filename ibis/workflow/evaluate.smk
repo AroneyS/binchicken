@@ -22,6 +22,7 @@ rule all:
         output_dir + "/evaluate/matched_hits.tsv",
         output_dir + "/evaluate/novel_hits.tsv",
         output_dir + "/evaluate/summary_stats.tsv",
+        output_dir + "/evaluate/summary_table.png",
 
 ######################
 ### Recovered bins ###
