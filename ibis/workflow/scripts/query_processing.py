@@ -22,8 +22,6 @@ def processing(
     SEQUENCE_IDENTITY=0.86,
     WINDOW_SIZE=60):
 
-    print(f"Polars using {str(pl.threadpool_size())} threads")
-
     if len(query_read) == 0:
         empty_output = pl.DataFrame(schema=OUTPUT_COLUMNS)
         return empty_output, empty_output
@@ -63,6 +61,8 @@ def pipeline(
     pipe_reads,
     SEQUENCE_IDENTITY=0.86,
     WINDOW_SIZE=60):
+
+    print(f"Polars using {str(pl.threadpool_size())} threads")
 
     for query, pipe in zip(query_reads, pipe_reads):
         binned, unbinned = processing(
