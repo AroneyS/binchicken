@@ -51,9 +51,8 @@ def pipeline(
     )
 
     # Within each target cluster, find pairs of samples with combined coverage > MIN_COVERAGE
-    sample_pairs = unbinned.lazy().join(unbinned.lazy(), how="cross", suffix="_2"
+    sample_pairs = unbinned.lazy().join(unbinned.lazy(), on="target", how="left", suffix="_2"
     ).filter(
-        (pl.col("target") == pl.col("target_2")) &
         (pl.col("sample").str.encode("hex") < pl.col("sample_2").str.encode("hex")) &
         (pl.col("coverage") + pl.col("coverage_2") > MIN_COASSEMBLY_COVERAGE)
     ).with_columns(
