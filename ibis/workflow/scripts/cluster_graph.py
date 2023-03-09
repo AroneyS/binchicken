@@ -31,16 +31,6 @@ def pipeline(
         pl.col("sample2").str.replace(r"\.1$", ""),
         )
 
-    clusters = pl.DataFrame(
-        schema=[
-            ("samples", str),
-            ("length", int),
-            ("total_weight", int),
-            ("total_targets", int),
-            ("total_size", int),
-            ("recover_samples", str)
-        ])
-
     # Create weighted graph and cluster with Girvan-Newman algorithm, removing edges from lightest to heaviest
     graph = nx.from_pandas_edgelist(elusive_edges.to_pandas(), source="sample1", target="sample2", edge_attr=True)
     node_attributes = {k: {"read_size": v} for k,v in zip(read_size["sample"], read_size["read_size"])}
@@ -51,43 +41,79 @@ def pipeline(
         return (u, v)
 
     comp = community.girvan_newman(graph, most_valuable_edge=lightest)
-    first_community = [[c for c in components.connected_components(graph)]]
-    umbrellas = []
-    for iteration in itertools.chain(first_community, comp):
-        communities = tuple(sorted(c) for c in iteration)
-        for c in communities:
-            if len(c) <= MAX_RECOVERY_SAMPLES and len(c) >= MIN_COASSEMBLY_SAMPLES and not c in umbrellas:
-                umbrellas.append(c)
-            if len(c) > MAX_COASSEMBLY_SAMPLES: continue
-            if len(c) < MIN_COASSEMBLY_SAMPLES: continue
+    first_community = [tuple([c for c in components.connected_components(graph)])]
 
-            subgraphview = nx.subgraph_view(
-                graph,
-                filter_node = lambda x: x in c
-                )
+    communities = pl.DataFrame({"community": itertools.chain(first_community, comp)}
+    ).lazy(
+    ).with_columns(
+        pl.col("community").apply(lambda x: [[i for i in s] for s in x])
+    ).explode("community"
+    ).with_columns(
+        pl.col("community").arr.lengths().alias("length")
+    ).with_columns(
+        ((pl.col("length") <= MAX_RECOVERY_SAMPLES) &
+        (pl.col("length") >= MIN_COASSEMBLY_SAMPLES)).alias("umbrella"),
+        ((pl.col("length") >= MIN_COASSEMBLY_SAMPLES) &
+        (pl.col("length") <= MAX_COASSEMBLY_SAMPLES)).alias("coassembly"),
+        pl.col("community").apply(lambda x: [hash(y) for y in x]).hash().alias("coassembly_hash")
+    ).filter(
+        pl.col("coassembly") | pl.col("umbrella")
+    ).unique(subset="coassembly_hash"
+    ).collect()
 
-            total_size = sum([data["read_size"] for _,data in subgraphview.nodes(data=True)])
-            if MAX_COASSEMBLY_SIZE and total_size > MAX_COASSEMBLY_SIZE: continue
+    umbrellas = communities.filter(
+        pl.col("umbrella")
+    ).select(
+        "community",
+        pl.col("length").alias("umbrella_length"),
+        pl.col("community").arr.sort().arr.join(",").alias("recover_samples")
+    ).sort(
+        "umbrella_length", descending=True
+    )
 
-            edgeview = subgraphview.edges(data=True)
-            total_weight = sum([data["weight"] for _,_,data in edgeview])
-            total_targets = len(set([i for l in [data["target_ids"].split(",") for _,_,data in edgeview] for i in l]))
+    clusters = communities.filter(
+        pl.col("coassembly")
+    ).with_columns(
+        pl.col("community").apply(
+            lambda x: nx.subgraph_view(graph, filter_node = lambda y: y in x)
+            ).alias("subgraphview"),
+    ).with_columns(
+        pl.col("subgraphview").apply(
+            lambda x: sum([data["read_size"] for _,data in x.nodes(data=True)])
+            ).alias("total_size"),
+    ).filter(
+        pl.when(MAX_COASSEMBLY_SIZE is not None)
+        .then(pl.col("total_size") <= MAX_COASSEMBLY_SIZE)
+        .otherwise(True)
+    )
 
-            suitable_indices = [i for i,u in enumerate(umbrellas) if all([s in u for s in c])]
-            suitable_umbrellas = [umbrellas[i] for i in suitable_indices]
-            best_umbrella = suitable_umbrellas[0]
+    if clusters.height == 0:
+        return pl.DataFrame(schema=output_columns)
 
-            df = pl.DataFrame({
-                "samples": ",".join(c),
-                "length": int(len(c)),
-                "total_weight": total_weight,
-                "total_targets": total_targets,
-                "total_size": total_size,
-                "recover_samples": ",".join(best_umbrella)
-                })
-            clusters = pl.concat([clusters, df])
+    clusters = clusters.with_columns(
+        pl.col("subgraphview").apply(
+            lambda x: x.edges(data=True)
+            ).alias("edgeview"),
+    ).select(
+        pl.col("community").arr.sort().arr.join(",").alias("samples"),
+        "length",
+        pl.col("edgeview").apply(
+            lambda x: sum([data["weight"] for _,_,data in x])
+            ).alias("total_weight"),
+        pl.col("edgeview").apply(
+            lambda x: len(set([i for l in [data["target_ids"].split(",") for _,_,data in x] for i in l]))
+            ).alias("total_targets"),
+        "total_size",
+        pl.col("community").apply(
+            lambda x: umbrellas.filter(
+                    pl.col("community").apply(
+                        lambda y: all([(a in y) for a in x])
+                    )
+                ).head(1).get_column("recover_samples")
+        ).flatten().alias("recover_samples"),
+    )
 
-    if len(clusters) == 0:
+    if clusters.height == 0:
         return pl.DataFrame(schema=output_columns)
 
     clusters = clusters.unique().with_columns(
