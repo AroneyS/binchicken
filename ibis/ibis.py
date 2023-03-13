@@ -9,7 +9,7 @@ import logging
 import subprocess
 import importlib.resources
 import bird_tool_utils as btu
-import pandas as pd
+import polars as pl
 from snakemake.io import load_configfile
 from ruamel.yaml import YAML
 import copy
@@ -183,8 +183,11 @@ def evaluate_bins(aviary_outputs, checkm_version, min_completeness, max_contamin
 
     coassembly_bins = {}
     for coassembly in checkm_out_dict:
-        checkm_out = pd.read_csv(checkm_out_dict[coassembly], sep = "\t")
-        passed_bins = checkm_out[(checkm_out[completeness_col] >= min_completeness) & (checkm_out[contamination_col] <= max_contamination)]["Bin Id"].to_list()
+        checkm_out = pl.read_csv(checkm_out_dict[coassembly], sep = "\t")
+        passed_bins = checkm_out.filter(
+            (pl.col(completeness_col) >= min_completeness) & (pl.col(contamination_col) <= max_contamination),
+        ).get_column("Bin Id"
+        ).to_list()
         coassembly_bins[coassembly] = passed_bins
 
     if iteration:
@@ -371,11 +374,11 @@ def unmap(args):
             os.path.join(args.output, "coassemble", "target", "elusive_clusters.tsv")
         )
     elif args.elusive_clusters and args.coassemblies:
-        elusive_clusters = pd.read_csv(os.path.abspath(args.elusive_clusters), sep="\t")
-        elusive_clusters = elusive_clusters[elusive_clusters["coassembly"].isin(args.coassemblies)]
+        elusive_clusters = pl.read_csv(os.path.abspath(args.elusive_clusters), sep="\t")
+        elusive_clusters = elusive_clusters.filter(pl.col("coassembly").is_in(args.coassemblies))
 
         os.makedirs(os.path.join(args.output, "coassemble", "target"), exist_ok=True)
-        elusive_clusters.to_csv(os.path.join(args.output, "coassemble", "target", "elusive_clusters.tsv"), sep="\t", index=False)
+        elusive_clusters.write_csv(os.path.join(args.output, "coassemble", "target", "elusive_clusters.tsv"), sep="\t")
 
     if args.appraise_binned:
         copy_input(
@@ -443,16 +446,15 @@ def iterate(args):
     coassemble(args)
 
     if args.elusive_clusters:
-        new_cluster = pd.read_csv(os.path.join(args.output, "coassemble", "target", "elusive_clusters.tsv"), sep="\t")
+        new_cluster = pl.read_csv(os.path.join(args.output, "coassemble", "target", "elusive_clusters.tsv"), sep="\t")
         for cluster in args.elusive_clusters:
-            old_cluster = pd.read_csv(cluster, sep="\t")
-            comb_cluster = (
-                new_cluster
-                .set_index("samples")[["coassembly"]]
-                .join(old_cluster.set_index("samples")[["length"]], how="inner")
-                )
-            if not comb_cluster.empty:
-                comb_cluster.apply(lambda x: logging.warn(f"{x['coassembly']} has been previously suggested"), axis=1)
+            old_cluster = pl.read_csv(cluster, sep="\t")
+            comb_cluster = new_cluster.join(old_cluster, on="samples", how="inner")
+
+            if comb_cluster.height > 0:
+                _ = comb_cluster.select(
+                    pl.col("coassembly").apply(lambda x: logging.warn(f"{x} has been previously suggested"))
+                    )
     else:
         logging.warn("Suggested coassemblies may match those from previous iterations. To check, use `--elusive-clusters`.")
 

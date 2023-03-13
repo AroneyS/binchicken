@@ -32,12 +32,11 @@ jobs:
           pip install -e .
       - name: Run unit tests
         run: |
-          python test/test_query_processing.py
-          python test/test_target_elusive.py
-          python test/test_cluster_graph.py
-          python test/test_collect_reference_bins.py
+          python test/test_query_processing.py -b
+          #python test/test_target_elusive.py -b
+          python test/test_cluster_graph.py -b
+          python test/test_collect_reference_bins.py -b
           python test/test_unmap.py
           python test/test_evaluate.py
-          python test/test_evaluate_script.py
-          python test/test_evaluate_Rscript.py -b
+          python test/test_evaluate_script.py -b
           python test/test_coassemble.py

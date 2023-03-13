@@ -15,18 +15,18 @@ if (!webshot::is_phantomjs_installed()) webshot::install_phantomjs()
 matched_hits_path <- snakemake@input[["matched_hits"]]
 novel_hits_path <- snakemake@input[["novel_hits"]]
 cluster_summary_path <- snakemake@input[["cluster_summary"]]
+summary_stats_path <- snakemake@input[["summary_stats"]]
 
 coassemble_summary_path <- snakemake@params[["coassemble_summary"]]
-recovered_bins <- snakemake@config$recovered_bins
 
 main_dir <- snakemake@output[["plots_dir"]]
-summary_stats_path <- snakemake@output[["summary_stats"]]
 summary_table_path <- snakemake@output[["summary_table"]]
 
 # Load inputs
 matched_hits <- read_tsv(matched_hits_path)
 novel_hits <- read_tsv(novel_hits_path)
 coassemble_summary <- read_tsv(coassemble_summary_path)
+summary_stats <- read_tsv(summary_stats_path)
 
 if (is.null(cluster_summary_path)) {
     cluster_summary <- tibble(type = c("original", coassemble_summary$coassembly), clusters = NA_real_)
@@ -101,78 +101,6 @@ coassembly_plots <- analysis %>%
     distinct(coassembly) %>%
     pull(coassembly) %>%
     map(plot_coassembly)
-
-#####################
-### Summary stats ###
-#####################
-recovered_hits <- bind_rows(
-    novel_hits,
-    matched_hits %>% filter(!is.na(genome))
-)
-
-stat_groups <- tribble(
-    ~statistic, ~within,
-    "sequences", "targets",
-    "taxonomy", "targets",
-    "nontarget_sequences", "recovery",
-    "novel_sequences", "recovery",
-    "bins", "recovery"
-)
-
-summary_stats <- analysis %>%
-    group_by(coassembly, status = c("match", "nonmatch")[as.integer(is.na(genome)) + 1]) %>%
-    summarise(
-        sequences = length(unique(sequence)),
-        bins = sum(!is.na(unique(genome))),
-        taxonomy = sum(!is.na(unique(taxonomy))),
-    ) %>%
-    left_join(
-        recovered_hits %>%
-            group_by(coassembly, status = c("match", "nonmatch")[as.integer(is.na(found_in)) + 1]) %>%
-            # Duplicate sequences are counted multiple times to give a proportion at bin level
-            summarise(nontarget_sequences = n())
-        ) %>%
-    left_join(
-        recovered_hits %>%
-            group_by(coassembly, status = c("match", "nonmatch")[as.integer(!is.na(found_in) | !is.na(target)) + 1]) %>%
-            # Duplicate sequences are counted multiple times to give a proportion at bin level
-            summarise(novel_sequences = n())
-        ) %>%
-    pivot_longer(-c(coassembly, status), names_to = "statistic", values_to = "value") %>%
-    replace_na(list(value = 0))
-
-
-recovered_counts <- recovered_bins %>%
-    as_tibble() %>%
-    pivot_longer(everything()) %>%
-    mutate(coassembly = str_extract(name, "coassembly_[:digit:]+")) %>%
-    group_by(coassembly) %>%
-    count() %>%
-    mutate(status = "match", statistic = "bins") %>%
-    left_join(summary_stats %>% rename(match = value)) %>%
-    mutate(
-        value = n - match,
-        status = "nonmatch"
-    ) %>%
-    select(coassembly, status, statistic, value)
-
-summary_stats <- summary_stats %>%
-    filter(statistic != "bins" | status != "nonmatch") %>%
-    bind_rows(recovered_counts) %>%
-    pivot_wider(names_from = status, values_from = value) %>%
-    mutate(
-        total = match + nonmatch,
-        match_percent = round(match / total * 100, 2)
-    ) %>%
-    left_join(stat_groups)
-
-if (test) warning(summary_stats)
-
-summary_stats %>%
-    select(coassembly, statistic, within, match, nonmatch, total, match_percent) %>%
-    mutate(statistic = factor(statistic, levels = c("sequences", "taxonomy", "nontarget_sequences", "novel_sequences", "bins"))) %>%
-    arrange(coassembly, statistic) %>%
-    write_tsv(summary_stats_path)
 
 ####################
 ### Table output ###

@@ -56,7 +56,7 @@ class Tests(unittest.TestCase):
                         "1",
                         "1",
                         "2",
-                        "50",
+                        "50.0",
                     ]),
                     "\t".join([
                         "coassembly_0",
@@ -65,7 +65,16 @@ class Tests(unittest.TestCase):
                         "1",
                         "1",
                         "2",
-                        "50",
+                        "50.0",
+                    ]),
+                    "\t".join([
+                        "coassembly_0",
+                        "bins",
+                        "recovery",
+                        "1",
+                        "1",
+                        "2",
+                        "50.0",
                     ]),
                     "\t".join([
                         "coassembly_0",
@@ -84,15 +93,6 @@ class Tests(unittest.TestCase):
                         "2",
                         "3",
                         "33.33",
-                    ]),
-                    "\t".join([
-                        "coassembly_0",
-                        "bins",
-                        "recovery",
-                        "1",
-                        "1",
-                        "2",
-                        "50",
                     ]),
                     ""
                 ]
