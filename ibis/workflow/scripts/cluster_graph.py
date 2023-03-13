@@ -59,7 +59,7 @@ def pipeline(
     ).filter(
         pl.col("coassembly") | pl.col("umbrella")
     ).unique(subset="coassembly_hash"
-    ).collect()
+    ).collect(streaming=True)
 
     umbrellas = communities.filter(
         pl.col("umbrella")
