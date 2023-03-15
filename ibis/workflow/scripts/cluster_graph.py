@@ -43,11 +43,13 @@ def pipeline(
     comp = community.girvan_newman(graph, most_valuable_edge=lightest)
     first_community = [tuple([c for c in components.connected_components(graph)])]
 
-    communities = pl.DataFrame({"community": itertools.chain(first_community, comp)}
+    def process_community(community):
+        for c_tuple in community:
+            for c_set in c_tuple:
+                yield [z for z in c_set]
+
+    communities = pl.DataFrame({"community": process_community(itertools.chain(first_community, comp))}
     ).lazy(
-    ).with_columns(
-        pl.col("community").apply(lambda x: [[i for i in s] for s in x])
-    ).explode("community"
     ).with_columns(
         pl.col("community").arr.lengths().alias("length")
     ).with_columns(
