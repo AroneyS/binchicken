@@ -1,6 +1,6 @@
-##########################
-### single_assembly.py ###
-##########################
+#####################
+### no_genomes.py ###
+#####################
 # Author: Samuel Aroney
 
 import pandas as pd

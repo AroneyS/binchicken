@@ -389,6 +389,72 @@ class Tests(unittest.TestCase):
             with open(cluster_path) as f:
                 self.assertEqual(expected, f.read())
 
+    def test_coassemble_no_genomes(self):
+        with in_tempdir():
+            cmd = (
+                f"ibis coassemble "
+                f"--forward {SAMPLE_READS_FORWARD} "
+                f"--reverse {SAMPLE_READS_REVERSE} "
+                f"--singlem-metapackage {METAPACKAGE} "
+                f"--no-genomes "
+                f"--output test "
+                f"--conda-prefix {path_to_conda} "
+                f"--snakemake-args \"cluster_graph\" "
+            )
+            extern.run(cmd)
+
+            config_path = os.path.join("test", "config.yaml")
+            self.assertTrue(os.path.exists(config_path))
+
+            binned_path = os.path.join("test", "coassemble", "appraise", "binned.otu_table.tsv")
+            self.assertTrue(os.path.exists(binned_path))
+
+            expected = "\n".join(
+                [
+                    "\t".join([
+                        "gene",
+                        "sample",
+                        "sequence",
+                        "num_hits",
+                        "coverage",
+                        "taxonomy",
+                        "found_in",
+                    ]),
+                    ""
+                ]
+            )
+            with open(binned_path) as f:
+                self.assertEqual(expected, f.read())
+
+            cluster_path = os.path.join("test", "coassemble", "target", "elusive_clusters.tsv")
+            self.assertTrue(os.path.exists(cluster_path))
+
+            expected = "\n".join(
+                [
+                    "\t".join([
+                        "samples",
+                        "length",
+                        "total_weight",
+                        "total_targets",
+                        "total_size",
+                        "recover_samples",
+                        "coassembly",
+                    ]),
+                    "\t".join([
+                        "sample_1,sample_2",
+                        "2",
+                        "2",
+                        "2",
+                        "5738",
+                        "sample_1,sample_2,sample_3",
+                        "coassembly_0"
+                    ]),
+                    ""
+                ]
+            )
+            with open(cluster_path) as f:
+                self.assertEqual(expected, f.read())
+
     def test_coassemble_no_mapping(self):
         with in_tempdir():
             cmd = (
