@@ -150,6 +150,7 @@ def set_standard_args(args):
     args.appraise_sequence_identity = 1
     args.min_sequence_coverage = 1
     args.single_assembly = False
+    args.no_genomes = False
     args.num_coassembly_samples = 1
     args.max_coassembly_samples = None
     args.max_coassembly_size = None
@@ -268,6 +269,7 @@ def coassemble(args):
     if args.single_assembly:
         args.num_coassembly_samples = 1
         args.max_coassembly_samples = 1
+        args.no_genomes = True
 
     config_items = {
         # General config
@@ -280,6 +282,7 @@ def coassemble(args):
         "appraise_sequence_identity": args.appraise_sequence_identity / 100 if args.appraise_sequence_identity > 1 else args.appraise_sequence_identity,
         "min_coassembly_coverage": args.min_sequence_coverage,
         "single_assembly": args.single_assembly,
+        "no_genomes": args.no_genomes,
         "num_coassembly_samples": args.num_coassembly_samples,
         "max_coassembly_samples": args.max_coassembly_samples if args.max_coassembly_samples else args.num_coassembly_samples,
         "max_coassembly_size": args.max_coassembly_size,
@@ -463,6 +466,10 @@ def main():
         examples = {
             "coassemble": [
                 btu.Example(
+                    "cluster reads into proposed coassemblies",
+                    "ibis coassemble --forward reads_1.1.fq ... --reverse reads_1.2.fq ... --no-genomes"
+                ),
+                btu.Example(
                     "cluster reads into proposed coassemblies based on unbinned sequences",
                     "ibis coassemble --forward reads_1.1.fq ... --reverse reads_1.2.fq ... --genomes genome_1.fna ..."
                 ),
@@ -553,6 +560,7 @@ def main():
         coassemble_clustering.add_argument("--taxa-of-interest", help="Only consider sequences from this GTDB taxa (e.g. p__Planctomycetota) [default: all]")
         coassemble_clustering.add_argument("--appraise-sequence-identity", type=int, help="Minimum sequence identity for SingleM appraise against reference database [default: 86%, Genus-level]", default=0.86)
         coassemble_clustering.add_argument("--min-sequence-coverage", type=int, help="Minimum combined coverage for sequence inclusion [default: 10]", default=10)
+        coassemble_clustering.add_argument("--no-genomes", action="store_true", help="Run pipeline without genomes")
         coassemble_clustering.add_argument("--single-assembly", action="store_true", help="Skip appraise to discover samples to differential abundance binning. Forces --num-coassembly-samples and --max-coassembly-samples to 1")
         coassemble_clustering.add_argument("--num-coassembly-samples", type=int, help="Number of samples per coassembly cluster [default: 2]", default=2)
         coassemble_clustering.add_argument("--max-coassembly-samples", type=int, help="Upper bound for number of samples per coassembly cluster [default: --num-coassembly-samples]", default=None)
@@ -640,7 +648,7 @@ def main():
             raise Exception("Input reads must be provided")
         if not args.reverse and not args.reverse_list and not args.sra:
             raise Exception("Interleaved and long-reads not yet implemented")
-        if not (args.genomes or args.genomes_list or args.single_assembly):
+        if not (args.genomes or args.genomes_list or args.no_genomes or args.single_assembly):
             raise Exception("Input genomes must be provided")
         if (args.forward and args.forward_list) or (args.reverse and args.reverse_list) or (args.genomes and args.genomes_list):
             raise Exception("General and list arguments are mutually exclusive")
