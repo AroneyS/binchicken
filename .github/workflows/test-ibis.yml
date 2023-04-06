@@ -33,7 +33,7 @@ jobs:
       - name: Run unit tests
         run: |
           python test/test_query_processing.py -b
-          #python test/test_target_elusive.py -b
+          python test/test_target_elusive.py -b
           python test/test_cluster_graph.py -b
           python test/test_collect_reference_bins.py -b
           python test/test_unmap.py
