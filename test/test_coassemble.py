@@ -64,6 +64,7 @@ class Tests(unittest.TestCase):
                 f"--genomes {GENOMES} "
                 f"--singlem-metapackage {METAPACKAGE} "
                 f"--assemble-unmapped "
+                f"--unmapping-max-identity 95 "
                 f"--prodigal-meta "
                 f"--output test "
                 f"--conda-prefix {path_to_conda} "
