@@ -91,12 +91,12 @@ if __name__ == "__main__":
     targets_path = snakemake.output.output_targets
     edges_path = snakemake.output.output_edges
 
-    unbinned = pl.read_csv(unbinned_path, sep="\t")
+    unbinned = pl.read_csv(unbinned_path, separator="\t")
 
     targets, edges = pipeline(
         unbinned,
         MIN_COASSEMBLY_COVERAGE=MIN_COASSEMBLY_COVERAGE,
         TAXA_OF_INTEREST=TAXA_OF_INTEREST
         )
-    targets.write_csv(targets_path, sep="\t")
-    edges.write_csv(edges_path, sep="\t")
+    targets.write_csv(targets_path, separator="\t")
+    edges.write_csv(edges_path, separator="\t")

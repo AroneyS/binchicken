@@ -81,8 +81,8 @@ if __name__ == "__main__":
     sample_read = snakemake.wildcards.read
     output_path = snakemake.output
 
-    appraise_binned = pl.read_csv(binned_path, sep="\t")
-    appraise_unbinned = pl.read_csv(unbinned_path, sep="\t")
+    appraise_binned = pl.read_csv(binned_path, separator="\t")
+    appraise_unbinned = pl.read_csv(unbinned_path, separator="\t")
 
     reference_bins = pipeline(appraise_binned, appraise_unbinned, sample, MIN_APPRAISED=MIN_APPRAISED)
 

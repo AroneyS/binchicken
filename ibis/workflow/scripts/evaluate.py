@@ -216,16 +216,16 @@ if __name__ == "__main__":
     novel_hits_path = snakemake.output.novel_hits
     summary_stats_path = snakemake.output.summary_stats
 
-    unbinned_otu_table = pl.read_csv(unbinned_path, sep="\t")
-    binned_otu_table = pl.read_csv(binned_path, sep="\t")
-    elusive_clusters = pl.read_csv(elusive_clusters_path, sep="\t")
-    elusive_edges = pl.read_csv(elusive_edges_path, sep="\t")
-    recovered_otu_table = pl.read_csv(recovered_otu_table_path, sep="\t")
+    unbinned_otu_table = pl.read_csv(unbinned_path, separator="\t")
+    binned_otu_table = pl.read_csv(binned_path, separator="\t")
+    elusive_clusters = pl.read_csv(elusive_clusters_path, separator="\t")
+    elusive_edges = pl.read_csv(elusive_edges_path, separator="\t")
+    recovered_otu_table = pl.read_csv(recovered_otu_table_path, separator="\t")
 
     matches, unmatched, summary = evaluate(unbinned_otu_table, binned_otu_table, elusive_clusters, elusive_edges, recovered_otu_table, recovered_bins)
     # Export hits matching elusive targets
-    matches.write_csv(matched_hits_path, sep="\t")
+    matches.write_csv(matched_hits_path, separator="\t")
     # Export non-elusive sequence hits
-    unmatched.write_csv(novel_hits_path, sep="\t")
+    unmatched.write_csv(novel_hits_path, separator="\t")
     # Export summary stats
-    summary.write_csv(summary_stats_path, sep="\t")
+    summary.write_csv(summary_stats_path, separator="\t")

@@ -377,11 +377,11 @@ def unmap(args):
             os.path.join(args.output, "coassemble", "target", "elusive_clusters.tsv")
         )
     elif args.elusive_clusters and args.coassemblies:
-        elusive_clusters = pl.read_csv(os.path.abspath(args.elusive_clusters), sep="\t")
+        elusive_clusters = pl.read_csv(os.path.abspath(args.elusive_clusters), separator="\t")
         elusive_clusters = elusive_clusters.filter(pl.col("coassembly").is_in(args.coassemblies))
 
         os.makedirs(os.path.join(args.output, "coassemble", "target"), exist_ok=True)
-        elusive_clusters.write_csv(os.path.join(args.output, "coassemble", "target", "elusive_clusters.tsv"), sep="\t")
+        elusive_clusters.write_csv(os.path.join(args.output, "coassemble", "target", "elusive_clusters.tsv"), separator="\t")
 
     if args.appraise_binned:
         copy_input(
@@ -449,9 +449,9 @@ def iterate(args):
     coassemble(args)
 
     if args.elusive_clusters:
-        new_cluster = pl.read_csv(os.path.join(args.output, "coassemble", "target", "elusive_clusters.tsv"), sep="\t")
+        new_cluster = pl.read_csv(os.path.join(args.output, "coassemble", "target", "elusive_clusters.tsv"), separator="\t")
         for cluster in args.elusive_clusters:
-            old_cluster = pl.read_csv(cluster, sep="\t")
+            old_cluster = pl.read_csv(cluster, separator="\t")
             comb_cluster = new_cluster.join(old_cluster, on="samples", how="inner")
 
             if comb_cluster.height > 0:
