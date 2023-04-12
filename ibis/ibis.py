@@ -184,7 +184,7 @@ def evaluate_bins(aviary_outputs, checkm_version, min_completeness, max_contamin
 
     coassembly_bins = {}
     for coassembly in checkm_out_dict:
-        checkm_out = pl.read_csv(checkm_out_dict[coassembly], sep = "\t")
+        checkm_out = pl.read_csv(checkm_out_dict[coassembly], separator="\t")
         passed_bins = checkm_out.filter(
             (pl.col(completeness_col) >= min_completeness) & (pl.col(contamination_col) <= max_contamination),
         ).get_column("Bin Id"

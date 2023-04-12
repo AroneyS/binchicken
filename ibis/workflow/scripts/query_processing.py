@@ -66,8 +66,8 @@ def pipeline(
 
     for query, pipe in zip(query_reads, pipe_reads):
         binned, unbinned = processing(
-            pl.read_csv(query, sep = "\t"),
-            pl.read_csv(pipe, sep = "\t"),
+            pl.read_csv(query, separator="\t"),
+            pl.read_csv(pipe, separator="\t"),
             SEQUENCE_IDENTITY,
             WINDOW_SIZE)
         yield binned, unbinned
