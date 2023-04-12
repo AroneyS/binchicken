@@ -140,7 +140,7 @@ def pipeline(
             ).alias("relevant_targets"),
     ).with_columns(
         pl.when(
-            (pl.col("recover_samples_list").arr.lengths().first() >= MAX_RECOVERY_SAMPLES) | (pl.col("relevant_edges").apply(lambda x: x.height) == 0)
+            (pl.col("recover_samples_list").arr.lengths() >= MAX_RECOVERY_SAMPLES) | (pl.col("relevant_edges").apply(lambda x: x.height) == 0)
         ).then(
             pl.Series("other_samples", [[]])
         ).otherwise(
