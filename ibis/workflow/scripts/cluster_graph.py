@@ -4,12 +4,14 @@
 # Author: Samuel Aroney
 
 import polars as pl
+import sys
 import os
 import networkx as nx
 from networkx.algorithms import community
 from networkx.algorithms import components
 from operator import itemgetter
 import itertools
+from bird_tool_utils import in_tempdir
 
 def pipeline(
         elusive_edges,
@@ -48,22 +50,39 @@ def pipeline(
             for c_set in c_tuple:
                 yield " ".join([z for z in c_set])
 
-    communities = pl.DataFrame({"community": process_community(itertools.chain(first_community, comp))}
-    ).lazy(
-    ).select(
-        pl.col("community").str.split(" ")
-    ).with_columns(
-        pl.col("community").arr.lengths().alias("length")
-    ).with_columns(
-        ((pl.col("length") <= MAX_RECOVERY_SAMPLES) &
-        (pl.col("length") >= MIN_COASSEMBLY_SAMPLES)).alias("umbrella"),
-        ((pl.col("length") >= MIN_COASSEMBLY_SAMPLES) &
-        (pl.col("length") <= MAX_COASSEMBLY_SAMPLES)).alias("coassembly"),
-        pl.col("community").apply(lambda x: [hash(y) for y in x]).hash().alias("coassembly_hash")
-    ).filter(
-        pl.col("coassembly") | pl.col("umbrella")
-    ).unique(subset="coassembly_hash"
-    ).collect(streaming=True)
+
+    with in_tempdir():
+        os.mkfifo("communities.fifo")
+        fifo = os.path.abspath("communities.fifo")
+        print(fifo)
+        fifo_write = open(fifo, "w")
+        #import pdb; pdb.set_trace()
+
+        pid = os.fork()
+        if pid == 0:
+            for c in process_community(itertools.chain(first_community, comp)):
+                fifo_write.write(c + "\n")
+            fifo_write.close()
+            os._exit(0)
+        else:
+            fifo_write.close()
+            communities = pl.scan_csv(fifo, has_header=False, new_columns=["community"], dtypes=[pl.Utf8]
+            ).select(
+                pl.col("community").str.split(" ")
+            ).with_columns(
+                pl.col("community").arr.lengths().alias("length")
+            ).with_columns(
+                ((pl.col("length") <= MAX_RECOVERY_SAMPLES) &
+                (pl.col("length") >= MIN_COASSEMBLY_SAMPLES)).alias("umbrella"),
+                ((pl.col("length") >= MIN_COASSEMBLY_SAMPLES) &
+                (pl.col("length") <= MAX_COASSEMBLY_SAMPLES)).alias("coassembly"),
+                pl.col("community").apply(lambda x: [hash(y) for y in x]).hash().alias("coassembly_hash")
+            ).filter(
+                pl.col("coassembly") | pl.col("umbrella")
+            ).unique(subset="coassembly_hash"
+            ).collect(streaming=True)
+
+        os.unlink(fifo)
 
     umbrellas = communities.filter(
         pl.col("umbrella")
