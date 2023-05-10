@@ -87,7 +87,7 @@ def evaluate(unbinned_otu_table, binned_otu_table, elusive_clusters, elusive_edg
 
     # Load recovered otu table and join elusive and nontarget sequences
     recovered_otu_table = recovered_otu_table.with_columns(
-        pl.col("sample").str.split("-").arr.to_struct(upper_bound=2, name_generator=lambda id: ["coassembly", "genome"][id])
+        pl.col("sample").str.split("-").arr.to_struct(upper_bound=2, fields=["coassembly", "genome"])
     ).unnest("sample"
     )
 
@@ -169,7 +169,7 @@ def summarise_stats(matches, combined_otu_table, recovered_bins):
     recovered_counts = pl.from_dict(recovered_bins
     ).melt(variable_name="name"
     ).with_columns(
-        pl.col("name").str.split("-").arr.to_struct(upper_bound=2, name_generator=lambda id: ["coassembly", "genome"][id])
+        pl.col("name").str.split("-").arr.to_struct(upper_bound=2, fields=["coassembly", "genome"])
     ).unnest("name"
     ).groupby("coassembly"
     ).agg(
