@@ -52,21 +52,25 @@ def pipeline(
 
 
     with in_tempdir():
-        os.mkfifo("communities.fifo")
-        fifo = os.path.abspath("communities.fifo")
+        fifo = os.path.abspath("communities.csv")
+        os.mkfifo(fifo)
         print(fifo)
-        fifo_write = open(fifo, "w")
-        #import pdb; pdb.set_trace()
 
-        pid = os.fork()
-        if pid == 0:
-            for c in process_community(itertools.chain(first_community, comp)):
-                fifo_write.write(c + "\n")
-            fifo_write.close()
-            os._exit(0)
-        else:
-            fifo_write.close()
-            communities = pl.scan_csv(fifo, has_header=False, new_columns=["community"], dtypes=[pl.Utf8]
+        def write_to_fifo(fifo):
+            with open(fifo, "w") as fifo_write:
+                for c in process_community(itertools.chain(first_community, comp)):
+                    fifo_write.write(c + "\n")
+
+        #import pdb; pdb.set_trace()
+        import threading
+
+        fifo_writer_thread = threading.Thread(target=write_to_fifo, args=(fifo,))
+        fifo_writer_thread.start()
+
+        with open(fifo, "r") as f:
+        #     print(f.read())
+
+            communities = pl.read_csv(f, has_header=False, new_columns=["community"], dtypes=[pl.Utf8]
             ).select(
                 pl.col("community").str.split(" ")
             ).with_columns(
@@ -82,6 +86,7 @@ def pipeline(
             ).unique(subset="coassembly_hash"
             ).collect(streaming=True)
 
+        fifo_writer_thread.join()
         os.unlink(fifo)
 
     umbrellas = communities.filter(
