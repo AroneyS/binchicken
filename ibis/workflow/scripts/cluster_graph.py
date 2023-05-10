@@ -142,7 +142,7 @@ def pipeline(
         pl.when(
             (pl.col("recover_samples_list").arr.lengths() >= MAX_RECOVERY_SAMPLES) | (pl.col("relevant_edges").apply(lambda x: x.height) == 0)
         ).then(
-            pl.Series("other_samples", [[]])
+            pl.Series("other_samples", [[]], dtype = pl.List(pl.Utf8))
         ).otherwise(
             pl.col("relevant_edges").apply(
                 lambda x: x.with_columns(pl.col("target_ids").str.split(","))
