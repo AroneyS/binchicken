@@ -49,7 +49,7 @@ def pipeline(appraise_binned, appraise_unbinned, sample, MIN_APPRAISED=0.1, TRIM
     ).agg(
         pl.col("coverage").sum()
     ).pivot(
-        values="coverage", index="gene", columns="found_in", 
+        values="coverage", index="gene", columns="found_in", aggregate_function=None
     ).melt(
         id_vars="gene", variable_name="found_in", value_name="coverage"
     ).fill_null(0

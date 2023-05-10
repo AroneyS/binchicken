@@ -189,7 +189,7 @@ def summarise_stats(matches, combined_otu_table, recovered_bins):
         summary.filter((pl.col("statistic") != "bins") | (pl.col("status") != "nonmatch")),
         recovered_counts
     ]).pivot(
-        index=["coassembly", "statistic"], values="value", columns="status"
+        index=["coassembly", "statistic"], values="value", columns="status", aggregate_function=None
     ).select(
         "coassembly", "statistic",
         pl.when(pl.col("statistic").is_in(["sequences", "taxonomy"])).then("targets").otherwise("recovery").alias("within"),
