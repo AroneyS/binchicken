@@ -3,15 +3,14 @@
 #####################
 # Author: Samuel Aroney
 
-import pandas as pd
+import polars as pl
 
 reads = []
 for read in snakemake.input.reads:
-    reads.append(pd.read_csv(read, sep = "\t"))
+    reads.append(pl.read_csv(read, separator="\t"))
 
-unbinned = pd.concat(reads)
-unbinned["found_in"] = ""
-unbinned.to_csv(snakemake.output.unbinned, sep="\t", index=False)
+unbinned = pl.concat(reads).with_columns(found_in = pl.lit(""))
+unbinned.write_csv(snakemake.output.unbinned, separator="\t")
 
-binned = unbinned.drop(unbinned.index)
-binned.to_csv(snakemake.output.binned, sep="\t", index=False)
+binned = unbinned.filter(False)
+binned.write_csv(snakemake.output.binned, separator="\t")
