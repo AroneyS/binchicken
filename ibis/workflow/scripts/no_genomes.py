@@ -9,7 +9,11 @@ import os
 def processing(reads):
     print(f"Polars using {str(pl.threadpool_size())} threads")
 
-    unbinned = reads.with_columns(found_in = pl.lit(""))
+    unbinned = (
+        reads
+        .with_columns(found_in = pl.lit(""))
+        .filter(pl.col("gene") != "S3.18.EIF_2_alpha")
+    )
     binned = unbinned.filter(False)
 
     return(binned, unbinned)

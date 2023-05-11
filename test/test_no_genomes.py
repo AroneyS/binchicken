@@ -60,6 +60,24 @@ class Tests(unittest.TestCase):
         self.assertDataFrameEqual(expected_binned, observed_binned)
         self.assertDataFrameEqual(expected_unbinned, observed_unbinned)
 
+    def test_no_genomes_remove_EIF(self):
+        reads = pl.DataFrame([
+            ["S3.1", "sample_1", "AAA", 5, 10, "Root"],
+            ["S3.1", "sample_1", "AAB", 5, 10, "Root"],
+            ["S3.18.EIF_2_alpha", "sample_1", "NNN", 5, 10, "Root"],
+        ], schema=READ_COLUMNS)
+
+        expected_binned = pl.DataFrame([
+        ], schema=APPRAISE_COLUMNS)
+        expected_unbinned = pl.DataFrame([
+            ["S3.1", "sample_1", "AAA", 5, 10, "Root", ""],
+            ["S3.1", "sample_1", "AAB", 5, 10, "Root", ""],
+        ], schema=APPRAISE_COLUMNS)
+
+        observed_binned, observed_unbinned = processing(reads)
+        self.assertDataFrameEqual(expected_binned, observed_binned)
+        self.assertDataFrameEqual(expected_unbinned, observed_unbinned)
+
 
 if __name__ == '__main__':
     unittest.main()
