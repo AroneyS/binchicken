@@ -162,8 +162,8 @@ rule singlem_appraise:
         reads=expand(output_dir + "/pipe/{read}_read.otu_table.tsv", read=config["reads_1"]),
         bins=output_dir + "/summarise/bins_summarised.otu_table.tsv",
     output:
-        unbinned=output_dir + "/appraise/unbinned.otu_table.tsv",
-        binned=output_dir + "/appraise/binned.otu_table.tsv",
+        unbinned=output_dir + "/appraise/unbinned_raw.otu_table.tsv",
+        binned=output_dir + "/appraise/binned_raw.otu_table.tsv",
     log:
         logs_dir + "/appraise/appraise.log"
     params:
@@ -182,6 +182,19 @@ rule singlem_appraise:
         "--sequence-identity {params.sequence_identity} "
         "--output-found-in "
         "&> {log}"
+
+rule singlem_appraise_filtered:
+    input:
+        unbinned=output_dir + "/appraise/unbinned_raw.otu_table.tsv",
+        binned=output_dir + "/appraise/binned_raw.otu_table.tsv",
+    output:
+        unbinned=output_dir + "/appraise/unbinned.otu_table.tsv",
+        binned=output_dir + "/appraise/binned.otu_table.tsv",
+    params:
+        bad_package="S3.18.EIF_2_alpha",
+    shell:
+        "grep -v {params.bad_package} {input.unbinned} > {output.unbinned} && "
+        "grep -v {params.bad_package} {input.binned} > {output.binned}"
 
 ###################################
 ### SingleM query (alternative) ###
