@@ -26,6 +26,7 @@ TWO_GENOMES = " ".join([
     os.path.join(path_to_data, "GB_GCA_013286235.2.fna"),
     ])
 METAPACKAGE = os.path.join(path_to_data, "singlem_metapackage.smpkg")
+METAPACKAGE_EIF = os.path.join(path_to_data, "singlem_metapackage_EIF.smpkg")
 
 MOCK_COASSEMBLE = os.path.join(path_to_data, "mock_coassemble")
 
@@ -35,8 +36,15 @@ SAMPLE_SINGLEM = ' '.join([
     os.path.join(MOCK_COASSEMBLE, "pipe", "sample_2_read.otu_table.tsv"),
     os.path.join(MOCK_COASSEMBLE, "pipe", "sample_3_read.otu_table.tsv"),
     ])
+SAMPLE_SINGLEM_EIF = ' '.join([
+    os.path.join(MOCK_COASSEMBLE, "pipe_EIF", "sample_1_read.otu_table.tsv"),
+    os.path.join(MOCK_COASSEMBLE, "pipe_EIF", "sample_2_read.otu_table.tsv"),
+    os.path.join(MOCK_COASSEMBLE, "pipe_EIF", "sample_3_read.otu_table.tsv"),
+    ])
+
 GENOME_TRANSCRIPTS = ' '.join([os.path.join(path_to_data, "GB_GCA_013286235.1_protein.fna")])
 GENOME_SINGLEM = os.path.join(MOCK_COASSEMBLE, "summarise", "bins_summarised.otu_table2.tsv")
+GENOME_SINGLEM_EIF = os.path.join(MOCK_COASSEMBLE, "summarise", "bins_summarised_EIF.otu_table.tsv")
 
 SAMPLE_QUERY_DIR = os.path.join(path_to_data, "query")
 SAMPLE_QUERY = ' '.join([
@@ -820,6 +828,46 @@ class Tests(unittest.TestCase):
                 ]
             )
             with open(appraise_path) as f:
+                self.assertEqual(expected, f.read())
+
+    def test_coassemble_remove_EIF(self):
+        with in_tempdir():
+            cmd = (
+                f"ibis coassemble "
+                f"--forward {SAMPLE_READS_FORWARD} "
+                f"--reverse {SAMPLE_READS_REVERSE} "
+                f"--genomes {GENOMES} "
+                f"--genome-transcripts {GENOME_TRANSCRIPTS} "
+                f"--sample-singlem {SAMPLE_SINGLEM_EIF} "
+                f"--sample-read-size {SAMPLE_READ_SIZE} "
+                f"--genome-singlem {GENOME_SINGLEM_EIF} "
+                f"--singlem-metapackage {METAPACKAGE_EIF} "
+                f"--output test "
+                f"--conda-prefix {path_to_conda} "
+                f"--snakemake-args \"target_elusive\" "
+            )
+            output = extern.run(cmd)
+
+            unbinned_path = os.path.join("test", "coassemble", "appraise", "unbinned.otu_table.tsv")
+            self.assertTrue(os.path.exists(unbinned_path))
+            expected = "\n".join(
+                [
+                    "\t".join(["gene", "sample", "sequence", "num_hits", "coverage", "taxonomy", "found_in"]),
+                    "\t".join(["S3.7.ribosomal_protein_S7", "sample_1.1", "TATCAAGTTCCACAAGAAGTTAGAGGAGAAAGAAGAATCTCGTTAGCTATTAGATGGATT", "3", "4.92", "Root; d__Bacteria; p__Proteobacteria; c__Gammaproteobacteria; o__Burkholderiales; f__Burkholderiaceae; g__Polynucleobacter; s__Polynucleobacter sp018688335", ""]),
+                    "\t".join(["S3.7.ribosomal_protein_S7", "sample_1.1", "TACCAGGTCCCGGTCGAGGTCCGTCCGATCCGCCAGACGACGCTCGCCCTGCGCTGGCTC", "5", "8.21", "Root; d__Bacteria; p__Actinobacteriota; c__Actinomycetia; o__Mycobacteriales; f__Mycobacteriaceae; g__Nocardia; s__Nocardia grenadensis", ""]),
+                    "\t".join(["S3.7.ribosomal_protein_S7", "sample_1.1", "TATCAGGTGCCTATTGAGGTAAGACCTGAAAGAAGACAGACTTTAGCGCTTCGCTGGATA", "1", "1.64", "Root; d__Bacteria; p__Actinobacteriota; c__Actinomycetia; o__Mycobacteriales; f__Mycobacteriaceae; g__Nocardia; s__Nocardia grenadensis2", ""]),
+                    "\t".join(["S3.7.ribosomal_protein_S7", "sample_1.1", "TATCAGGTGCCTATTGAGGTAAGACCTGAAAGAAGACAGACTTTAGCGCTTCGCTGGATC", "5", "8.21", "Root; d__Bacteria; p__Actinobacteriota; c__Actinomycetia; o__Mycobacteriales; f__Mycobacteriaceae; g__Nocardia; s__Nocardia grenadensis3", ""]),
+                    "\t".join(["S3.18.EIF_2_alpha", "sample_1.1", "TATCAGGTGCCTATTGAGGTAAGACCTGAAAGAAGACAGACTTTAGCGCTTCGCTGGATC", "5", "8.21", "Root; d__Archaea; p__Actinobacteriota; c__Actinomycetia; o__Mycobacteriales; f__Mycobacteriaceae; g__Nocardia; s__Nocardia grenadensis3", ""]),
+                    "\t".join(["S3.7.ribosomal_protein_S7", "sample_2.1", "TATCAAGTTCCACAAGAAGTTAGAGGAGAAAGAAGAATCTCGTTAGCTATTAGATGGATT", "4", "6.57", "Root; d__Bacteria; p__Proteobacteria; c__Gammaproteobacteria; o__Burkholderiales; f__Burkholderiaceae; g__Polynucleobacter; s__Polynucleobacter sp018688335", ""]),
+                    "\t".join(["S3.7.ribosomal_protein_S7", "sample_2.1", "TACCAGGTCCCGGTCGAGGTCCGTCCGATCCGCCAGACGACGCTCGCCCTGCGCTGGCTC", "3", "4.92", "Root; d__Bacteria; p__Actinobacteriota; c__Actinomycetia; o__Mycobacteriales; f__Mycobacteriaceae; g__Nocardia; s__Nocardia grenadensis", ""]),
+                    "\t".join(["S3.18.EIF_2_alpha", "sample_2.1", "TATCAGGTGCCTATTGAGGTAAGACCTGAAAGAAGACAGACTTTAGCGCTTCGCTGGATC", "5", "8.21", "Root; d__Archaea; p__Actinobacteriota; c__Actinomycetia; o__Mycobacteriales; f__Mycobacteriaceae; g__Nocardia; s__Nocardia grenadensis3", ""]),
+                    "\t".join(["S3.7.ribosomal_protein_S7", "sample_3.1", "TATCAGGTGCCTATTGAGGTAAGACCTGAAAGAAGACAGACTTTAGCGCTTCGCTGGATA", "6", "9.85", "Root; d__Bacteria; p__Actinobacteriota; c__Actinomycetia; o__Mycobacteriales; f__Mycobacteriaceae; g__Nocardia; s__Nocardia grenadensis2", ""]),
+                    "\t".join(["S3.7.ribosomal_protein_S7", "sample_3.1", "TATCAGGTGCCTATTGAGGTAAGACCTGAAAGAAGACAGACTTTAGCGCTTCGCTGGATC", "5", "8.21", "Root; d__Bacteria; p__Actinobacteriota; c__Actinomycetia; o__Mycobacteriales; f__Mycobacteriaceae; g__Nocardia; s__Nocardia grenadensis3", ""]),
+                    "\t".join(["S3.18.EIF_2_alpha", "sample_3.1", "TATCAGGTGCCTATTGAGGTAAGACCTGAAAGAAGACAGACTTTAGCGCTTCGCTGGATC", "5", "8.21", "Root; d__Archaea; p__Actinobacteriota; c__Actinomycetia; o__Mycobacteriales; f__Mycobacteriaceae; g__Nocardia; s__Nocardia grenadensis3", ""]),
+                    ""
+                ]
+            )
+            with open(unbinned_path) as f:
                 self.assertEqual(expected, f.read())
 
 

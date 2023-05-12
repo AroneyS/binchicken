@@ -1,0 +1,13 @@
+tax_id,parent_id,rank,tax_name,root,rank_0,rank_1
+Root,Root,root,Root,Root,,
+d__Eukaryota,Root,rank_0,d__Eukaryota,Root,d__Eukaryota,
+Viridiplantae,d__Eukaryota,rank_1,Viridiplantae,Root,d__Eukaryota,Viridiplantae
+Rhodophyta,d__Eukaryota,rank_1,Rhodophyta,Root,d__Eukaryota,Rhodophyta
+Cryptophyceae,d__Eukaryota,rank_1,Cryptophyceae,Root,d__Eukaryota,Cryptophyceae
+Sar,d__Eukaryota,rank_1,Sar,Root,d__Eukaryota,Sar
+Discoba,d__Eukaryota,rank_1,Discoba,Root,d__Eukaryota,Discoba
+Fungi,d__Eukaryota,rank_1,Fungi,Root,d__Eukaryota,Fungi
+Glaucocystophyceae,d__Eukaryota,rank_1,Glaucocystophyceae,Root,d__Eukaryota,Glaucocystophyceae
+Haptista,d__Eukaryota,rank_1,Haptista,Root,d__Eukaryota,Haptista
+Metazoa,d__Eukaryota,rank_1,Metazoa,Root,d__Eukaryota,Metazoa
+Amoebozoa,d__Eukaryota,rank_1,Amoebozoa,Root,d__Eukaryota,Amoebozoa
