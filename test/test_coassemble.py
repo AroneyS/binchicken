@@ -811,7 +811,7 @@ class Tests(unittest.TestCase):
                 f"--genome-transcripts {GENOME_TRANSCRIPTS} "
                 f"--output test "
                 f"--conda-prefix {path_to_conda} "
-                f"--snakemake-args \"singlem_appraise\" "
+                f"--snakemake-args \"singlem_appraise_filtered\" "
             )
             import subprocess
             _ = subprocess.run(cmd, shell=True, check=True, capture_output=True, env=os.environ)
