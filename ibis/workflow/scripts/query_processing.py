@@ -54,6 +54,10 @@ def processing(
         pl.lit(None).cast(str).alias("found_in")
     )
 
+    # Filter out EIF
+    binned = binned.filter(pl.col("gene") != "S3.18.EIF_2_alpha")
+    unbinned = unbinned.filter(pl.col("gene") != "S3.18.EIF_2_alpha")
+
     return binned, unbinned
 
 def pipeline(
