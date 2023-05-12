@@ -1,7 +1,7 @@
 #############
 ### Setup ###
 #############
-ruleorder: no_genomes > query_processing > singlem_appraise
+ruleorder: no_genomes > query_processing > singlem_appraise_filtered
 
 import os
 import pandas as pd
