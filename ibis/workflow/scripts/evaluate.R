@@ -110,12 +110,12 @@ target_summary <- summary_stats %>%
     pivot_wider(id_cols = coassembly, names_from = statistic, values_from = match)
 
 target_totals <- summary_stats %>%
-    filter(!statistic %in% c("novel_sequences", "taxonomy")) %>%
+    filter(!statistic %in% c("nontarget_unbin_sequences", "novel_sequences", "taxonomy")) %>%
     pivot_wider(id_cols = coassembly, names_from = statistic, values_from = total) %>%
-    rename(total_targets = sequences, total_bins = bins, total_recovered = nontarget_sequences)
+    rename(total_targets = sequences, total_bins = bins, total_recovered = nontarget_bin_sequences)
 
 target_percentage <- summary_stats %>%
-    filter(!statistic %in% c("bins", "nontarget_sequences", "novel_sequences", "taxonomy")) %>%
+    filter(!statistic %in% c("bins", "nontarget_bin_sequences", "nontarget_unbin_sequences", "novel_sequences", "taxonomy")) %>%
     pivot_wider(id_cols = coassembly, names_from = statistic, values_from = match_percent) %>%
     rename(perc_targets = sequences)
 
@@ -144,7 +144,7 @@ summary_table <- coassemble_summary %>%
         total_size = total_size / 10**9,
         unmapped_size = unmapped_size / 10**9,
         ) %>%
-    select(coassembly, length, total_size, unmapped_size, bins, sequences, nontarget_sequences, novel_sequences, novel_clusters) %>%
+    select(coassembly, length, total_size, unmapped_size, bins, sequences, nontarget_bin_sequences, nontarget_unbin_sequences, novel_sequences, novel_clusters) %>%
     gt() %>%
     tab_spanner(
         label = "Gbp",
@@ -152,9 +152,9 @@ summary_table <- coassemble_summary %>%
     ) %>%
     tab_spanner(
         label = "Recovered sequences",
-        columns = c(sequences, nontarget_sequences, novel_sequences)
+        columns = c(sequences, nontarget_bin_sequences, nontarget_unbin_sequences, novel_sequences)
     ) %>%
-    fmt_integer(c(length, total_size, unmapped_size, nontarget_sequences, novel_sequences, novel_clusters)) %>%
+    fmt_integer(c(length, total_size, unmapped_size, nontarget_bin_sequences, nontarget_unbin_sequences, novel_sequences, novel_clusters)) %>%
     cols_label(
         coassembly = "coassembly",
         length = "samples",
@@ -162,7 +162,8 @@ summary_table <- coassemble_summary %>%
         unmapped_size = "unmap",
         bins = "target bins",
         sequences = "targets",
-        nontarget_sequences = "nontargets",
+        nontarget_unbin_sequences = "non-targets",
+        nontarget_bin_sequences = "prior binned",
         novel_sequences = "novel",
         novel_clusters = "novel clusters"
     ) %>%
