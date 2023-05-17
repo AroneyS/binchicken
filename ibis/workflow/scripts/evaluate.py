@@ -88,7 +88,7 @@ def evaluate(target_otu_table, unbinned_otu_table, binned_otu_table, elusive_clu
     # Add binned otu table to above with target NA
     nontarget_otu_table = pl.concat([
         binned_otu_table,
-        unbinned_otu_table.join(target_otu_table, on=["gene", "sequence"], how="anti")
+        unbinned_otu_table.join(elusive_otu_table, on=["gene", "sequence"], how="anti")
     ]).select([
         pl.col("sample").str.replace(r"\.1$", ""),
         "gene", "sequence", "taxonomy", "found_in"
@@ -136,7 +136,6 @@ def evaluate(target_otu_table, unbinned_otu_table, binned_otu_table, elusive_clu
 
     # Summarise recovery stats
     summary = summarise_stats(matches, combined_otu_table, recovered_bins)
-    #import pdb; pdb.set_trace()
 
     return matches, unmatched, summary
 

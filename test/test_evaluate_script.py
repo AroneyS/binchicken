@@ -556,6 +556,56 @@ class Tests(unittest.TestCase):
         self.assertDataFrameEqual(expected_unmatched, observed_unmatched)
         self.assertDataFrameEqual(expected_summary, observed_summary)
 
+    def test_evaluate_script_other_sample_target(self):
+        targets = pl.DataFrame([
+            ["S3.1", "sample_1.1", "AAA", 5, 10.0, "Root; old", 10],
+            ["S3.1", "sample_2.1", "AAA", 5, 10.0, "Root; old", 10],
+            ["S3.1", "sample_3.1", "CCC", 5, 10.0, "Root; old", 11],
+        ], schema=TARGET_COLUMNS)
+        unbinned = pl.DataFrame([
+            ["S3.1", "sample_1.1", "AAA", 5, 10.0, "Root; old", None],
+            ["S3.1", "sample_2.1", "AAA", 5, 10.0, "Root; old", None],
+            ["S3.1", "sample_1.1", "CCC", 5, 10.0, "Root; old", None],
+            ["S3.1", "sample_3.1", "CCC", 5, 10.0, "Root; old", None],
+        ], schema=APPRAISE_COLUMNS, schema_overrides={"found_in": str})
+        binned = pl.DataFrame([
+            ["S3.1", "sample_1.1", "BBB", 5, 10.0, "Root; old", "oldgenome_1"],
+        ], schema=APPRAISE_COLUMNS)
+        clusters = pl.DataFrame([
+            ["sample_1,sample_2", 2, 1, 1, 100, "sample_1,sample_2,sample_3", "coassembly_0"],
+        ], schema=CLUSTER_COLUMNS)
+        edges = pl.DataFrame([
+            ["Root", 1, "10", "sample_1.1", "sample_2.1"],
+        ], schema=EDGE_COLUMNS)
+        recovered = pl.DataFrame([
+            ["S3.1", "coassembly_0-genome_1_transcripts", "AAA", 1, 2.0, "Root"],
+            ["S3.1", "coassembly_0-genome_1_transcripts", "CCC", 1, 2.0, "Root"],
+        ], schema=SINGLEM_COLUMNS)
+        recovered_bins = {
+            "coassembly_0-genome_0": "genome_0.fna",
+            "coassembly_0-genome_1": "genome_1.fna",
+            }
+
+        expected_matches = pl.DataFrame([
+            ["coassembly_0", "S3.1", "AAA", "genome_1_transcripts", "10", None, "sample_1,sample_2", "Root"],
+            ["coassembly_0", "S3.1", "CCC", "genome_1_transcripts", None, None, "sample_1", "Root"],
+        ], schema=OUTPUT_COLUMNS)
+        expected_unmatched = pl.DataFrame([
+        ], schema=OUTPUT_COLUMNS)
+        expected_summary = pl.DataFrame([
+            ["coassembly_0", "sequences", "targets", 1, 0, 1, 100],
+            ["coassembly_0", "taxonomy", "targets", 1, 0, 1, 100],
+            ["coassembly_0", "nontarget_bin_sequences", "recovery", 0, 2, 2, 0],
+            ["coassembly_0", "nontarget_unbin_sequences", "recovery", 1, 1, 2, 50.0],
+            ["coassembly_0", "novel_sequences", "recovery", 0, 2, 2, 0],
+            ["coassembly_0", "bins", "recovery", 1, 1, 2, 50],
+        ], schema=SUMMARY_COLUMNS)
+
+        observed_matches, observed_unmatched, observed_summary = evaluate(targets, unbinned, binned, clusters, edges, recovered, recovered_bins)
+        self.assertDataFrameEqual(expected_matches, observed_matches)
+        self.assertDataFrameEqual(expected_unmatched, observed_unmatched)
+        self.assertDataFrameEqual(expected_summary, observed_summary)
+
 
 if __name__ == '__main__':
     unittest.main()
