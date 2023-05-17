@@ -336,7 +336,6 @@ def evaluate(args):
 
     config_items = {
         "targets": os.path.join(coassemble_target_dir, "targets.tsv"),
-        "unbinned": os.path.join(coassemble_appraise_dir, "unbinned.otu_table.tsv"),
         "binned": os.path.join(coassemble_appraise_dir, "binned.otu_table.tsv"),
         "elusive_edges": os.path.join(coassemble_target_dir, "elusive_edges.tsv"),
         "elusive_clusters": os.path.join(coassemble_target_dir, "elusive_clusters.tsv"),

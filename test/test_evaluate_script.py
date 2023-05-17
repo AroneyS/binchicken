@@ -41,14 +41,10 @@ class Tests(unittest.TestCase):
         targets = pl.DataFrame([
             ["S3.1", "sample_1.1", "AAA", 5, 10.0, "Root; old", 10],
             ["S3.1", "sample_2.1", "AAA", 5, 10.0, "Root; old", 10],
+            ["S3.1", "sample_1.1", "CCC", 1, 2.0, "Root; old", 11],
+            ["S3.1", "sample_2.1", "CCC", 1, 2.0, "Root; old", 11],
+            ["S3.1", "sample_1.1", "DDD", 1, 2.0, "Root; old", 12],
         ], schema=TARGET_COLUMNS)
-        unbinned = pl.DataFrame([
-            ["S3.1", "sample_1.1", "AAA", 5, 10.0, "Root; old", None],
-            ["S3.1", "sample_2.1", "AAA", 5, 10.0, "Root; old", None],
-            ["S3.1", "sample_1.1", "CCC", 1, 2.0, "Root; old", None],
-            ["S3.1", "sample_2.1", "CCC", 1, 2.0, "Root; old", None],
-            ["S3.1", "sample_1.1", "DDD", 1, 2.0, "Root; old", None],
-        ], schema=APPRAISE_COLUMNS, schema_overrides={"found_in": str})
         binned = pl.DataFrame([
             ["S3.1", "sample_1.1", "BBB", 5, 10.0, "Root; old", "oldgenome_1"],
         ], schema=APPRAISE_COLUMNS)
@@ -88,7 +84,7 @@ class Tests(unittest.TestCase):
             ["coassembly_0", "bins", "recovery", 1, 1, 2, 50],
         ], schema=SUMMARY_COLUMNS)
 
-        observed_matches, observed_unmatched, observed_summary = evaluate(targets, unbinned, binned, clusters, edges, recovered, recovered_bins)
+        observed_matches, observed_unmatched, observed_summary = evaluate(targets, binned, clusters, edges, recovered, recovered_bins)
         self.assertDataFrameEqual(expected_matches, observed_matches)
         self.assertDataFrameEqual(expected_unmatched, observed_unmatched)
         self.assertDataFrameEqual(expected_summary, observed_summary)
@@ -98,10 +94,6 @@ class Tests(unittest.TestCase):
             ["S3.1", "sample_1.1", "AAA", 5, 10.0, "Root; old", 10],
             ["S3.1", "sample_2.1", "AAA", 5, 10.0, "Root; old", 10],
         ], schema=TARGET_COLUMNS)
-        unbinned = pl.DataFrame([
-            ["S3.1", "sample_1.1", "AAA", 5, 10.0, "Root; old", None],
-            ["S3.1", "sample_2.1", "AAA", 5, 10.0, "Root; old", None],
-        ], schema=APPRAISE_COLUMNS, schema_overrides={"found_in": str})
         binned = pl.DataFrame([
             ["S3.1", "sample_1.1", "BBB", 5, 10.0, "Root; old", "oldgenome_1"],
         ], schema=APPRAISE_COLUMNS)
@@ -133,7 +125,7 @@ class Tests(unittest.TestCase):
             ["coassembly_0", "bins", "recovery", 1, 1, 2, 50],
         ], schema=SUMMARY_COLUMNS)
 
-        observed_matches, observed_unmatched, observed_summary = evaluate(targets, unbinned, binned, clusters, edges, recovered, recovered_bins)
+        observed_matches, observed_unmatched, observed_summary = evaluate(targets, binned, clusters, edges, recovered, recovered_bins)
         self.assertDataFrameEqual(expected_matches, observed_matches)
         self.assertDataFrameEqual(expected_unmatched, observed_unmatched)
         self.assertDataFrameEqual(expected_summary, observed_summary)
@@ -143,10 +135,6 @@ class Tests(unittest.TestCase):
             ["S3.1", "sample_1.1", "AAA", 5, 10.0, "Root; old", 10],
             ["S3.1", "sample_2.1", "AAA", 5, 10.0, "Root; old", 10],
         ], schema=TARGET_COLUMNS)
-        unbinned = pl.DataFrame([
-            ["S3.1", "sample_1.1", "AAA", 5, 10.0, "Root; old", None],
-            ["S3.1", "sample_2.1", "AAA", 5, 10.0, "Root; old", None],
-        ], schema=APPRAISE_COLUMNS, schema_overrides={"found_in": str})
         binned = pl.DataFrame([
             ["S3.1", "sample_1.1", "BBB", 5, 10.0, "Root; old", "oldgenome_1"],
         ], schema=APPRAISE_COLUMNS)
@@ -179,7 +167,7 @@ class Tests(unittest.TestCase):
             ["coassembly_0", "bins", "recovery", 0, 2, 2, 0],
         ], schema=SUMMARY_COLUMNS)
 
-        observed_matches, observed_unmatched, observed_summary = evaluate(targets, unbinned, binned, clusters, edges, recovered, recovered_bins)
+        observed_matches, observed_unmatched, observed_summary = evaluate(targets, binned, clusters, edges, recovered, recovered_bins)
         self.assertDataFrameEqual(expected_matches, observed_matches)
         self.assertDataFrameEqual(expected_unmatched, observed_unmatched)
         self.assertDataFrameEqual(expected_summary, observed_summary)
@@ -188,13 +176,9 @@ class Tests(unittest.TestCase):
         targets = pl.DataFrame([
             ["S3.1", "sample_1.1", "AAA", 5, 10.0, "Root; old", 10],
             ["S3.1", "sample_2.1", "AAA", 5, 10.0, "Root; old", 10],
+            ["S3.1", "sample_1.1", "CCC", 1, 2.0, "Root; old", 11],
+            ["S3.1", "sample_2.1", "CCC", 1, 2.0, "Root; old", 11],
         ], schema=TARGET_COLUMNS)
-        unbinned = pl.DataFrame([
-            ["S3.1", "sample_1.1", "AAA", 5, 10.0, "Root; old", None],
-            ["S3.1", "sample_2.1", "AAA", 5, 10.0, "Root; old", None],
-            ["S3.1", "sample_1.1", "CCC", 1, 2.0, "Root; old", None],
-            ["S3.1", "sample_2.1", "CCC", 1, 2.0, "Root; old", None],
-        ], schema=APPRAISE_COLUMNS, schema_overrides={"found_in": str})
         binned = pl.DataFrame([
             ["S3.1", "sample_1.1", "BBB", 5, 10.0, "Root; old", "oldgenome_1"],
         ], schema=APPRAISE_COLUMNS)
@@ -216,7 +200,7 @@ class Tests(unittest.TestCase):
         expected_summary = pl.DataFrame([
         ], schema=SUMMARY_COLUMNS)
 
-        observed_matches, observed_unmatched, observed_summary = evaluate(targets, unbinned, binned, clusters, edges, recovered, recovered_bins)
+        observed_matches, observed_unmatched, observed_summary = evaluate(targets, binned, clusters, edges, recovered, recovered_bins)
         self.assertDataFrameEqual(expected_matches, observed_matches)
         self.assertDataFrameEqual(expected_unmatched, observed_unmatched)
         self.assertDataFrameEqual(expected_summary, observed_summary)
@@ -226,10 +210,6 @@ class Tests(unittest.TestCase):
             ["S3.1", "sample_1.1", "AAA", 5, 10.0, "Root; old", 10],
             ["S3.1", "sample_2.1", "AAA", 5, 10.0, "Root; old", 10],
         ], schema=TARGET_COLUMNS)
-        unbinned = pl.DataFrame([
-            ["S3.1", "sample_1.1", "AAA", 5, 10.0, "Root; old", None],
-            ["S3.1", "sample_2.1", "AAA", 5, 10.0, "Root; old", None],
-        ], schema=APPRAISE_COLUMNS, schema_overrides={"found_in": str})
         binned = pl.DataFrame([
             ["S3.1", "sample_3.1", "BBB", 5, 10.0, "Root; old", "oldgenome_1"],
         ], schema=APPRAISE_COLUMNS)
@@ -265,7 +245,7 @@ class Tests(unittest.TestCase):
             ["coassembly_0", "bins", "recovery", 1, 1, 2, 50],
         ], schema=SUMMARY_COLUMNS)
 
-        observed_matches, observed_unmatched, observed_summary = evaluate(targets, unbinned, binned, clusters, edges, recovered, recovered_bins)
+        observed_matches, observed_unmatched, observed_summary = evaluate(targets, binned, clusters, edges, recovered, recovered_bins)
         self.assertDataFrameEqual(expected_matches, observed_matches)
         self.assertDataFrameEqual(expected_unmatched, observed_unmatched)
         self.assertDataFrameEqual(expected_summary, observed_summary)
@@ -275,10 +255,6 @@ class Tests(unittest.TestCase):
             ["S3.1", "sample_1.1", "AAA", 5, 10.0, "Root; old", 10],
             ["S3.1", "sample_2.1", "AAA", 5, 10.0, "Root; old", 10],
         ], schema=TARGET_COLUMNS)
-        unbinned = pl.DataFrame([
-            ["S3.1", "sample_1.1", "AAA", 5, 10.0, "Root; old", None],
-            ["S3.1", "sample_2.1", "AAA", 5, 10.0, "Root; old", None],
-        ], schema=APPRAISE_COLUMNS, schema_overrides={"found_in": str})
         binned = pl.DataFrame([
             ["S3.1", "sample_1.1", "BBB", 5, 10.0, "Root; old", "oldgenome_1"],
             ["S3.1", "sample_2.1", "BBB", 5, 10.0, "Root; old", "oldgenome_1"],
@@ -315,7 +291,7 @@ class Tests(unittest.TestCase):
             ["coassembly_0", "bins", "recovery", 1, 1, 2, 50],
         ], schema=SUMMARY_COLUMNS)
 
-        observed_matches, observed_unmatched, observed_summary = evaluate(targets, unbinned, binned, clusters, edges, recovered, recovered_bins)
+        observed_matches, observed_unmatched, observed_summary = evaluate(targets, binned, clusters, edges, recovered, recovered_bins)
         self.assertDataFrameEqual(expected_matches, observed_matches)
         self.assertDataFrameEqual(expected_unmatched, observed_unmatched)
         self.assertDataFrameEqual(expected_summary, observed_summary)
@@ -326,15 +302,9 @@ class Tests(unittest.TestCase):
             ["S3.1", "sample_2.1", "AAA", 5, 10.0, "Root; old", 10],
             ["S3.1", "sample_1.1", "CCC", 5, 10.0, "Root; old", 11],
             ["S3.1", "sample_3.1", "CCC", 5, 10.0, "Root; old", 11],
+            ["S3.1", "sample_1.1", "EEE", 1, 2.0, "Root; old", 12],
+            ["S3.1", "sample_3.1", "EEE", 1, 2.0, "Root; old", 12],
         ], schema=TARGET_COLUMNS)
-        unbinned = pl.DataFrame([
-            ["S3.1", "sample_1.1", "AAA", 5, 10.0, "Root; old", None],
-            ["S3.1", "sample_2.1", "AAA", 5, 10.0, "Root; old", None],
-            ["S3.1", "sample_1.1", "CCC", 5, 10.0, "Root; old", None],
-            ["S3.1", "sample_3.1", "CCC", 5, 10.0, "Root; old", None],
-            ["S3.1", "sample_1.1", "EEE", 1, 2.0, "Root; old", None],
-            ["S3.1", "sample_3.1", "EEE", 1, 2.0, "Root; old", None],
-        ], schema=APPRAISE_COLUMNS, schema_overrides={"found_in": str})
         binned = pl.DataFrame([
             ["S3.1", "sample_1.1", "BBB", 5, 10.0, "Root; old", "oldgenome_1"],
             ["S3.1", "sample_3.1", "DDD", 5, 10.0, "Root; old", "oldgenome_2"],
@@ -389,7 +359,7 @@ class Tests(unittest.TestCase):
             ["coassembly_1", "bins", "recovery", 1, 1, 2, 50],
         ], schema=SUMMARY_COLUMNS)
 
-        observed_matches, observed_unmatched, observed_summary = evaluate(targets, unbinned, binned, clusters, edges, recovered, recovered_bins)
+        observed_matches, observed_unmatched, observed_summary = evaluate(targets, binned, clusters, edges, recovered, recovered_bins)
         self.assertDataFrameEqual(expected_matches, observed_matches)
         self.assertDataFrameEqual(expected_unmatched, observed_unmatched)
         self.assertDataFrameEqual(expected_summary, observed_summary)
@@ -401,12 +371,6 @@ class Tests(unittest.TestCase):
             ["S3.1", "sample_1.1", "CCC", 5, 10.0, "Root; old", 11],
             ["S3.1", "sample_3.1", "CCC", 5, 10.0, "Root; old", 11],
         ], schema=TARGET_COLUMNS)
-        unbinned = pl.DataFrame([
-            ["S3.1", "sample_1.1", "AAA", 5, 10.0, "Root; old", None],
-            ["S3.1", "sample_2.1", "AAA", 5, 10.0, "Root; old", None],
-            ["S3.1", "sample_1.1", "CCC", 5, 10.0, "Root; old", None],
-            ["S3.1", "sample_3.1", "CCC", 5, 10.0, "Root; old", None],
-        ], schema=APPRAISE_COLUMNS, schema_overrides={"found_in": str})
         binned = pl.DataFrame([
             ["S3.1", "sample_1.1", "BBB", 5, 10.0, "Root; old", "oldgenome_1"],
             ["S3.1", "sample_3.1", "DDD", 5, 10.0, "Root; old", "oldgenome_2"],
@@ -465,7 +429,7 @@ class Tests(unittest.TestCase):
             ["coassembly_1", "bins", "recovery", 1, 1, 2, 50],
         ], schema=SUMMARY_COLUMNS)
 
-        observed_matches, observed_unmatched, observed_summary = evaluate(targets, unbinned, binned, clusters, edges, recovered, recovered_bins)
+        observed_matches, observed_unmatched, observed_summary = evaluate(targets, binned, clusters, edges, recovered, recovered_bins)
         self.assertDataFrameEqual(expected_matches, observed_matches)
         self.assertDataFrameEqual(expected_unmatched, observed_unmatched)
         self.assertDataFrameEqual(expected_summary, observed_summary)
@@ -481,16 +445,6 @@ class Tests(unittest.TestCase):
             ["S3.1", "sample_2.1", "ZZZ", 5, 10.0, "Root; old", 99],
             ["S3.1", "sample_3.1", "ZZZ", 5, 10.0, "Root; old", 99],
         ], schema=TARGET_COLUMNS)
-        unbinned = pl.DataFrame([
-            ["S3.1", "sample_1.1", "AAA", 5, 10.0, "Root; old", None],
-            ["S3.1", "sample_3.1", "AAA", 5, 10.0, "Root; old", None],
-            ["S3.1", "sample_1.1", "CCC", 5, 10.0, "Root; old", None],
-            ["S3.1", "sample_2.1", "CCC", 5, 10.0, "Root; old", None],
-            ["S3.1", "sample_1.1", "YYY", 5, 10.0, "Root; old", None],
-            ["S3.1", "sample_2.1", "YYY", 5, 10.0, "Root; old", None],
-            ["S3.1", "sample_2.1", "ZZZ", 5, 10.0, "Root; old", None],
-            ["S3.1", "sample_3.1", "ZZZ", 5, 10.0, "Root; old", None],
-        ], schema=APPRAISE_COLUMNS, schema_overrides={"found_in": str})
         binned = pl.DataFrame([
             ["S3.1", "sample_3.1", "BBB", 5, 10.0, "Root; old", "oldgenome_1"],
             ["S3.1", "sample_1.1", "DDD", 5, 10.0, "Root; old", "oldgenome_2"],
@@ -551,7 +505,7 @@ class Tests(unittest.TestCase):
             ["coassembly_1", "bins", "recovery", 1, 2, 3, 33.33],
         ], schema=SUMMARY_COLUMNS)
 
-        observed_matches, observed_unmatched, observed_summary = evaluate(targets, unbinned, binned, clusters, edges, recovered, recovered_bins)
+        observed_matches, observed_unmatched, observed_summary = evaluate(targets, binned, clusters, edges, recovered, recovered_bins)
         self.assertDataFrameEqual(expected_matches, observed_matches)
         self.assertDataFrameEqual(expected_unmatched, observed_unmatched)
         self.assertDataFrameEqual(expected_summary, observed_summary)
@@ -560,14 +514,9 @@ class Tests(unittest.TestCase):
         targets = pl.DataFrame([
             ["S3.1", "sample_1.1", "AAA", 5, 10.0, "Root; old", 10],
             ["S3.1", "sample_2.1", "AAA", 5, 10.0, "Root; old", 10],
-            ["S3.1", "sample_3.1", "CCC", 5, 10.0, "Root; old", 11],
+            ["S3.1", "sample_1.1", "CCC", 1, 2.0, "Root; old", 11],
+            ["S3.1", "sample_3.1", "CCC", 1, 2.0, "Root; old", 11],
         ], schema=TARGET_COLUMNS)
-        unbinned = pl.DataFrame([
-            ["S3.1", "sample_1.1", "AAA", 5, 10.0, "Root; old", None],
-            ["S3.1", "sample_2.1", "AAA", 5, 10.0, "Root; old", None],
-            ["S3.1", "sample_1.1", "CCC", 5, 10.0, "Root; old", None],
-            ["S3.1", "sample_3.1", "CCC", 5, 10.0, "Root; old", None],
-        ], schema=APPRAISE_COLUMNS, schema_overrides={"found_in": str})
         binned = pl.DataFrame([
             ["S3.1", "sample_1.1", "BBB", 5, 10.0, "Root; old", "oldgenome_1"],
         ], schema=APPRAISE_COLUMNS)
@@ -601,7 +550,7 @@ class Tests(unittest.TestCase):
             ["coassembly_0", "bins", "recovery", 1, 1, 2, 50],
         ], schema=SUMMARY_COLUMNS)
 
-        observed_matches, observed_unmatched, observed_summary = evaluate(targets, unbinned, binned, clusters, edges, recovered, recovered_bins)
+        observed_matches, observed_unmatched, observed_summary = evaluate(targets, binned, clusters, edges, recovered, recovered_bins)
         self.assertDataFrameEqual(expected_matches, observed_matches)
         self.assertDataFrameEqual(expected_unmatched, observed_unmatched)
         self.assertDataFrameEqual(expected_summary, observed_summary)

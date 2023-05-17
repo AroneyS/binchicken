@@ -26,7 +26,7 @@ SUMMARY_COLUMNS = {
     "match_percent": float,
     }
 
-def evaluate(target_otu_table, unbinned_otu_table, binned_otu_table, elusive_clusters, elusive_edges, recovered_otu_table, recovered_bins):
+def evaluate(target_otu_table, binned_otu_table, elusive_clusters, elusive_edges, recovered_otu_table, recovered_bins):
 
     print(f"Polars using {str(pl.threadpool_size())} threads")
 
@@ -35,7 +35,7 @@ def evaluate(target_otu_table, unbinned_otu_table, binned_otu_table, elusive_clu
         return empty_output, empty_output, pl.DataFrame(schema=SUMMARY_COLUMNS)
 
     # Load otu table of target sequences and get unique id for each sequence (to match sequences to target id)
-    target_otu_table = target_otu_table.select([
+    relevant_target_otu_table = target_otu_table.select([
         "gene", "sequence",
         pl.first("target").over(["gene", "sequence"]).cast(str),
         pl.first("taxonomy").over(["gene", "sequence"]),
@@ -76,7 +76,7 @@ def evaluate(target_otu_table, unbinned_otu_table, binned_otu_table, elusive_clu
     ])
 
     elusive_otu_table = coassembly_edges.join(
-        target_otu_table, on="target", how="left"
+        relevant_target_otu_table, on="target", how="left"
     ).select(
         "gene", "sequence", "coassembly", "taxonomy",
         pl.lit(None).cast(str).alias("found_in"),
@@ -88,7 +88,10 @@ def evaluate(target_otu_table, unbinned_otu_table, binned_otu_table, elusive_clu
     # Add binned otu table to above with target NA
     nontarget_otu_table = pl.concat([
         binned_otu_table,
-        unbinned_otu_table.join(elusive_otu_table, on=["gene", "sequence"], how="anti")
+        target_otu_table
+            .join(elusive_otu_table, on=["gene", "sequence"], how="anti")
+            .drop("target")
+            .with_columns(pl.lit(None).cast(str).alias("found_in"))
     ]).select([
         pl.col("sample").str.replace(r"\.1$", ""),
         "gene", "sequence", "taxonomy", "found_in"
@@ -240,7 +243,6 @@ if __name__ == "__main__":
     import polars as pl
 
     target_path = snakemake.params.target_otu_table
-    unbinned_path = snakemake.params.unbinned_otu_table
     binned_path = snakemake.params.binned_otu_table
     elusive_clusters_path = snakemake.params.elusive_clusters
     elusive_edges_path = snakemake.params.elusive_edges
@@ -251,13 +253,12 @@ if __name__ == "__main__":
     summary_stats_path = snakemake.output.summary_stats
 
     target_otu_table = pl.read_csv(target_path, separator="\t")
-    unbinned_otu_table = pl.read_csv(unbinned_path, separator="\t")
     binned_otu_table = pl.read_csv(binned_path, separator="\t")
     elusive_clusters = pl.read_csv(elusive_clusters_path, separator="\t")
     elusive_edges = pl.read_csv(elusive_edges_path, separator="\t")
     recovered_otu_table = pl.read_csv(recovered_otu_table_path, separator="\t")
 
-    matches, unmatched, summary = evaluate(target_otu_table, unbinned_otu_table, binned_otu_table, elusive_clusters, elusive_edges, recovered_otu_table, recovered_bins)
+    matches, unmatched, summary = evaluate(target_otu_table, binned_otu_table, elusive_clusters, elusive_edges, recovered_otu_table, recovered_bins)
     # Export hits matching elusive targets
     matches.write_csv(matched_hits_path, separator="\t")
     # Export non-elusive sequence hits
