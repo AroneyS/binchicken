@@ -78,12 +78,21 @@ class Tests(unittest.TestCase):
                     ]),
                     "\t".join([
                         "coassembly_0",
-                        "nontarget_sequences",
+                        "nontarget_bin_sequences",
                         "recovery",
                         "1",
                         "2",
                         "3",
                         "33.33",
+                    ]),
+                    "\t".join([
+                        "coassembly_0",
+                        "nontarget_unbin_sequences",
+                        "recovery",
+                        "0",
+                        "3",
+                        "3",
+                        "0.0",
                     ]),
                     "\t".join([
                         "coassembly_0",

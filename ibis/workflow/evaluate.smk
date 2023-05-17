@@ -146,7 +146,7 @@ rule evaluate:
         novel_hits = output_dir + "/evaluate/novel_hits.tsv",
         summary_stats = output_dir + "/evaluate/summary_stats.tsv",
     params:
-        unbinned_otu_table=config["targets"],
+        target_otu_table=config["targets"],
         binned_otu_table=config["binned"],
         elusive_edges=config["elusive_edges"],
         elusive_clusters=config["elusive_clusters"],

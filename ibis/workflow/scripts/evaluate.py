@@ -13,6 +13,7 @@ OUTPUT_COLUMNS={
     "genome": str,
     "target": str,
     "found_in": str,
+    "source_samples": str,
     "taxonomy": str,
     }
 SUMMARY_COLUMNS = {
@@ -25,7 +26,7 @@ SUMMARY_COLUMNS = {
     "match_percent": float,
     }
 
-def evaluate(unbinned_otu_table, binned_otu_table, elusive_clusters, elusive_edges, recovered_otu_table, recovered_bins):
+def evaluate(target_otu_table, binned_otu_table, elusive_clusters, elusive_edges, recovered_otu_table, recovered_bins):
 
     print(f"Polars using {str(pl.threadpool_size())} threads")
 
@@ -33,8 +34,8 @@ def evaluate(unbinned_otu_table, binned_otu_table, elusive_clusters, elusive_edg
         empty_output = pl.DataFrame(schema=OUTPUT_COLUMNS)
         return empty_output, empty_output, pl.DataFrame(schema=SUMMARY_COLUMNS)
 
-    # Load otu table of unbinned sequences and get unique id for each sequence (to match sequences to target id)
-    unbinned_otu_table = unbinned_otu_table.select([
+    # Load otu table of target sequences and get unique id for each sequence (to match sequences to target id)
+    relevant_target_otu_table = target_otu_table.select([
         "gene", "sequence",
         pl.first("target").over(["gene", "sequence"]).cast(str),
         pl.first("taxonomy").over(["gene", "sequence"]),
@@ -46,7 +47,7 @@ def evaluate(unbinned_otu_table, binned_otu_table, elusive_clusters, elusive_edg
         "coassembly"
     ).explode("samples")
 
-    coassembly_edges = elusive_edges.with_columns(
+    elusive_edges = elusive_edges.with_columns(
         pl.col("sample1").str.replace(r"\.1$", ""),
         pl.col("sample2").str.replace(r"\.1$", ""),
     ).join(
@@ -58,29 +59,52 @@ def evaluate(unbinned_otu_table, binned_otu_table, elusive_clusters, elusive_edg
     ).with_columns(
         pl.col("target_ids").str.split(",").alias("target")
     ).explode("target"
-    ).select(["target", "coassembly"]
+    )
+
+    coassembly_edges = elusive_edges.select(["target", "coassembly"]
     ).unique()
 
-    # Create otu table with original sequence, cluster id, target id and associated coassemblies
+    # Create otu table with original sequence, samples present, cluster id, target id and associated coassemblies
+    sample_edges = elusive_edges.melt(
+        id_vars=["coassembly", "target"],
+        value_vars=["sample1", "sample2"],
+        value_name="sample"
+    ).groupby([
+        "coassembly", "target"
+    ]).agg([
+        pl.col("sample").unique().sort().str.concat(",").alias("source_samples")
+    ])
+
     elusive_otu_table = coassembly_edges.join(
-        unbinned_otu_table, on="target", how="left"
+        relevant_target_otu_table, on="target", how="left"
     ).select(
-        "gene", "sequence", "taxonomy",
+        "gene", "sequence", "coassembly", "taxonomy",
         pl.lit(None).cast(str).alias("found_in"),
-        "coassembly", "target",
+        "target",
+    ).join(
+        sample_edges, on=["coassembly", "target"], how="left"
     )
 
     # Add binned otu table to above with target NA
-    nontarget_otu_table = binned_otu_table.select([
+    nontarget_otu_table = pl.concat([
+        binned_otu_table,
+        target_otu_table
+            .join(elusive_otu_table, on=["gene", "sequence"], how="anti")
+            .drop("target")
+            .with_columns(pl.lit(None).cast(str).alias("found_in"))
+    ]).select([
         pl.col("sample").str.replace(r"\.1$", ""),
         "gene", "sequence", "taxonomy", "found_in"
     ]).join(
         sample_coassemblies, left_on="sample", right_on="samples", how="left"
-    ).drop("sample"
     ).drop_nulls("coassembly"
-    ).unique(
-    ).with_columns(
-        pl.lit(None).cast(str).alias("target")
+    ).groupby(["gene", "sequence", "coassembly"]
+    ).agg([
+        pl.first("taxonomy"),
+        pl.first("found_in"),
+        pl.lit(None).cast(str).alias("target"),
+        pl.col("sample").unique().sort().str.concat(",").alias("source_samples")
+    ]).unique(
     )
 
     haystack_otu_table = pl.concat([elusive_otu_table, nontarget_otu_table])
@@ -94,7 +118,7 @@ def evaluate(unbinned_otu_table, binned_otu_table, elusive_clusters, elusive_edg
     combined_otu_table = recovered_otu_table.join(
         haystack_otu_table, on=["coassembly", "gene", "sequence"], how="outer", suffix="old"
     ).select(
-        "coassembly", "gene", "sequence", "genome", "target", "found_in",
+        "coassembly", "gene", "sequence", "genome", "target", "found_in", "source_samples",
         pl.when(pl.col("taxonomy").is_null())
         .then(pl.col("taxonomyold"))
         .otherwise(pl.col("taxonomy"))
@@ -106,11 +130,11 @@ def evaluate(unbinned_otu_table, binned_otu_table, elusive_clusters, elusive_edg
     )
 
     matches = combined_otu_table.filter(
-        ~pl.all(pl.col(["target", "found_in"]).is_null())
+        ~pl.all(pl.col(["target", "found_in", "source_samples"]).is_null())
     )
 
     unmatched = combined_otu_table.filter(
-        (pl.col("target").is_null()) & (pl.col("found_in").is_null())
+        pl.all(pl.col(["target", "found_in", "source_samples"]).is_null())
     )
 
     # Summarise recovery stats
@@ -145,14 +169,26 @@ def summarise_stats(matches, combined_otu_table, recovered_bins):
         ).groupby([
             "coassembly", "status"
         ]).agg(
-            pl.col("sequence").len().alias("nontarget_sequences")
+            pl.col("sequence").len().alias("nontarget_bin_sequences")
         ),
         on=["coassembly", "status"], how="outer"
     ).join(
         # Duplicate sequences are counted multiple times to give a proportion at bin level
         recovered_hits.with_columns(
             pl.when(
-                (pl.col("found_in").is_null()) & (pl.col("target").is_null())
+                pl.all(pl.col(["target", "found_in"]).is_null()) & (pl.col("source_samples").is_not_null())
+            ).then("match").otherwise("nonmatch").alias("status")
+        ).groupby([
+            "coassembly", "status"
+        ]).agg(
+            pl.col("sequence").len().alias("nontarget_unbin_sequences")
+        ),
+        on=["coassembly", "status"], how="outer"
+    ).join(
+        # Duplicate sequences are counted multiple times to give a proportion at bin level
+        recovered_hits.with_columns(
+            pl.when(
+                pl.all(pl.col(["target", "found_in", "source_samples"]).is_null())
             ).then("match").otherwise("nonmatch").alias("status")
         ).groupby([
             "coassembly", "status"
@@ -206,7 +242,7 @@ if __name__ == "__main__":
     os.environ["POLARS_MAX_THREADS"] = str(snakemake.threads)
     import polars as pl
 
-    unbinned_path = snakemake.params.unbinned_otu_table
+    target_path = snakemake.params.target_otu_table
     binned_path = snakemake.params.binned_otu_table
     elusive_clusters_path = snakemake.params.elusive_clusters
     elusive_edges_path = snakemake.params.elusive_edges
@@ -216,13 +252,13 @@ if __name__ == "__main__":
     novel_hits_path = snakemake.output.novel_hits
     summary_stats_path = snakemake.output.summary_stats
 
-    unbinned_otu_table = pl.read_csv(unbinned_path, separator="\t")
+    target_otu_table = pl.read_csv(target_path, separator="\t")
     binned_otu_table = pl.read_csv(binned_path, separator="\t")
     elusive_clusters = pl.read_csv(elusive_clusters_path, separator="\t")
     elusive_edges = pl.read_csv(elusive_edges_path, separator="\t")
     recovered_otu_table = pl.read_csv(recovered_otu_table_path, separator="\t")
 
-    matches, unmatched, summary = evaluate(unbinned_otu_table, binned_otu_table, elusive_clusters, elusive_edges, recovered_otu_table, recovered_bins)
+    matches, unmatched, summary = evaluate(target_otu_table, binned_otu_table, elusive_clusters, elusive_edges, recovered_otu_table, recovered_bins)
     # Export hits matching elusive targets
     matches.write_csv(matched_hits_path, separator="\t")
     # Export non-elusive sequence hits
