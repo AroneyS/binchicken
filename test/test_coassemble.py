@@ -334,6 +334,111 @@ class Tests(unittest.TestCase):
             with open(cluster_path) as f:
                 self.assertEqual(expected, f.read())
 
+    def test_coassemble_query_input_taxa_of_interest(self):
+        with in_tempdir():
+            cmd = (
+                f"ibis coassemble "
+                f"--forward {SAMPLE_READS_FORWARD} "
+                f"--reverse {SAMPLE_READS_REVERSE} "
+                f"--genomes {GENOMES} "
+                f"--genome-transcripts {GENOME_TRANSCRIPTS} "
+                f"--sample-query {SAMPLE_QUERY} "
+                f"--sample-singlem {SAMPLE_QUERY_SINGLEM} "
+                f"--sample-read-size {SAMPLE_READ_SIZE} "
+                f"--taxa-of-interest \"p__Actinobacteriota\" "
+                f"--output test "
+                f"--conda-prefix {path_to_conda} "
+                f"--snakemake-args \"cluster_graph\" "
+            )
+            extern.run(cmd)
+
+            config_path = os.path.join("test", "config.yaml")
+            self.assertTrue(os.path.exists(config_path))
+
+            binned_path = os.path.join("test", "coassemble", "appraise", "binned.otu_table.tsv")
+            self.assertTrue(os.path.exists(binned_path))
+            expected = "\n".join(
+                [
+                    "\t".join(["gene", "sample", "sequence", "num_hits", "coverage", "taxonomy", "found_in"]),
+                    ""
+                ]
+            )
+            with open(binned_path) as f:
+                self.assertEqual(expected, f.read())
+
+            unbinned_path = os.path.join("test", "coassemble", "appraise", "unbinned.otu_table.tsv")
+            self.assertTrue(os.path.exists(unbinned_path))
+            expected = "\n".join(
+                [
+                    "\t".join([
+                        "gene",
+                        "sample",
+                        "sequence",
+                        "num_hits",
+                        "coverage",
+                        "taxonomy",
+                        "found_in",
+                    ]),
+                    "\t".join([
+                        "S3.7.ribosomal_protein_S7",
+                        "sample_1",
+                        "TACCAGGTCCCGGTCGAGGTCCGTCCGATCCGCCAGACGACGCTCGCCCTGCGCTGGCTC",
+                        "5",
+                        "8.21",
+                        "Root; d__Bacteria; p__Actinobacteriota; c__Actinomycetia; o__Mycobacteriales; f__Mycobacteriaceae; g__Nocardia; s__Nocardia grenadensis",
+                        "",
+                    ]),
+                    "\t".join([
+                        "S3.7.ribosomal_protein_S7",
+                        "sample_1",
+                        "TATCAGGTGCCTATTGAGGTAAGACCTGAAAGAAGACAGACTTTAGCGCTTCGCTGGATA",
+                        "1",
+                        "1.64",
+                        "Root; d__Bacteria; p__Actinobacteriota; c__Actinomycetia; o__Mycobacteriales; f__Mycobacteriaceae; g__Nocardia; s__Nocardia grenadensis2",
+                        "",
+                    ]),
+                    "\t".join([
+                        "S3.7.ribosomal_protein_S7",
+                        "sample_1",
+                        "TATCAGGTGCCTATTGAGGTAAGACCTGAAAGAAGACAGACTTTAGCGCTTCGCTGGATC",
+                        "5",
+                        "8.21",
+                        "Root; d__Bacteria; p__Actinobacteriota; c__Actinomycetia; o__Mycobacteriales; f__Mycobacteriaceae; g__Nocardia; s__Nocardia grenadensis3",
+                        "",
+                    ]),
+                    "\t".join([
+                        "S3.7.ribosomal_protein_S7",
+                        "sample_2",
+                        "TACCAGGTCCCGGTCGAGGTCCGTCCGATCCGCCAGACGACGCTCGCCCTGCGCTGGCTC",
+                        "3",
+                        "4.92",
+                        "Root; d__Bacteria; p__Actinobacteriota; c__Actinomycetia; o__Mycobacteriales; f__Mycobacteriaceae; g__Nocardia; s__Nocardia grenadensis",
+                        "",
+                    ]),
+                    "\t".join([
+                        "S3.7.ribosomal_protein_S7",
+                        "sample_3",
+                        "TATCAGGTGCCTATTGAGGTAAGACCTGAAAGAAGACAGACTTTAGCGCTTCGCTGGATA",
+                        "6",
+                        "9.85",
+                        "Root; d__Bacteria; p__Actinobacteriota; c__Actinomycetia; o__Mycobacteriales; f__Mycobacteriaceae; g__Nocardia; s__Nocardia grenadensis2",
+                        "",
+                    ]),
+                    ""
+                ]
+            )
+            with open(unbinned_path) as f:
+                self.assertEqual(expected, f.read())
+
+            edges_path = os.path.join("test", "coassemble", "target", "targets.tsv")
+            self.assertTrue(os.path.exists(edges_path))
+
+            edges_path = os.path.join("test", "coassemble", "target", "elusive_edges.tsv")
+            self.assertTrue(os.path.exists(edges_path))
+
+            cluster_path = os.path.join("test", "coassemble", "target", "elusive_clusters.tsv")
+            self.assertTrue(os.path.exists(cluster_path))
+
     def test_coassemble_single_assembly(self):
         with in_tempdir():
             cmd = (
