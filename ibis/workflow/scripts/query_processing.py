@@ -20,11 +20,18 @@ def processing(
     query_read,
     pipe_read,
     SEQUENCE_IDENTITY=0.86,
-    WINDOW_SIZE=60):
+    WINDOW_SIZE=60,
+    TAXA_OF_INTEREST=None):
 
     if len(query_read) == 0:
         empty_output = pl.DataFrame(schema=OUTPUT_COLUMNS)
         return empty_output, empty_output
+
+    # Filter TAXA_OF_INTEREST
+    if TAXA_OF_INTEREST:
+        pipe_read = pipe_read.filter(
+            pl.col("taxonomy").str.contains(TAXA_OF_INTEREST, literal=True)
+        )
 
     appraised = query_read.rename(
         # Rename to match appraise output
@@ -64,7 +71,8 @@ def pipeline(
     query_reads,
     pipe_reads,
     SEQUENCE_IDENTITY=0.86,
-    WINDOW_SIZE=60):
+    WINDOW_SIZE=60,
+    TAXA_OF_INTEREST=None):
 
     print(f"Polars using {str(pl.threadpool_size())} threads")
 
@@ -73,7 +81,8 @@ def pipeline(
             pl.read_csv(query, separator="\t"),
             pl.read_csv(pipe, separator="\t"),
             SEQUENCE_IDENTITY,
-            WINDOW_SIZE)
+            WINDOW_SIZE,
+            TAXA_OF_INTEREST)
         yield binned, unbinned
 
 if __name__ == "__main__":
@@ -82,6 +91,7 @@ if __name__ == "__main__":
 
     SEQUENCE_IDENTITY = snakemake.params.sequence_identity
     WINDOW_SIZE = snakemake.params.window_size
+    TAXA_OF_INTEREST = snakemake.params.taxa_of_interest
     query_reads = snakemake.input.query_reads
     pipe_reads = snakemake.input.pipe_reads
     binned_path = snakemake.output.binned
@@ -91,7 +101,8 @@ if __name__ == "__main__":
         query_reads,
         pipe_reads,
         SEQUENCE_IDENTITY=SEQUENCE_IDENTITY,
-        WINDOW_SIZE=WINDOW_SIZE
+        WINDOW_SIZE=WINDOW_SIZE,
+        TAXA_OF_INTEREST=TAXA_OF_INTEREST
         )
 
     with open(binned_path, "ab") as binned_file, open(unbinned_path, "ab") as unbinned_file:
