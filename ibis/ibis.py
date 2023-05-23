@@ -365,7 +365,7 @@ def evaluate(args):
         snakemake_args = args.snakemake_args,
     )
 
-def unmap(args):
+def update(args):
     logging.info("Loading Ibis coassemble info")
     if args.coassemble_output:
         args.elusive_clusters = os.path.join(args.coassemble_output, "target", "elusive_clusters.tsv")
@@ -492,10 +492,10 @@ def main():
                     "ibis evaluate --coassemble-output coassemble_dir --aviary-outputs coassembly_0_dir ..."
                 ),
             ],
-            "unmap": [
+            "update": [
                 btu.Example(
                     "generate unmapped reads and commands for completed coassembly",
-                    "ibis unmap --coassemble-output coassemble_dir --forward reads_1.1.fq ... --reverse reads_1.2.fq ... --genomes genome_1.fna ..."
+                    "ibis update --coassemble-output coassemble_dir --forward reads_1.1.fq ... --reverse reads_1.2.fq ... --genomes genome_1.fna ..."
                 ),
             ],
             "iterate": [
@@ -602,24 +602,24 @@ def main():
 
     ###########################################################################
 
-    unmap_parser = main_parser.new_subparser("unmap", "Coassemble pre-clustered reads")
+    update_parser = main_parser.new_subparser("update", "Coassemble pre-clustered reads")
     # Base arguments
-    unmap_base = unmap_parser.add_argument_group("Input arguments")
-    add_base_arguments(unmap_base)
-    unmap_base.add_argument("--sra", action="store_true", help="Download reads from SRA (read argument still required)")
+    update_base = update_parser.add_argument_group("Input arguments")
+    add_base_arguments(update_base)
+    update_base.add_argument("--sra", action="store_true", help="Download reads from SRA (read argument still required)")
     # Coassembly options
-    unmap_coassembly = unmap_parser.add_argument_group("Coassembly options")
-    unmap_coassembly.add_argument("--coassemble-output", help="Output dir from cluster subcommand")
-    unmap_coassembly.add_argument("--appraise-binned", help="SingleM appraise binned output from Ibis coassemble (alternative to --coassemble-output)")
-    unmap_coassembly.add_argument("--appraise-unbinned", help="SingleM appraise unbinned output from Ibis coassemble (alternative to --coassemble-output)")
-    unmap_coassembly.add_argument("--elusive-clusters", help="Elusive clusters output from Ibis coassemble (alternative to --coassemble-output)")
-    unmap_coassembly.add_argument("--coassemblies", nargs='+', help="Choose specific coassemblies from elusive clusters (e.g. coassembly_0)")
-    unmap_coassembly.add_argument("--unmapping-min-appraised", type=float, help="Minimum fraction of sequences binned to justify unmapping [default: 0.1]", default=0.1)
-    unmap_coassembly.add_argument("--unmapping-max-identity", type=float, help="Maximum sequence identity of mapped sequences kept for coassembly [default: 95%]", default=95)
-    add_aviary_options(unmap_coassembly)
+    update_coassembly = update_parser.add_argument_group("Coassembly options")
+    update_coassembly.add_argument("--coassemble-output", help="Output dir from cluster subcommand")
+    update_coassembly.add_argument("--appraise-binned", help="SingleM appraise binned output from Ibis coassemble (alternative to --coassemble-output)")
+    update_coassembly.add_argument("--appraise-unbinned", help="SingleM appraise unbinned output from Ibis coassemble (alternative to --coassemble-output)")
+    update_coassembly.add_argument("--elusive-clusters", help="Elusive clusters output from Ibis coassemble (alternative to --coassemble-output)")
+    update_coassembly.add_argument("--coassemblies", nargs='+', help="Choose specific coassemblies from elusive clusters (e.g. coassembly_0)")
+    update_coassembly.add_argument("--unmapping-min-appraised", type=float, help="Minimum fraction of sequences binned to justify unmapping [default: 0.1]", default=0.1)
+    update_coassembly.add_argument("--unmapping-max-identity", type=float, help="Maximum sequence identity of mapped sequences kept for coassembly [default: 95%]", default=95)
+    add_aviary_options(update_coassembly)
     # General options
-    unmap_general = unmap_parser.add_argument_group("General options")
-    add_general_snakemake_options(unmap_general)
+    update_general = update_parser.add_argument_group("General options")
+    add_general_snakemake_options(update_general)
 
     ###########################################################################
 
@@ -686,13 +686,13 @@ def main():
             raise Exception("Reference genomes must be provided to cluster with new genomes")
         evaluate(args)
 
-    elif args.subparser_name == "unmap":
+    elif args.subparser_name == "update":
         base_argument_verification(args)
         if not args.coassemble_output and not (args.appraise_binned and args.appraise_unbinned and args.elusive_clusters):
             raise Exception("Either Ibis coassemble output (--coassemble-output) or specific input files (--appraise-binned and --elusive-clusters) must be provided")
         if args.run_aviary and not args.aviary_conda:
             raise Exception("Run Aviary (--run-aviary) requires pre-build conda env path to be provided (--aviary-conda)")
-        unmap(args)
+        update(args)
 
     elif args.subparser_name == "iterate":
         if args.sample_query or args.sample_query_list or args.sample_query_dir:

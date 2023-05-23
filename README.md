@@ -68,11 +68,11 @@ Compares the recovery by phyla and by single-copy marker gene.
 ibis evaluate --coassemble-output coassemble_dir --aviary-outputs coassembly_0_dir ...
 ```
 
-## Ibis unmap
+## Ibis update
 
 Applies unmapping to a previous Ibis coassemble run, generating unmapped reads files and Aviary commands.
 
 ```bash
 # Example: generate unmapped reads and commands for completed coassembly
-ibis unmap --coassemble-output coassemble_dir --forward reads_1.1.fq ... --reverse reads_1.2.fq ... --genomes genome_1.fna ...
+ibis update --coassemble-output coassemble_dir --forward reads_1.1.fq ... --reverse reads_1.2.fq ... --genomes genome_1.fna ...
 ```

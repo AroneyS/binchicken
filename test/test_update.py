@@ -33,10 +33,10 @@ ELUSIVE_CLUSTERS_TWO = os.path.join(MOCK_COASSEMBLE, 'target', 'elusive_clusters
 
 
 class Tests(unittest.TestCase):
-    def test_unmap(self):
+    def test_update(self):
         with in_tempdir():
             cmd = (
-                f"ibis unmap "
+                f"ibis update "
                 f"--coassemble-output {MOCK_COASSEMBLE} "
                 f"--forward {SAMPLE_READS_FORWARD} "
                 f"--reverse {SAMPLE_READS_REVERSE} "
@@ -113,10 +113,10 @@ class Tests(unittest.TestCase):
             with open(recover_path) as f:
                 self.assertEqual(expected, f.read())
 
-    def test_unmap_specified_files(self):
+    def test_update_specified_files(self):
         with in_tempdir():
             cmd = (
-                f"ibis unmap "
+                f"ibis update "
                 f"--forward {SAMPLE_READS_FORWARD} "
                 f"--reverse {SAMPLE_READS_REVERSE} "
                 f"--genomes {GENOMES} "
@@ -145,10 +145,10 @@ class Tests(unittest.TestCase):
             self.assertTrue("finish_mapping" in output)
             self.assertTrue("aviary_commands" in output)
 
-    def test_unmap_read_identity(self):
+    def test_update_read_identity(self):
         with in_tempdir():
             cmd = (
-                f"ibis unmap "
+                f"ibis update "
                 f"--unmapping-max-identity 99 "
                 f"--coassemble-output {MOCK_COASSEMBLE} "
                 f"--forward {SAMPLE_READS_FORWARD} "
@@ -178,10 +178,10 @@ class Tests(unittest.TestCase):
                 self.assertTrue("@A00178:112:HMNM5DSXX:4:1622:16405:19194" in file)
                 self.assertTrue("@A00178:118:HTHTVDSXX:1:1249:16740:14105" in file)
 
-    def test_unmap_sra_download(self):
+    def test_update_sra_download(self):
         with in_tempdir():
             cmd = (
-                f"ibis unmap "
+                f"ibis update "
                 f"--forward SRR8334323 SRR8334324 "
                 f"--sra "
                 f"--genomes {GENOMES} "
@@ -214,10 +214,10 @@ class Tests(unittest.TestCase):
             self.assertTrue("aviary_commands" in output)
 
     @unittest.skip("Downloads SRA data using Kingfisher. Test manually")
-    def test_unmap_sra_download_real(self):
+    def test_update_sra_download_real(self):
         with in_tempdir():
             cmd = (
-                f"ibis unmap "
+                f"ibis update "
                 f"--forward SRR8334323 SRR8334324 "
                 f"--sra "
                 f"--genomes {GENOMES} "
@@ -243,10 +243,10 @@ class Tests(unittest.TestCase):
             self.assertTrue(os.path.exists(os.path.join("test", "coassemble", "sra", "SRR8334324_1.fastq.gz")))
             self.assertTrue(os.path.exists(os.path.join("test", "coassemble", "sra", "SRR8334324_2.fastq.gz")))
 
-    def test_unmap_aviary_run(self):
+    def test_update_aviary_run(self):
         with in_tempdir():
             cmd = (
-                f"ibis unmap "
+                f"ibis update "
                 f"--forward SRR8334323 SRR8334324 "
                 f"--sra "
                 f"--run-aviary "
@@ -286,10 +286,10 @@ class Tests(unittest.TestCase):
             self.assertTrue("aviary_combine" in output)
 
     @unittest.skip("Downloads SRA data using Kingfisher and runs Aviary. Test manually")
-    def test_unmap_aviary_run_real(self):
+    def test_update_aviary_run_real(self):
         with in_tempdir():
             cmd = (
-                f"ibis unmap "
+                f"ibis update "
                 f"--forward SRR8334323 SRR8334324 "
                 f"--sra "
                 f"--run-aviary "
@@ -325,10 +325,10 @@ class Tests(unittest.TestCase):
 
             self.assertTrue(os.path.exists(os.path.join("test", "coassemble", "coassemble", "coassembly_0", "recover", "bins", "checkm_minimal.tsv")))
 
-    def test_unmap_specific_coassembly(self):
+    def test_update_specific_coassembly(self):
         with in_tempdir():
             cmd = (
-                f"ibis unmap "
+                f"ibis update "
                 f"--forward {SAMPLE_READS_FORWARD} "
                 f"--reverse {SAMPLE_READS_REVERSE} "
                 f"--genomes {GENOMES} "
@@ -354,10 +354,10 @@ class Tests(unittest.TestCase):
             self.assertFalse(os.path.exists(os.path.join("test", "coassemble", "mapping", "sample_4_unmapped.2.fq.gz")))
 
     @unittest.skip("Downloads SRA data using Kingfisher. Test manually")
-    def test_unmap_specific_coassembly_sra(self):
+    def test_update_specific_coassembly_sra(self):
         with in_tempdir():
             cmd = (
-                f"ibis unmap "
+                f"ibis update "
                 f"--forward SRR8334323 SRR8334324 "
                 f"--sra "
                 f"--genomes {GENOMES} "

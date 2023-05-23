@@ -159,7 +159,7 @@ summary_table <- coassemble_summary %>%
         coassembly = "coassembly",
         length = "samples",
         total_size = "size",
-        unmapped_size = "unmap",
+        unmapped_size = "update",
         bins = "target bins",
         sequences = "targets",
         nontarget_unbin_sequences = "non-targets",
