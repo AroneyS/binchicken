@@ -36,6 +36,9 @@ Aviary assemble/recover commands are generated based on proposed coassemblies.
 Optionally, reads can be mapped to the matched bins with only unmapped reads being assembled.
 
 ```bash
+# Example: cluster reads into proposed coassemblies
+ibis coassemble --forward reads_1.1.fq ... --reverse reads_1.2.fq ... --no-genomes
+
 # Example: cluster reads into proposed coassemblies based on unbinned sequences
 ibis coassemble --forward reads_1.1.fq ... --reverse reads_1.2.fq ... --genomes genome_1.fna ...
 
@@ -49,15 +52,6 @@ ibis coassemble --forward reads_1.1.fq ... --reverse reads_1.2.fq ... --genomes 
 ibis coassemble --forward reads_1.1.fq ... --reverse reads_1.2.fq ... --single-assembly
 ```
 
-## Ibis iterate
-
-Run a further iteration of coassemble, including newly recovered bins.
-
-```bash
-# Example: rerun coassemble, adding new bins to database
-ibis iterate --aviary-outputs coassembly_0_dir ... --forward reads_1.1.fq ... --reverse reads_1.2.fq ... --genomes genome_1.fna ...
-```
-
 ## Ibis evaluate
 
 Evaluates the recovery of target genes by coassemblies suggested by above, finding the number of target genes present in the newly recovered genomes.
@@ -68,11 +62,26 @@ Compares the recovery by phyla and by single-copy marker gene.
 ibis evaluate --coassemble-output coassemble_dir --aviary-outputs coassembly_0_dir ...
 ```
 
-## Ibis update
+## Ibis iterate
 
-Applies unmapping to a previous Ibis coassemble run, generating unmapped reads files and Aviary commands.
+Run a further iteration of coassemble, including newly recovered bins.
 
 ```bash
-# Example: generate unmapped reads and commands for completed coassembly
-ibis update --coassemble-output coassemble_dir --forward reads_1.1.fq ... --reverse reads_1.2.fq ... --genomes genome_1.fna ...
+# Example: rerun coassemble, adding new bins to database
+ibis iterate --aviary-outputs coassembly_0_dir ... --forward reads_1.1.fq ... --reverse reads_1.2.fq ... --genomes genome_1.fna ...
+```
+
+## Ibis update
+
+Applies further processing to a previous Ibis coassemble run: downloading SRA reads, generating unmapped reads files, and/or running Aviary commands.
+
+```bash
+# Example: update previous run to download SRA reads
+ibis update --sra --coassemble-output coassemble_dir --forward SRA000001 ... --reverse SRA000001 ... --genomes genome_1.fna ...
+
+# Example: update previous run to perform unmapping
+ibis update --assemble-unmapped --coassemble-output coassemble_dir --forward reads_1.1.fq ... --reverse reads_1.2.fq ... --genomes genome_1.fna ...
+
+# Example: update previous run to run specific coassemblies
+ibis update --run-aviary --coassemblies coassembly_0 ... --coassemble-output coassemble_dir --forward reads_1.1.fq ... --reverse reads_1.2.fq ... --genomes genome_1.fna ...
 ```

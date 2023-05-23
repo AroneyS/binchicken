@@ -493,8 +493,16 @@ def main():
             ],
             "update": [
                 btu.Example(
-                    "update previous run to perform unmapping, download SRA reads, and/or run specific coassembly",
-                    "ibis update --assemble-unmapped --sra --run-aviary --coassemblies coassembly_0 --coassemble-output coassemble_dir --forward reads_1.1.fq ... --reverse reads_1.2.fq ... --genomes genome_1.fna ..."
+                    "update previous run to download SRA reads",
+                    "ibis update --sra --coassemble-output coassemble_dir --forward SRA000001 ... --reverse SRA000001 ... --genomes genome_1.fna ..."
+                ),
+                btu.Example(
+                    "update previous run to perform unmapping",
+                    "ibis update --assemble-unmapped --coassemble-output coassemble_dir --forward reads_1.1.fq ... --reverse reads_1.2.fq ... --genomes genome_1.fna ..."
+                ),
+                btu.Example(
+                    "update previous run to run specific coassemblies",
+                    "ibis update --run-aviary --coassemblies coassembly_0 ... --coassemble-output coassemble_dir --forward reads_1.1.fq ... --reverse reads_1.2.fq ... --genomes genome_1.fna ..."
                 ),
             ],
             "iterate": [
