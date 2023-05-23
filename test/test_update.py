@@ -37,6 +37,7 @@ class Tests(unittest.TestCase):
         with in_tempdir():
             cmd = (
                 f"ibis update "
+                f"--assemble-unmapped "
                 f"--coassemble-output {MOCK_COASSEMBLE} "
                 f"--forward {SAMPLE_READS_FORWARD} "
                 f"--reverse {SAMPLE_READS_REVERSE} "
@@ -117,6 +118,7 @@ class Tests(unittest.TestCase):
         with in_tempdir():
             cmd = (
                 f"ibis update "
+                f"--assemble-unmapped "
                 f"--forward {SAMPLE_READS_FORWARD} "
                 f"--reverse {SAMPLE_READS_REVERSE} "
                 f"--genomes {GENOMES} "
@@ -149,6 +151,7 @@ class Tests(unittest.TestCase):
         with in_tempdir():
             cmd = (
                 f"ibis update "
+                f"--assemble-unmapped "
                 f"--unmapping-max-identity 99 "
                 f"--coassemble-output {MOCK_COASSEMBLE} "
                 f"--forward {SAMPLE_READS_FORWARD} "
@@ -182,6 +185,7 @@ class Tests(unittest.TestCase):
         with in_tempdir():
             cmd = (
                 f"ibis update "
+                f"--assemble-unmapped "
                 f"--forward SRR8334323 SRR8334324 "
                 f"--sra "
                 f"--genomes {GENOMES} "
@@ -218,6 +222,7 @@ class Tests(unittest.TestCase):
         with in_tempdir():
             cmd = (
                 f"ibis update "
+                f"--assemble-unmapped "
                 f"--forward SRR8334323 SRR8334324 "
                 f"--sra "
                 f"--genomes {GENOMES} "
@@ -247,6 +252,7 @@ class Tests(unittest.TestCase):
         with in_tempdir():
             cmd = (
                 f"ibis update "
+                f"--assemble-unmapped "
                 f"--forward SRR8334323 SRR8334324 "
                 f"--sra "
                 f"--run-aviary "
@@ -290,6 +296,7 @@ class Tests(unittest.TestCase):
         with in_tempdir():
             cmd = (
                 f"ibis update "
+                f"--assemble-unmapped "
                 f"--forward SRR8334323 SRR8334324 "
                 f"--sra "
                 f"--run-aviary "
@@ -329,6 +336,7 @@ class Tests(unittest.TestCase):
         with in_tempdir():
             cmd = (
                 f"ibis update "
+                f"--assemble-unmapped "
                 f"--forward {SAMPLE_READS_FORWARD} "
                 f"--reverse {SAMPLE_READS_REVERSE} "
                 f"--genomes {GENOMES} "
@@ -358,6 +366,7 @@ class Tests(unittest.TestCase):
         with in_tempdir():
             cmd = (
                 f"ibis update "
+                f"--assemble-unmapped "
                 f"--forward SRR8334323 SRR8334324 "
                 f"--sra "
                 f"--genomes {GENOMES} "

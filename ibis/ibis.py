@@ -156,7 +156,6 @@ def set_standard_args(args):
     args.max_coassembly_size = None
     args.max_recovery_samples = 1
     args.prodigal_meta = False
-    args.assemble_unmapped = True
 
     return(args)
 
@@ -494,8 +493,8 @@ def main():
             ],
             "update": [
                 btu.Example(
-                    "generate unmapped reads and commands for completed coassembly",
-                    "ibis update --coassemble-output coassemble_dir --forward reads_1.1.fq ... --reverse reads_1.2.fq ... --genomes genome_1.fna ..."
+                    "update previous run to perform unmapping, download SRA reads, and/or run coassembly",
+                    "ibis update --assemble-unmapped --sra --run-aviary --coassemble-output coassemble_dir --forward reads_1.1.fq ... --reverse reads_1.2.fq ... --genomes genome_1.fna ..."
                 ),
             ],
             "iterate": [
@@ -614,6 +613,7 @@ def main():
     update_coassembly.add_argument("--appraise-unbinned", help="SingleM appraise unbinned output from Ibis coassemble (alternative to --coassemble-output)")
     update_coassembly.add_argument("--elusive-clusters", help="Elusive clusters output from Ibis coassemble (alternative to --coassemble-output)")
     update_coassembly.add_argument("--coassemblies", nargs='+', help="Choose specific coassemblies from elusive clusters (e.g. coassembly_0)")
+    update_coassembly.add_argument("--assemble-unmapped", action="store_true", help="Only assemble reads that do not map to reference genomes")
     update_coassembly.add_argument("--unmapping-min-appraised", type=float, help="Minimum fraction of sequences binned to justify unmapping [default: 0.1]", default=0.1)
     update_coassembly.add_argument("--unmapping-max-identity", type=float, help="Maximum sequence identity of mapped sequences kept for coassembly [default: 95%]", default=95)
     add_aviary_options(update_coassembly)
