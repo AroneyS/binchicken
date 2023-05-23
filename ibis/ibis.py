@@ -292,9 +292,11 @@ def coassemble(args):
         "unmapping_min_appraised": args.unmapping_min_appraised,
         "unmapping_max_identity": args.unmapping_max_identity,
         "run_aviary": args.run_aviary,
-        "aviary_conda": args.aviary_conda,
+        "aviary_gtdbtk": args.aviary_gtdbtk_dir,
+        "aviary_checkm2": args.aviary_checkm2_dir,
         "aviary_threads": args.aviary_cores,
         "aviary_memory": args.aviary_memory,
+        "conda_prefix": args.conda_prefix,
     }
 
     config_path = make_config(
@@ -536,8 +538,9 @@ def main():
         argument_group.add_argument("--max-contamination", type=int, help="Include bins with at most this maximum contamination [default: 10]", default=10)
 
     def add_aviary_options(argument_group):
-        argument_group.add_argument("--run-aviary", action="store_true", help="Run Aviary commands for all identified coassemblies")
-        argument_group.add_argument("--aviary-conda", help="Pre-built Aviary conda env path")
+        argument_group.add_argument("--run-aviary", action="store_true", help="Run Aviary commands for all identified coassemblies (unless specified)")
+        argument_group.add_argument("--aviary-gtdbtk-dir", help="Path to GTDB-Tk database directory for Aviary")
+        argument_group.add_argument("--aviary-checkm2-dir", help="Path to CheckM2 database directory for Aviary")
         argument_group.add_argument("--aviary-cores", type=int, help="Maximum number of cores for Aviary to use", default=16)
         argument_group.add_argument("--aviary-memory", type=int, help="Maximum amount of memory for Aviary to use (Gigabytes)", default=250)
 
@@ -680,8 +683,8 @@ def main():
         else:
             if args.num_coassembly_samples > args.max_recovery_samples:
                 raise Exception("Max recovery samples (--max-recovery-samples) must be greater than or equal to number of coassembly samples (--num-coassembly-samples)")
-        if args.run_aviary and not args.aviary_conda:
-            raise Exception("Run Aviary (--run-aviary) requires pre-build conda env path to be provided (--aviary-conda)")
+        if args.run_aviary and not (args.aviary_gtdbtk_dir and args.aviary_checkm2_dir):
+            raise Exception("Run Aviary (--run-aviary) requires paths to GTDB-Tk and CheckM2 databases to be provided (--aviary-gtdbtk-dir and --aviary-checkm2-dir)")
 
     if args.subparser_name == "coassemble":
         coassemble_argument_verification(args)
@@ -698,8 +701,8 @@ def main():
         base_argument_verification(args)
         if not args.coassemble_output and not (args.appraise_binned and args.appraise_unbinned and args.elusive_clusters):
             raise Exception("Either Ibis coassemble output (--coassemble-output) or specific input files (--appraise-binned and --elusive-clusters) must be provided")
-        if args.run_aviary and not args.aviary_conda:
-            raise Exception("Run Aviary (--run-aviary) requires pre-build conda env path to be provided (--aviary-conda)")
+        if args.run_aviary and not (args.aviary_gtdbtk_dir and args.aviary_checkm2_dir):
+            raise Exception("Run Aviary (--run-aviary) requires paths to GTDB-Tk and CheckM2 databases to be provided (--aviary-gtdbtk-dir and --aviary-checkm2-dir)")
         update(args)
 
     elif args.subparser_name == "iterate":

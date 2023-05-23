@@ -445,7 +445,7 @@ rule aviary_assemble:
     log:
         logs_dir + "/aviary/{coassembly}_assemble.log"
     conda:
-        config["aviary_conda"]
+        "env/aviary.yml"
     shell:
         "aviary assemble "
         "-1 {params.reads_1} "
@@ -467,13 +467,19 @@ rule aviary_recover:
         reads_2 = lambda wildcards: get_reads_coassembly(wildcards, forward=False, recover=True),
         memory=config["aviary_memory"],
         skip_binners = "--skip-binners rosella semibin metabat1 vamb concoct maxbin2 maxbin" if config["test"] else "",
+        gtdbtk=config["aviary_gtdbtk"],
+        checkm2=config["aviary_checkm2"],
+        conda_prefix = config["conda_prefix"] if config["conda_prefix"] else ".",
     threads:
         config["aviary_threads"]
     log:
         logs_dir + "/aviary/{coassembly}_recover.log"
     conda:
-        config["aviary_conda"]
+        "env/aviary.yml"
     shell:
+        "GTDBTK_DATA_PATH={params.gtdbtk} "
+        "CHECKM2DB={params.checkm2} "
+        "CONDA_ENV_PATH={params.conda_prefix} "
         "aviary recover "
         "--assembly {input.assembly} "
         "-1 {params.reads_1} "
