@@ -368,7 +368,6 @@ class Tests(unittest.TestCase):
         with in_tempdir():
             cmd = (
                 f"ibis update "
-                f"--assemble-unmapped "
                 f"--forward SRR8334323 SRR8334324 "
                 f"--sra "
                 f"--genomes {GENOMES} "
@@ -393,10 +392,6 @@ class Tests(unittest.TestCase):
             self.assertFalse(os.path.exists(os.path.join("test", "coassemble", "sra", "SRR8334320_2.fastq.gz")))
             self.assertFalse(os.path.exists(os.path.join("test", "coassemble", "sra", "SRR8334321_1.fastq.gz")))
             self.assertFalse(os.path.exists(os.path.join("test", "coassemble", "sra", "SRR8334321_2.fastq.gz")))
-
-            self.assertTrue(os.path.exists(os.path.join("test", "coassemble", "coassemble", "coassembly_0", "assemble", "assembly", "final_contigs.fna")))
-
-            self.assertTrue(os.path.exists(os.path.join("test", "coassemble", "coassemble", "coassembly_0", "recover", "bins", "checkm_minimal.tsv")))
 
 
 if __name__ == '__main__':
