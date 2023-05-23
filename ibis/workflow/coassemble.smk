@@ -440,6 +440,7 @@ rule aviary_assemble:
         reads_1 = lambda wildcards: get_reads_coassembly(wildcards),
         reads_2 = lambda wildcards: get_reads_coassembly(wildcards, forward=False),
         memory=config["aviary_memory"],
+        conda_prefix = config["conda_prefix"] if config["conda_prefix"] else ".",
     threads:
         threads=config["aviary_threads"]
     log:
@@ -447,6 +448,10 @@ rule aviary_assemble:
     conda:
         "env/aviary.yml"
     shell:
+        "GTDBTK_DATA_PATH=. "
+        "CHECKM2DB=. "
+        "EGGNOG_DATA_DIR=. "
+        "CONDA_ENV_PATH={params.conda_prefix} "
         "aviary assemble "
         "-1 {params.reads_1} "
         "-2 {params.reads_2} "
@@ -479,6 +484,7 @@ rule aviary_recover:
     shell:
         "GTDBTK_DATA_PATH={params.gtdbtk} "
         "CHECKM2DB={params.checkm2} "
+        "EGGNOG_DATA_DIR=. "
         "CONDA_ENV_PATH={params.conda_prefix} "
         "aviary recover "
         "--assembly {input.assembly} "
