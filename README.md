@@ -1,6 +1,6 @@
 # Ibis
 
-![Ibis logo](ibis_logo.png)
+[<img src="ibis_logo.png" width="50%" />](ibis_logo.png)
 
 Ibis (bin chicken) - targeted recovery of low abundance genomes through intelligent coassembly.
 
