@@ -22,4 +22,5 @@ aviary_checkm2: ""
 aviary_memory: 1
 aviary_threads: 1
 test: false
+aviary_dryrun: false
 conda_prefix: false

@@ -5,6 +5,7 @@ import os
 import gzip
 from bird_tool_utils import in_tempdir
 import extern
+from snakemake.io import load_configfile
 
 path_to_data = os.path.join(os.path.dirname(os.path.realpath(__file__)),'data')
 path_to_conda = os.path.join(path_to_data,'.conda')
@@ -291,6 +292,50 @@ class Tests(unittest.TestCase):
             self.assertTrue("aviary_assemble" in output)
             self.assertTrue("aviary_recover" in output)
             self.assertTrue("aviary_combine" in output)
+
+    def test_update_aviary_dryrun(self):
+        with in_tempdir():
+            cmd = (
+                f"ibis update "
+                f"--run-aviary "
+                f"--aviary-gtdbtk-dir gtdb_release "
+                f"--aviary-checkm2-dir CheckM2_database "
+                f"--coassemble-output {MOCK_COASSEMBLE} "
+                f"--forward {SAMPLE_READS_FORWARD} "
+                f"--reverse {SAMPLE_READS_REVERSE} "
+                f"--genomes {GENOMES} "
+                f"--output test "
+                f"--conda-prefix {path_to_conda} "
+                f"--snakemake-args \" --config test=True aviary_dryrun=True\" "
+            )
+            extern.run(cmd)
+
+            config_path = os.path.join("test", "config.yaml")
+            self.assertTrue(os.path.exists(config_path))
+
+            coassembly_path = os.path.join("test", "coassemble", "coassemble", "coassembly_0")
+            contigs_path = os.path.join(coassembly_path, "assemble", "assembly", "final_contigs.fasta")
+            self.assertTrue(os.path.exists(contigs_path))
+
+            assembly_config_path = os.path.join(coassembly_path, "assemble", "config.yaml")
+            self.assertTrue(os.path.exists(assembly_config_path))
+            assembly_config = load_configfile(assembly_config_path)
+            forward_reads = SAMPLE_READS_FORWARD.split(" ")
+            self.assertTrue(forward_reads[0] in assembly_config["short_reads_1"])
+            self.assertTrue(forward_reads[1] in assembly_config["short_reads_1"])
+            self.assertFalse(forward_reads[2] in assembly_config["short_reads_1"])
+            self.assertTrue(assembly_config["coassemble"])
+
+            recovery_config_path = os.path.join(coassembly_path, "recover", "config.yaml")
+            self.assertTrue(os.path.exists(recovery_config_path))
+            recovery_config = load_configfile(recovery_config_path)
+            self.assertTrue(forward_reads[0] in recovery_config["short_reads_1"])
+            self.assertTrue(forward_reads[1] in recovery_config["short_reads_1"])
+            self.assertTrue(forward_reads[2] in recovery_config["short_reads_1"])
+            self.assertEqual(recovery_config["fasta"][0], os.path.abspath(contigs_path))
+            self.assertEqual(recovery_config["checkm2_db_folder"], "CheckM2_database")
+            self.assertEqual(recovery_config["gtdbtk_folder"], "gtdb_release")
+            self.assertEqual(recovery_config["eggnog_folder"], ".")
 
     @unittest.skip("Downloads SRA data using Kingfisher and runs Aviary. Test manually")
     def test_update_aviary_run_real(self):
