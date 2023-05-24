@@ -14,7 +14,7 @@ mapped_reads_2 = {read: output_dir + f"/mapping/{read}_unmapped.2.fq.gz" for rea
 
 def get_reads(wildcards, forward=True, version=None):
     version = version if version else wildcards.version
-    if version == "":
+    if version == "" or version == "whole":
         if forward:
             return config["reads_1"]
         else:
@@ -25,7 +25,7 @@ def get_reads(wildcards, forward=True, version=None):
         else:
             return mapped_reads_2
     else:
-        raise ValueError("Version should be empty or unmapped")
+        raise ValueError("Version should be empty, 'whole' or 'unmapped'")
 
 def get_cat(wildcards):
     return "zcat" if [r for r in get_reads(wildcards).values()][0].endswith(".gz") else "cat"
@@ -44,7 +44,7 @@ def get_reads_coassembly(wildcards, forward=True, recover=False):
     if config["assemble_unmapped"]:
         version = "unmapped_"
     else:
-        version = ""
+        version = "whole"
 
     reads = get_reads(wildcards, forward=forward, version=version)
     return [reads[n] for n in sample_names]
@@ -440,13 +440,21 @@ rule aviary_assemble:
         reads_1 = lambda wildcards: get_reads_coassembly(wildcards),
         reads_2 = lambda wildcards: get_reads_coassembly(wildcards, forward=False),
         memory=config["aviary_memory"],
+        dryrun = "--dryrun" if config["aviary_dryrun"] else "",
+        drymkdir = "&& mkdir -p "+output_dir+"/coassemble/{coassembly}/assemble/assembly" if config["aviary_dryrun"] else "",
+        drytouch = "&& touch "+output_dir+"/coassemble/{coassembly}/assemble/assembly/final_contigs.fasta" if config["aviary_dryrun"] else "",
+        conda_prefix = config["conda_prefix"] if config["conda_prefix"] else ".",
     threads:
         threads=config["aviary_threads"]
     log:
         logs_dir + "/aviary/{coassembly}_assemble.log"
     conda:
-        config["aviary_conda"]
+        "env/aviary.yml"
     shell:
+        "GTDBTK_DATA_PATH=. "
+        "CHECKM2DB=. "
+        "EGGNOG_DATA_DIR=. "
+        "CONDA_ENV_PATH={params.conda_prefix} "
         "aviary assemble "
         "-1 {params.reads_1} "
         "-2 {params.reads_2} "
@@ -454,7 +462,10 @@ rule aviary_assemble:
         "-n {threads} "
         "-t {threads} "
         "-m {params.memory} "
+        "{params.dryrun} "
         "&> {log} "
+        "{params.drymkdir} "
+        "{params.drytouch} "
 
 rule aviary_recover:
     input:
@@ -467,13 +478,21 @@ rule aviary_recover:
         reads_2 = lambda wildcards: get_reads_coassembly(wildcards, forward=False, recover=True),
         memory=config["aviary_memory"],
         skip_binners = "--skip-binners rosella semibin metabat1 vamb concoct maxbin2 maxbin" if config["test"] else "",
+        dryrun = "--dryrun" if config["aviary_dryrun"] else "",
+        gtdbtk=config["aviary_gtdbtk"],
+        checkm2=config["aviary_checkm2"],
+        conda_prefix = config["conda_prefix"] if config["conda_prefix"] else ".",
     threads:
         config["aviary_threads"]
     log:
         logs_dir + "/aviary/{coassembly}_recover.log"
     conda:
-        config["aviary_conda"]
+        "env/aviary.yml"
     shell:
+        "GTDBTK_DATA_PATH={params.gtdbtk} "
+        "CHECKM2DB={params.checkm2} "
+        "EGGNOG_DATA_DIR=. "
+        "CONDA_ENV_PATH={params.conda_prefix} "
         "aviary recover "
         "--assembly {input.assembly} "
         "-1 {params.reads_1} "
@@ -483,6 +502,7 @@ rule aviary_recover:
         "-n {threads} "
         "-t {threads} "
         "-m {params.memory} "
+        "{params.dryrun} "
         "&> {log} "
 
 rule aviary_combine:

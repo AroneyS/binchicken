@@ -156,7 +156,6 @@ def set_standard_args(args):
     args.max_coassembly_size = None
     args.max_recovery_samples = 1
     args.prodigal_meta = False
-    args.assemble_unmapped = True
 
     return(args)
 
@@ -293,9 +292,11 @@ def coassemble(args):
         "unmapping_min_appraised": args.unmapping_min_appraised,
         "unmapping_max_identity": args.unmapping_max_identity,
         "run_aviary": args.run_aviary,
-        "aviary_conda": args.aviary_conda,
+        "aviary_gtdbtk": args.aviary_gtdbtk_dir,
+        "aviary_checkm2": args.aviary_checkm2_dir,
         "aviary_threads": args.aviary_cores,
         "aviary_memory": args.aviary_memory,
+        "conda_prefix": args.conda_prefix,
     }
 
     config_path = make_config(
@@ -365,7 +366,7 @@ def evaluate(args):
         snakemake_args = args.snakemake_args,
     )
 
-def unmap(args):
+def update(args):
     logging.info("Loading Ibis coassemble info")
     if args.coassemble_output:
         args.elusive_clusters = os.path.join(args.coassemble_output, "target", "elusive_clusters.tsv")
@@ -492,10 +493,18 @@ def main():
                     "ibis evaluate --coassemble-output coassemble_dir --aviary-outputs coassembly_0_dir ..."
                 ),
             ],
-            "unmap": [
+            "update": [
                 btu.Example(
-                    "generate unmapped reads and commands for completed coassembly",
-                    "ibis unmap --coassemble-output coassemble_dir --forward reads_1.1.fq ... --reverse reads_1.2.fq ... --genomes genome_1.fna ..."
+                    "update previous run to download SRA reads",
+                    "ibis update --sra --coassemble-output coassemble_dir --forward SRA000001 ... --reverse SRA000001 ... --genomes genome_1.fna ..."
+                ),
+                btu.Example(
+                    "update previous run to perform unmapping",
+                    "ibis update --assemble-unmapped --coassemble-output coassemble_dir --forward reads_1.1.fq ... --reverse reads_1.2.fq ... --genomes genome_1.fna ..."
+                ),
+                btu.Example(
+                    "update previous run to run specific coassemblies",
+                    "ibis update --run-aviary --coassemblies coassembly_0 ... --coassemble-output coassemble_dir --forward reads_1.1.fq ... --reverse reads_1.2.fq ... --genomes genome_1.fna ..."
                 ),
             ],
             "iterate": [
@@ -529,8 +538,9 @@ def main():
         argument_group.add_argument("--max-contamination", type=int, help="Include bins with at most this maximum contamination [default: 10]", default=10)
 
     def add_aviary_options(argument_group):
-        argument_group.add_argument("--run-aviary", action="store_true", help="Run Aviary commands for all identified coassemblies")
-        argument_group.add_argument("--aviary-conda", help="Pre-built Aviary conda env path")
+        argument_group.add_argument("--run-aviary", action="store_true", help="Run Aviary commands for all identified coassemblies (unless specified)")
+        argument_group.add_argument("--aviary-gtdbtk-dir", help="Path to GTDB-Tk database directory for Aviary")
+        argument_group.add_argument("--aviary-checkm2-dir", help="Path to CheckM2 database directory for Aviary")
         argument_group.add_argument("--aviary-cores", type=int, help="Maximum number of cores for Aviary to use", default=16)
         argument_group.add_argument("--aviary-memory", type=int, help="Maximum amount of memory for Aviary to use (Gigabytes)", default=250)
 
@@ -602,24 +612,25 @@ def main():
 
     ###########################################################################
 
-    unmap_parser = main_parser.new_subparser("unmap", "Coassemble pre-clustered reads")
+    update_parser = main_parser.new_subparser("update", "Coassemble pre-clustered reads")
     # Base arguments
-    unmap_base = unmap_parser.add_argument_group("Input arguments")
-    add_base_arguments(unmap_base)
-    unmap_base.add_argument("--sra", action="store_true", help="Download reads from SRA (read argument still required)")
+    update_base = update_parser.add_argument_group("Input arguments")
+    add_base_arguments(update_base)
+    update_base.add_argument("--sra", action="store_true", help="Download reads from SRA (read argument still required)")
     # Coassembly options
-    unmap_coassembly = unmap_parser.add_argument_group("Coassembly options")
-    unmap_coassembly.add_argument("--coassemble-output", help="Output dir from cluster subcommand")
-    unmap_coassembly.add_argument("--appraise-binned", help="SingleM appraise binned output from Ibis coassemble (alternative to --coassemble-output)")
-    unmap_coassembly.add_argument("--appraise-unbinned", help="SingleM appraise unbinned output from Ibis coassemble (alternative to --coassemble-output)")
-    unmap_coassembly.add_argument("--elusive-clusters", help="Elusive clusters output from Ibis coassemble (alternative to --coassemble-output)")
-    unmap_coassembly.add_argument("--coassemblies", nargs='+', help="Choose specific coassemblies from elusive clusters (e.g. coassembly_0)")
-    unmap_coassembly.add_argument("--unmapping-min-appraised", type=float, help="Minimum fraction of sequences binned to justify unmapping [default: 0.1]", default=0.1)
-    unmap_coassembly.add_argument("--unmapping-max-identity", type=float, help="Maximum sequence identity of mapped sequences kept for coassembly [default: 95%]", default=95)
-    add_aviary_options(unmap_coassembly)
+    update_coassembly = update_parser.add_argument_group("Coassembly options")
+    update_coassembly.add_argument("--coassemble-output", help="Output dir from cluster subcommand")
+    update_coassembly.add_argument("--appraise-binned", help="SingleM appraise binned output from Ibis coassemble (alternative to --coassemble-output)")
+    update_coassembly.add_argument("--appraise-unbinned", help="SingleM appraise unbinned output from Ibis coassemble (alternative to --coassemble-output)")
+    update_coassembly.add_argument("--elusive-clusters", help="Elusive clusters output from Ibis coassemble (alternative to --coassemble-output)")
+    update_coassembly.add_argument("--coassemblies", nargs='+', help="Choose specific coassemblies from elusive clusters (e.g. coassembly_0)")
+    update_coassembly.add_argument("--assemble-unmapped", action="store_true", help="Only assemble reads that do not map to reference genomes")
+    update_coassembly.add_argument("--unmapping-min-appraised", type=float, help="Minimum fraction of sequences binned to justify unmapping [default: 0.1]", default=0.1)
+    update_coassembly.add_argument("--unmapping-max-identity", type=float, help="Maximum sequence identity of mapped sequences kept for coassembly [default: 95%]", default=95)
+    add_aviary_options(update_coassembly)
     # General options
-    unmap_general = unmap_parser.add_argument_group("General options")
-    add_general_snakemake_options(unmap_general)
+    update_general = update_parser.add_argument_group("General options")
+    add_general_snakemake_options(update_general)
 
     ###########################################################################
 
@@ -672,8 +683,8 @@ def main():
         else:
             if args.num_coassembly_samples > args.max_recovery_samples:
                 raise Exception("Max recovery samples (--max-recovery-samples) must be greater than or equal to number of coassembly samples (--num-coassembly-samples)")
-        if args.run_aviary and not args.aviary_conda:
-            raise Exception("Run Aviary (--run-aviary) requires pre-build conda env path to be provided (--aviary-conda)")
+        if args.run_aviary and not (args.aviary_gtdbtk_dir and args.aviary_checkm2_dir):
+            raise Exception("Run Aviary (--run-aviary) requires paths to GTDB-Tk and CheckM2 databases to be provided (--aviary-gtdbtk-dir and --aviary-checkm2-dir)")
 
     if args.subparser_name == "coassemble":
         coassemble_argument_verification(args)
@@ -686,13 +697,13 @@ def main():
             raise Exception("Reference genomes must be provided to cluster with new genomes")
         evaluate(args)
 
-    elif args.subparser_name == "unmap":
+    elif args.subparser_name == "update":
         base_argument_verification(args)
         if not args.coassemble_output and not (args.appraise_binned and args.appraise_unbinned and args.elusive_clusters):
             raise Exception("Either Ibis coassemble output (--coassemble-output) or specific input files (--appraise-binned and --elusive-clusters) must be provided")
-        if args.run_aviary and not args.aviary_conda:
-            raise Exception("Run Aviary (--run-aviary) requires pre-build conda env path to be provided (--aviary-conda)")
-        unmap(args)
+        if args.run_aviary and not (args.aviary_gtdbtk_dir and args.aviary_checkm2_dir):
+            raise Exception("Run Aviary (--run-aviary) requires paths to GTDB-Tk and CheckM2 databases to be provided (--aviary-gtdbtk-dir and --aviary-checkm2-dir)")
+        update(args)
 
     elif args.subparser_name == "iterate":
         if args.sample_query or args.sample_query_list or args.sample_query_dir:

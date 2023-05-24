@@ -1,12 +1,6 @@
 channels:
   - conda-forge
   - bioconda
-  - defaults
 dependencies:
   - python>=3.7
-  - aviary==0.5.7
-variables:
-  CONDA_ENV_PATH: /work/microbiome/conda
-  GTDBTK_DATA_PATH: /work/microbiome/db/gtdb/gtdb_release207_v2
-  EGGNOG_DATA_DIR: /work/microbiome/db/eggnog-mapper/2.1.3
-  CHECKM2DB: /work/microbiome/db/CheckM2_database
+  - aviary>=0.5.7
