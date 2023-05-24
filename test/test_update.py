@@ -224,7 +224,7 @@ class Tests(unittest.TestCase):
             cmd = (
                 f"ibis update "
                 f"--assemble-unmapped "
-                f"--forward ERR1678104 SRR8334324 "
+                f"--forward SRR8334323 SRR8334324 "
                 f"--sra "
                 f"--genomes {GENOMES} "
                 f"--appraise-binned {os.path.join(MOCK_COASSEMBLE, 'appraise', 'binned_sra.otu_table.tsv')} "
@@ -254,7 +254,7 @@ class Tests(unittest.TestCase):
             cmd = (
                 f"ibis update "
                 f"--assemble-unmapped "
-                f"--forward ERR1678104 SRR8334324 "
+                f"--forward SRR8334323 SRR8334324 "
                 f"--sra "
                 f"--run-aviary "
                 f"--aviary-gtdbtk-dir gtdb_release "
@@ -343,7 +343,7 @@ class Tests(unittest.TestCase):
             cmd = (
                 f"ibis update "
                 f"--assemble-unmapped "
-                f"--forward ERR1678104 SRR8334324 "
+                f"--forward SRR8334323 SRR8334324 "
                 f"--sra "
                 f"--run-aviary "
                 f"--cores 32 "
@@ -359,19 +359,19 @@ class Tests(unittest.TestCase):
                 f"--conda-prefix {path_to_conda} "
                 f"--snakemake-args \" --config test=True\" "
             )
-            output = extern.run(cmd)
+            extern.run(cmd)
 
             config_path = os.path.join("test", "config.yaml")
             self.assertTrue(os.path.exists(config_path))
 
-            sra_1_path = os.path.join("test", "coassemble", "sra", "ERR1678104_1.fastq.gz")
+            sra_1_path = os.path.join("test", "coassemble", "sra", "SRR8334323_1.fastq.gz")
             self.assertTrue(os.path.exists(sra_1_path))
             with gzip.open(sra_1_path) as f:
                 file = f.readline().decode()
-                self.assertTrue("@ERR1678104.1" in file)
-                self.assertTrue("@ERR1678104.2" not in file)
+                self.assertTrue("@SRR8334323.1 1/1" in file)
+                self.assertTrue("@SRR8334323.1 1/2" not in file)
 
-            self.assertTrue(os.path.exists(os.path.join("test", "coassemble", "sra", "ERR1678104_2.fastq.gz")))
+            self.assertTrue(os.path.exists(os.path.join("test", "coassemble", "sra", "SRR8334323_2.fastq.gz")))
             self.assertTrue(os.path.exists(os.path.join("test", "coassemble", "sra", "SRR8334324_1.fastq.gz")))
             self.assertTrue(os.path.exists(os.path.join("test", "coassemble", "sra", "SRR8334324_2.fastq.gz")))
 
@@ -413,7 +413,7 @@ class Tests(unittest.TestCase):
         with in_tempdir():
             cmd = (
                 f"ibis update "
-                f"--forward ERR1678104 SRR8334324 "
+                f"--forward SRR8334323 SRR8334324 "
                 f"--sra "
                 f"--genomes {GENOMES} "
                 f"--appraise-binned {os.path.join(MOCK_COASSEMBLE, 'appraise', 'binned_sra.otu_table.tsv')} "
@@ -428,8 +428,8 @@ class Tests(unittest.TestCase):
             config_path = os.path.join("test", "config.yaml")
             self.assertTrue(os.path.exists(config_path))
 
-            self.assertTrue(os.path.exists(os.path.join("test", "coassemble", "sra", "ERR1678104_1.fastq.gz")))
-            self.assertTrue(os.path.exists(os.path.join("test", "coassemble", "sra", "ERR1678104_2.fastq.gz")))
+            self.assertTrue(os.path.exists(os.path.join("test", "coassemble", "sra", "SRR8334323_1.fastq.gz")))
+            self.assertTrue(os.path.exists(os.path.join("test", "coassemble", "sra", "SRR8334323_2.fastq.gz")))
             self.assertTrue(os.path.exists(os.path.join("test", "coassemble", "sra", "SRR8334324_1.fastq.gz")))
             self.assertTrue(os.path.exists(os.path.join("test", "coassemble", "sra", "SRR8334324_2.fastq.gz")))
 
