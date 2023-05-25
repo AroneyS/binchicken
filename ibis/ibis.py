@@ -110,6 +110,11 @@ def download_sra(args):
         config_items
         )
 
+    if "--config test=True" in args.snakemake_args:
+        target_rule = "mock_download_sra"
+    else:
+        target_rule = "download_sra"
+
     run_workflow(
         config = config_path,
         workflow = "coassemble.smk",
@@ -117,7 +122,7 @@ def download_sra(args):
         cores = args.cores,
         dryrun = args.dryrun,
         conda_prefix = args.conda_prefix,
-        snakemake_args = args.snakemake_args + " -- download_sra" if args.snakemake_args else "-- download_sra",
+        snakemake_args = args.snakemake_args + " -- " + target_rule if args.snakemake_args else "-- " + target_rule,
     )
 
     sra_dir = args.output + "/coassemble/sra/"
