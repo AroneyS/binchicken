@@ -317,9 +317,10 @@ rule mock_download_sra:
     threads:
         64
     params:
-        sra_f="_1.fastq.gz ".join(config["sra"][1:]) if config["sra"] else "",
-        sra_r="_2.fastq.gz ".join(config["sra"][1:]) if config["sra"] else "",
+        sra_f=" ".join([s + "_1.fastq.gz" for s in config["sra"][1:]]) if config["sra"] else "",
+        sra_r=" ".join([s + "_2.fastq.gz" for s in config["sra"][1:]]) if config["sra"] else "",
         sra_u=config["sra"][0] + ".fastq.gz" if config["sra"] else "",
+        sra_basedir=workflow.basedir + "/../../test/data/sra",
     conda:
         "env/kingfisher.yml"
     log:
@@ -327,7 +328,8 @@ rule mock_download_sra:
     shell:
         "mkdir -p {output} && "
         "cd {output} && "
-        "touch {params.sra_f} {params.sra_r} {params.sra_u}"
+        "touch {params.sra_f} {params.sra_r} && "
+        "cp {params.sra_basedir}/{params.sra_u} {params.sra_u} "
 
 #####################################
 ### Map reads to matching genomes ###
