@@ -218,6 +218,53 @@ class Tests(unittest.TestCase):
             self.assertTrue("finish_mapping" in output)
             self.assertTrue("aviary_commands" in output)
 
+    def test_update_sra_download_mock(self):
+        with in_tempdir():
+            cmd = (
+                f"ibis update "
+                f"--forward SRR3309137 SRR8334323 SRR8334324 "
+                f"--sra "
+                f"--genomes {GENOMES} "
+                f"--appraise-binned {os.path.join(MOCK_COASSEMBLE, 'appraise', 'binned_sra.otu_table.tsv')} "
+                f"--appraise-unbinned {os.path.join(MOCK_COASSEMBLE, 'appraise', 'unbinned_sra.otu_table.tsv')} "
+                f"--elusive-clusters {os.path.join(MOCK_COASSEMBLE, 'target', 'elusive_clusters_sra_mock.tsv')} "
+                f"--output test "
+                f"--conda-prefix {path_to_conda} "
+                f"--snakemake-args \" --config test=True\" "
+            )
+            extern.run(cmd)
+
+            sra_1_path = os.path.join("test", "coassemble", "sra", "SRR3309137_1.fastq.gz")
+            self.assertTrue(os.path.exists(sra_1_path))
+            with gzip.open(sra_1_path) as f:
+                file = f.readline().decode()
+                self.assertTrue("@SRR3309137.1 HISEQ06:195:D1DRHACXX:5:1101:1597:2236/1" in file)
+                self.assertTrue("@SRR3309137.2 HISEQ06:195:D1DRHACXX:5:1101:1597:2236/1" not in file)
+
+            sra_2_path = os.path.join("test", "coassemble", "sra", "SRR3309137_2.fastq.gz")
+            self.assertTrue(os.path.exists(sra_2_path))
+            with gzip.open(sra_2_path) as f:
+                file = f.readline().decode()
+                self.assertTrue("@SRR3309137.2 HISEQ06:195:D1DRHACXX:5:1101:1597:2236/1" in file)
+                self.assertTrue("@SRR3309137.1 HISEQ06:195:D1DRHACXX:5:1101:1597:2236/1" not in file)
+
+    def test_update_sra_download_mock_fail(self):
+        with in_tempdir():
+            cmd = (
+                f"ibis update "
+                f"--forward SRR3309137_mismatched SRR8334323 SRR8334324 "
+                f"--sra "
+                f"--genomes {GENOMES} "
+                f"--appraise-binned {os.path.join(MOCK_COASSEMBLE, 'appraise', 'binned_sra.otu_table.tsv')} "
+                f"--appraise-unbinned {os.path.join(MOCK_COASSEMBLE, 'appraise', 'unbinned_sra.otu_table.tsv')} "
+                f"--elusive-clusters {os.path.join(MOCK_COASSEMBLE, 'target', 'elusive_clusters_sra_mock.tsv')} "
+                f"--output test "
+                f"--conda-prefix {path_to_conda} "
+                f"--snakemake-args \" --config test=True\" "
+            )
+            with self.assertRaises(Exception):
+                extern.run(cmd)
+
     @unittest.skip("Downloads SRA data using Kingfisher. Test manually")
     def test_update_sra_download_real(self):
         with in_tempdir():

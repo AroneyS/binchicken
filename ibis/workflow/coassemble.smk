@@ -2,6 +2,7 @@
 ### Setup ###
 #############
 ruleorder: no_genomes > query_processing > singlem_appraise_filtered
+ruleorder: mock_download_sra > download_sra
 
 import os
 import pandas as pd
@@ -306,9 +307,29 @@ rule download_sra:
         "kingfisher get "
         "-r {params.sra} "
         "-f fastq.gz "
-        "-m ena-ascp ena-ftp prefetch aws-http aws-cp "
+        "-m ena-ftp prefetch ena-ascp aws-http aws-cp "
         "-t {threads} "
         "&> {log} "
+
+rule mock_download_sra:
+    output:
+        directory(output_dir + "/sra") if config["test"] else []
+    threads:
+        64
+    params:
+        sra_f=" ".join([s + "_1.fastq.gz" for s in config["sra"][1:]]) if config["sra"] else "",
+        sra_r=" ".join([s + "_2.fastq.gz" for s in config["sra"][1:]]) if config["sra"] else "",
+        sra_u=config["sra"][0] + ".fastq.gz" if config["sra"] else "",
+        sra_basedir=workflow.basedir + "/../../test/data/sra",
+    conda:
+        "env/kingfisher.yml"
+    log:
+        logs_dir + "/sra/kingfisher.log"
+    shell:
+        "mkdir -p {output} && "
+        "cd {output} && "
+        "touch {params.sra_f} {params.sra_r} && "
+        "cp {params.sra_basedir}/{params.sra_u} {params.sra_u} "
 
 #####################################
 ### Map reads to matching genomes ###

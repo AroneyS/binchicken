@@ -7,6 +7,7 @@ import os
 import sys
 import logging
 import subprocess
+import extern
 import importlib.resources
 import bird_tool_utils as btu
 import polars as pl
@@ -110,6 +111,11 @@ def download_sra(args):
         config_items
         )
 
+    if "--config test=True" in args.snakemake_args:
+        target_rule = "mock_download_sra"
+    else:
+        target_rule = "download_sra"
+
     run_workflow(
         config = config_path,
         workflow = "coassemble.smk",
@@ -117,11 +123,60 @@ def download_sra(args):
         cores = args.cores,
         dryrun = args.dryrun,
         conda_prefix = args.conda_prefix,
-        snakemake_args = args.snakemake_args + " -- download_sra" if args.snakemake_args else "-- download_sra",
+        snakemake_args = args.snakemake_args + " -- " + target_rule if args.snakemake_args else "-- " + target_rule,
     )
 
     sra_dir = args.output + "/coassemble/sra/"
     SRA_SUFFIX = ".fastq.gz"
+    expected_forward = [sra_dir + f + "_1" + SRA_SUFFIX for f in args.forward]
+    expected_reverse = [sra_dir + f + "_2" + SRA_SUFFIX for f in args.forward]
+
+    # Fix single file outputs if interleaved or error if unpaired
+    if not args.dryrun:
+        for f, r in zip(expected_forward, expected_reverse):
+            if os.path.isfile(f) & os.path.isfile(r):
+                continue
+
+            if os.path.isfile(f) | os.path.isfile(r):
+                raise Exception(f"Mismatched downloads with {f} and {r}")
+
+            u = f.replace("_1", "")
+            if not os.path.isfile(u):
+                raise Exception(f"Missing downloads: {f} and {r}")
+
+            logging.info(f"Checking single-file download for interleaved: {u}")
+            cmd = (
+                "python {script} "
+                "--input {input} "
+                "--start-check-pairs {start_check_pairs} "
+                "--end-check-pairs {end_check_pairs} "
+            ).format(
+                script = importlib.resources.files("ibis.workflow.scripts").joinpath("is_interleaved.py"),
+                input = u,
+                start_check_pairs = 5,
+                end_check_pairs = 5,
+            )
+            output = extern.run(cmd).strip().split("\t")
+
+            if output[0] != "True":
+                raise Exception(f"Download {u} was not interleaved: {output[1]}")
+
+            logging.info(f"Download {u} was interleaved: {output[1]}")
+            logging.info(f"Deinterleaving {u}")
+            cmd = (
+                "gunzip -c {input} | "
+                "paste - - - - - - - - | "
+                "tee >(cut -f 1-4 | tr '\t' '\n' | pigz --best --processes {threads} > {output_f}) "
+                "| cut -f 5-8 | tr '\t' '\n' | pigz --best --processes {threads} > {output_r}"
+            ).format(
+                input = u,
+                output_f = f,
+                output_r = r,
+                threads = max(1, args.cores // 2),
+            )
+            extern.run(cmd)
+
+
     # Need to convince Snakemake that the SRA data predates the completed outputs
     # Otherwise it will rerun all the rules with reason "updated input files"
     # Using Jan 1 2000 as pre-date
