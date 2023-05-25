@@ -45,7 +45,6 @@ def is_interleaved(reads, total_count):
 def pipeline(fastq_reads, START_CHECK_PAIRS, END_CHECK_PAIRS):
     start_list = []
     end_list = []
-    line_count = -1
     read_count = 0
 
     if fastq_reads.endswith(".gz"):
@@ -53,8 +52,7 @@ def pipeline(fastq_reads, START_CHECK_PAIRS, END_CHECK_PAIRS):
     else:
         f = open(fastq_reads)
 
-    for line in f:
-        line_count += 1
+    for line_count, line in enumerate(f):
         if line_count % 4 != 0:
             continue
 
@@ -68,7 +66,9 @@ def pipeline(fastq_reads, START_CHECK_PAIRS, END_CHECK_PAIRS):
 
     f.close()
 
-    if line_count == -1:
+    try:
+        line_count
+    except UnboundLocalError:
         return False, "Empty file"
 
     reads = pl.DataFrame(start_list + end_list, schema=READS_COLUMNS)

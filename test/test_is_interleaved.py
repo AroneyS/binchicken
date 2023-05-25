@@ -19,6 +19,7 @@ SRA_ODD = os.path.join(path_to_sra, "SRR3309137_odd.fastq")
 SRA_ODD_GZ = os.path.join(path_to_sra, "SRR3309137_odd.fastq.gz")
 SRA_MISMATCHED = os.path.join(path_to_sra, "SRR3309137_mismatched.fastq")
 SRA_MISMATCHED_GZ = os.path.join(path_to_sra, "SRR3309137_mismatched.fastq.gz")
+SRA_EMPTY = os.path.join(path_to_sra, "SRR3309137_empty.fastq")
 
 READS_COLUMNS={
     "read": str,
@@ -178,6 +179,11 @@ class Tests(unittest.TestCase):
     def test_is_interleaved_pipeline_mismatched_shorter(self):
         observed_outcome, observed_reason = pipeline(SRA_MISMATCHED, 2, 3)
         self.assertEqual("Consecutive reads do not match (1/5)", observed_reason)
+        self.assertEqual(False, observed_outcome)
+
+    def test_is_interleaved_pipeline_empty(self):
+        observed_outcome, observed_reason = pipeline(SRA_EMPTY, 2, 3)
+        self.assertEqual("Empty file", observed_reason)
         self.assertEqual(False, observed_outcome)
 
     def test_is_interleaved_cli(self):
