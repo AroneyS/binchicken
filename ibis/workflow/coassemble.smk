@@ -306,7 +306,7 @@ rule download_sra:
         "kingfisher get "
         "-r {params.sra} "
         "-f fastq.gz "
-        "-m ena-ascp ena-ftp prefetch aws-http aws-cp "
+        "-m ena-ftp prefetch ena-ascp aws-http aws-cp "
         "-t {threads} "
         "&> {log} "
 
