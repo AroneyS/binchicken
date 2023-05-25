@@ -319,13 +319,14 @@ rule mock_download_sra:
     params:
         sra_f="_1.fastq.gz ".join(config["sra"][1:]) if config["sra"] else "",
         sra_r="_2.fastq.gz ".join(config["sra"][1:]) if config["sra"] else "",
-        sra_u=".fastq.gz ".join(config["sra"][0]) if config["sra"] else "",
+        sra_u=config["sra"][0] + ".fastq.gz" if config["sra"] else "",
     conda:
         "env/kingfisher.yml"
     log:
         logs_dir + "/sra/kingfisher.log"
     shell:
         "mkdir -p {output} && "
+        "cd {output} && "
         "touch {params.sra_f} {params.sra_r} {params.sra_u}"
 
 #####################################
