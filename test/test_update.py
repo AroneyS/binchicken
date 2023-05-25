@@ -154,6 +154,7 @@ class Tests(unittest.TestCase):
                 f"ibis update "
                 f"--assemble-unmapped "
                 f"--unmapping-max-identity 99 "
+                f"--unmapping-max-alignment 90 "
                 f"--coassemble-output {MOCK_COASSEMBLE} "
                 f"--forward {SAMPLE_READS_FORWARD} "
                 f"--reverse {SAMPLE_READS_REVERSE} "
