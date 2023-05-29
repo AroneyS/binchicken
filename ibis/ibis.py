@@ -111,7 +111,7 @@ def download_sra(args):
         config_items
         )
 
-    if "--config test=True" in args.snakemake_args:
+    if "mock_sra=True" in args.snakemake_args:
         target_rule = "mock_download_sra"
     else:
         target_rule = "download_sra"

@@ -313,7 +313,7 @@ rule download_sra:
 
 rule mock_download_sra:
     output:
-        directory(output_dir + "/sra") if config["test"] else []
+        directory(output_dir + "/sra") if config["mock_sra"] else []
     threads:
         64
     params:

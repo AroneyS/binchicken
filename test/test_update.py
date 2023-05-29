@@ -231,7 +231,7 @@ class Tests(unittest.TestCase):
                 f"--elusive-clusters {os.path.join(MOCK_COASSEMBLE, 'target', 'elusive_clusters_sra_mock.tsv')} "
                 f"--output test "
                 f"--conda-prefix {path_to_conda} "
-                f"--snakemake-args \" --config test=True\" "
+                f"--snakemake-args \" --config mock_sra=True\" "
             )
             extern.run(cmd)
 
@@ -261,7 +261,7 @@ class Tests(unittest.TestCase):
                 f"--elusive-clusters {os.path.join(MOCK_COASSEMBLE, 'target', 'elusive_clusters_sra_mock.tsv')} "
                 f"--output test "
                 f"--conda-prefix {path_to_conda} "
-                f"--snakemake-args \" --config test=True\" "
+                f"--snakemake-args \" --config mock_sra=True\" "
             )
             with self.assertRaises(Exception):
                 extern.run(cmd)
