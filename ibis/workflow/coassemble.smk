@@ -392,6 +392,7 @@ rule filter_bam_files:
         "--inverse "
         "--min-read-percent-identity-pair {params.sequence_identity} "
         "--min-read-aligned-percent-pair {params.alignment_percent} "
+        "--proper-pairs-only "
         "&> {log}"
 
 rule bam_to_fastq:
