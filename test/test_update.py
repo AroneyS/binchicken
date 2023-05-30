@@ -65,7 +65,7 @@ class Tests(unittest.TestCase):
             with gzip.open(unmapped_sample_1_path) as f:
                 file = f.read().decode()
                 self.assertTrue("@A00178:112:HMNM5DSXX:4:1622:16405:19194" in file)
-                self.assertTrue("@A00178:118:HTHTVDSXX:1:1249:16740:14105" not in file)
+                self.assertTrue("@A00178:112:HMNM5DSXX:4:9999:19126:17300" not in file)
 
             coassemble_path = os.path.join("test", "coassemble", "commands", "coassemble_commands.sh")
             self.assertTrue(os.path.exists(coassemble_path))
