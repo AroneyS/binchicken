@@ -638,7 +638,7 @@ def main():
         coassemble_coassembly.add_argument("--assemble-unmapped", action="store_true", help="Only assemble reads that do not map to reference genomes")
         coassemble_coassembly.add_argument("--unmapping-min-appraised", type=int, help="Minimum fraction of sequences binned to justify unmapping [default: 0.1]", default=0.1)
         coassemble_coassembly.add_argument("--unmapping-max-identity", type=float, help="Maximum sequence identity of mapped sequences kept for coassembly [default: 99%]", default=99)
-        coassemble_coassembly.add_argument("--unmapping-max-alignment", type=float, help="Maximum percent alignment of mapped sequences kept for coassembly [default: 90%]", default=90)
+        coassemble_coassembly.add_argument("--unmapping-max-alignment", type=float, help="Maximum percent alignment of mapped sequences kept for coassembly [default: 99%]", default=99)
         add_aviary_options(coassemble_coassembly)
         # General options
         coassemble_general = parser.add_argument_group("General options")
