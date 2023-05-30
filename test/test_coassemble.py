@@ -72,7 +72,8 @@ class Tests(unittest.TestCase):
                 f"--genomes {GENOMES} "
                 f"--singlem-metapackage {METAPACKAGE} "
                 f"--assemble-unmapped "
-                f"--unmapping-max-identity 95 "
+                f"--unmapping-max-identity 99 "
+                f"--unmapping-max-alignment 90 "
                 f"--prodigal-meta "
                 f"--output test "
                 f"--conda-prefix {path_to_conda} "
@@ -86,7 +87,7 @@ class Tests(unittest.TestCase):
             self.assertTrue(os.path.exists(read_size_path))
             expected = "\n".join(
                 [
-                    ",".join(["sample_1", "3322"]),
+                    ",".join(["sample_1", "3624"]),
                     ",".join(["sample_2", "2416"]),
                     ",".join(["sample_3", "2416"]),
                     ""
@@ -120,7 +121,7 @@ class Tests(unittest.TestCase):
                         "2",
                         "2",
                         "2",
-                        "5738",
+                        "6040",
                         "sample_1,sample_2,sample_3",
                         "coassembly_0"
                     ]),
@@ -144,7 +145,7 @@ class Tests(unittest.TestCase):
             with gzip.open(unmapped_sample_1_path) as f:
                 file = f.read().decode()
                 self.assertTrue("@A00178:112:HMNM5DSXX:4:1622:16405:19194" in file)
-                self.assertTrue("@A00178:118:HTHTVDSXX:1:1249:16740:14105" not in file)
+                self.assertTrue("@A00178:112:HMNM5DSXX:4:9999:19126:17300" not in file)
 
             coassemble_path = os.path.join("test", "coassemble", "commands", "coassemble_commands.sh")
             self.assertTrue(os.path.exists(coassemble_path))
@@ -213,8 +214,8 @@ class Tests(unittest.TestCase):
                         "2",
                         "2",
                         "2",
+                        "6040",
                         "5738",
-                        "4832",
                     ]),
                     ""
                 ]
@@ -493,7 +494,7 @@ class Tests(unittest.TestCase):
                         "1",
                         "0",
                         "0",
-                        "3322",
+                        "3624",
                         "sample_1,sample_2,sample_3",
                         "coassembly_2"
                     ]),
@@ -559,7 +560,7 @@ class Tests(unittest.TestCase):
                         "2",
                         "2",
                         "2",
-                        "5738",
+                        "6040",
                         "sample_1,sample_2,sample_3",
                         "coassembly_0"
                     ]),

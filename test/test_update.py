@@ -65,7 +65,7 @@ class Tests(unittest.TestCase):
             with gzip.open(unmapped_sample_1_path) as f:
                 file = f.read().decode()
                 self.assertTrue("@A00178:112:HMNM5DSXX:4:1622:16405:19194" in file)
-                self.assertTrue("@A00178:118:HTHTVDSXX:1:1249:16740:14105" not in file)
+                self.assertTrue("@A00178:112:HMNM5DSXX:4:9999:19126:17300" not in file)
 
             coassemble_path = os.path.join("test", "coassemble", "commands", "coassemble_commands.sh")
             self.assertTrue(os.path.exists(coassemble_path))
@@ -154,6 +154,7 @@ class Tests(unittest.TestCase):
                 f"ibis update "
                 f"--assemble-unmapped "
                 f"--unmapping-max-identity 99 "
+                f"--unmapping-max-alignment 90 "
                 f"--coassemble-output {MOCK_COASSEMBLE} "
                 f"--forward {SAMPLE_READS_FORWARD} "
                 f"--reverse {SAMPLE_READS_REVERSE} "
@@ -230,7 +231,7 @@ class Tests(unittest.TestCase):
                 f"--elusive-clusters {os.path.join(MOCK_COASSEMBLE, 'target', 'elusive_clusters_sra_mock.tsv')} "
                 f"--output test "
                 f"--conda-prefix {path_to_conda} "
-                f"--snakemake-args \" --config test=True\" "
+                f"--snakemake-args \" --config mock_sra=True\" "
             )
             extern.run(cmd)
 
@@ -260,7 +261,7 @@ class Tests(unittest.TestCase):
                 f"--elusive-clusters {os.path.join(MOCK_COASSEMBLE, 'target', 'elusive_clusters_sra_mock.tsv')} "
                 f"--output test "
                 f"--conda-prefix {path_to_conda} "
-                f"--snakemake-args \" --config test=True\" "
+                f"--snakemake-args \" --config mock_sra=True\" "
             )
             with self.assertRaises(Exception):
                 extern.run(cmd)

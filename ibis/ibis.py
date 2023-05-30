@@ -111,7 +111,7 @@ def download_sra(args):
         config_items
         )
 
-    if "--config test=True" in args.snakemake_args:
+    if "mock_sra=True" in args.snakemake_args:
         target_rule = "mock_download_sra"
     else:
         target_rule = "download_sra"
@@ -346,6 +346,7 @@ def coassemble(args):
         "assemble_unmapped": args.assemble_unmapped,
         "unmapping_min_appraised": args.unmapping_min_appraised,
         "unmapping_max_identity": args.unmapping_max_identity,
+        "unmapping_max_alignment": args.unmapping_max_alignment,
         "run_aviary": args.run_aviary,
         "aviary_gtdbtk": args.aviary_gtdbtk_dir,
         "aviary_checkm2": args.aviary_checkm2_dir,
@@ -637,6 +638,7 @@ def main():
         coassemble_coassembly.add_argument("--assemble-unmapped", action="store_true", help="Only assemble reads that do not map to reference genomes")
         coassemble_coassembly.add_argument("--unmapping-min-appraised", type=int, help="Minimum fraction of sequences binned to justify unmapping [default: 0.1]", default=0.1)
         coassemble_coassembly.add_argument("--unmapping-max-identity", type=float, help="Maximum sequence identity of mapped sequences kept for coassembly [default: 99%]", default=99)
+        coassemble_coassembly.add_argument("--unmapping-max-alignment", type=float, help="Maximum percent alignment of mapped sequences kept for coassembly [default: 99%]", default=99)
         add_aviary_options(coassemble_coassembly)
         # General options
         coassemble_general = parser.add_argument_group("General options")
@@ -682,6 +684,7 @@ def main():
     update_coassembly.add_argument("--assemble-unmapped", action="store_true", help="Only assemble reads that do not map to reference genomes")
     update_coassembly.add_argument("--unmapping-min-appraised", type=float, help="Minimum fraction of sequences binned to justify unmapping [default: 0.1]", default=0.1)
     update_coassembly.add_argument("--unmapping-max-identity", type=float, help="Maximum sequence identity of mapped sequences kept for coassembly [default: 95%]", default=95)
+    update_coassembly.add_argument("--unmapping-max-alignment", type=float, help="Maximum percent alignment of mapped sequences kept for coassembly [default: 90%]", default=90)
     add_aviary_options(update_coassembly)
     # General options
     update_general = update_parser.add_argument_group("General options")

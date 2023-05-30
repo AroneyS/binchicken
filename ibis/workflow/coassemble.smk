@@ -313,7 +313,7 @@ rule download_sra:
 
 rule mock_download_sra:
     output:
-        directory(output_dir + "/sra") if config["test"] else []
+        directory(output_dir + "/sra") if config["mock_sra"] else []
     threads:
         64
     params:
@@ -380,6 +380,7 @@ rule filter_bam_files:
         genomes="{read}_reference.fna",
         reads_1=lambda wildcards: os.path.basename(config["reads_1"][wildcards.read]),
         sequence_identity=config["unmapping_max_identity"],
+        alignment_percent=config["unmapping_max_alignment"],
     threads:
         32
     conda:
@@ -389,7 +390,9 @@ rule filter_bam_files:
         "-b {input}/{params.genomes}.{params.reads_1}.bam "
         "-o {output} "
         "--inverse "
-        "--min-read-percent-identity {params.sequence_identity} "
+        "--min-read-percent-identity-pair {params.sequence_identity} "
+        "--min-read-aligned-percent-pair {params.alignment_percent} "
+        "--proper-pairs-only "
         "&> {log}"
 
 rule bam_to_fastq:
