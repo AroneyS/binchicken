@@ -16,3 +16,4 @@ dependencies:
   - polars
   - pyarrow
   - parallel
+  - pyopenssl>22.1.0
