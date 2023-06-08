@@ -878,6 +878,9 @@ class Tests(unittest.TestCase):
 
     def test_coassemble_singlem_inputs_dir(self):
         with in_tempdir():
+            for sample in SAMPLE_READS_FORWARD.split(" ") + SAMPLE_READS_REVERSE.split(" "):
+                extern.run(f"touch -t 200001011200 {sample}")
+
             cmd = (
                 f"ibis coassemble "
                 f"--forward {SAMPLE_READS_FORWARD} "
