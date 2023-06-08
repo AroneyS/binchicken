@@ -13,7 +13,7 @@ dependencies:
   - bird_tool_utils_python
   - extern
   - ruamel.yaml>=0.15.99
-  - polars=0.18.*
+  - polars=0.17.*
   - pyarrow
   - parallel
   - pyopenssl>22.1.0
