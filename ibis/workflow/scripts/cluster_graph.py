@@ -27,8 +27,8 @@ def pipeline(
         return pl.DataFrame(schema=output_columns)
 
     elusive_edges = elusive_edges.with_columns(
-        pl.col("sample1").str.replace(r"\.1$", ""),
-        pl.col("sample2").str.replace(r"\.1$", ""),
+        sample1 = pl.col("samples").str.split(",").arr.get(0).str.replace(r"\.1$", ""),
+        sample2 = pl.col("samples").str.split(",").arr.get(1).str.replace(r"\.1$", ""),
         )
 
     # Create weighted graph and cluster with Girvan-Newman algorithm, removing edges from lightest to heaviest

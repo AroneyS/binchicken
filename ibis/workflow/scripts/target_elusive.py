@@ -10,8 +10,7 @@ EDGES_COLUMNS={
     "taxa_group": str,
     "weight": int,
     "target_ids": str,
-    "sample1": str,
-    "sample2": str
+    "samples": str,
     }
 
 def pipeline(
@@ -74,8 +73,7 @@ def pipeline(
         pl.col("target").sort().str.concat(",").alias("target_ids")
     ]).select([
         "taxa_group", "weight", "target_ids",
-        pl.col("sample").alias("sample1"),
-        pl.col("sample_2").alias("sample2")
+        pl.concat_str(["sample", "sample_2"], separator=",").alias("samples"),
     ])
 
     return unbinned, sparse_edges
