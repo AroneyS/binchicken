@@ -26,6 +26,35 @@ def pipeline(
     if len(elusive_edges) == 0:
         return pl.DataFrame(schema=output_columns)
 
+    elusive_edges = (
+        elusive_edges
+        .with_columns(
+            pl.col("samples").str.split(",").arr.eval(pl.element().str.replace(r"\.1$", ""))
+            )
+    )
+
+    samples = (
+        elusive_edges
+        .select(pl.col("samples").explode())
+        .unique()
+    )
+
+    clusters = (
+        pl.DataFrame({"samples": itertools.chain(*[
+            itertools.combinations(samples["samples"], n) for n in range(MIN_COASSEMBLY_SAMPLES, MAX_COASSEMBLY_SAMPLES+1)
+            ])})
+        .with_columns(len = pl.col("samples").arr.lengths())
+        .with_columns(
+            subsamples = pl.struct(["samples", "len"]).apply(
+                lambda x: [list(itertools.combinations(x["samples"], n)) for n in range(2, x["len"]+1)],
+                return_dtype=pl.List(pl.List(pl.List(pl.Utf8)))
+                )
+            )
+        .explode("subsamples")
+        .explode("subsamples")
+    )
+    import pdb; pdb.set_trace()
+
     elusive_edges = elusive_edges.with_columns(
         sample1 = pl.col("samples").str.split(",").arr.get(0).str.replace(r"\.1$", ""),
         sample2 = pl.col("samples").str.split(",").arr.get(1).str.replace(r"\.1$", ""),
