@@ -26,32 +26,32 @@ def pipeline(
     if len(elusive_edges) == 0:
         return pl.DataFrame(schema=output_columns)
 
-    elusive_edges = (
+    targets = (
+        elusive_edges
+        .select(pl.col("target_ids").str.split(",").arr.explode().alias("target"))
+        .unique()
+    )
+
+    def accumulate_targets(x):
+        return pl.Series([len(set(i.split(","))) - 1 for i in itertools.accumulate(x)])
+
+    clusters = (
         elusive_edges
         .with_columns(
             pl.col("samples").str.split(",").arr.eval(pl.element().str.replace(r"\.1$", ""))
             )
-    )
-
-    samples = (
-        elusive_edges
-        .select(pl.col("samples").explode())
-        .unique()
-    )
-
-    clusters = (
-        pl.DataFrame({"samples": itertools.chain(*[
-            itertools.combinations(samples["samples"], n) for n in range(MIN_COASSEMBLY_SAMPLES, MAX_COASSEMBLY_SAMPLES+1)
-            ])})
-        .with_columns(len = pl.col("samples").arr.lengths())
+        .sort("weight", descending=True)
         .with_columns(
-            subsamples = pl.struct(["samples", "len"]).apply(
-                lambda x: [list(itertools.combinations(x["samples"], n)) for n in range(2, x["len"]+1)],
-                return_dtype=pl.List(pl.List(pl.List(pl.Utf8)))
-                )
-            )
-        .explode("subsamples")
-        .explode("subsamples")
+            targets_cum = 
+                pl.col("target_ids")
+                .str.replace("$", ",")
+                .map(accumulate_targets, return_dtype=pl.Int64),
+        )
+        .with_columns(
+            target_improvement = pl.col("targets_cum") - pl.col("targets_cum").shift().fill_null(0)
+        )
+        .filter(pl.col("targets_cum") < targets.height * 0.9)
+        .filter(pl.col("target_improvement") > 0)
     )
     import pdb; pdb.set_trace()
 
