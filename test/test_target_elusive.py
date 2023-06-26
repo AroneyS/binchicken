@@ -11,10 +11,9 @@ APPRAISE_COLUMNS=["gene", "sample", "sequence", "num_hits", "coverage", "taxonom
 
 TARGETS_COLUMNS=["gene", "sample", "sequence", "num_hits", "coverage", "taxonomy", "target"]
 EDGES_COLUMNS={
-    "taxa_group": str,
+    "samples": str,
     "weight": int,
     "target_ids": str,
-    "samples": str,
     }
 
 class Tests(unittest.TestCase):
@@ -32,7 +31,7 @@ class Tests(unittest.TestCase):
             ["S3.1", "sample_2", "AAA", 5, 10, "Root", "0"],
         ], schema=TARGETS_COLUMNS)
         expected_edges = pl.DataFrame([
-            ["Root", 1, "0", "sample_1,sample_2"],
+            ["sample_1,sample_2", 1, "0"],
         ], schema=EDGES_COLUMNS)
 
         observed_targets, observed_edges = pipeline(unbinned)
@@ -84,7 +83,7 @@ class Tests(unittest.TestCase):
             ["S3.1", "sample_2", "AAB", 5, 10, "Root", "1"],
         ], schema=TARGETS_COLUMNS)
         expected_edges = pl.DataFrame([
-            ["Root", 2, "0,1", "sample_1,sample_2"],
+            ["sample_1,sample_2", 2, "0,1"],
         ], schema=EDGES_COLUMNS)
 
         observed_targets, observed_edges = pipeline(unbinned)
@@ -106,7 +105,7 @@ class Tests(unittest.TestCase):
             ["S3.2", "sample_2", "AAB", 5, 10, "Root", "1"],
         ], schema=TARGETS_COLUMNS)
         expected_edges = pl.DataFrame([
-            ["Root", 2, "0,1", "sample_1,sample_2"],
+            ["sample_1,sample_2", 2, "0,1"],
         ], schema=EDGES_COLUMNS)
 
         observed_targets, observed_edges = pipeline(unbinned)
@@ -132,9 +131,9 @@ class Tests(unittest.TestCase):
             ["S3.1", "sample_3", "AAC", 5, 10, "Root", "2"],
         ], schema=TARGETS_COLUMNS)
         expected_edges = pl.DataFrame([
-            ["Root", 2, "0,1", "sample_1,sample_2"],
-            ["Root", 1, "0", "sample_1,sample_3"],
-            ["Root", 1, "0", "sample_2,sample_3"],
+            ["sample_1,sample_2", 2, "0,1"],
+            ["sample_1,sample_3", 1, "0"],
+            ["sample_2,sample_3", 1, "0"],
         ], schema=EDGES_COLUMNS)
 
         observed_targets, observed_edges = pipeline(unbinned)
@@ -151,12 +150,10 @@ class Tests(unittest.TestCase):
 
         expected_targets = pl.DataFrame([
             ["S3.1", "sample_1", "AAA", 5, 10, "Root; d__Bacteria; p__Planctomycetota", "0"],
-            ["S3.1", "sample_1", "AAB", 5, 10, "Root", "1"],
             ["S3.1", "sample_2", "AAA", 5, 10, "Root; d__Bacteria; p__Planctomycetota", "0"],
-            ["S3.1", "sample_2", "AAB", 5, 10, "Root", "1"],
         ], schema=TARGETS_COLUMNS)
         expected_edges = pl.DataFrame([
-            ["p__Planctomycetota", 1, "0", "sample_1,sample_2"],
+            ["sample_1,sample_2", 1, "0"],
         ], schema=EDGES_COLUMNS)
 
         observed_targets, observed_edges = pipeline(unbinned, TAXA_OF_INTEREST="p__Planctomycetota")
