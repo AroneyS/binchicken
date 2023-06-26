@@ -140,6 +140,69 @@ class Tests(unittest.TestCase):
         self.assertDataFrameEqual(expected_targets, observed_targets)
         self.assertDataFrameEqual(expected_edges, observed_edges)
 
+    def test_target_elusive_three_way_targets(self):
+        unbinned = pl.DataFrame([
+            ["S3.1", "sample_1", "AAA", 3, 6, "Root", ""],
+            ["S3.1", "sample_1", "AAB", 2, 4, "Root", ""],
+            ["S3.1", "sample_2", "AAA", 3, 6, "Root", ""],
+            ["S3.1", "sample_2", "AAB", 2, 4, "Root", ""],
+            ["S3.1", "sample_3", "AAA", 2, 4, "Root", ""],
+            ["S3.1", "sample_3", "AAB", 2, 4, "Root", ""],
+        ], schema=APPRAISE_COLUMNS)
+
+        expected_targets = pl.DataFrame([
+            ["S3.1", "sample_1", "AAA", 3, 6, "Root", "0"],
+            ["S3.1", "sample_1", "AAB", 2, 4, "Root", "1"],
+            ["S3.1", "sample_2", "AAA", 3, 6, "Root", "0"],
+            ["S3.1", "sample_2", "AAB", 2, 4, "Root", "1"],
+            ["S3.1", "sample_3", "AAA", 2, 4, "Root", "0"],
+            ["S3.1", "sample_3", "AAB", 2, 4, "Root", "1"],
+        ], schema=TARGETS_COLUMNS)
+        expected_edges = pl.DataFrame([
+            ["sample_1,sample_2", 1, "0"],
+            ["sample_1,sample_2,sample_3", 2, "0,1"],
+        ], schema=EDGES_COLUMNS)
+
+        observed_targets, observed_edges = pipeline(unbinned, MAX_COASSEMBLY_SAMPLES=3)
+        self.assertDataFrameEqual(expected_targets, observed_targets)
+        self.assertDataFrameEqual(expected_edges, observed_edges)
+
+    def test_target_elusive_four_way_targets(self):
+        unbinned = pl.DataFrame([
+            ["S3.1", "sample_1", "AAA", 2, 4, "Root", ""],
+            ["S3.1", "sample_1", "AAC", 1, 3, "Root", ""],
+            ["S3.1", "sample_2", "AAA", 2, 4, "Root", ""],
+            ["S3.1", "sample_2", "AAB", 2, 4, "Root", ""],
+            ["S3.1", "sample_2", "AAC", 1, 3, "Root", ""],
+            ["S3.1", "sample_3", "AAA", 2, 4, "Root", ""],
+            ["S3.1", "sample_3", "AAB", 2, 4, "Root", ""],
+            ["S3.1", "sample_3", "AAC", 1, 3, "Root", ""],
+            ["S3.1", "sample_4", "AAB", 2, 4, "Root", ""],
+            ["S3.1", "sample_4", "AAC", 1, 3, "Root", ""],
+        ], schema=APPRAISE_COLUMNS)
+
+        expected_targets = pl.DataFrame([
+            ["S3.1", "sample_1", "AAA", 2, 4, "Root", "0"],
+            ["S3.1", "sample_1", "AAC", 1, 3, "Root", "1"],
+            ["S3.1", "sample_2", "AAA", 2, 4, "Root", "0"],
+            ["S3.1", "sample_2", "AAB", 2, 4, "Root", "2"],
+            ["S3.1", "sample_2", "AAC", 1, 3, "Root", "1"],
+            ["S3.1", "sample_3", "AAA", 2, 4, "Root", "0"],
+            ["S3.1", "sample_3", "AAB", 2, 4, "Root", "2"],
+            ["S3.1", "sample_3", "AAC", 1, 3, "Root", "1"],
+            ["S3.1", "sample_4", "AAB", 2, 4, "Root", "2"],
+            ["S3.1", "sample_4", "AAC", 1, 3, "Root", "1"],
+        ], schema=TARGETS_COLUMNS)
+        expected_edges = pl.DataFrame([
+            ["sample_1,sample_2,sample_3", 1, "0"],
+            ["sample_2,sample_3,sample_4", 1, "2"],
+            ["sample_1,sample_2,sample_3,sample_4", 1, "1"],
+        ], schema=EDGES_COLUMNS)
+
+        observed_targets, observed_edges = pipeline(unbinned, MAX_COASSEMBLY_SAMPLES=4)
+        self.assertDataFrameEqual(expected_targets, observed_targets)
+        self.assertDataFrameEqual(expected_edges, observed_edges)
+
     def test_target_elusive_target_taxa(self):
         unbinned = pl.DataFrame([
             ["S3.1", "sample_1", "AAA", 5, 10, "Root; d__Bacteria; p__Planctomycetota", ""],
