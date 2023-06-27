@@ -37,7 +37,7 @@ def pipeline(
 
     # Start with pair clusters
     clusters = [elusive_edges.filter(pl.col("length") == 2).select("samples", "target_ids", sample = pl.col("samples"))]
-    for i in range(3, MAX_COASSEMBLY_SAMPLES + 1):
+    for n in range(3, MAX_COASSEMBLY_SAMPLES + 1):
         # Join pairs to n-1 clusters and add n clusters from elusive_edges
         clusters.append(
             clusters[-1]
@@ -46,22 +46,26 @@ def pipeline(
             .select(
                 pl.concat_list("samples", "samples_2").arr.unique(),
                 pl.concat_list("target_ids", "target_ids_2").arr.unique(),
+                n_way_edge = False,
                 )
-            .filter(pl.col("samples").arr.lengths() == i)
+            .filter(pl.col("samples").arr.lengths() == n)
             .vstack(
                 elusive_edges
-                .filter(pl.col("length") == i)
-                .select("samples", "target_ids")
+                .filter(pl.col("length") == n)
+                .select("samples", "target_ids", n_way_edge = True)
                 )
             .groupby(pl.col("samples").arr.sort().arr.join(","))
-            .agg(pl.col("target_ids").flatten())
-            .with_columns(
+            .agg(
+                pl.col("target_ids").flatten(),
+                pl.any("n_way_edge"),
+                )
+            .filter(pl.col("n_way_edge"))
+            .select(
                 pl.col("samples").str.split(","),
                 pl.col("target_ids").arr.unique(),
                 sample = pl.col("samples").str.split(",")
                 )
         )
-    import pdb; pdb.set_trace()
 
     def accumulate_clusters(x):
         clustered_samples = []
