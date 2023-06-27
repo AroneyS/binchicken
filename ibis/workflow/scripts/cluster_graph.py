@@ -36,12 +36,12 @@ def pipeline(
     )
 
     # Start with pair clusters
-    clustering = [elusive_edges.filter(pl.col("length") == 2).select("samples", "target_ids", sample = pl.col("samples"))]
+    clusters = [elusive_edges.filter(pl.col("length") == 2).select("samples", "target_ids", sample = pl.col("samples"))]
     for i in range(3, MAX_COASSEMBLY_SAMPLES + 1):
         # Join pairs to n-1 clusters and add n clusters from elusive_edges
-        clustering.append(
-            clustering[-1].explode("sample")
-            .join(clustering[0].explode("sample"), on="sample", how="inner", suffix="_2")
+        clusters.append(
+            clusters[-1].explode("sample")
+            .join(clusters[0].explode("sample"), on="sample", how="inner", suffix="_2")
             .filter(pl.col("samples") != pl.col("samples_2"))
             .select(
                 pl.concat_list("samples", "samples_2").arr.unique(),
@@ -60,13 +60,28 @@ def pipeline(
                 sample = pl.col("samples").str.split(",")
                 )
         )
+    import pdb; pdb.set_trace()
 
+    def accumulate_clusters(x):
+        clustered_samples = []
+        choices = []
+        for cluster in x:
+            cluster_samples = cluster.split(",")
+            if all([x not in clustered_samples for x in cluster_samples]):
+                choices.append(True)
+                clustered_samples += cluster_samples
+            else:
+                choices.append(False)
+
+        return pl.Series(choices)
+
+    # Find best clusters (each sample appearing only once per length)
     clusters = (
-        pl.concat(clustering)
+        pl.concat(clusters)
         .with_columns(
             pl.col("samples").arr.sort().arr.join(","),
             pl.col("target_ids").arr.sort().arr.join(","),
-            weight = pl.col("target_ids").arr.lengths(),
+            total_targets = pl.col("target_ids").arr.lengths(),
             length = pl.col("samples").arr.lengths()
             )
         .explode("sample")
@@ -75,8 +90,8 @@ def pipeline(
         .agg(
             pl.first("length"),
             pl.first("target_ids"),
-            pl.first("weight"),
-            pl.sum("read_size").alias("total_size"),
+            pl.first("total_targets"),
+            total_size = pl.sum("read_size"),
         )
         .filter(pl.col("length") >= MIN_COASSEMBLY_SAMPLES)
         .filter(
@@ -84,12 +99,20 @@ def pipeline(
             .then(pl.col("total_size") <= MAX_COASSEMBLY_SIZE)
             .otherwise(True)
             )
-        .sort("weight", descending=True)
+        .sort("total_targets", descending=True)
+        .with_columns(
+            unique_samples = 
+                pl.col("samples")
+                .map(accumulate_clusters, return_dtype=pl.Boolean),
+            )
+        .filter(pl.col("unique_samples"))
     )
 
     if clusters.height == 0:
         return pl.DataFrame(schema=output_columns)
-    #import pdb; pdb.set_trace()
+
+    # Find best recover samples
+    import pdb; pdb.set_trace()
 
 
 

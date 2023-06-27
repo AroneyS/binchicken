@@ -311,10 +311,10 @@ class Tests(unittest.TestCase):
         # 3: 1 2   4
         # 4: 1 2 3 4
 
-        # 5: 1   6 7 8 9 10
-        # 6:   5   7 8
-        # 7:   5 6   8
-        # 8:         8 9 10
+        # 5: 1         6 7 8 9 10
+        # 6:         5   7 8
+        # 7:         5 6   8
+        # 8:               8 9 10
 
         elusive_edges = pl.DataFrame([
             # pairs of 1,2,3,4
