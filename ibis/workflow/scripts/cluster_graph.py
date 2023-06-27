@@ -80,6 +80,14 @@ def pipeline(
 
         return pl.Series(choices)
 
+    sample_targets = (
+        elusive_edges
+        .select("samples", "target_ids")
+        .explode("samples")
+        .explode("target_ids")
+        .unique(["samples", "target_ids"])
+    )
+
     # Find best clusters (each sample appearing only once per length)
     clusters = (
         pl.concat(clusters)
@@ -111,97 +119,23 @@ def pipeline(
                 .map(accumulate_clusters, return_dtype=pl.Boolean),
             )
         .filter(pl.col("unique_samples"))
+        .with_columns(
+            recover_samples = pl.col("target_ids").str.split(",").apply(
+                lambda x: sample_targets
+                          .filter(pl.col("target_ids").is_in(x))
+                          .groupby("samples")
+                          .agg(pl.col("target_ids").unique().count())
+                          .sort("target_ids", descending=True)
+                          .head(MAX_RECOVERY_SAMPLES)
+                          .get_column("samples")
+            ).arr.sort().arr.join(","),
+            )
+        .with_row_count("coassembly")
+        .select(
+            "samples", "length", "total_targets", "total_size", "recover_samples",
+            coassembly = pl.lit("coassembly_") + pl.col("coassembly").cast(pl.Utf8)
+            )
     )
-
-    if clusters.height == 0:
-        return pl.DataFrame(schema=output_columns)
-
-    # Find best recover samples
-    import pdb; pdb.set_trace()
-
-
-
-
-    clusters = clusters.with_columns(
-        pl.col("subgraphview").apply(
-            lambda x: x.edges(data=True)
-            ).alias("edgeview"),
-    ).select(
-        pl.col("community").arr.sort().arr.join(",").alias("samples"),
-        "length",
-        pl.col("edgeview").apply(
-            lambda x: sum([data["weight"] for _,_,data in x])
-            ).alias("total_weight"),
-        pl.col("edgeview").apply(
-            lambda x: len(set([i for l in [data["target_ids"].split(",") for _,_,data in x] for i in l]))
-            ).alias("total_targets"),
-        "total_size",
-        pl.col("community").apply(
-            lambda x: umbrellas.filter(
-                    pl.col("community").apply(
-                        lambda y: all([(a in y) for a in x])
-                    )
-                ).head(1).get_column("recover_samples")
-        ).flatten().alias("recover_samples"),
-    )
-
-    if clusters.height == 0:
-        return pl.DataFrame(schema=output_columns)
-
-    clusters = clusters.unique().with_columns(
-        pl.col("samples").str.split(",").alias("samples_list"),
-        pl.col("recover_samples").str.split(",").alias("recover_samples_list"),
-    ).with_columns(
-        pl.col("samples_list").apply(
-            lambda x: elusive_edges.with_columns(
-                    pl.col("sample1").is_in(x).alias("sample1_bool"),
-                    pl.col("sample2").is_in(x).alias("sample2_bool"),
-                ).filter(pl.col("sample1_bool") != pl.col("sample2_bool")
-                ).with_columns(
-                    pl.when(pl.col("sample1_bool")).then(pl.col("sample2")).otherwise(pl.col("sample1")).alias("other_sample"),
-                )
-            ).alias("relevant_edges"),
-        pl.col("samples_list").apply(
-            lambda x: elusive_edges.with_columns(
-                    pl.col("sample1").is_in(x).alias("sample1_bool"),
-                    pl.col("sample2").is_in(x).alias("sample2_bool"),
-                ).filter(pl.col("sample1_bool") & pl.col("sample2_bool")
-                ).select(
-                    pl.col("target_ids").str.split(",").flatten().alias("target_ids"),
-                ).get_column("target_ids")
-            ).alias("relevant_targets"),
-    ).with_columns(
-        pl.when(
-            (pl.col("recover_samples_list").arr.lengths() >= MAX_RECOVERY_SAMPLES) | (pl.col("relevant_edges").apply(lambda x: x.height) == 0)
-        ).then(
-            pl.Series("other_samples", [[]], dtype = pl.List(pl.Utf8))
-        ).otherwise(
-            pl.col("relevant_edges").apply(
-                lambda x: x.with_columns(pl.col("target_ids").str.split(","))
-                    .explode("target_ids")
-                    .groupby("other_sample")
-                    .agg(pl.count())
-                    .sort(["count", "other_sample"], descending=True)
-                    .get_column("other_sample")
-                )
-        ).alias("recover_candidates"),
-    ).with_columns(
-        pl.col("recover_samples_list")
-            .arr.concat(pl.col("recover_candidates"))
-            .alias("recover_samples"),
-    )
-
-    clusters = clusters.select([
-        "samples", "length", "total_weight", "total_targets", "total_size", 
-        pl.col("recover_samples")
-            .apply(lambda s: s.to_frame("s").groupby("s", maintain_order=True).first().to_series())
-            .arr.head(MAX_RECOVERY_SAMPLES)
-            .arr.sort()
-            .arr.join(",")
-            .alias("recover_samples"),
-    ]).sort(["total_targets", "samples"], descending=True).with_columns(
-        pl.lit("coassembly_").alias("coassembly") + pl.arange(0, clusters.height).cast(pl.Utf8)
-        )
 
     return clusters
 
