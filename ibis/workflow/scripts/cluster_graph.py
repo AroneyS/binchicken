@@ -40,13 +40,14 @@ def pipeline(
     for i in range(3, MAX_COASSEMBLY_SAMPLES + 1):
         # Join pairs to n-1 clusters and add n clusters from elusive_edges
         clusters.append(
-            clusters[-1].explode("sample")
+            clusters[-1]
+            .explode("sample")
             .join(clusters[0].explode("sample"), on="sample", how="inner", suffix="_2")
-            .filter(pl.col("samples") != pl.col("samples_2"))
             .select(
                 pl.concat_list("samples", "samples_2").arr.unique(),
                 pl.concat_list("target_ids", "target_ids_2").arr.unique(),
                 )
+            .filter(pl.col("samples").arr.lengths() == i)
             .vstack(
                 elusive_edges
                 .filter(pl.col("length") == i)
