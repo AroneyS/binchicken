@@ -26,98 +26,73 @@ def pipeline(
     if len(elusive_edges) == 0:
         return pl.DataFrame(schema=output_columns)
 
-    targets = (
+    elusive_edges = (
         elusive_edges
-        .select(pl.col("target_ids").str.split(",").arr.explode().alias("target"))
-        .unique()
+        .with_columns(
+            pl.col("samples").str.split(",").arr.eval(pl.element().str.replace(r"\.1$", "")),
+            pl.col("target_ids").str.split(","),
+            )
+        .with_columns(length = pl.col("samples").arr.lengths())
     )
 
-    def accumulate_targets(x):
-        return pl.Series([len(set(i.split(","))) - 1 for i in itertools.accumulate(x)])
+    # Start with pair clusters
+    clustering = [elusive_edges.filter(pl.col("length") == 2).select("samples", "target_ids", sample = pl.col("samples"))]
+    for i in range(3, MAX_COASSEMBLY_SAMPLES + 1):
+        # Join pairs to n-1 clusters and add n clusters from elusive_edges
+        clustering.append(
+            clustering[-1].explode("sample")
+            .join(clustering[0].explode("sample"), on="sample", how="inner", suffix="_2")
+            .filter(pl.col("samples") != pl.col("samples_2"))
+            .select(
+                pl.concat_list("samples", "samples_2").arr.unique(),
+                pl.concat_list("target_ids", "target_ids_2").arr.unique(),
+                )
+            .vstack(
+                elusive_edges
+                .filter(pl.col("length") == i)
+                .select("samples", "target_ids")
+                )
+            .groupby(pl.col("samples").arr.sort().arr.join(","))
+            .agg(pl.col("target_ids").flatten())
+            .with_columns(
+                pl.col("samples").str.split(","),
+                pl.col("target_ids").arr.unique(),
+                sample = pl.col("samples").str.split(",")
+                )
+        )
 
     clusters = (
-        elusive_edges
+        pl.concat(clustering)
         .with_columns(
-            pl.col("samples").str.split(",").arr.eval(pl.element().str.replace(r"\.1$", ""))
+            pl.col("samples").arr.sort().arr.join(","),
+            pl.col("target_ids").arr.sort().arr.join(","),
+            weight = pl.col("target_ids").arr.lengths(),
+            length = pl.col("samples").arr.lengths()
+            )
+        .explode("sample")
+        .join(read_size, on="sample", how="inner")
+        .groupby("samples")
+        .agg(
+            pl.first("length"),
+            pl.first("target_ids"),
+            pl.first("weight"),
+            pl.sum("read_size").alias("total_size"),
+        )
+        .filter(pl.col("length") >= MIN_COASSEMBLY_SAMPLES)
+        .filter(
+            pl.when(MAX_COASSEMBLY_SIZE is not None)
+            .then(pl.col("total_size") <= MAX_COASSEMBLY_SIZE)
+            .otherwise(True)
             )
         .sort("weight", descending=True)
-        .with_columns(
-            targets_cum = 
-                pl.col("target_ids")
-                .str.replace("$", ",")
-                .map(accumulate_targets, return_dtype=pl.Int64),
-        )
-        .with_columns(
-            target_improvement = pl.col("targets_cum") - pl.col("targets_cum").shift().fill_null(0)
-        )
-        .filter(pl.col("targets_cum") < targets.height * 0.9)
-        .filter(pl.col("target_improvement") > 0)
-    )
-    import pdb; pdb.set_trace()
-
-    elusive_edges = elusive_edges.with_columns(
-        sample1 = pl.col("samples").str.split(",").arr.get(0).str.replace(r"\.1$", ""),
-        sample2 = pl.col("samples").str.split(",").arr.get(1).str.replace(r"\.1$", ""),
-        )
-
-    # Create weighted graph and cluster with Girvan-Newman algorithm, removing edges from lightest to heaviest
-    graph = nx.from_pandas_edgelist(elusive_edges.to_pandas(), source="sample1", target="sample2", edge_attr=True)
-    node_attributes = {k: {"read_size": v} for k,v in zip(read_size["sample"], read_size["read_size"])}
-    nx.set_node_attributes(graph, node_attributes)
-
-    def lightest(graph):
-        u, v, _ = min(graph.edges(data="weight"), key=itemgetter(2))
-        return (u, v)
-
-    comp = community.girvan_newman(graph, most_valuable_edge=lightest)
-    first_community = [tuple([c for c in components.connected_components(graph)])]
-
-    communities = pl.DataFrame({"community": itertools.chain(first_community, comp)}
-    ).lazy(
-    ).with_columns(
-        pl.col("community").apply(lambda x: [[i for i in s] for s in x])
-    ).explode("community"
-    ).with_columns(
-        pl.col("community").arr.lengths().alias("length")
-    ).with_columns(
-        ((pl.col("length") <= MAX_RECOVERY_SAMPLES) &
-        (pl.col("length") >= MIN_COASSEMBLY_SAMPLES)).alias("umbrella"),
-        ((pl.col("length") >= MIN_COASSEMBLY_SAMPLES) &
-        (pl.col("length") <= MAX_COASSEMBLY_SAMPLES)).alias("coassembly"),
-        pl.col("community").apply(lambda x: [hash(y) for y in x]).hash().alias("coassembly_hash")
-    ).filter(
-        pl.col("coassembly") | pl.col("umbrella")
-    ).unique(subset="coassembly_hash"
-    ).collect()
-
-    umbrellas = communities.filter(
-        pl.col("umbrella")
-    ).select(
-        "community",
-        pl.col("length").alias("umbrella_length"),
-        pl.col("community").arr.sort().arr.join(",").alias("recover_samples")
-    ).sort(
-        "umbrella_length", descending=True
-    )
-
-    clusters = communities.filter(
-        pl.col("coassembly")
-    ).with_columns(
-        pl.col("community").apply(
-            lambda x: nx.subgraph_view(graph, filter_node = lambda y: y in x)
-            ).alias("subgraphview"),
-    ).with_columns(
-        pl.col("subgraphview").apply(
-            lambda x: sum([data["read_size"] for _,data in x.nodes(data=True)])
-            ).alias("total_size"),
-    ).filter(
-        pl.when(MAX_COASSEMBLY_SIZE is not None)
-        .then(pl.col("total_size") <= MAX_COASSEMBLY_SIZE)
-        .otherwise(True)
     )
 
     if clusters.height == 0:
         return pl.DataFrame(schema=output_columns)
+    #import pdb; pdb.set_trace()
+
+
+
 
     clusters = clusters.with_columns(
         pl.col("subgraphview").apply(
