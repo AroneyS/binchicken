@@ -23,6 +23,10 @@ def pipeline(
     if len(unbinned) == 0:
         return unbinned.rename({"found_in": "target"}), pl.DataFrame(schema=EDGES_COLUMNS)
 
+    if MAX_COASSEMBLY_SAMPLES < 2:
+        # Set to 2 to produce paired edges
+        MAX_COASSEMBLY_SAMPLES = 2
+
     # Filter TAXA_OF_INTEREST
     if TAXA_OF_INTEREST:
         unbinned = unbinned.filter(
