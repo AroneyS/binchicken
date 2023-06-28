@@ -88,7 +88,6 @@ class Tests(unittest.TestCase):
                     "\t".join([
                         "samples",
                         "length",
-                        "total_weight",
                         "total_targets",
                         "total_size",
                         "recover_samples",
@@ -97,7 +96,6 @@ class Tests(unittest.TestCase):
                     "\t".join([
                         "sample_1,sample_3",
                         "2",
-                        "1",
                         "1",
                         "5738",
                         "sample_1,sample_2,sample_3",

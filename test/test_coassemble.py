@@ -110,7 +110,6 @@ class Tests(unittest.TestCase):
                     "\t".join([
                         "samples",
                         "length",
-                        "total_weight",
                         "total_targets",
                         "total_size",
                         "recover_samples",
@@ -118,7 +117,6 @@ class Tests(unittest.TestCase):
                     ]),
                     "\t".join([
                         "sample_1,sample_2",
-                        "2",
                         "2",
                         "2",
                         "6040",
@@ -203,7 +201,6 @@ class Tests(unittest.TestCase):
                         "coassembly",
                         "samples",
                         "length",
-                        "total_weight",
                         "total_targets",
                         "total_size",
                         "unmapped_size",
@@ -211,7 +208,6 @@ class Tests(unittest.TestCase):
                     "\t".join([
                         "coassembly_0",
                         "sample_1,sample_2",
-                        "2",
                         "2",
                         "2",
                         "6040",
@@ -259,7 +255,6 @@ class Tests(unittest.TestCase):
                     "\t".join([
                         "samples",
                         "length",
-                        "total_weight",
                         "total_targets",
                         "total_size",
                         "recover_samples",
@@ -267,7 +262,6 @@ class Tests(unittest.TestCase):
                     ]),
                     "\t".join([
                         "sample_1,sample_3",
-                        "2",
                         "2",
                         "2",
                         "2869",
@@ -314,7 +308,6 @@ class Tests(unittest.TestCase):
                     "\t".join([
                         "samples",
                         "length",
-                        "total_weight",
                         "total_targets",
                         "total_size",
                         "recover_samples",
@@ -322,7 +315,6 @@ class Tests(unittest.TestCase):
                     ]),
                     "\t".join([
                         "sample_1,sample_2",
-                        "2",
                         "2",
                         "2",
                         "2869",
@@ -465,7 +457,6 @@ class Tests(unittest.TestCase):
                     "\t".join([
                         "samples",
                         "length",
-                        "total_weight",
                         "total_targets",
                         "total_size",
                         "recover_samples",
@@ -475,7 +466,6 @@ class Tests(unittest.TestCase):
                         "sample_3",
                         "1",
                         "0",
-                        "0",
                         "2416",
                         "sample_1,sample_2,sample_3",
                         "coassembly_0"
@@ -484,7 +474,6 @@ class Tests(unittest.TestCase):
                         "sample_2",
                         "1",
                         "0",
-                        "0",
                         "2416",
                         "sample_1,sample_2,sample_3",
                         "coassembly_1"
@@ -492,7 +481,6 @@ class Tests(unittest.TestCase):
                     "\t".join([
                         "sample_1",
                         "1",
-                        "0",
                         "0",
                         "3624",
                         "sample_1,sample_2,sample_3",
@@ -549,7 +537,6 @@ class Tests(unittest.TestCase):
                     "\t".join([
                         "samples",
                         "length",
-                        "total_weight",
                         "total_targets",
                         "total_size",
                         "recover_samples",
@@ -557,7 +544,6 @@ class Tests(unittest.TestCase):
                     ]),
                     "\t".join([
                         "sample_1,sample_2",
-                        "2",
                         "2",
                         "2",
                         "6040",
