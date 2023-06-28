@@ -5,11 +5,15 @@
 
 import polars as pl
 import os
-import networkx as nx
-from networkx.algorithms import community
-from networkx.algorithms import components
-from operator import itemgetter
-import itertools
+
+OUTPUT_COLUMNS={
+    "samples": str,
+    "length": int,
+    "total_targets": int,
+    "total_size": int,
+    "recover_samples": str,
+    "coassembly": str,
+    }
 
 def pipeline(
         elusive_edges,
@@ -21,10 +25,8 @@ def pipeline(
 
     print(f"Polars using {str(pl.threadpool_size())} threads")
 
-    output_columns = ["samples", "length", "total_weight", "total_targets", "total_size", "recover_samples", "coassembly"]
-
     if len(elusive_edges) == 0:
-        return pl.DataFrame(schema=output_columns)
+        return pl.DataFrame(schema=OUTPUT_COLUMNS)
 
     elusive_edges = (
         elusive_edges
@@ -70,6 +72,20 @@ def pipeline(
                 )
         )
 
+    if MAX_COASSEMBLY_SAMPLES == 1:
+        clusters = [
+            elusive_edges
+            .lazy()
+            .explode("samples")
+            .groupby("samples")
+            .agg(pl.col("target_ids").flatten())
+            .with_columns(
+                pl.col("samples").apply(lambda x: [x], return_dtype=pl.List(pl.Utf8)),
+                pl.col("target_ids").arr.sort().arr.unique(),
+                sample = pl.col("samples").apply(lambda x: [x], return_dtype=pl.List(pl.Utf8)),
+            )
+        ]
+
     def accumulate_clusters(x):
         clustered_samples = []
         choices = []
@@ -81,7 +97,7 @@ def pipeline(
             else:
                 choices.append(False)
 
-        return pl.Series(choices)
+        return pl.Series(choices, dtype=pl.Boolean)
 
     sample_targets = (
         elusive_edges
@@ -115,7 +131,7 @@ def pipeline(
             .then(pl.col("total_size") <= MAX_COASSEMBLY_SIZE)
             .otherwise(True)
             )
-        .sort("total_targets", descending=True)
+        .sort("total_targets", "samples", descending=True)
         .with_columns(
             unique_samples = 
                 pl.col("samples")
@@ -123,15 +139,23 @@ def pipeline(
             )
         .filter(pl.col("unique_samples"))
         .with_columns(
-            recover_samples = pl.col("target_ids").str.split(",").apply(
+            recover_candidates = pl.col("target_ids").str.split(",").apply(
                 lambda x: sample_targets
                           .filter(pl.col("target_ids").is_in(x))
                           .groupby("samples")
                           .agg(pl.col("target_ids").unique().count())
                           .sort("target_ids", descending=True)
                           .head(MAX_RECOVERY_SAMPLES)
-                          .get_column("samples")
-            ).arr.sort().arr.join(","),
+                          .get_column("samples"),
+                return_dtype=pl.List(pl.Utf8),
+            ),
+            )
+        .with_columns(
+            recover_samples = pl.concat_list(pl.col("samples").str.split(","), "recover_candidates")
+            .arr.unique(maintain_order=True)
+            .arr.head(MAX_RECOVERY_SAMPLES)
+            .arr.sort()
+            .arr.join(","),
             )
         .with_row_count("coassembly")
         .select(
