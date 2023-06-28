@@ -94,10 +94,10 @@ class Tests(unittest.TestCase):
                         "coassembly",
                     ]),
                     "\t".join([
-                        "sample_1,sample_3",
+                        "sample_1,sample_2",
                         "2",
-                        "1",
-                        "5738",
+                        "3",
+                        "8456",
                         "sample_1,sample_2,sample_3",
                         "coassembly_0"
                     ]),
