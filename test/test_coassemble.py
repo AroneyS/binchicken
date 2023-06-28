@@ -344,7 +344,6 @@ class Tests(unittest.TestCase):
                 f"--snakemake-args \"cluster_graph\" "
             )
             extern.run(cmd)
-            import pdb; pdb.set_trace()
 
             config_path = os.path.join("test", "config.yaml")
             self.assertTrue(os.path.exists(config_path))
@@ -402,6 +401,15 @@ class Tests(unittest.TestCase):
                     ]),
                     "\t".join([
                         "S3.7.ribosomal_protein_S7",
+                        "sample_1",
+                        "TATCAGGTGCCTATTGAGGTAAGACCTGAAAGAAGACAGACTTTAGCGCTTCGCTGGATG",
+                        "5",
+                        "8.21",
+                        "Root; d__Bacteria; p__Actinobacteriota; c__Actinomycetia; o__Mycobacteriales; f__Mycobacteriaceae; g__Nocardia; s__Nocardia grenadensis4",
+                        "",
+                    ]),
+                    "\t".join([
+                        "S3.7.ribosomal_protein_S7",
                         "sample_2",
                         "TACCAGGTCCCGGTCGAGGTCCGTCCGATCCGCCAGACGACGCTCGCCCTGCGCTGGCTC",
                         "3",
@@ -411,11 +419,29 @@ class Tests(unittest.TestCase):
                     ]),
                     "\t".join([
                         "S3.7.ribosomal_protein_S7",
+                        "sample_2",
+                        "TATCAGGTGCCTATTGAGGTAAGACCTGAAAGAAGACAGACTTTAGCGCTTCGCTGGATG",
+                        "5",
+                        "8.21",
+                        "Root; d__Bacteria; p__Actinobacteriota; c__Actinomycetia; o__Mycobacteriales; f__Mycobacteriaceae; g__Nocardia; s__Nocardia grenadensis4",
+                        "",
+                    ]),
+                    "\t".join([
+                        "S3.7.ribosomal_protein_S7",
                         "sample_3",
                         "TATCAGGTGCCTATTGAGGTAAGACCTGAAAGAAGACAGACTTTAGCGCTTCGCTGGATA",
                         "6",
                         "9.85",
                         "Root; d__Bacteria; p__Actinobacteriota; c__Actinomycetia; o__Mycobacteriales; f__Mycobacteriaceae; g__Nocardia; s__Nocardia grenadensis2",
+                        "",
+                    ]),
+                    "\t".join([
+                        "S3.7.ribosomal_protein_S7",
+                        "sample_3",
+                        "TATCAGGTGCCTATTGAGGTAAGACCTGAAAGAAGACAGACTTTAGCGCTTCGCTGGATG",
+                        "5",
+                        "8.21",
+                        "Root; d__Bacteria; p__Actinobacteriota; c__Actinomycetia; o__Mycobacteriales; f__Mycobacteriaceae; g__Nocardia; s__Nocardia grenadensis4",
                         "",
                     ]),
                     ""
