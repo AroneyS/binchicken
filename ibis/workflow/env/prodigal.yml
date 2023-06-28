@@ -3,4 +3,4 @@ channels:
   - bioconda
 dependencies:
   - python>=3.6
-  - prodigal
+  - prodigal=2.6.*
