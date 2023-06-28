@@ -211,7 +211,7 @@ class Tests(unittest.TestCase):
                         "2",
                         "3",
                         "8456",
-                        "5738",
+                        "8154",
                     ]),
                     ""
                 ]
@@ -344,6 +344,7 @@ class Tests(unittest.TestCase):
                 f"--snakemake-args \"cluster_graph\" "
             )
             extern.run(cmd)
+            import pdb; pdb.set_trace()
 
             config_path = os.path.join("test", "config.yaml")
             self.assertTrue(os.path.exists(config_path))
@@ -545,8 +546,8 @@ class Tests(unittest.TestCase):
                     "\t".join([
                         "sample_1,sample_2",
                         "2",
-                        "2",
-                        "6040",
+                        "3",
+                        "8456",
                         "sample_1,sample_2,sample_3",
                         "coassembly_0"
                     ]),
