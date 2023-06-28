@@ -463,25 +463,25 @@ class Tests(unittest.TestCase):
                         "coassembly",
                     ]),
                     "\t".join([
-                        "sample_3",
+                        "sample_1",
                         "1",
-                        "0",
-                        "2416",
+                        "4",
+                        "4832",
                         "sample_1,sample_2,sample_3",
                         "coassembly_0"
                     ]),
                     "\t".join([
                         "sample_2",
                         "1",
-                        "0",
-                        "2416",
+                        "3",
+                        "3624",
                         "sample_1,sample_2,sample_3",
                         "coassembly_1"
                     ]),
                     "\t".join([
-                        "sample_1",
+                        "sample_3",
                         "1",
-                        "0",
+                        "2",
                         "3624",
                         "sample_1,sample_2,sample_3",
                         "coassembly_2"
