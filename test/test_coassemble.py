@@ -87,9 +87,9 @@ class Tests(unittest.TestCase):
             self.assertTrue(os.path.exists(read_size_path))
             expected = "\n".join(
                 [
-                    ",".join(["sample_1", "3624"]),
-                    ",".join(["sample_2", "2416"]),
-                    ",".join(["sample_3", "2416"]),
+                    ",".join(["sample_1", "4832"]),
+                    ",".join(["sample_2", "3624"]),
+                    ",".join(["sample_3", "3624"]),
                     ""
                 ]
             )
@@ -118,8 +118,8 @@ class Tests(unittest.TestCase):
                     "\t".join([
                         "sample_1,sample_2",
                         "2",
-                        "2",
-                        "6040",
+                        "3",
+                        "8456",
                         "sample_1,sample_2,sample_3",
                         "coassembly_0"
                     ]),
@@ -209,8 +209,8 @@ class Tests(unittest.TestCase):
                         "coassembly_0",
                         "sample_1,sample_2",
                         "2",
-                        "2",
-                        "6040",
+                        "3",
+                        "8456",
                         "5738",
                     ]),
                     ""
