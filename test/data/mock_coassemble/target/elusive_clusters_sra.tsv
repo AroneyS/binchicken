@@ -1,2 +1,2 @@
-samples	length	total_weight	total_targets	total_size	recover_samples	coassembly
-SRR8334324,SRR8334323	2	2	2	0	SRR8334324,SRR8334323	coassembly_0
+samples	length	total_targets	total_size	recover_samples	coassembly
+SRR8334324,SRR8334323	2	2	0	SRR8334324,SRR8334323	coassembly_0

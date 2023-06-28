@@ -5,11 +5,15 @@
 
 import polars as pl
 import os
-import networkx as nx
-from networkx.algorithms import community
-from networkx.algorithms import components
-from operator import itemgetter
-import itertools
+
+OUTPUT_COLUMNS={
+    "samples": str,
+    "length": int,
+    "total_targets": int,
+    "total_size": int,
+    "recover_samples": str,
+    "coassembly": str,
+    }
 
 def pipeline(
         elusive_edges,
@@ -21,155 +25,145 @@ def pipeline(
 
     print(f"Polars using {str(pl.threadpool_size())} threads")
 
-    output_columns = ["samples", "length", "total_weight", "total_targets", "total_size", "recover_samples", "coassembly"]
-
     if len(elusive_edges) == 0:
-        return pl.DataFrame(schema=output_columns)
+        return pl.DataFrame(schema=OUTPUT_COLUMNS)
 
-    elusive_edges = elusive_edges.with_columns(
-        pl.col("sample1").str.replace(r"\.1$", ""),
-        pl.col("sample2").str.replace(r"\.1$", ""),
+    elusive_edges = (
+        elusive_edges
+        .with_columns(
+            pl.col("samples").str.split(",").arr.eval(pl.element().str.replace(r"\.1$", "")),
+            pl.col("target_ids").str.split(","),
+            )
+        .with_columns(length = pl.col("samples").arr.lengths())
+    )
+
+    # Start with pair clusters
+    clusters = [elusive_edges.lazy().filter(pl.col("length") == 2).select("samples", "target_ids", sample = pl.col("samples"))]
+    for n in range(3, MAX_COASSEMBLY_SAMPLES + 1):
+        # Join pairs to n-1 clusters and add n clusters from elusive_edges
+        clusters.append(
+            pl.concat([
+                # n-1 way edges + matching edges
+                clusters[-1]
+                .explode("sample")
+                .join(clusters[0].explode("sample"), on="sample", how="inner", suffix="_2")
+                .select(
+                    pl.concat_list("samples", "samples_2").arr.unique(),
+                    pl.concat_list("target_ids", "target_ids_2").arr.unique(),
+                    n_way_edge = False,
+                    )
+                .filter(pl.col("samples").arr.lengths() == n),
+                # n-way edges
+                elusive_edges
+                .lazy()
+                .filter(pl.col("length") == n)
+                .select("samples", "target_ids", n_way_edge = True)
+            ])
+            .groupby(pl.col("samples").arr.sort().arr.join(","))
+            .agg(
+                pl.col("target_ids").flatten(),
+                pl.any("n_way_edge"),
+                )
+            .filter(pl.col("n_way_edge"))
+            .select(
+                pl.col("samples").str.split(","),
+                pl.col("target_ids").arr.unique(),
+                sample = pl.col("samples").str.split(",")
+                )
         )
 
-    # Create weighted graph and cluster with Girvan-Newman algorithm, removing edges from lightest to heaviest
-    graph = nx.from_pandas_edgelist(elusive_edges.to_pandas(), source="sample1", target="sample2", edge_attr=True)
-    node_attributes = {k: {"read_size": v} for k,v in zip(read_size["sample"], read_size["read_size"])}
-    nx.set_node_attributes(graph, node_attributes)
+    if MAX_COASSEMBLY_SAMPLES == 1:
+        clusters = [
+            elusive_edges
+            .lazy()
+            .explode("samples")
+            .groupby("samples")
+            .agg(pl.col("target_ids").flatten())
+            .with_columns(
+                pl.col("samples").apply(lambda x: [x], return_dtype=pl.List(pl.Utf8)),
+                pl.col("target_ids").arr.sort().arr.unique(),
+                sample = pl.col("samples").apply(lambda x: [x], return_dtype=pl.List(pl.Utf8)),
+            )
+        ]
 
-    def lightest(graph):
-        u, v, _ = min(graph.edges(data="weight"), key=itemgetter(2))
-        return (u, v)
+    def accumulate_clusters(x):
+        clustered_samples = []
+        choices = []
+        for cluster in x:
+            cluster_samples = cluster.split(",")
+            if all([x not in clustered_samples for x in cluster_samples]):
+                choices.append(True)
+                clustered_samples += cluster_samples
+            else:
+                choices.append(False)
 
-    comp = community.girvan_newman(graph, most_valuable_edge=lightest)
-    first_community = [tuple([c for c in components.connected_components(graph)])]
+        return pl.Series(choices, dtype=pl.Boolean)
 
-    communities = pl.DataFrame({"community": itertools.chain(first_community, comp)}
-    ).lazy(
-    ).with_columns(
-        pl.col("community").apply(lambda x: [[i for i in s] for s in x])
-    ).explode("community"
-    ).with_columns(
-        pl.col("community").arr.lengths().alias("length")
-    ).with_columns(
-        ((pl.col("length") <= MAX_RECOVERY_SAMPLES) &
-        (pl.col("length") >= MIN_COASSEMBLY_SAMPLES)).alias("umbrella"),
-        ((pl.col("length") >= MIN_COASSEMBLY_SAMPLES) &
-        (pl.col("length") <= MAX_COASSEMBLY_SAMPLES)).alias("coassembly"),
-        pl.col("community").apply(lambda x: [hash(y) for y in x]).hash().alias("coassembly_hash")
-    ).filter(
-        pl.col("coassembly") | pl.col("umbrella")
-    ).unique(subset="coassembly_hash"
-    ).collect()
-
-    umbrellas = communities.filter(
-        pl.col("umbrella")
-    ).select(
-        "community",
-        pl.col("length").alias("umbrella_length"),
-        pl.col("community").arr.sort().arr.join(",").alias("recover_samples")
-    ).sort(
-        "umbrella_length", descending=True
+    sample_targets = (
+        elusive_edges
+        .select("samples", "target_ids")
+        .explode("samples")
+        .explode("target_ids")
+        .unique(["samples", "target_ids"])
     )
 
-    clusters = communities.filter(
-        pl.col("coassembly")
-    ).with_columns(
-        pl.col("community").apply(
-            lambda x: nx.subgraph_view(graph, filter_node = lambda y: y in x)
-            ).alias("subgraphview"),
-    ).with_columns(
-        pl.col("subgraphview").apply(
-            lambda x: sum([data["read_size"] for _,data in x.nodes(data=True)])
-            ).alias("total_size"),
-    ).filter(
-        pl.when(MAX_COASSEMBLY_SIZE is not None)
-        .then(pl.col("total_size") <= MAX_COASSEMBLY_SIZE)
-        .otherwise(True)
-    )
-
-    if clusters.height == 0:
-        return pl.DataFrame(schema=output_columns)
-
-    clusters = clusters.with_columns(
-        pl.col("subgraphview").apply(
-            lambda x: x.edges(data=True)
-            ).alias("edgeview"),
-    ).select(
-        pl.col("community").arr.sort().arr.join(",").alias("samples"),
-        "length",
-        pl.col("edgeview").apply(
-            lambda x: sum([data["weight"] for _,_,data in x])
-            ).alias("total_weight"),
-        pl.col("edgeview").apply(
-            lambda x: len(set([i for l in [data["target_ids"].split(",") for _,_,data in x] for i in l]))
-            ).alias("total_targets"),
-        "total_size",
-        pl.col("community").apply(
-            lambda x: umbrellas.filter(
-                    pl.col("community").apply(
-                        lambda y: all([(a in y) for a in x])
-                    )
-                ).head(1).get_column("recover_samples")
-        ).flatten().alias("recover_samples"),
-    )
-
-    if clusters.height == 0:
-        return pl.DataFrame(schema=output_columns)
-
-    clusters = clusters.unique().with_columns(
-        pl.col("samples").str.split(",").alias("samples_list"),
-        pl.col("recover_samples").str.split(",").alias("recover_samples_list"),
-    ).with_columns(
-        pl.col("samples_list").apply(
-            lambda x: elusive_edges.with_columns(
-                    pl.col("sample1").is_in(x).alias("sample1_bool"),
-                    pl.col("sample2").is_in(x).alias("sample2_bool"),
-                ).filter(pl.col("sample1_bool") != pl.col("sample2_bool")
-                ).with_columns(
-                    pl.when(pl.col("sample1_bool")).then(pl.col("sample2")).otherwise(pl.col("sample1")).alias("other_sample"),
-                )
-            ).alias("relevant_edges"),
-        pl.col("samples_list").apply(
-            lambda x: elusive_edges.with_columns(
-                    pl.col("sample1").is_in(x).alias("sample1_bool"),
-                    pl.col("sample2").is_in(x).alias("sample2_bool"),
-                ).filter(pl.col("sample1_bool") & pl.col("sample2_bool")
-                ).select(
-                    pl.col("target_ids").str.split(",").flatten().alias("target_ids"),
-                ).get_column("target_ids")
-            ).alias("relevant_targets"),
-    ).with_columns(
-        pl.when(
-            (pl.col("recover_samples_list").arr.lengths() >= MAX_RECOVERY_SAMPLES) | (pl.col("relevant_edges").apply(lambda x: x.height) == 0)
-        ).then(
-            pl.Series("other_samples", [[]], dtype = pl.List(pl.Utf8))
-        ).otherwise(
-            pl.col("relevant_edges").apply(
-                lambda x: x.with_columns(pl.col("target_ids").str.split(","))
-                    .explode("target_ids")
-                    .groupby("other_sample")
-                    .agg(pl.count())
-                    .sort(["count", "other_sample"], descending=True)
-                    .get_column("other_sample")
-                )
-        ).alias("recover_candidates"),
-    ).with_columns(
-        pl.col("recover_samples_list")
-            .arr.concat(pl.col("recover_candidates"))
-            .alias("recover_samples"),
-    )
-
-    clusters = clusters.select([
-        "samples", "length", "total_weight", "total_targets", "total_size", 
-        pl.col("recover_samples")
-            .apply(lambda s: s.to_frame("s").groupby("s", maintain_order=True).first().to_series())
+    # Find best clusters (each sample appearing only once per length)
+    clusters = (
+        pl.concat(clusters)
+        .with_columns(
+            pl.col("samples").arr.sort().arr.join(","),
+            pl.col("target_ids").arr.sort().arr.join(","),
+            total_targets = pl.col("target_ids").arr.lengths(),
+            length = pl.col("samples").arr.lengths()
+            )
+        .explode("sample")
+        .join(read_size.lazy(), on="sample", how="inner")
+        .groupby("samples")
+        .agg(
+            pl.first("length"),
+            pl.first("target_ids"),
+            pl.first("total_targets"),
+            total_size = pl.sum("read_size"),
+        )
+        .filter(pl.col("length") >= MIN_COASSEMBLY_SAMPLES)
+        .filter(
+            pl.when(MAX_COASSEMBLY_SIZE is not None)
+            .then(pl.col("total_size") <= MAX_COASSEMBLY_SIZE)
+            .otherwise(True)
+            )
+        .sort("total_targets", "samples", descending=True)
+        .with_columns(
+            unique_samples = 
+                pl.col("samples")
+                .map(accumulate_clusters, return_dtype=pl.Boolean),
+            )
+        .filter(pl.col("unique_samples"))
+        .with_columns(
+            recover_candidates = pl.col("target_ids").str.split(",").apply(
+                lambda x: sample_targets
+                          .filter(pl.col("target_ids").is_in(x))
+                          .groupby("samples")
+                          .agg(pl.col("target_ids").unique().count())
+                          .sort("target_ids", descending=True)
+                          .head(MAX_RECOVERY_SAMPLES)
+                          .get_column("samples"),
+                return_dtype=pl.List(pl.Utf8),
+            ),
+            )
+        .with_columns(
+            recover_samples = pl.concat_list(pl.col("samples").str.split(","), "recover_candidates")
+            .arr.unique(maintain_order=True)
             .arr.head(MAX_RECOVERY_SAMPLES)
             .arr.sort()
-            .arr.join(",")
-            .alias("recover_samples"),
-    ]).sort(["total_targets", "samples"], descending=True).with_columns(
-        pl.lit("coassembly_").alias("coassembly") + pl.arange(0, clusters.height).cast(pl.Utf8)
-        )
+            .arr.join(","),
+            )
+        .with_row_count("coassembly")
+        .select(
+            "samples", "length", "total_targets", "total_size", "recover_samples",
+            coassembly = pl.lit("coassembly_") + pl.col("coassembly").cast(pl.Utf8)
+            )
+        .collect()
+    )
 
     return clusters
 

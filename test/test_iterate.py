@@ -88,18 +88,16 @@ class Tests(unittest.TestCase):
                     "\t".join([
                         "samples",
                         "length",
-                        "total_weight",
                         "total_targets",
                         "total_size",
                         "recover_samples",
                         "coassembly",
                     ]),
                     "\t".join([
-                        "sample_1,sample_3",
+                        "sample_1,sample_2",
                         "2",
-                        "1",
-                        "1",
-                        "5738",
+                        "3",
+                        "8456",
                         "sample_1,sample_2,sample_3",
                         "coassembly_0"
                     ]),

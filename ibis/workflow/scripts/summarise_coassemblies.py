@@ -6,7 +6,7 @@
 import pandas as pd
 
 elusive_clusters = pd.read_csv(snakemake.input.elusive_clusters, sep="\t")
-summary = elusive_clusters[["coassembly", "samples", "length", "total_weight", "total_targets", "total_size"]]
+summary = elusive_clusters[["coassembly", "samples", "length", "total_targets", "total_size"]]
 
 if snakemake.input.read_size:
     read_size = pd.read_csv(snakemake.input.read_size, names = ["sample", "read_size"])

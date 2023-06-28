@@ -87,9 +87,9 @@ class Tests(unittest.TestCase):
             self.assertTrue(os.path.exists(read_size_path))
             expected = "\n".join(
                 [
-                    ",".join(["sample_1", "3624"]),
-                    ",".join(["sample_2", "2416"]),
-                    ",".join(["sample_3", "2416"]),
+                    ",".join(["sample_1", "4832"]),
+                    ",".join(["sample_2", "3624"]),
+                    ",".join(["sample_3", "3624"]),
                     ""
                 ]
             )
@@ -110,7 +110,6 @@ class Tests(unittest.TestCase):
                     "\t".join([
                         "samples",
                         "length",
-                        "total_weight",
                         "total_targets",
                         "total_size",
                         "recover_samples",
@@ -119,9 +118,8 @@ class Tests(unittest.TestCase):
                     "\t".join([
                         "sample_1,sample_2",
                         "2",
-                        "2",
-                        "2",
-                        "6040",
+                        "3",
+                        "8456",
                         "sample_1,sample_2,sample_3",
                         "coassembly_0"
                     ]),
@@ -203,7 +201,6 @@ class Tests(unittest.TestCase):
                         "coassembly",
                         "samples",
                         "length",
-                        "total_weight",
                         "total_targets",
                         "total_size",
                         "unmapped_size",
@@ -212,10 +209,9 @@ class Tests(unittest.TestCase):
                         "coassembly_0",
                         "sample_1,sample_2",
                         "2",
-                        "2",
-                        "2",
-                        "6040",
-                        "5738",
+                        "3",
+                        "8456",
+                        "8154",
                     ]),
                     ""
                 ]
@@ -259,7 +255,6 @@ class Tests(unittest.TestCase):
                     "\t".join([
                         "samples",
                         "length",
-                        "total_weight",
                         "total_targets",
                         "total_size",
                         "recover_samples",
@@ -269,9 +264,8 @@ class Tests(unittest.TestCase):
                         "sample_1,sample_3",
                         "2",
                         "2",
-                        "2",
                         "2869",
-                        "sample_1,sample_2,sample_3",
+                        "sample_1,sample_3",
                         "coassembly_0"
                     ]),
                     ""
@@ -314,7 +308,6 @@ class Tests(unittest.TestCase):
                     "\t".join([
                         "samples",
                         "length",
-                        "total_weight",
                         "total_targets",
                         "total_size",
                         "recover_samples",
@@ -323,8 +316,7 @@ class Tests(unittest.TestCase):
                     "\t".join([
                         "sample_1,sample_2",
                         "2",
-                        "2",
-                        "2",
+                        "3",
                         "2869",
                         "sample_1,sample_2,sample_3",
                         "coassembly_0"
@@ -409,6 +401,15 @@ class Tests(unittest.TestCase):
                     ]),
                     "\t".join([
                         "S3.7.ribosomal_protein_S7",
+                        "sample_1",
+                        "TATCAGGTGCCTATTGAGGTAAGACCTGAAAGAAGACAGACTTTAGCGCTTCGCTGGATG",
+                        "5",
+                        "8.21",
+                        "Root; d__Bacteria; p__Actinobacteriota; c__Actinomycetia; o__Mycobacteriales; f__Mycobacteriaceae; g__Nocardia; s__Nocardia grenadensis4",
+                        "",
+                    ]),
+                    "\t".join([
+                        "S3.7.ribosomal_protein_S7",
                         "sample_2",
                         "TACCAGGTCCCGGTCGAGGTCCGTCCGATCCGCCAGACGACGCTCGCCCTGCGCTGGCTC",
                         "3",
@@ -418,11 +419,29 @@ class Tests(unittest.TestCase):
                     ]),
                     "\t".join([
                         "S3.7.ribosomal_protein_S7",
+                        "sample_2",
+                        "TATCAGGTGCCTATTGAGGTAAGACCTGAAAGAAGACAGACTTTAGCGCTTCGCTGGATG",
+                        "5",
+                        "8.21",
+                        "Root; d__Bacteria; p__Actinobacteriota; c__Actinomycetia; o__Mycobacteriales; f__Mycobacteriaceae; g__Nocardia; s__Nocardia grenadensis4",
+                        "",
+                    ]),
+                    "\t".join([
+                        "S3.7.ribosomal_protein_S7",
                         "sample_3",
                         "TATCAGGTGCCTATTGAGGTAAGACCTGAAAGAAGACAGACTTTAGCGCTTCGCTGGATA",
                         "6",
                         "9.85",
                         "Root; d__Bacteria; p__Actinobacteriota; c__Actinomycetia; o__Mycobacteriales; f__Mycobacteriaceae; g__Nocardia; s__Nocardia grenadensis2",
+                        "",
+                    ]),
+                    "\t".join([
+                        "S3.7.ribosomal_protein_S7",
+                        "sample_3",
+                        "TATCAGGTGCCTATTGAGGTAAGACCTGAAAGAAGACAGACTTTAGCGCTTCGCTGGATG",
+                        "5",
+                        "8.21",
+                        "Root; d__Bacteria; p__Actinobacteriota; c__Actinomycetia; o__Mycobacteriales; f__Mycobacteriaceae; g__Nocardia; s__Nocardia grenadensis4",
                         "",
                     ]),
                     ""
@@ -465,35 +484,31 @@ class Tests(unittest.TestCase):
                     "\t".join([
                         "samples",
                         "length",
-                        "total_weight",
                         "total_targets",
                         "total_size",
                         "recover_samples",
                         "coassembly",
                     ]),
                     "\t".join([
-                        "sample_3",
+                        "sample_1",
                         "1",
-                        "0",
-                        "0",
-                        "2416",
+                        "4",
+                        "4832",
                         "sample_1,sample_2,sample_3",
                         "coassembly_0"
                     ]),
                     "\t".join([
                         "sample_2",
                         "1",
-                        "0",
-                        "0",
-                        "2416",
+                        "3",
+                        "3624",
                         "sample_1,sample_2,sample_3",
                         "coassembly_1"
                     ]),
                     "\t".join([
-                        "sample_1",
+                        "sample_3",
                         "1",
-                        "0",
-                        "0",
+                        "2",
                         "3624",
                         "sample_1,sample_2,sample_3",
                         "coassembly_2"
@@ -549,7 +564,6 @@ class Tests(unittest.TestCase):
                     "\t".join([
                         "samples",
                         "length",
-                        "total_weight",
                         "total_targets",
                         "total_size",
                         "recover_samples",
@@ -558,9 +572,8 @@ class Tests(unittest.TestCase):
                     "\t".join([
                         "sample_1,sample_2",
                         "2",
-                        "2",
-                        "2",
-                        "6040",
+                        "3",
+                        "8456",
                         "sample_1,sample_2,sample_3",
                         "coassembly_0"
                     ]),

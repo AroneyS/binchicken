@@ -10,7 +10,7 @@ from ibis.workflow.scripts.evaluate import evaluate
 SINGLEM_COLUMNS=["gene", "sample", "sequence", "num_hits", "coverage", "taxonomy"]
 TARGET_COLUMNS=SINGLEM_COLUMNS+["target"]
 APPRAISE_COLUMNS=SINGLEM_COLUMNS+["found_in"]
-CLUSTER_COLUMNS=["samples", "length", "total_weight", "total_targets", "total_size", "recover_samples", "coassembly"]
+CLUSTER_COLUMNS=["samples", "length", "total_targets", "total_size", "recover_samples", "coassembly"]
 EDGE_COLUMNS=["taxa_group", "weight", "target_ids", "sample1", "sample2"]
 
 OUTPUT_COLUMNS={
@@ -49,7 +49,7 @@ class Tests(unittest.TestCase):
             ["S3.1", "sample_1.1", "BBB", 5, 10.0, "Root; old", "oldgenome_1"],
         ], schema=APPRAISE_COLUMNS)
         clusters = pl.DataFrame([
-            ["sample_1,sample_2", 2, 1, 1, 100, "sample_1,sample_2,sample_3", "coassembly_0"],
+            ["sample_1,sample_2", 2, 1, 100, "sample_1,sample_2,sample_3", "coassembly_0"],
         ], schema=CLUSTER_COLUMNS)
         edges = pl.DataFrame([
             ["Root", 1, "10", "sample_1.1", "sample_2.1"],
@@ -98,7 +98,7 @@ class Tests(unittest.TestCase):
             ["S3.1", "sample_1.1", "BBB", 5, 10.0, "Root; old", "oldgenome_1"],
         ], schema=APPRAISE_COLUMNS)
         clusters = pl.DataFrame([
-            ["sample_1,sample_2", 2, 1, 1, 100, "sample_1,sample_2,sample_3", "coassembly_0"],
+            ["sample_1,sample_2", 2, 1, 100, "sample_1,sample_2,sample_3", "coassembly_0"],
         ], schema=CLUSTER_COLUMNS)
         edges = pl.DataFrame([
             ["Root", 1, "10", "sample_1.1", "sample_2.1"],
@@ -139,7 +139,7 @@ class Tests(unittest.TestCase):
             ["S3.1", "sample_1.1", "BBB", 5, 10.0, "Root; old", "oldgenome_1"],
         ], schema=APPRAISE_COLUMNS)
         clusters = pl.DataFrame([
-            ["sample_1,sample_2", 2, 1, 1, 100, "sample_1,sample_2,sample_3", "coassembly_0"],
+            ["sample_1,sample_2", 2, 1, 100, "sample_1,sample_2,sample_3", "coassembly_0"],
         ], schema=CLUSTER_COLUMNS)
         edges = pl.DataFrame([
             ["Root", 1, "10", "sample_1.1", "sample_2.1"],
@@ -183,7 +183,7 @@ class Tests(unittest.TestCase):
             ["S3.1", "sample_1.1", "BBB", 5, 10.0, "Root; old", "oldgenome_1"],
         ], schema=APPRAISE_COLUMNS)
         clusters = pl.DataFrame([
-            ["sample_1,sample_2", 2, 1, 1, 100, "sample_1,sample_2,sample_3", "coassembly_0"],
+            ["sample_1,sample_2", 2, 1, 100, "sample_1,sample_2,sample_3", "coassembly_0"],
         ], schema=CLUSTER_COLUMNS)
         edges = pl.DataFrame([
             ["Root", 1, "10", "sample_1.1", "sample_2.1"],
@@ -214,7 +214,7 @@ class Tests(unittest.TestCase):
             ["S3.1", "sample_3.1", "BBB", 5, 10.0, "Root; old", "oldgenome_1"],
         ], schema=APPRAISE_COLUMNS)
         clusters = pl.DataFrame([
-            ["sample_1,sample_2", 2, 1, 1, 100, "sample_1,sample_2,sample_3", "coassembly_0"],
+            ["sample_1,sample_2", 2, 1, 100, "sample_1,sample_2,sample_3", "coassembly_0"],
         ], schema=CLUSTER_COLUMNS)
         edges = pl.DataFrame([
             ["Root", 1, "10", "sample_1.1", "sample_2.1"],
@@ -260,7 +260,7 @@ class Tests(unittest.TestCase):
             ["S3.1", "sample_2.1", "BBB", 5, 10.0, "Root; old", "oldgenome_1"],
         ], schema=APPRAISE_COLUMNS)
         clusters = pl.DataFrame([
-            ["sample_1,sample_2", 2, 1, 1, 100, "sample_1,sample_2,sample_3", "coassembly_0"],
+            ["sample_1,sample_2", 2, 1, 100, "sample_1,sample_2,sample_3", "coassembly_0"],
         ], schema=CLUSTER_COLUMNS)
         edges = pl.DataFrame([
             ["Root", 1, "10", "sample_1.1", "sample_2.1"],
@@ -310,8 +310,8 @@ class Tests(unittest.TestCase):
             ["S3.1", "sample_3.1", "DDD", 5, 10.0, "Root; old", "oldgenome_2"],
         ], schema=APPRAISE_COLUMNS)
         clusters = pl.DataFrame([
-            ["sample_1,sample_2", 2, 1, 1, 100, "sample_1,sample_2,sample_3", "coassembly_0"],
-            ["sample_1,sample_3", 2, 1, 1, 100, "sample_1,sample_2,sample_3", "coassembly_1"],
+            ["sample_1,sample_2", 2, 1, 100, "sample_1,sample_2,sample_3", "coassembly_0"],
+            ["sample_1,sample_3", 2, 1, 100, "sample_1,sample_2,sample_3", "coassembly_1"],
         ], schema=CLUSTER_COLUMNS)
         edges = pl.DataFrame([
             ["Root", 1, "10", "sample_1.1", "sample_2.1"],
@@ -376,8 +376,8 @@ class Tests(unittest.TestCase):
             ["S3.1", "sample_3.1", "DDD", 5, 10.0, "Root; old", "oldgenome_2"],
         ], schema=APPRAISE_COLUMNS)
         clusters = pl.DataFrame([
-            ["sample_1,sample_2,sample_3", 3, 1, 1, 100, "sample_1,sample_2,sample_3", "coassembly_0"],
-            ["sample_1,sample_2", 2, 1, 1, 100, "sample_1,sample_2,sample_3", "coassembly_1"],
+            ["sample_1,sample_2,sample_3", 3, 1, 100, "sample_1,sample_2,sample_3", "coassembly_0"],
+            ["sample_1,sample_2", 2, 1, 100, "sample_1,sample_2,sample_3", "coassembly_1"],
         ], schema=CLUSTER_COLUMNS)
         edges = pl.DataFrame([
             ["Root", 1, "10", "sample_1.1", "sample_2.1"],
@@ -450,8 +450,8 @@ class Tests(unittest.TestCase):
             ["S3.1", "sample_1.1", "DDD", 5, 10.0, "Root; old", "oldgenome_2"],
         ], schema=APPRAISE_COLUMNS)
         clusters = pl.DataFrame([
-            ["sample_1,sample_2,sample_3", 3, 2, 2, 3000, "sample_1,sample_2,sample_3", "coassembly_0"],
-            ["sample_1,sample_2", 2, 2, 2, 2000, "sample_1,sample_2,sample_3", "coassembly_1"],
+            ["sample_1,sample_2,sample_3", 3, 2, 3000, "sample_1,sample_2,sample_3", "coassembly_0"],
+            ["sample_1,sample_2", 2, 2, 2000, "sample_1,sample_2,sample_3", "coassembly_1"],
         ], schema=CLUSTER_COLUMNS)
         edges = pl.DataFrame([
             ["Root", 1, "10", "sample_1.1", "sample_3.1"],
@@ -521,7 +521,7 @@ class Tests(unittest.TestCase):
             ["S3.1", "sample_1.1", "BBB", 5, 10.0, "Root; old", "oldgenome_1"],
         ], schema=APPRAISE_COLUMNS)
         clusters = pl.DataFrame([
-            ["sample_1,sample_2", 2, 1, 1, 100, "sample_1,sample_2,sample_3", "coassembly_0"],
+            ["sample_1,sample_2", 2, 1, 100, "sample_1,sample_2,sample_3", "coassembly_0"],
         ], schema=CLUSTER_COLUMNS)
         edges = pl.DataFrame([
             ["Root", 1, "10", "sample_1.1", "sample_2.1"],

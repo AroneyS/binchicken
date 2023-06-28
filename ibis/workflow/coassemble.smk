@@ -263,6 +263,7 @@ rule target_elusive:
         logs_dir + "/elusive_targets.log"
     params:
         min_coassembly_coverage=config["min_coassembly_coverage"],
+        max_coassembly_samples=config["max_coassembly_samples"],
         taxa_of_interest=config["taxa_of_interest"],
     threads:
         64

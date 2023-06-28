@@ -133,7 +133,7 @@ if (!"unmapped_size" %in% colnames(coassemble_summary)) coassemble_summary$unmap
 
 summary_table <- coassemble_summary %>%
     filter(coassembly %in% analysis$coassembly) %>%
-    select(-c(samples, total_weight, total_targets)) %>%
+    select(-c(samples, total_targets)) %>%
     left_join(target_summary) %>%
     left_join(target_totals) %>%
     left_join(target_percentage) %>%
