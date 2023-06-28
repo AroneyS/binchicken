@@ -3,5 +3,5 @@ channels:
   - bioconda
   - rpetit3
 dependencies:
-  - kingfisher=0.2.*
+  - kingfisher>=0.2.1
   - aspera-connect
