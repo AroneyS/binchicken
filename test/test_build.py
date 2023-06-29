@@ -27,7 +27,7 @@ MOCK_COASSEMBLIES = ' '.join([os.path.join(MOCK_COASSEMBLE, "coassemble", "coass
 class Tests(unittest.TestCase):
     def test_build(self):
         with in_tempdir():
-            path_to_conda = os.path.abspath(".conda")
+            #path_to_conda = os.path.abspath(".conda")
             cmd = (
                 f"ibis build "
                 f"--conda-prefix {path_to_conda} "
