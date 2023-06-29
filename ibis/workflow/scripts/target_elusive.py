@@ -52,7 +52,7 @@ def pipeline(
         for _ in range(1, MAX_COASSEMBLY_SAMPLES):
             dfs.append(
                 dfs[-1]
-                .join(df.lazy(), on="target", how="left", suffix="_2")
+                .join(df.lazy(), how="cross", suffix="_2")
                 .filter(
                     (pl.col("samples").arr.contains(pl.col("samples_2").arr.first()).is_not()) &
                     (pl.col("samples").arr.last().str.encode("hex") < pl.col("samples_2").arr.first().str.encode("hex"))
