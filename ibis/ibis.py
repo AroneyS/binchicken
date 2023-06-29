@@ -809,8 +809,12 @@ def main():
     def base_argument_verification(args):
         if not args.forward and not args.forward_list:
             raise Exception("Input reads must be provided")
-        if not args.reverse and not args.reverse_list and not args.sra:
-            raise Exception("Interleaved and long-reads not yet implemented")
+        if not args.reverse and not args.reverse_list:
+            try:
+                if args.sra:
+                    logging.info("SRA reads reverse reads not required")
+            except AttributeError:
+                raise Exception("Interleaved and long-reads not yet implemented")
         if not (args.genomes or args.genomes_list or args.no_genomes or args.single_assembly):
             raise Exception("Input genomes must be provided")
         if (args.forward and args.forward_list) or (args.reverse and args.reverse_list) or (args.genomes and args.genomes_list):
