@@ -47,37 +47,43 @@ def pipeline(
             )
     )
 
-    # Create co-assembly clusters by joining targets with themselves
-    targets = unbinned.select(
-        "target",
-        "coverage",
-        samples = pl.col("sample").apply(lambda x: [x], return_dtype=pl.List(pl.Utf8)),
-        )
-
-    target_dfs = [targets.lazy()]
-    for _ in range(1, MAX_COASSEMBLY_SAMPLES):
-        target_dfs.append(
-            target_dfs[-1]
-            .join(targets.lazy(), on="target", how="left", suffix="_2")
-            .filter(
-                (pl.col("samples").arr.contains(pl.col("samples_2").arr.first()).is_not()) &
-                (pl.col("samples").arr.last().str.encode("hex") < pl.col("samples_2").arr.first().str.encode("hex"))
-                )
-            .select([
-                "target",
-                pl.col("coverage") + pl.col("coverage_2").alias("coverage"),
-                pl.col("samples").arr.concat(pl.col("samples_2")),
-                ])
-        )
-
-    # Filter to selected target-clusters and merge per sample-cluster
-    sparse_edges = (
-        pl.concat(
-            pl.collect_all(target_dfs)
+    def process_groups(df):
+        dfs = [df.lazy()]
+        for _ in range(1, MAX_COASSEMBLY_SAMPLES):
+            dfs.append(
+                dfs[-1]
+                .join(df.lazy(), on="target", how="left", suffix="_2")
+                .filter(
+                    (pl.col("samples").arr.contains(pl.col("samples_2").arr.first()).is_not()) &
+                    (pl.col("samples").arr.last().str.encode("hex") < pl.col("samples_2").arr.first().str.encode("hex"))
+                    )
+                .select([
+                    "target",
+                    pl.col("coverage") + pl.col("coverage_2").alias("coverage"),
+                    pl.col("samples").arr.concat(pl.col("samples_2")),
+                    ])
             )
-        .filter(pl.col("samples").arr.lengths() > 1)
-        .filter(pl.col("coverage") > MIN_COASSEMBLY_COVERAGE)
-        .with_columns(pl.col("samples").arr.join(","))
+
+        filtered = (
+            pl.concat(
+                pl.collect_all(dfs)
+                )
+            .filter(pl.col("samples").arr.lengths() > 1)
+            .filter(pl.col("coverage") > MIN_COASSEMBLY_COVERAGE)
+            .with_columns(pl.col("samples").arr.join(","))
+        )
+
+        return filtered
+
+    sparse_edges = (
+        unbinned
+        .select(
+            "target",
+            "coverage",
+            samples = pl.col("sample").apply(lambda x: [x], return_dtype=pl.List(pl.Utf8)),
+            )
+        .groupby("target")
+        .apply(process_groups)
         .groupby("samples", maintain_order=True)
         .agg(
             weight = pl.count().cast(int),
