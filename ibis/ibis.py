@@ -813,6 +813,8 @@ def main():
             try:
                 if args.sra:
                     logging.info("SRA reads reverse reads not required")
+                else:
+                    raise Exception("Interleaved and long-reads not yet implemented")
             except AttributeError:
                 raise Exception("Interleaved and long-reads not yet implemented")
         if not (args.genomes or args.genomes_list or args.no_genomes or args.single_assembly):
