@@ -112,6 +112,28 @@ class Tests(unittest.TestCase):
         self.assertDataFrameEqual(expected_targets, observed_targets)
         self.assertDataFrameEqual(expected_edges, observed_edges)
 
+    def test_target_elusive_multiple_genes_same_sequence(self):
+        unbinned = pl.DataFrame([
+            ["S3.1", "sample_1", "AAA", 5, 10, "Root", ""],
+            ["S3.2", "sample_1", "AAA", 5, 10, "Root", ""],
+            ["S3.1", "sample_2", "AAA", 5, 10, "Root", ""],
+            ["S3.2", "sample_2", "AAA", 5, 10, "Root", ""],
+        ], schema=APPRAISE_COLUMNS)
+
+        expected_targets = pl.DataFrame([
+            ["S3.1", "sample_1", "AAA", 5, 10, "Root", "0"],
+            ["S3.2", "sample_1", "AAA", 5, 10, "Root", "1"],
+            ["S3.1", "sample_2", "AAA", 5, 10, "Root", "0"],
+            ["S3.2", "sample_2", "AAA", 5, 10, "Root", "1"],
+        ], schema=TARGETS_COLUMNS)
+        expected_edges = pl.DataFrame([
+            ["sample_1,sample_2", 2, "0,1"],
+        ], schema=EDGES_COLUMNS)
+
+        observed_targets, observed_edges = pipeline(unbinned)
+        self.assertDataFrameEqual(expected_targets, observed_targets)
+        self.assertDataFrameEqual(expected_edges, observed_edges)
+
     def test_target_elusive_three_sample_mix(self):
         unbinned = pl.DataFrame([
             ["S3.1", "sample_1", "AAA", 5, 10, "Root", ""],
