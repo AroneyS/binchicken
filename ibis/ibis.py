@@ -554,6 +554,7 @@ def build(args):
     args.aviary_cores = None
     args.assemble_unmapped = True
     args.coassemblies = None
+    args.singlem_metapackage = "."
 
     # Create mock input files
     args.forward = [os.path.join(args.output, "sample_" + s + ".1.fq") for s in ["1", "2", "3"]]
