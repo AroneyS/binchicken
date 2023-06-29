@@ -58,6 +58,16 @@ def make_config(template, output_dir, config_items):
 
     return config_path
 
+def load_config(config_path):
+    yaml = YAML()
+    yaml.version = (1, 1)
+    yaml.default_flow_style = False
+
+    with open(config_path) as f:
+        config = yaml.load(f)
+
+    return config
+
 def copy_input(input, output, suppress=False):
     os.makedirs(os.path.dirname(output), exist_ok=True)
 
@@ -132,7 +142,7 @@ def download_sra(args):
     expected_reverse = [sra_dir + f + "_2" + SRA_SUFFIX for f in args.forward]
 
     # Fix single file outputs if interleaved or error if unpaired
-    if not args.dryrun:
+    if not args.dryrun and args.sra != "build":
         for f, r in zip(expected_forward, expected_reverse):
             if os.path.isfile(f) & os.path.isfile(r):
                 continue
@@ -233,6 +243,9 @@ def evaluate_bins(aviary_outputs, checkm_version, min_completeness, max_contamin
     elif checkm_version == 2:
         completeness_col = "Completeness (CheckM2)"
         contamination_col = "Contamination (CheckM2)"
+    elif checkm_version == "build":
+        logging.info("Mock bins for Ibis build")
+        return {"iteration_0-coassembly_0-0": os.path.join(aviary_outputs[0], "iteration_0-coassembly_0-0.fna")}
     else:
         raise ValueError("Invalid CheckM version")
 
@@ -518,6 +531,75 @@ def iterate(args):
     else:
         logging.warn("Suggested coassemblies may match those from previous iterations. To check, use `--elusive-clusters`.")
 
+def build(args):
+    output_dir = os.path.join(args.output, "build")
+    os.makedirs(output_dir, exist_ok=True)
+    conda_prefix = args.conda_prefix
+    args.build = True
+
+    args = set_standard_args(args)
+    coassemble_config = load_config(importlib.resources.files("ibis.config").joinpath("template_coassemble.yaml"))
+    vars(args).update(coassemble_config)
+    evaluate_config = load_config(importlib.resources.files("ibis.config").joinpath("template_evaluate.yaml"))
+    vars(args).update(evaluate_config)
+
+    args.snakemake_args = args.snakemake_args + " --conda-create-envs-only" if args.snakemake_args else "--conda-create-envs-only"
+    args.conda_prefix = conda_prefix
+
+    args.forward_list = None
+    args.reverse_list = None
+    args.genomes_list = None
+    args.aviary_gtdbtk_dir = "."
+    args.aviary_checkm2_dir = "."
+    args.aviary_cores = None
+    args.assemble_unmapped = True
+    args.coassemblies = None
+
+    # Create mock input files
+    args.forward = [os.path.join(args.output, "sample_" + s + ".1.fq") for s in ["1", "2", "3"]]
+    args.reverse = [os.path.join(args.output, "sample_" + s + ".2.fq") for s in ["1", "2", "3"]]
+    args.genomes = [os.path.join(args.output, "genome_1.fna")]
+
+    # Create mock iterate files
+    args.checkm_version = "build"
+    args.aviary_outputs = [os.path.join(output_dir, "aviary_output")]
+    os.makedirs(args.aviary_outputs[0], exist_ok=True)
+    new_bins = [os.path.join(args.aviary_outputs[0], "iteration_0-coassembly_0-0.fna")]
+
+    # Create mock update files
+    args.coassemble_output = os.path.join(output_dir, "coassemble_output")
+    appraise_dir = os.path.join(args.coassemble_output, "appraise")
+    os.makedirs(appraise_dir, exist_ok=True)
+    otu_tables = [os.path.join(appraise_dir, t + ".otu_table.tsv") for t in ["binned", "unbinned"]]
+    target_dir = os.path.join(args.coassemble_output, "target")
+    os.makedirs(target_dir, exist_ok=True)
+    clusters = [os.path.join(target_dir, "elusive_clusters.tsv")]
+    clusters_text = "samples\tlength\ttotal_targets\ttotal_size\trecover_samples\tcoassembly\nSRR8334324,SRR8334323\t2\t2\t0\tSRR8334324,SRR8334323\tcoassembly_0\n"
+    with open(clusters[0], "w") as f:
+        f.write(clusters_text)
+
+    for item in args.forward + args.reverse + args.genomes + new_bins + otu_tables + clusters:
+        subprocess.check_call(f"touch {item}", shell=True)
+
+    logging.info("Building SingleM, CoverM and Prodigal conda environments")
+    args.output = os.path.join(output_dir, "build_coassemble")
+    os.mkdir(args.output)
+    coassemble(args)
+
+    logging.info("Building R conda environments")
+    args.output = os.path.join(output_dir, "build_evaluate")
+    os.mkdir(args.output)
+    evaluate(args)
+
+    logging.info("Building Aviary and Kingfisher conda environments")
+    args.output = os.path.join(output_dir, "build_sra")
+    os.mkdir(args.output)
+    args.run_aviary = True
+    args.sra = "build"
+    args.forward = ["SRR8334323", "SRR8334324"]
+    args.reverse = args.forward
+    update(args)
+
 def main():
     main_parser = btu.BirdArgparser(program="Ibis (bin chicken)", version = __version__, program_invocation="ibis",
         examples = {
@@ -568,14 +650,20 @@ def main():
                     "rerun coassemble, adding new bins to database",
                     "ibis iterate --aviary-outputs coassembly_0_dir ... --forward reads_1.1.fq ... --reverse reads_1.2.fq ... --genomes genome_1.fna ..."
                 ),
-            ]
+            ],
+            "build": [
+                btu.Example(
+                    "create dependency conda environments",
+                    "ibis build --conda-prefix path_to_conda"
+                ),
+            ],
         }
         )
 
     ###########################################################################
-    def add_general_snakemake_options(argument_group):
+    def add_general_snakemake_options(argument_group, required_conda_prefix=False):
         argument_group.add_argument("--output", help="Output directory [default: .]", default="./")
-        argument_group.add_argument("--conda-prefix", help="Path to conda environment install location", default=None)
+        argument_group.add_argument("--conda-prefix", help="Path to conda environment install location", default=None, required=required_conda_prefix)
         argument_group.add_argument("--cores", type=int, help="Maximum number of cores to use", default=1)
         argument_group.add_argument("--dryrun", action="store_true", help="dry run workflow")
         argument_group.add_argument("--snakemake-args", help="Additional commands to be supplied to snakemake in the form of a space-prefixed single string e.g. \" --quiet\"", default="")
@@ -704,6 +792,11 @@ def main():
 
     ###########################################################################
 
+    build_parser = main_parser.new_subparser("build", "Create dependency conda environments")
+    add_general_snakemake_options(build_parser, required_conda_prefix=True)
+
+    ###########################################################################
+
     args = main_parser.parse_the_args()
     logging.info(f"Ibis v{__version__}")
     logging.info(f"Command: {' '.join(['ibis'] + sys.argv[1:])}")
@@ -772,6 +865,9 @@ def main():
             raise Exception("Single assembly is incompatible with Ibis iterate")
         coassemble_argument_verification(args)
         iterate(args)
+
+    elif args.subparser_name == "build":
+        build(args)
 
 if __name__ == "__main__":
     sys.exit(main())
