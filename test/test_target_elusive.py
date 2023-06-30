@@ -7,9 +7,25 @@ import polars as pl
 from polars.testing import assert_frame_equal
 from ibis.workflow.scripts.target_elusive import pipeline
 
-APPRAISE_COLUMNS=["gene", "sample", "sequence", "num_hits", "coverage", "taxonomy", "found_in"]
+APPRAISE_COLUMNS={
+    "gene": str,
+    "sample": str,
+    "sequence": str,
+    "num_hits": int,
+    "coverage": float,
+    "taxonomy": str,
+    "found_in": str,
+}
 
-TARGETS_COLUMNS=["gene", "sample", "sequence", "num_hits", "coverage", "taxonomy", "target"]
+TARGETS_COLUMNS={
+    "gene": str,
+    "sample": str,
+    "sequence": str,
+    "num_hits": int,
+    "coverage": float,
+    "taxonomy": str,
+    "target": str,
+}
 EDGES_COLUMNS={
     "samples": str,
     "weight": int,

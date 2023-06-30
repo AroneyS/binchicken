@@ -49,7 +49,7 @@ def pipeline(
 
     def process_groups(df):
         if df.height == 1:
-            return pl.DataFrame(schema={"target": str, "coverage": int, "samples": str})
+            return pl.DataFrame(schema={"target": str, "coverage": float, "samples": str})
 
         dfs = [df.lazy()]
         for _ in range(1, MAX_COASSEMBLY_SAMPLES):
