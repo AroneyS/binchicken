@@ -31,10 +31,10 @@ def pipeline(
     elusive_edges = (
         elusive_edges
         .with_columns(
-            pl.col("samples").str.split(",").arr.eval(pl.element().str.replace(r"\.1$", "")),
+            pl.col("samples").str.split(",").list.eval(pl.element().str.replace(r"\.1$", "")),
             pl.col("target_ids").str.split(","),
             )
-        .with_columns(length = pl.col("samples").arr.lengths())
+        .with_columns(length = pl.col("samples").list.lengths())
     )
 
     # Start with pair clusters
@@ -48,18 +48,18 @@ def pipeline(
                 .explode("sample")
                 .join(clusters[0].explode("sample"), on="sample", how="inner", suffix="_2")
                 .select(
-                    pl.concat_list("samples", "samples_2").arr.unique(),
-                    pl.concat_list("target_ids", "target_ids_2").arr.unique(),
+                    pl.concat_list("samples", "samples_2").list.unique(),
+                    pl.concat_list("target_ids", "target_ids_2").list.unique(),
                     n_way_edge = False,
                     )
-                .filter(pl.col("samples").arr.lengths() == n),
+                .filter(pl.col("samples").list.lengths() == n),
                 # n-way edges
                 elusive_edges
                 .lazy()
                 .filter(pl.col("length") == n)
                 .select("samples", "target_ids", n_way_edge = True)
             ])
-            .groupby(pl.col("samples").arr.sort().arr.join(","))
+            .groupby(pl.col("samples").list.sort().list.join(","))
             .agg(
                 pl.col("target_ids").flatten(),
                 pl.any("n_way_edge"),
@@ -67,7 +67,7 @@ def pipeline(
             .filter(pl.col("n_way_edge"))
             .select(
                 pl.col("samples").str.split(","),
-                pl.col("target_ids").arr.unique(),
+                pl.col("target_ids").list.unique(),
                 sample = pl.col("samples").str.split(",")
                 )
         )
@@ -81,7 +81,7 @@ def pipeline(
             .agg(pl.col("target_ids").flatten())
             .with_columns(
                 pl.col("samples").apply(lambda x: [x], return_dtype=pl.List(pl.Utf8)),
-                pl.col("target_ids").arr.sort().arr.unique(),
+                pl.col("target_ids").list.sort().list.unique(),
                 sample = pl.col("samples").apply(lambda x: [x], return_dtype=pl.List(pl.Utf8)),
             )
         ]
@@ -111,10 +111,10 @@ def pipeline(
     clusters = (
         pl.concat(clusters)
         .with_columns(
-            pl.col("samples").arr.sort().arr.join(","),
-            pl.col("target_ids").arr.sort().arr.join(","),
-            total_targets = pl.col("target_ids").arr.lengths(),
-            length = pl.col("samples").arr.lengths()
+            pl.col("samples").list.sort().list.join(","),
+            pl.col("target_ids").list.sort().list.join(","),
+            total_targets = pl.col("target_ids").list.lengths(),
+            length = pl.col("samples").list.lengths()
             )
         .explode("sample")
         .join(read_size.lazy(), on="sample", how="inner")
@@ -152,10 +152,10 @@ def pipeline(
             )
         .with_columns(
             recover_samples = pl.concat_list(pl.col("samples").str.split(","), "recover_candidates")
-            .arr.unique(maintain_order=True)
-            .arr.head(MAX_RECOVERY_SAMPLES)
-            .arr.sort()
-            .arr.join(","),
+            .list.unique(maintain_order=True)
+            .list.head(MAX_RECOVERY_SAMPLES)
+            .list.sort()
+            .list.join(","),
             )
         .with_row_count("coassembly")
         .select(

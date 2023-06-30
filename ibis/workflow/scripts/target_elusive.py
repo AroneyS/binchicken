@@ -57,13 +57,13 @@ def pipeline(
                 dfs[-1]
                 .join(df.lazy(), how="cross", suffix="_2")
                 .filter(
-                    (pl.col("samples").arr.contains(pl.col("samples_2").arr.first()).is_not()) &
-                    (pl.col("samples").arr.last().str.encode("hex") < pl.col("samples_2").arr.first().str.encode("hex"))
+                    (pl.col("samples").list.contains(pl.col("samples_2").list.first()).is_not()) &
+                    (pl.col("samples").list.last().str.encode("hex") < pl.col("samples_2").list.first().str.encode("hex"))
                     )
                 .select([
                     "target",
                     pl.col("coverage") + pl.col("coverage_2").alias("coverage"),
-                    pl.col("samples").arr.concat(pl.col("samples_2")),
+                    pl.col("samples").list.concat(pl.col("samples_2")),
                     ])
             )
 
@@ -71,9 +71,9 @@ def pipeline(
             pl.concat(
                 pl.collect_all(dfs)
                 )
-            .filter(pl.col("samples").arr.lengths() > 1)
+            .filter(pl.col("samples").list.lengths() > 1)
             .filter(pl.col("coverage") > MIN_COASSEMBLY_COVERAGE)
-            .with_columns(pl.col("samples").arr.join(","))
+            .with_columns(pl.col("samples").list.join(","))
         )
 
         return filtered
