@@ -38,7 +38,7 @@ def pipeline(
     )
 
     # Start with pair clusters
-    clusters = [elusive_edges.lazy().filter(pl.col("length") == 2).select("samples", "target_ids", sample = pl.col("samples"))]
+    clusters = [elusive_edges.filter(pl.col("length") == 2).select("samples", "target_ids", sample = pl.col("samples"))]
     for n in range(3, MAX_COASSEMBLY_SAMPLES + 1):
         # Join pairs to n-1 clusters and add n clusters from elusive_edges
         clusters.append(
@@ -55,7 +55,6 @@ def pipeline(
                 .filter(pl.col("samples").list.lengths() == n),
                 # n-way edges
                 elusive_edges
-                .lazy()
                 .filter(pl.col("length") == n)
                 .select("samples", "target_ids", n_way_edge = True)
             ])
@@ -75,7 +74,6 @@ def pipeline(
     if MAX_COASSEMBLY_SAMPLES == 1:
         clusters = [
             elusive_edges
-            .lazy()
             .explode("samples")
             .groupby("samples")
             .agg(pl.col("target_ids").flatten())
@@ -117,7 +115,7 @@ def pipeline(
             length = pl.col("samples").list.lengths()
             )
         .explode("sample")
-        .join(read_size.lazy(), on="sample", how="inner")
+        .join(read_size, on="sample", how="inner")
         .groupby("samples")
         .agg(
             pl.first("length"),
@@ -162,7 +160,6 @@ def pipeline(
             "samples", "length", "total_targets", "total_size", "recover_samples",
             coassembly = pl.lit("coassembly_") + pl.col("coassembly").cast(pl.Utf8)
             )
-        .collect()
     )
 
     return clusters
