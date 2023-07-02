@@ -33,10 +33,16 @@ ELUSIVE_CLUSTERS_TWO = os.path.join(MOCK_COASSEMBLE, 'target', 'elusive_clusters
 
 
 class Tests(unittest.TestCase):
-    def test_update_sra_download_real(self):
-        output_dir = os.path.join("examples", "test_update_sra_download_real")
-        shutil.rmtree(output_dir)
+    def setup_output_dir(self, output_dir):
+        try:
+            shutil.rmtree(output_dir)
+        except FileNotFoundError:
+            pass
         os.makedirs(output_dir)
+
+    def test_update_sra_download_real(self):
+        output_dir = os.path.join("example", "test_update_sra_download_real")
+        self.setup_output_dir(output_dir)
 
         cmd = (
             f"ibis update "
@@ -67,9 +73,8 @@ class Tests(unittest.TestCase):
         self.assertTrue(os.path.exists(os.path.join("test", "coassemble", "sra", "SRR8334324_2.fastq.gz")))
 
     def test_update_aviary_run_real(self):
-        output_dir = os.path.join("examples", "test_update_aviary_run_real")
-        shutil.rmtree(output_dir)
-        os.makedirs(output_dir)
+        output_dir = os.path.join("example", "test_update_aviary_run_real")
+        self.setup_output_dir(output_dir)
 
         cmd = (
             f"ibis update "
@@ -111,9 +116,8 @@ class Tests(unittest.TestCase):
         self.assertTrue(os.path.exists(os.path.join("test", "coassemble", "coassemble", "coassembly_0", "recover", "bins", "checkm_minimal.tsv")))
 
     def test_update_specific_coassembly_sra(self):
-        output_dir = os.path.join("examples", "test_update_specific_coassembly_sra")
-        shutil.rmtree(output_dir)
-        os.makedirs(output_dir)
+        output_dir = os.path.join("example", "test_update_specific_coassembly_sra")
+        self.setup_output_dir(output_dir)
 
         cmd = (
             f"ibis update "
