@@ -7,8 +7,9 @@ import polars as pl
 import os
 
 EDGES_COLUMNS={
+    "style": str,
+    "cluster_size": int,
     "samples": str,
-    "weight": int,
     "target_ids": str,
     }
 
@@ -49,34 +50,48 @@ def pipeline(
 
     def process_groups(df):
         if df.height == 1:
-            return pl.DataFrame(schema={"target": str, "coverage": float, "samples": str})
+            return pl.DataFrame(schema={"style": str, "cluster_size": pl.Int64, "samples": str, "target": str})
 
-        dfs = [df.lazy()]
-        for _ in range(1, MAX_COASSEMBLY_SAMPLES):
-            dfs.append(
-                dfs[-1]
-                .join(df.lazy(), how="cross", suffix="_2")
-                .filter(
-                    (pl.col("samples").list.contains(pl.col("samples_2").list.first()).is_not()) &
-                    (pl.col("samples").list.last().str.encode("hex") < pl.col("samples_2").list.first().str.encode("hex"))
-                    )
-                .select([
-                    "target",
-                    pl.col("coverage") + pl.col("coverage_2").alias("coverage"),
-                    pl.col("samples").list.concat(pl.col("samples_2")),
-                    ])
-            )
-
-        filtered = (
-            pl.concat(
-                pl.collect_all(dfs)
+        # Direct matching samples in pairs with coverage > MIN_COASSEMBLY_COVERAGE
+        dfs = [
+            df
+            .join(df, how="cross", suffix="_2")
+            .filter(
+                pl.col("samples").list.last().str.encode("hex") < pl.col("samples_2").list.first().str.encode("hex")
                 )
+            .select([
+                "target",
+                pl.col("coverage") + pl.col("coverage_2").alias("coverage"),
+                pl.col("samples").list.concat(pl.col("samples_2")),
+                ])
             .filter(pl.col("samples").list.lengths() > 1)
             .filter(pl.col("coverage") > MIN_COASSEMBLY_COVERAGE)
-            .with_columns(pl.col("samples").list.join(","))
+            .select(
+                pl.lit("match").alias("style"),
+                pl.lit(2).cast(pl.Int64).alias("cluster_size"),
+                pl.col("samples").list.join(","),
+                pl.col("target"),
+                )
+        ]
+
+        # Pool samples with coverage > MIN_COASSEMBLY_COVERAGE / N for clusters of size N: 3 to MAX_COASSEMBLY_SAMPLES
+        cluster_sizes = pl.DataFrame({"cluster_size": range(3, MAX_COASSEMBLY_SAMPLES+1)})
+        dfs.append(
+            df
+            .join(cluster_sizes, how="cross")
+            .filter(pl.col("coverage") > float(MIN_COASSEMBLY_COVERAGE) / pl.col("cluster_size").cast(float))
+            .groupby("target", "cluster_size")
+            .agg(pl.concat_list("samples").flatten())
+            .filter(pl.col("samples").list.lengths() >= pl.col("cluster_size"))
+            .select(
+                pl.lit("pool").alias("style"),
+                pl.col("cluster_size"),
+                pl.col("samples").list.sort().list.join(","),
+                pl.col("target"),
+                )
         )
 
-        return filtered
+        return pl.concat(dfs)
 
     sparse_edges = (
         unbinned
@@ -87,11 +102,8 @@ def pipeline(
             )
         .groupby("target")
         .apply(process_groups)
-        .groupby("samples", maintain_order=True)
-        .agg(
-            weight = pl.count().cast(int),
-            target_ids = pl.col("target").sort().str.concat(","),
-            )
+        .groupby(["style", "cluster_size", "samples"])
+        .agg(target_ids = pl.col("target").sort().str.concat(","))
     )
 
     return unbinned, sparse_edges
