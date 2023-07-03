@@ -5,6 +5,7 @@
 
 import polars as pl
 import os
+import logging
 
 EDGES_COLUMNS={
     "style": str,
@@ -19,9 +20,10 @@ def pipeline(
     TAXA_OF_INTEREST="",
     MAX_COASSEMBLY_SAMPLES=2):
 
-    print(f"Polars using {str(pl.threadpool_size())} threads")
+    logging.info(f"Polars using {str(pl.threadpool_size())} threads")
 
     if len(unbinned) == 0:
+        logging.warning("No unbinned sequences found")
         return unbinned.rename({"found_in": "target"}), pl.DataFrame(schema=EDGES_COLUMNS)
 
     if MAX_COASSEMBLY_SAMPLES < 2:
@@ -30,11 +32,12 @@ def pipeline(
 
     # Filter TAXA_OF_INTEREST
     if TAXA_OF_INTEREST:
+        logging.info(f"Filtering for taxa of interest: {TAXA_OF_INTEREST}")
         unbinned = unbinned.filter(
             pl.col("taxonomy").str.contains(TAXA_OF_INTEREST, literal=True)
         )
 
-    # Group hits by sequence within genes and number to form targets
+    logging.info("Grouping hits by marker gene sequences to form targets")
     unbinned = (
         unbinned
         .drop("found_in")
@@ -93,6 +96,7 @@ def pipeline(
 
         return pl.concat(dfs)
 
+    logging.info("Grouping targets into paired matches and pooled samples for clusters of size 3+")
     sparse_edges = (
         unbinned
         .select(
