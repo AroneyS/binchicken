@@ -6,6 +6,7 @@
 import polars as pl
 import itertools
 import os
+import logging
 
 OUTPUT_COLUMNS={
     "samples": str,
@@ -24,9 +25,10 @@ def pipeline(
         MIN_COASSEMBLY_SAMPLES=2,
         MAX_RECOVERY_SAMPLES=20):
 
-    print(f"Polars using {str(pl.threadpool_size())} threads")
+    logging.info(f"Polars using {str(pl.threadpool_size())} threads")
 
     if len(elusive_edges) == 0:
+        logging.warning("No elusive edges found")
         return pl.DataFrame(schema=OUTPUT_COLUMNS)
 
     elusive_edges = (
@@ -39,6 +41,7 @@ def pipeline(
     )
 
     if MAX_COASSEMBLY_SAMPLES == 1:
+        logging.info("Skipping clustering, using single-sample clusters")
         clusters = (
             elusive_edges
             .explode("samples")
@@ -51,6 +54,7 @@ def pipeline(
             )
         )
     else:
+        logging.info("Forming candidate sample clusters")
         clusters = pl.concat([
             # Pair clusters
             elusive_edges
@@ -112,7 +116,7 @@ def pipeline(
         .unique(["samples", "target_ids"])
     )
 
-    # Find best clusters (each sample appearing only once per length)
+    logging.info("Filtering clusters (each sample restricted to only once per cluster size)")
     clusters = (
         clusters
         .with_columns(
@@ -168,6 +172,8 @@ def pipeline(
             coassembly = pl.lit("coassembly_") + pl.col("coassembly").cast(pl.Utf8)
             )
     )
+
+    logging.info("Done")
 
     return clusters
 
