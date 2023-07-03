@@ -384,6 +384,11 @@ def coassemble(args):
         snakemake_args = args.snakemake_args,
     )
 
+    logging.info(f"Ibis coassemble complete.")
+    logging.info(f"Cluster summary at {os.path.join(args.output, 'coassemble', 'summary.tsv')}")
+    logging.info(f"More details at {os.path.join(args.output, 'coassemble', 'target', 'elusive_clusters.tsv')}")
+    logging.info(f"Aviary commands for coassembly and recovery in shell scripts at {os.path.join(args.output, 'coassemble', 'commands')}")
+
 def evaluate(args):
     coassemble_dir = os.path.abspath(args.coassemble_output)
     coassemble_target_dir = os.path.join(coassemble_dir, "target")
@@ -435,6 +440,10 @@ def evaluate(args):
         snakemake_args = args.snakemake_args,
     )
 
+    logging.info(f"Ibis evaluate complete.")
+    logging.info(f"Coassembly evaluation summary at {os.path.join(args.output, 'evaluate', 'evaluate', 'summary_stats.tsv')}")
+    logging.info(f"Genome recovery breakdown by phyla at {os.path.join(args.output, 'evaluate', 'evaluate', 'plots', 'combined', 'phylum_recovered.png')}")
+
 def update(args):
     logging.info("Loading Ibis coassemble info")
     if args.coassemble_output:
@@ -474,6 +483,9 @@ def update(args):
 
     args = set_standard_args(args)
     coassemble(args)
+
+    logging.info(f"Ibis update complete.")
+    logging.info(f"Aviary commands for coassembly and recovery in shell scripts at {os.path.join(args.output, 'coassemble', 'commands')}")
 
 def generate_genome_singlem(orig_args, new_genomes):
     args = copy.deepcopy(orig_args)
@@ -530,6 +542,11 @@ def iterate(args):
                     )
     else:
         logging.warn("Suggested coassemblies may match those from previous iterations. To check, use `--elusive-clusters`.")
+
+    logging.info(f"Ibis iterate complete.")
+    logging.info(f"Cluster summary at {os.path.join(args.output, 'coassemble', 'summary.tsv')}")
+    logging.info(f"More details at {os.path.join(args.output, 'coassemble', 'target', 'elusive_clusters.tsv')}")
+    logging.info(f"Aviary commands for coassembly and recovery in shell scripts at {os.path.join(args.output, 'coassemble', 'commands')}")
 
 def build(args):
     output_dir = os.path.join(args.output, "build")
@@ -600,6 +617,9 @@ def build(args):
     args.forward = ["SRR8334323", "SRR8334324"]
     args.reverse = args.forward
     update(args)
+
+    logging.info(f"Ibis build complete.")
+    logging.info(f"Conda envs at {conda_prefix}")
 
 def main():
     main_parser = btu.BirdArgparser(program="Ibis (bin chicken)", version = __version__, program_invocation="ibis",
