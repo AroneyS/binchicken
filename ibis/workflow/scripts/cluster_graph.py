@@ -181,6 +181,12 @@ if __name__ == "__main__":
     os.environ["POLARS_MAX_THREADS"] = str(snakemake.threads)
     import polars as pl
 
+    logging.basicConfig(
+        level=logging.INFO,
+        format='%(asctime)s %(levelname)s: %(message)s',
+        datefmt='%Y/%m/%d %I:%M:%S %p'
+        )
+
     MAX_COASSEMBLY_SIZE = snakemake.params.max_coassembly_size * 10**9 if snakemake.params.max_coassembly_size else None
     MAX_COASSEMBLY_SAMPLES = snakemake.params.max_coassembly_samples
     MIN_COASSEMBLY_SAMPLES = snakemake.params.num_coassembly_samples
