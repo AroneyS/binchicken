@@ -4,6 +4,7 @@
 # Author: Samuel Aroney
 
 import polars as pl
+import itertools
 import os
 
 OUTPUT_COLUMNS={
@@ -38,7 +39,7 @@ def pipeline(
     )
 
     if MAX_COASSEMBLY_SAMPLES == 1:
-        clusters = [
+        clusters = (
             elusive_edges
             .explode("samples")
             .groupby("samples")
@@ -48,35 +49,47 @@ def pipeline(
                 pl.col("target_ids").list.sort().list.unique(),
                 sample = pl.col("samples").apply(lambda x: [x], return_dtype=pl.List(pl.Utf8)),
             )
-        ]
+        )
     else:
-        # Start with pair clusters
-        clusters = [
+        clusters = pl.concat([
+            # Pair clusters
             elusive_edges
             .filter(pl.col("style") == "match")
             .filter(pl.col("length") == 2)
-            .select("samples", "target_ids", sample = pl.col("samples"))
-            ]
-        for n in range(3, MAX_COASSEMBLY_SAMPLES + 1):
-            # Join pairs to n-1 clusters and add n clusters from elusive_edges
-            clusters.append(
-                # n-1 way edges + matching edges
-                clusters[-1]
-                .explode("sample")
-                .join(clusters[0].explode("sample"), on="sample", how="inner", suffix="_2")
-                .select(
-                    pl.concat_list("samples", "samples_2").list.unique(),
-                    pl.concat_list("target_ids", "target_ids_2").list.unique(),
+            .select("samples", "target_ids", sample = pl.col("samples")),
+            # 3+ way clusters
+            elusive_edges
+            .filter(pl.col("style") == "pool")
+            .with_columns(
+                samples = pl.struct(["samples", "cluster_size"]).apply(
+                    lambda x: [i for i in itertools.combinations(x["samples"], x["cluster_size"])],
+                    return_dtype=pl.List(pl.List(pl.Utf8)),
                     )
-                .filter(pl.col("samples").list.lengths() == n)
-                .groupby(pl.col("samples").list.sort().list.join(","))
-                .agg(pl.col("target_ids").flatten())
-                .select(
-                    pl.col("samples").str.split(","),
-                    pl.col("target_ids").list.unique(),
-                    sample = pl.col("samples").str.split(",")
-                    )
+                )
+            .explode("samples")
+            .select(pl.col("samples").list.sort().list.join(","), "target_ids")
+            .groupby("samples")
+            .agg(pl.col("target_ids").flatten())
+            .with_columns(
+                pl.col("samples").str.split(",")
             )
+            .with_columns(
+                two_way_targets = pl.col("samples").apply(
+                    lambda x: elusive_edges
+                            .filter(pl.col("style") == "match")
+                            .filter(pl.col("samples").list.eval(pl.element().is_in(x)).list.sum() == 2)
+                            .select(pl.col("target_ids").flatten())
+                            .get_column("target_ids")
+                            .to_list(),
+                    skip_nulls=False
+                    ).cast(pl.List(pl.Utf8)),
+                )
+            .select(
+                "samples",
+                pl.concat_list("target_ids", "two_way_targets").list.sort().list.unique(),
+                sample = pl.col("samples"),
+                )
+        ])
 
     def accumulate_clusters(x):
         clustered_samples = []
@@ -101,23 +114,10 @@ def pipeline(
 
     # Find best clusters (each sample appearing only once per length)
     clusters = (
-        pl.concat(clusters)
-        .with_columns(
-            n_way_targets = pl.col("samples").apply(
-                lambda x: elusive_edges
-                          .filter(pl.col("style") == "pool")
-                          .filter(pl.col("cluster_size") == x.len())
-                          .filter(pl.col("samples").list.eval(pl.element().is_in(x)).list.sum() == x.len())
-                          .select(pl.col("target_ids").flatten())
-                          .get_column("target_ids")
-                          .to_list()
-            ).cast(pl.List(pl.Utf8)),
-            )
-        # Require at least 1 N-way target for clusters of size 3+
-        .filter((pl.col("n_way_targets").list.lengths() > 0) | (pl.col("samples").list.lengths() < 3))
+        clusters
         .with_columns(
             pl.col("samples").list.sort().list.join(","),
-            pl.concat_list("target_ids", "n_way_targets").list.sort().list.unique().list.join(","),
+            pl.col("target_ids").list.sort().list.join(","),
             total_targets = pl.col("target_ids").list.lengths(),
             length = pl.col("samples").list.lengths()
             )

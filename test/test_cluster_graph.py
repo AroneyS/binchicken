@@ -289,8 +289,8 @@ class Tests(unittest.TestCase):
             ["match", 2, "4,5", "6,7"],
             ["match", 2, "4,6", "8,9"],
             ["match", 2, "5,6", "10,11,12"],
-            ["pool", 3, "1,2,3", 2, "1,3"],
-            ["pool", 3, "4,5,6", 1, "6"],
+            ["pool", 3, "1,2,3", "1,3"],
+            ["pool", 3, "4,5,6", "6"],
         ], schema = ELUSIVE_EDGES_COLUMNS)
         read_size = pl.DataFrame([
             ["1", 1000],
