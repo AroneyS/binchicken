@@ -37,40 +37,6 @@ def pipeline(
         .with_columns(length = pl.col("samples").list.lengths())
     )
 
-    # Start with pair clusters
-    clusters = [elusive_edges.filter(pl.col("length") == 2).select("samples", "target_ids", sample = pl.col("samples"))]
-    for n in range(3, MAX_COASSEMBLY_SAMPLES + 1):
-        # Join pairs to n-1 clusters and add n clusters from elusive_edges
-        clusters.append(
-            pl.concat([
-                # n-1 way edges + matching edges
-                clusters[-1]
-                .explode("sample")
-                .join(clusters[0].explode("sample"), on="sample", how="inner", suffix="_2")
-                .select(
-                    pl.concat_list("samples", "samples_2").list.unique(),
-                    pl.concat_list("target_ids", "target_ids_2").list.unique(),
-                    n_way_edge = False,
-                    )
-                .filter(pl.col("samples").list.lengths() == n),
-                # n-way edges
-                elusive_edges
-                .filter(pl.col("length") == n)
-                .select("samples", "target_ids", n_way_edge = True)
-            ])
-            .groupby(pl.col("samples").list.sort().list.join(","))
-            .agg(
-                pl.col("target_ids").flatten(),
-                pl.any("n_way_edge"),
-                )
-            .filter(pl.col("n_way_edge"))
-            .select(
-                pl.col("samples").str.split(","),
-                pl.col("target_ids").list.unique(),
-                sample = pl.col("samples").str.split(",")
-                )
-        )
-
     if MAX_COASSEMBLY_SAMPLES == 1:
         clusters = [
             elusive_edges
@@ -83,6 +49,34 @@ def pipeline(
                 sample = pl.col("samples").apply(lambda x: [x], return_dtype=pl.List(pl.Utf8)),
             )
         ]
+    else:
+        # Start with pair clusters
+        clusters = [
+            elusive_edges
+            .filter(pl.col("style") == "match")
+            .filter(pl.col("length") == 2)
+            .select("samples", "target_ids", sample = pl.col("samples"))
+            ]
+        for n in range(3, MAX_COASSEMBLY_SAMPLES + 1):
+            # Join pairs to n-1 clusters and add n clusters from elusive_edges
+            clusters.append(
+                # n-1 way edges + matching edges
+                clusters[-1]
+                .explode("sample")
+                .join(clusters[0].explode("sample"), on="sample", how="inner", suffix="_2")
+                .select(
+                    pl.concat_list("samples", "samples_2").list.unique(),
+                    pl.concat_list("target_ids", "target_ids_2").list.unique(),
+                    )
+                .filter(pl.col("samples").list.lengths() == n)
+                .groupby(pl.col("samples").list.sort().list.join(","))
+                .agg(pl.col("target_ids").flatten())
+                .select(
+                    pl.col("samples").str.split(","),
+                    pl.col("target_ids").list.unique(),
+                    sample = pl.col("samples").str.split(",")
+                    )
+            )
 
     def accumulate_clusters(x):
         clustered_samples = []
@@ -109,8 +103,21 @@ def pipeline(
     clusters = (
         pl.concat(clusters)
         .with_columns(
+            n_way_targets = pl.col("samples").apply(
+                lambda x: elusive_edges
+                          .filter(pl.col("style") == "pool")
+                          .filter(pl.col("cluster_size") == x.len())
+                          .filter(pl.col("samples").list.eval(pl.element().is_in(x)).list.sum() == x.len())
+                          .select(pl.col("target_ids").flatten())
+                          .get_column("target_ids")
+                          .to_list()
+            ).cast(pl.List(pl.Utf8)),
+            )
+        # Require at least 1 N-way target for clusters of size 3+
+        .filter((pl.col("n_way_targets").list.lengths() > 0) | (pl.col("samples").list.lengths() < 3))
+        .with_columns(
             pl.col("samples").list.sort().list.join(","),
-            pl.col("target_ids").list.sort().list.join(","),
+            pl.concat_list("target_ids", "n_way_targets").list.sort().list.unique().list.join(","),
             total_targets = pl.col("target_ids").list.lengths(),
             length = pl.col("samples").list.lengths()
             )
@@ -122,7 +129,7 @@ def pipeline(
             pl.first("target_ids"),
             pl.first("total_targets"),
             total_size = pl.sum("read_size"),
-        )
+            )
         .filter(pl.col("length") >= MIN_COASSEMBLY_SAMPLES)
         .filter(
             pl.when(MAX_COASSEMBLY_SIZE is not None)

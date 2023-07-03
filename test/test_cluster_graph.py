@@ -8,8 +8,9 @@ from polars.testing import assert_frame_equal
 from ibis.workflow.scripts.cluster_graph import pipeline
 
 ELUSIVE_EDGES_COLUMNS={
+    "style": str,
+    "cluster_size": int,
     "samples": str,
-    "weight": int,
     "target_ids": str,
     }
 READ_SIZE_COLUMNS=["sample", "read_size"]
@@ -28,8 +29,8 @@ class Tests(unittest.TestCase):
 
     def test_cluster_graph(self):
         elusive_edges = pl.DataFrame([
-            ["sample_2.1,sample_1.1", 3, "0,1,2"],
-            ["sample_1.1,sample_3.1", 2, "1,2"],
+            ["match", 2, "sample_2.1,sample_1.1", "0,1,2"],
+            ["match", 2, "sample_1.1,sample_3.1", "1,2"],
         ], schema=ELUSIVE_EDGES_COLUMNS)
         read_size = pl.DataFrame([
             ["sample_1", 1000],
@@ -45,12 +46,12 @@ class Tests(unittest.TestCase):
 
     def test_cluster_two_components(self):
         elusive_edges = pl.DataFrame([
-            ["1,2", 1, "1"],
-            ["1,3", 2, "1,2"],
-            ["2,3", 3, "1,2,3"],
-            ["4,5", 4, "4,5,6,7"],
-            ["4,6", 5, "4,5,6,7,8"],
-            ["5,6", 6, "4,5,6,7,8,9"],
+            ["match", 2, "1,2", "1"],
+            ["match", 2, "1,3", "1,2"],
+            ["match", 2, "2,3", "1,2,3"],
+            ["match", 2, "4,5", "4,5,6,7"],
+            ["match", 2, "4,6", "4,5,6,7,8"],
+            ["match", 2, "5,6", "4,5,6,7,8,9"],
         ], schema = ELUSIVE_EDGES_COLUMNS)
         read_size = pl.DataFrame([
             ["1", 1000],
@@ -70,13 +71,13 @@ class Tests(unittest.TestCase):
 
     def test_cluster_single_bud(self):
         elusive_edges = pl.DataFrame([
-            ["1,2", 2, "1,2"],
-            ["1,3", 2, "1,3"],
-            ["1,4", 2, "1,4"],
-            ["2,3", 2, "2,3"],
-            ["2,4", 2, "2,4"],
-            ["3,4", 2, "3,4"],
-            ["4,5", 1, "5"],
+            ["match", 2, "1,2", "1,2"],
+            ["match", 2, "1,3", "1,3"],
+            ["match", 2, "1,4", "1,4"],
+            ["match", 2, "2,3", "2,3"],
+            ["match", 2, "2,4", "2,4"],
+            ["match", 2, "3,4", "3,4"],
+            ["match", 2, "4,5", "5"],
         ], schema = ELUSIVE_EDGES_COLUMNS)
         read_size = pl.DataFrame([
             ["1", 1000],
@@ -104,9 +105,9 @@ class Tests(unittest.TestCase):
 
     def test_cluster_single_bud_choice(self):
         elusive_edges = pl.DataFrame([
-            ["1,2", 4, "1,2,3,4"],
-            ["3,1", 1, "5"],
-            ["3,2", 2, "6,7"],
+            ["match", 2, "1,2", "1,2,3,4"],
+            ["match", 2, "3,1", "5"],
+            ["match", 2, "3,2", "6,7"],
         ], schema = ELUSIVE_EDGES_COLUMNS)
         read_size = pl.DataFrame([
             ["1", 1000],
@@ -130,15 +131,15 @@ class Tests(unittest.TestCase):
 
     def test_cluster_double_bud(self):
         elusive_edges = pl.DataFrame([
-            ["1,2", 3, "1,2,3"],
-            ["1,3", 2, "1,3"],
-            ["1,4", 2, "1,4"],
-            ["2,3", 2, "2,3"],
-            ["2,4", 2, "2,4"],
-            ["3,4", 3, "1,3,4"],
-            ["4,5", 1, "5"],
-            ["4,6", 1, "5"],
-            ["5,6", 3, "5,6,7"],
+            ["match", 2, "1,2", "1,2,3"],
+            ["match", 2, "1,3", "1,3"],
+            ["match", 2, "1,4", "1,4"],
+            ["match", 2, "2,3", "2,3"],
+            ["match", 2, "2,4", "2,4"],
+            ["match", 2, "3,4", "1,3,4"],
+            ["match", 2, "4,5", "5"],
+            ["match", 2, "4,6", "5"],
+            ["match", 2, "5,6", "5,6,7"],
         ], schema = ELUSIVE_EDGES_COLUMNS)
         read_size = pl.DataFrame([
             ["1", 1000],
@@ -163,14 +164,14 @@ class Tests(unittest.TestCase):
 
     def test_cluster_double_bud_choice(self):
         elusive_edges = pl.DataFrame([
-            ["1,2", 3, "1,2,3"],
-            ["1,3", 2, "1,3"],
-            ["2,3", 2, "1,3"],
-            ["4,1", 1, "4"],
-            ["4,3", 1, "5"],
-            ["5,1", 1, "4"],
-            ["5,3", 1, "6"],
-            ["4,5", 3, "4,5,6"],
+            ["match", 2, "1,2", "1,2,3"],
+            ["match", 2, "1,3", "1,3"],
+            ["match", 2, "2,3", "1,3"],
+            ["match", 2, "4,1", "4"],
+            ["match", 2, "4,3", "5"],
+            ["match", 2, "5,1", "4"],
+            ["match", 2, "5,3", "6"],
+            ["match", 2, "4,5", "4,5,6"],
         ], schema = ELUSIVE_EDGES_COLUMNS)
         read_size = pl.DataFrame([
             ["1", 1000],
@@ -193,14 +194,14 @@ class Tests(unittest.TestCase):
 
     def test_cluster_double_bud_irrelevant_targets(self):
         elusive_edges = pl.DataFrame([
-            ["1,2", 3, "1,2,3"],
-            ["1,3", 2, "1,3"],
-            ["2,3", 2, "1,3"],
-            ["4,1", 1, "4"],
-            ["4,3", 1, "7"],
-            ["5,1", 1, "4"],
-            ["5,3", 1, "8"],
-            ["4,5", 3, "4,5,6"],
+            ["match", 2, "1,2", "1,2,3"],
+            ["match", 2, "1,3", "1,3"],
+            ["match", 2, "2,3", "1,3"],
+            ["match", 2, "4,1", "4"],
+            ["match", 2, "4,3", "7"],
+            ["match", 2, "5,1", "4"],
+            ["match", 2, "5,3", "8"],
+            ["match", 2, "4,5", "4,5,6"],
         ], schema = ELUSIVE_EDGES_COLUMNS)
         read_size = pl.DataFrame([
             ["1", 1000],
@@ -223,7 +224,7 @@ class Tests(unittest.TestCase):
 
     def test_cluster_two_samples_among_many(self):
         elusive_edges = pl.DataFrame([
-            ["1,2", 1, "some"],
+            ["match", 2, "1,2", "some"],
         ], schema = ELUSIVE_EDGES_COLUMNS)
         read_size = pl.DataFrame([
             ["1", 1000],
@@ -259,7 +260,7 @@ class Tests(unittest.TestCase):
 
     def test_cluster_only_large_clusters(self):
         elusive_edges = pl.DataFrame([
-            ["1,2", 1, "some"],
+            ["match", 2, "1,2", "some"],
         ], schema = ELUSIVE_EDGES_COLUMNS)
         read_size = pl.DataFrame([
             ["1", 10000],
@@ -280,16 +281,16 @@ class Tests(unittest.TestCase):
         # 6:           6   8 9 10 11 12
 
         elusive_edges = pl.DataFrame([
-            ["1,2", 3, "1,2,3"],
-            ["1,3", 2, "1,3"],
-            ["2,3", 2, "1,3"],
-            ["4,1", 1, "4"],
-            ["4,3", 1, "5"],
-            ["4,5", 2, "6,7"],
-            ["4,6", 2, "8,9"],
-            ["5,6", 3, "10,11,12"],
-            ["1,2,3", 2, "1,3"],
-            ["4,5,6", 1, "6"],
+            ["match", 2, "1,2", "1,2,3"],
+            ["match", 2, "1,3", "1,3"],
+            ["match", 2, "2,3", "1,3"],
+            ["match", 2, "4,1", "4"],
+            ["match", 2, "4,3", "5"],
+            ["match", 2, "4,5", "6,7"],
+            ["match", 2, "4,6", "8,9"],
+            ["match", 2, "5,6", "10,11,12"],
+            ["pool", 3, "1,2,3", 2, "1,3"],
+            ["pool", 3, "4,5,6", 1, "6"],
         ], schema = ELUSIVE_EDGES_COLUMNS)
         read_size = pl.DataFrame([
             ["1", 1000],
@@ -326,43 +327,33 @@ class Tests(unittest.TestCase):
 
         elusive_edges = pl.DataFrame([
             # pairs of 1,2,3,4
-            ["1,2", 2, "3,4"],
-            ["1,3", 2, "2,4"],
-            ["1,4", 3, "2,3,4"],
-            ["2,3", 2, "1,4"],
-            ["2,4", 3, "1,3,4"],
-            ["3,4", 3, "1,2,4"],
-            # triplets of 1,2,3,4
-            ["1,2,3", 1, "4"],
-            ["1,2,4", 2, "3,4"],
-            ["1,3,4", 2, "2,4"],
-            ["2,3,4", 2, "1,4"],
-            # quads of 1,2,3,4
-            ["1,2,3,4", 1, "4"],
+            ["match", 2, "1,2", "3,4"],
+            ["match", 2, "1,3", "2,4"],
+            ["match", 2, "1,4", "2,3,4"],
+            ["match", 2, "2,3", "1,4"],
+            ["match", 2, "2,4", "1,3,4"],
+            ["match", 2, "3,4", "1,2,4"],
             # pairs of 5,6,7,8
-            ["5,6", 2, "7,8"],
-            ["5,7", 2, "6,8"],
-            ["5,8", 3, "8,9,10"],
-            ["6,7", 2, "5,8"],
-            ["6,8", 1, "8"],
-            ["7,8", 1, "8"],
-            # triplets of 5,6,7,8
-            ["5,6,7", 1, "8"],
-            ["5,6,8", 1, "8"],
-            ["5,7,8", 1, "8"],
-            ["6,7,8", 1, "8"],
-            # quads of 5,6,7,8
-            ["5,6,7,8", 1, "8"],
+            ["match", 2, "5,6", "7,8"],
+            ["match", 2, "5,7", "6,8"],
+            ["match", 2, "5,8", "8,9,10"],
+            ["match", 2, "6,7", "5,8"],
+            ["match", 2, "6,8", "8"],
+            ["match", 2, "7,8", "8"],
             # joint pairs
-            ["2,5", 1, "1"],
-            ["3,5", 1, "1"],
-            ["4,5", 1, "1"],
-            # joint triplets
-            ["2,3,5", 1, "1"],
-            ["2,4,5", 1, "1"],
-            ["3,4,5", 1, "1"],
-            # joint quads
-            ["2,3,4,5", 1, "1"],
+            ["match", 2, "2,5", "1"],
+            ["match", 2, "3,5", "1"],
+            ["match", 2, "4,5", "1"],
+            # triplets
+            ["pool", 3, "2,3,4,5", "1"],
+            ["pool", 3, "1,3,4", "2"],
+            ["pool", 3, "1,2,4", "3"],
+            ["pool", 3, "1,2,3,4", "4"],
+            ["pool", 3, "5,6,7,8", "8"],
+            # quads
+            ["pool", 4, "2,3,4,5", "1"],
+            ["pool", 4, "1,2,3,4", "4"],
+            ["pool", 4, "5,6,7,8", "8"],
         ], schema = ELUSIVE_EDGES_COLUMNS)
         read_size = pl.DataFrame([
             ["1", 1000],
