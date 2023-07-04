@@ -33,6 +33,7 @@ def pipeline(
 
     elusive_edges = (
         elusive_edges
+        .lazy()
         .with_columns(
             pl.col("samples").str.split(",").list.eval(pl.element().str.replace(r"\.1$", "")),
             pl.col("target_ids").str.split(","),
@@ -78,11 +79,11 @@ def pipeline(
                 pl.col("samples").str.split(",")
             )
             .with_columns(
-                two_way_targets = pl.col("samples").apply(
+                extra_targets = pl.col("samples").apply(
                     lambda x: elusive_edges
-                            .filter(pl.col("style") == "match")
-                            .filter(pl.col("samples").list.eval(pl.element().is_in(x)).list.sum() == 2)
+                            .filter(pl.col("samples").list.eval(pl.element().is_in(x)).list.min())
                             .select(pl.col("target_ids").flatten())
+                            .collect()
                             .get_column("target_ids")
                             .to_list(),
                     skip_nulls=False
@@ -90,7 +91,7 @@ def pipeline(
                 )
             .select(
                 "samples",
-                pl.concat_list("target_ids", "two_way_targets").list.sort().list.unique(),
+                pl.concat_list("target_ids", "extra_targets").list.sort().list.unique(),
                 sample = pl.col("samples"),
                 )
         ])
@@ -110,6 +111,7 @@ def pipeline(
 
     sample_targets = (
         elusive_edges
+        .lazy()
         .select("samples", "target_ids")
         .explode("samples")
         .explode("target_ids")
@@ -126,7 +128,7 @@ def pipeline(
             length = pl.col("samples").list.lengths()
             )
         .explode("sample")
-        .join(read_size, on="sample", how="inner")
+        .join(read_size.lazy(), on="sample", how="inner")
         .groupby("samples")
         .agg(
             pl.first("length"),
@@ -155,6 +157,7 @@ def pipeline(
                           .agg(pl.col("target_ids").unique().count())
                           .sort("target_ids", descending=True)
                           .head(MAX_RECOVERY_SAMPLES)
+                          .collect()
                           .get_column("samples"),
                 return_dtype=pl.List(pl.Utf8),
             ),
@@ -171,6 +174,7 @@ def pipeline(
             "samples", "length", "total_targets", "total_size", "recover_samples",
             coassembly = pl.lit("coassembly_") + pl.col("coassembly").cast(pl.Utf8)
             )
+        .collect(streaming=True)
     )
 
     logging.info("Done")
