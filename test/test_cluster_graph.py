@@ -388,10 +388,10 @@ class Tests(unittest.TestCase):
         ], schema=["col1", "col2"])
 
         df2 = pl.DataFrame([
-            [["a", "b"], "1"],
-            [["b", "c"], "2"],
-            [["c", "d"], "3"],
-            [["b", "c", "d"], "4"],
+            [["a", "b"], ["1"]],
+            [["b", "c"], ["2"]],
+            [["c", "d"], ["3"]],
+            [["b", "c", "d"], ["4"]],
         ], schema=["col1", "col2"])
 
         expected = pl.DataFrame([
@@ -422,10 +422,10 @@ class Tests(unittest.TestCase):
         ], schema=["col1", "col2"]).lazy()
 
         df2 = pl.DataFrame([
-            [["a", "b"], "1"],
-            [["b", "c"], "2"],
-            [["c", "d"], "3"],
-            [["b", "c", "d"], "4"],
+            [["a", "b"], ["1"]],
+            [["b", "c"], ["2"]],
+            [["c", "d"], ["3"]],
+            [["b", "c", "d"], ["4"]],
         ], schema=["col1", "col2"]).lazy()
 
         expected = pl.DataFrame([
