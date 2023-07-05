@@ -65,6 +65,19 @@ def join_list_subsets(df1, df2, list_colname, value_colname, output_colname):
         .with_columns(pl.col(output_colname).fill_null([]))
         )
 
+def accumulate_clusters(x):
+    clustered_samples = []
+    choices = []
+    for cluster in x:
+        cluster_samples = cluster.split(",")
+        if all([x not in clustered_samples for x in cluster_samples]):
+            choices.append(True)
+            clustered_samples += cluster_samples
+        else:
+            choices.append(False)
+
+    return pl.Series(choices, dtype=pl.Boolean)
+
 def pipeline(
         elusive_edges,
         read_size,
@@ -144,18 +157,7 @@ def pipeline(
                 )
         ])
 
-    def accumulate_clusters(x):
-        clustered_samples = []
-        choices = []
-        for cluster in x:
-            cluster_samples = cluster.split(",")
-            if all([x not in clustered_samples for x in cluster_samples]):
-                choices.append(True)
-                clustered_samples += cluster_samples
-            else:
-                choices.append(False)
-
-        return pl.Series(choices, dtype=pl.Boolean)
+        #return clusters.collect(streaming=True)
 
     sample_targets = (
         elusive_edges

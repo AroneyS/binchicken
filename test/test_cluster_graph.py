@@ -4,8 +4,8 @@ import unittest
 import os
 os.environ["POLARS_MAX_THREADS"] = "1"
 import polars as pl
-from polars.testing import assert_frame_equal
-from ibis.workflow.scripts.cluster_graph import pipeline, join_list_subsets
+from polars.testing import assert_frame_equal, assert_series_equal
+from ibis.workflow.scripts.cluster_graph import pipeline, join_list_subsets, accumulate_clusters
 
 ELUSIVE_EDGES_COLUMNS={
     "style": str,
@@ -26,6 +26,9 @@ ELUSIVE_CLUSTERS_COLUMNS={
 class Tests(unittest.TestCase):
     def assertDataFrameEqual(self, a, b):
         assert_frame_equal(a, b, check_dtype=False)
+
+    def assertSeriesEqual(self, a, b):
+        assert_series_equal(a, b, check_dtype=False)
 
     def test_cluster_graph(self):
         elusive_edges = pl.DataFrame([
@@ -449,6 +452,20 @@ class Tests(unittest.TestCase):
                 .collect()
             )
             self.assertDataFrameEqual(expected, observed)
+
+    def test_accumulate_clusters(self):
+        input = ["1,2,3", "1,2", "4,5,6", "4,5", "7,8,9", "7,8", "10,11,12", "10,11"]
+
+        expected = pl.Series([True, False, True, False, True, False, True, False], dtype=pl.Boolean)
+        observed = accumulate_clusters(input)
+        self.assertSeriesEqual(observed, expected)
+
+    def test_accumulate_clusters_empty_input(self):
+        input = []
+
+        expected = pl.Series([], dtype=pl.Boolean)
+        observed = accumulate_clusters(input)
+        self.assertSeriesEqual(observed, expected)
 
 
 if __name__ == '__main__':
