@@ -34,7 +34,7 @@ def join_list_subsets(df1, df2, list_colname, value_colname, output_colname):
         df2_phys = (
             df2.select(
                 pl.col(list_colname).cast(pl.List(pl.Categorical)).to_physical().list.sort(),
-                pl.col(value_colname).flatten(),
+                pl.col(value_colname),
                 )
             .with_row_count()
         )
@@ -55,7 +55,7 @@ def join_list_subsets(df1, df2, list_colname, value_colname, output_colname):
             )
             .filter(pl.col(list_colname).hash() == pl.col(list_colname + '_right').hash())
             .groupby('row_nr')
-            .agg(value_colname)
+            .agg(pl.col(value_colname).flatten())
             .select("row_nr", pl.col(value_colname).alias(output_colname))
         )
 
