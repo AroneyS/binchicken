@@ -26,14 +26,14 @@ def join_list_subsets(df1, df2, list_colname, value_colname, output_colname):
     with pl.StringCache():
         df1_phys = (
             df1.select(
-                pl.col(list_colname).cast(pl.List(pl.Categorical)).to_physical().list.sort(),
+                pl.col(list_colname).cast(pl.List(pl.Categorical)).to_physical(),
                 "row_nr",
                 )
         )
 
         df2_phys = (
             df2.select(
-                pl.col(list_colname).cast(pl.List(pl.Categorical)).to_physical().list.sort(),
+                pl.col(list_colname).cast(pl.List(pl.Categorical)).to_physical(),
                 pl.col(value_colname),
                 )
             .with_row_count()
