@@ -85,7 +85,7 @@ def pipeline(
         .lazy()
         .with_columns(
             pl.col("samples").str.split(",").list.eval(pl.element().str.replace(r"\.1$", "")),
-            pl.col("target_ids").str.split(","),
+            pl.col("target_ids").str.split(",").cast(pl.List(pl.UInt32)),
             )
         .with_columns(length = pl.col("samples").list.lengths())
     )
@@ -161,7 +161,7 @@ def pipeline(
     sample_targets = (
         elusive_edges
         .lazy()
-        .select("samples", "target_ids")
+        .select("samples", pl.col("target_ids").cast(pl.List(pl.Utf8)))
         .explode("samples")
         .explode("target_ids")
         .unique(["samples", "target_ids"])
@@ -172,7 +172,7 @@ def pipeline(
         clusters
         .with_columns(
             pl.col("samples").list.sort().list.join(","),
-            pl.col("target_ids").list.sort().list.join(","),
+            pl.col("target_ids").cast(pl.List(pl.Utf8)).list.sort().list.join(","),
             total_targets = pl.col("target_ids").list.lengths(),
             length = pl.col("samples").list.lengths()
             )
