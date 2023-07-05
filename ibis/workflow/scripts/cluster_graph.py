@@ -17,6 +17,55 @@ OUTPUT_COLUMNS={
     "coassembly": str,
     }
 
+def join_list_subsets(df1, df2, list_colname, value_colname, output_colname):
+    """
+    Join two DataFrames/LazyFrames by strict subset of list column
+    """
+    df1 = df1.with_row_count()
+
+    with pl.StringCache():
+        df1_phys = (
+            df1.select(
+                pl.col(list_colname).cast(pl.List(pl.Categorical)).to_physical().list.sort(),
+                "row_nr",
+                )
+        )
+
+        df2_phys = (
+            df2.select(
+                pl.col(list_colname).cast(pl.List(pl.Categorical)).to_physical().list.sort(),
+                pl.col(value_colname),
+                )
+            .with_row_count()
+        )
+
+        output = (
+            df1_phys
+            .explode(list_colname)
+            .join(
+                df2_phys
+                .explode(list_colname),
+                on=list_colname,
+            )
+            .groupby('row_nr', 'row_nr_right')
+            .agg(list_colname)
+            .join(
+                df2_phys,
+                left_on='row_nr_right', right_on='row_nr'
+            )
+            .filter(pl.col(list_colname).hash() == pl.col(list_colname + '_right').hash())
+            .groupby('row_nr')
+            .agg(value_colname)
+            .select("row_nr", pl.col(value_colname).alias(output_colname))
+        )
+
+    return (
+        df1
+        .join(output, on="row_nr", how="left")
+        .drop("row_nr")
+        .with_columns(pl.col(output_colname).fill_null([]))
+        )
+
 def pipeline(
         elusive_edges,
         read_size,

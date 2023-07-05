@@ -5,7 +5,7 @@ import os
 os.environ["POLARS_MAX_THREADS"] = "1"
 import polars as pl
 from polars.testing import assert_frame_equal
-from ibis.workflow.scripts.cluster_graph import pipeline
+from ibis.workflow.scripts.cluster_graph import pipeline, join_list_subsets
 
 ELUSIVE_EDGES_COLUMNS={
     "style": str,
@@ -378,6 +378,76 @@ class Tests(unittest.TestCase):
             MAX_COASSEMBLY_SAMPLES=4,
             )
         self.assertDataFrameEqual(expected, observed)
+
+    def test_join_list_subsets(self):
+        df1 = pl.DataFrame([
+            [["a", "b", "c"], ["1"]],
+            [["b", "c", "d"], ["2"]],
+            [["a", "b", "c", "d"], ["3"]],
+            [["d", "e", "f"], ["4"]],
+        ], schema=["col1", "col2"])
+
+        df2 = pl.DataFrame([
+            [["a", "b"], "1"],
+            [["b", "c"], "2"],
+            [["c", "d"], "3"],
+            [["b", "c", "d"], "4"],
+        ], schema=["col1", "col2"])
+
+        expected = pl.DataFrame([
+            [["a", "b", "c"], ["1"], ["1", "2"]],
+            [["b", "c", "d"], ["2"], ["2", "3", "4"]],
+            [["a", "b", "c", "d"], ["3"], ["1", "2", "3", "4"]],
+            [["d", "e", "f"], ["4"], []],
+        ], schema=["col1", "col2", "col3"])
+
+        observed = (
+            join_list_subsets(
+                df1,
+                df2,
+                list_colname="col1",
+                value_colname="col2",
+                output_colname="col3"
+                )
+            .with_columns(pl.col("col3").list.sort())
+        )
+        self.assertDataFrameEqual(expected, observed)
+
+    def test_join_list_subsets_lazy(self):
+        df1 = pl.DataFrame([
+            [["a", "b", "c"], ["1"]],
+            [["b", "c", "d"], ["2"]],
+            [["a", "b", "c", "d"], ["3"]],
+            [["d", "e", "f"], ["4"]],
+        ], schema=["col1", "col2"]).lazy()
+
+        df2 = pl.DataFrame([
+            [["a", "b"], "1"],
+            [["b", "c"], "2"],
+            [["c", "d"], "3"],
+            [["b", "c", "d"], "4"],
+        ], schema=["col1", "col2"]).lazy()
+
+        expected = pl.DataFrame([
+            [["a", "b", "c"], ["1"], ["1", "2"]],
+            [["b", "c", "d"], ["2"], ["2", "3", "4"]],
+            [["a", "b", "c", "d"], ["3"], ["1", "2", "3", "4"]],
+            [["d", "e", "f"], ["4"], []],
+        ], schema=["col1", "col2", "col3"])
+
+        observed = (
+            join_list_subsets(
+                df1,
+                df2,
+                list_colname="col1",
+                value_colname="col2",
+                output_colname="col3"
+                )
+            .with_columns(pl.col("col3").list.sort())
+            .collect()
+        )
+        self.assertDataFrameEqual(expected, observed)
+
 
 if __name__ == '__main__':
     unittest.main()
