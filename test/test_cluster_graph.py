@@ -454,7 +454,7 @@ class Tests(unittest.TestCase):
             self.assertDataFrameEqual(expected, observed)
 
     def test_accumulate_clusters(self):
-        input = ["1,2,3", "1,2,4", "4,5,6", "4,5,7", "7,8,9", "7,8,10", "10,11,12", "10,11"]
+        input = [[1,2,3], [1,2,4], [4,5,6], [4,5,7], [7,8,9], [7,8,10], [10,11,12], [10,11]]
 
         expected = pl.Series([True, False, True, False, True, False, True, False], dtype=pl.Boolean)
         observed = accumulate_clusters(input)

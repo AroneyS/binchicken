@@ -69,10 +69,9 @@ def accumulate_clusters(x):
     clustered_samples = set()
     choices = []
     for cluster in x:
-        cluster_samples = cluster.split(",")
-        if all([x not in clustered_samples for x in cluster_samples]):
+        if all([x not in clustered_samples for x in cluster]):
             choices.append(True)
-            clustered_samples.update(cluster_samples)
+            clustered_samples.update(cluster)
         else:
             choices.append(False)
 
