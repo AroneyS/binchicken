@@ -21,48 +21,47 @@ def join_list_subsets(df1, df2, list_colname, value_colname, output_colname):
     """
     Join two DataFrames/LazyFrames by strict subset of list column
     """
-    df1 = df1.with_row_count()
-
-    with pl.StringCache():
-        df1_phys = (
-            df1.select(
-                pl.col(list_colname).cast(pl.List(pl.Categorical)).to_physical(),
-                "row_nr",
-                )
-        )
-
-        df2_phys = (
-            df2.select(
-                pl.col(list_colname).cast(pl.List(pl.Categorical)).to_physical(),
-                pl.col(value_colname),
-                )
-            .with_row_count()
-        )
-
-        output = (
-            df1_phys
-            .explode(list_colname)
-            .join(
-                df2_phys
-                .explode(list_colname),
-                on=list_colname,
+    df2 = (
+        df2.select(
+            pl.col(list_colname),
+            pl.col(value_colname),
             )
-            .groupby('row_nr', 'row_nr_right')
-            .agg(list_colname)
-            .join(
-                df2_phys,
-                left_on='row_nr_right', right_on='row_nr'
+        .with_row_count()
+    )
+
+    output = (
+        df1
+        .select(
+            pl.col(list_colname),
+            original_list = pl.col(list_colname),
             )
-            .filter(pl.col(list_colname).hash() == pl.col(list_colname + '_right').hash())
-            .groupby('row_nr')
-            .agg(pl.col(value_colname).flatten())
-            .select("row_nr", pl.col(value_colname).alias(output_colname))
+        .with_row_count()
+        .explode(list_colname)
+        .join(
+            df2
+            .explode(list_colname),
+            on=list_colname,
         )
+        .groupby('row_nr', 'row_nr_right')
+        .agg(list_colname, pl.first("original_list"))
+        .join(
+            df2,
+            left_on='row_nr_right', right_on='row_nr'
+        )
+        .filter(pl.col(list_colname).hash() == pl.col(list_colname + '_right').hash())
+        .groupby("original_list")
+        .agg(pl.col(value_colname).flatten())
+        .select(
+            pl.col(value_colname).list.unique().alias(output_colname),
+            join_col = pl.col("original_list").list.sort().hash(),
+            )
+    )
 
     return (
         df1
-        .join(output, on="row_nr", how="left")
-        .drop("row_nr")
+        .with_columns(join_col = pl.col(list_colname).list.sort().hash())
+        .join(output, on="join_col", how="left")
+        .drop("join_col")
         .with_columns(pl.col(output_colname).fill_null([]))
         )
 
