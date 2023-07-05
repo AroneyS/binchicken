@@ -66,13 +66,13 @@ def join_list_subsets(df1, df2, list_colname, value_colname, output_colname):
         )
 
 def accumulate_clusters(x):
-    clustered_samples = []
+    clustered_samples = set()
     choices = []
     for cluster in x:
         cluster_samples = cluster.split(",")
         if all([x not in clustered_samples for x in cluster_samples]):
             choices.append(True)
-            clustered_samples += cluster_samples
+            clustered_samples.update(cluster_samples)
         else:
             choices.append(False)
 
