@@ -115,140 +115,146 @@ def pipeline(
         logging.warning("No elusive edges found")
         return pl.DataFrame(schema=OUTPUT_COLUMNS)
 
-    elusive_edges = (
-        elusive_edges
-        .lazy()
-        .with_columns(
-            pl.col("samples").str.split(",").list.eval(pl.element().str.replace(r"\.1$", "")),
-            pl.col("target_ids").str.split(",").cast(pl.List(pl.UInt32)),
-            )
-        .with_columns(length = pl.col("samples").list.lengths())
-    )
-
-    if MAX_COASSEMBLY_SAMPLES == 1:
-        logging.info("Skipping clustering, using single-sample clusters")
-        clusters = (
+    with pl.StringCache():
+        elusive_edges = (
             elusive_edges
-            .explode("samples")
-            .groupby("samples")
-            .agg(pl.col("target_ids").flatten())
+            .lazy()
             .with_columns(
-                pl.col("samples").apply(lambda x: [x], return_dtype=pl.List(pl.Utf8)),
-                pl.col("target_ids").list.sort().list.unique(),
-                sample = pl.col("samples").apply(lambda x: [x], return_dtype=pl.List(pl.Utf8)),
-            )
-        )
-    else:
-        logging.info("Forming candidate sample clusters")
-        clusters = pl.concat([
-            # Pair clusters
-            elusive_edges
-            .filter(pl.col("style") == "match")
-            .filter(pl.col("length") == 2)
-            .select("samples", "target_ids", sample = pl.col("samples")),
-            # 3+ way clusters
-            elusive_edges
-            .filter(pl.col("style") == "pool")
-            .with_columns(
-                samples = pl.struct(["samples", "cluster_size"]).apply(
-                    lambda x: [i for i in itertools.combinations(x["samples"], x["cluster_size"])],
-                    return_dtype=pl.List(pl.List(pl.Utf8)),
-                    )
-                )
-            .explode("samples")
-            .select(pl.col("samples").list.sort().list.join(","), "target_ids")
-            .groupby("samples")
-            .agg(pl.col("target_ids").flatten())
-            .with_columns(
-                pl.col("samples").str.split(",")
-            )
-            .with_columns(
-                extra_targets = pl.col("samples").apply(
-                    lambda x: elusive_edges
-                            .filter(pl.col("samples").list.eval(pl.element().is_in(x)).list.min())
-                            .select(pl.col("target_ids").flatten())
-                            .collect()
-                            .get_column("target_ids")
-                            .to_list(),
-                    skip_nulls=False
-                    ).cast(pl.List(pl.Utf8)),
-                )
-            .select(
-                "samples",
-                pl.concat_list("target_ids", "extra_targets").list.sort().list.unique(),
-                sample = pl.col("samples"),
-                )
-        ])
-
-        #return clusters.collect(streaming=True)
-
-    sample_targets = (
-        elusive_edges
-        .lazy()
-        .select("samples", pl.col("target_ids").cast(pl.List(pl.Utf8)))
-        .explode("samples")
-        .explode("target_ids")
-        .unique(["samples", "target_ids"])
-    )
-
-    logging.info("Filtering clusters (each sample restricted to only once per cluster size)")
-    clusters = (
-        clusters
-        .with_columns(
-            pl.col("samples").list.sort().list.join(","),
-            pl.col("target_ids").cast(pl.List(pl.Utf8)).list.sort().list.join(","),
-            total_targets = pl.col("target_ids").list.lengths(),
-            length = pl.col("samples").list.lengths()
-            )
-        .explode("sample")
-        .join(read_size.lazy(), on="sample", how="inner")
-        .groupby("samples")
-        .agg(
-            pl.first("length"),
-            pl.first("target_ids"),
-            pl.first("total_targets"),
-            total_size = pl.sum("read_size"),
-            )
-        .filter(pl.col("length") >= MIN_COASSEMBLY_SAMPLES)
-        .filter(
-            pl.when(MAX_COASSEMBLY_SIZE is not None)
-            .then(pl.col("total_size") <= MAX_COASSEMBLY_SIZE)
-            .otherwise(True)
-            )
-        .sort("total_targets", "samples", descending=True)
-        .with_columns(
-            unique_samples = 
                 pl.col("samples")
-                .map(accumulate_clusters, return_dtype=pl.Boolean),
+                    .str.split(",")
+                    .list.eval(pl.element().str.replace(r"\.1$", ""))
+                    .cast(pl.List(pl.Categorical)),
+                pl.col("target_ids")
+                    .str.split(",")
+                    .cast(pl.List(pl.UInt32)),
+                )
+            .with_columns(length = pl.col("samples").list.lengths())
+        )
+
+        read_size = (
+            read_size
+            .lazy()
+            .with_columns(
+                pl.col("sample").cast(pl.Categorical),
+                )
+        )
+
+        if MAX_COASSEMBLY_SAMPLES == 1:
+            logging.info("Skipping clustering, using single-sample clusters")
+            clusters = (
+                elusive_edges
+                .explode("samples")
+                .groupby("samples")
+                .agg(pl.col("target_ids").flatten())
+                .with_columns(
+                    pl.col("samples").apply(lambda x: [x], return_dtype=pl.List(pl.Utf8)).cast(pl.List(pl.Categorical)),
+                    pl.col("target_ids").list.sort().list.unique(),
+                    sample = pl.col("samples").apply(lambda x: [x], return_dtype=pl.List(pl.Utf8)).cast(pl.List(pl.Categorical)),
+                )
             )
-        .filter(pl.col("unique_samples"))
-        .with_columns(
-            recover_candidates = pl.col("target_ids").str.split(",").apply(
-                lambda x: sample_targets
-                          .filter(pl.col("target_ids").is_in(x))
-                          .groupby("samples")
-                          .agg(pl.col("target_ids").unique().count())
-                          .sort("target_ids", descending=True)
-                          .head(MAX_RECOVERY_SAMPLES)
-                          .collect()
-                          .get_column("samples"),
-                return_dtype=pl.List(pl.Utf8),
-            ),
-            )
-        .with_columns(
-            recover_samples = pl.concat_list(pl.col("samples").str.split(","), "recover_candidates")
-            .list.unique(maintain_order=True)
-            .list.head(MAX_RECOVERY_SAMPLES)
-            .list.sort()
-            .list.join(","),
-            )
-        .with_row_count("coassembly")
-        .select(
-            "samples", "length", "total_targets", "total_size", "recover_samples",
-            coassembly = pl.lit("coassembly_") + pl.col("coassembly").cast(pl.Utf8)
-            )
-        .collect(streaming=True)
-    )
+        else:
+            logging.info("Forming candidate sample clusters")
+            clusters = pl.concat([
+                # Pair clusters
+                elusive_edges
+                .filter(pl.col("style") == "match")
+                .filter(pl.col("length") == 2)
+                .select("samples", "target_ids", sample = pl.col("samples")),
+                # 3+ way clusters
+                elusive_edges
+                .filter(pl.col("style") == "pool")
+                # Prevent combinatorial explosion (also, large clusters are less useful for distinguishing between clusters)
+                .filter(pl.col("samples").list.lengths() < 100)
+                .with_columns(
+                    samples_combinations = pl.struct(["length", "cluster_size"]).apply(
+                        lambda x: [i for i in itertools.combinations(range(x["length"]), x["cluster_size"])],
+                        return_dtype=pl.List(pl.List(pl.Int64)),
+                        )
+                    )
+                .explode("samples_combinations")
+                .with_columns(
+                    pl.col("samples")
+                    .list.take(pl.col("samples_combinations"))
+                    )
+                .select("samples", "target_ids")
+                .groupby("samples")
+                .agg(pl.col("target_ids").flatten())
+                .pipe(
+                    join_list_subsets,
+                    df2=elusive_edges,
+                    list_colname="samples",
+                    value_colname="target_ids",
+                    output_colname="extra_targets"
+                    )
+                .select(
+                    "samples",
+                    pl.concat_list("target_ids", "extra_targets").list.unique(),
+                    sample = pl.col("samples"),
+                    )
+            ])
+
+        sample_targets = (
+            elusive_edges
+            .select("samples", "target_ids")
+            .explode("samples")
+            .explode("target_ids")
+            .unique()
+            .groupby("samples")
+            .agg("target_ids")
+        )
+
+        logging.info("Filtering clusters (each sample restricted to only once per cluster size)")
+        clusters = (
+            clusters
+            .with_columns(
+                "samples", "target_ids",
+                total_targets = pl.col("target_ids").list.lengths(),
+                length = pl.col("samples").list.lengths()
+                )
+            .filter(pl.col("length") >= MIN_COASSEMBLY_SAMPLES)
+            .explode("sample")
+            .join(read_size, on="sample", how="inner")
+            .groupby("samples")
+            .agg(
+                pl.first("length"),
+                pl.first("target_ids"),
+                pl.first("total_targets"),
+                total_size = pl.sum("read_size"),
+                )
+            .filter(
+                pl.when(MAX_COASSEMBLY_SIZE is not None)
+                .then(pl.col("total_size") <= MAX_COASSEMBLY_SIZE)
+                .otherwise(True)
+                )
+            .sort("total_targets", descending=True)
+            .with_columns(
+                unique_samples = 
+                    pl.col("samples")
+                    .map(accumulate_clusters, return_dtype=pl.Boolean),
+                )
+            .filter(pl.col("unique_samples"))
+            .pipe(
+                find_recover_candidates,
+                sample_targets,
+                MAX_RECOVERY_SAMPLES=MAX_RECOVERY_SAMPLES,
+                )
+            .with_columns(
+                pl.col("samples").cast(pl.List(pl.Utf8)).list.sort().list.join(","),
+                recover_samples = pl.concat_list(pl.col("samples"), "recover_candidates")
+                .list.unique(maintain_order=True)
+                .list.head(MAX_RECOVERY_SAMPLES)
+                .cast(pl.List(pl.Utf8))
+                .list.sort()
+                .list.join(",")
+                )
+            .sort("total_targets", "samples", descending=True)
+            .with_row_count("coassembly")
+            .select(
+                "samples", "length", "total_targets", "total_size", "recover_samples",
+                coassembly = pl.lit("coassembly_") + pl.col("coassembly").cast(pl.Utf8)
+                )
+            .collect(streaming=True)
+        )
 
     logging.info("Done")
 
