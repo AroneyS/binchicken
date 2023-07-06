@@ -115,6 +115,8 @@ def pipeline(
         logging.warning("No elusive edges found")
         return pl.DataFrame(schema=OUTPUT_COLUMNS)
 
+    is_pooled = any(elusive_edges["style"] == "pool")
+
     with pl.StringCache():
         elusive_edges = (
             elusive_edges
@@ -141,7 +143,7 @@ def pipeline(
 
         if MAX_COASSEMBLY_SAMPLES == 1:
             logging.info("Skipping clustering, using single-sample clusters")
-            clusters = (
+            clusters = [
                 elusive_edges
                 .explode("samples")
                 .groupby("samples")
@@ -151,47 +153,51 @@ def pipeline(
                     pl.col("target_ids").list.sort().list.unique(),
                     sample = pl.col("samples").apply(lambda x: [x], return_dtype=pl.List(pl.Utf8)).cast(pl.List(pl.Categorical)),
                 )
-            )
+            ]
         else:
             logging.info("Forming candidate sample clusters")
-            clusters = pl.concat([
+            clusters = [
                 # Pair clusters
                 elusive_edges
                 .filter(pl.col("style") == "match")
                 .filter(pl.col("length") == 2)
-                .select("samples", "target_ids", sample = pl.col("samples")),
-                # 3+ way clusters
-                elusive_edges
-                .filter(pl.col("style") == "pool")
-                # Prevent combinatorial explosion (also, large clusters are less useful for distinguishing between clusters)
-                .filter(pl.col("samples").list.lengths() < 100)
-                .with_columns(
-                    samples_combinations = pl.struct(["length", "cluster_size"]).apply(
-                        lambda x: [i for i in itertools.combinations(range(x["length"]), x["cluster_size"])],
-                        return_dtype=pl.List(pl.List(pl.Int64)),
-                        )
+                .select("samples", "target_ids", sample = pl.col("samples"))
+            ]
+
+            if is_pooled:
+                    clusters.append(
+                        # 3+ way clusters
+                        elusive_edges
+                        .filter(pl.col("style") == "pool")
+                        # Prevent combinatorial explosion (also, large clusters are less useful for distinguishing between clusters)
+                        .filter(pl.col("samples").list.lengths() < 100)
+                        .with_columns(
+                            samples_combinations = pl.struct(["length", "cluster_size"]).apply(
+                                lambda x: [i for i in itertools.combinations(range(x["length"]), x["cluster_size"])],
+                                return_dtype=pl.List(pl.List(pl.Int64)),
+                                )
+                            )
+                        .explode("samples_combinations")
+                        .with_columns(
+                            pl.col("samples")
+                            .list.take(pl.col("samples_combinations"))
+                            )
+                        .select("samples", "target_ids")
+                        .groupby("samples")
+                        .agg(pl.col("target_ids").flatten())
+                        .pipe(
+                            join_list_subsets,
+                            df2=elusive_edges,
+                            list_colname="samples",
+                            value_colname="target_ids",
+                            output_colname="extra_targets"
+                            )
+                        .select(
+                            "samples",
+                            pl.concat_list("target_ids", "extra_targets").list.unique(),
+                            sample = pl.col("samples"),
+                            )
                     )
-                .explode("samples_combinations")
-                .with_columns(
-                    pl.col("samples")
-                    .list.take(pl.col("samples_combinations"))
-                    )
-                .select("samples", "target_ids")
-                .groupby("samples")
-                .agg(pl.col("target_ids").flatten())
-                .pipe(
-                    join_list_subsets,
-                    df2=elusive_edges,
-                    list_colname="samples",
-                    value_colname="target_ids",
-                    output_colname="extra_targets"
-                    )
-                .select(
-                    "samples",
-                    pl.concat_list("target_ids", "extra_targets").list.unique(),
-                    sample = pl.col("samples"),
-                    )
-            ])
 
         sample_targets = (
             elusive_edges
@@ -205,7 +211,7 @@ def pipeline(
 
         logging.info("Filtering clusters (each sample restricted to only once per cluster size)")
         clusters = (
-            clusters
+            pl.concat(clusters)
             .with_columns(
                 "samples", "target_ids",
                 total_targets = pl.col("target_ids").list.lengths(),
