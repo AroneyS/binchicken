@@ -31,7 +31,7 @@ CAT_CLUSTERS_COLUMNS={
     "total_size": int,
     }
 SAMPLE_TARGETS_COLUMNS={
-    "samples": pl.Utf8,
+    "recover_candidates": pl.Utf8,
     "target_ids": pl.List(pl.UInt32),
     }
 CAT_RECOVERY_COLUMNS={
@@ -508,7 +508,7 @@ class Tests(unittest.TestCase):
                     ],
                     schema=SAMPLE_TARGETS_COLUMNS
                     )
-                .with_columns(pl.col("samples").cast(pl.Categorical))
+                .with_columns(pl.col("recover_candidates").cast(pl.Categorical))
             )
 
             clusters = (
@@ -565,7 +565,7 @@ class Tests(unittest.TestCase):
                     ],
                     schema=SAMPLE_TARGETS_COLUMNS
                     )
-                .with_columns(pl.col("samples").cast(pl.Categorical))
+                .with_columns(pl.col("recover_candidates").cast(pl.Categorical))
                 .lazy()
             )
 

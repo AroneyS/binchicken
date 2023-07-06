@@ -86,13 +86,13 @@ def find_recover_candidates(df, samples_df, MAX_RECOVERY_SAMPLES=20):
         .select("join_col", "target_ids")
         .explode("target_ids")
         .join(samples_df, on="target_ids", how="left")
-        .groupby("join_col", "samples")
+        .groupby("join_col", "recover_candidates")
         .agg(pl.count())
         .sort("count", descending=True)
         .groupby("join_col")
         .head(MAX_RECOVERY_SAMPLES)
         .groupby("join_col")
-        .agg(recover_candidates = pl.col("samples"))
+        .agg("recover_candidates")
     )
 
     return (
@@ -201,11 +201,11 @@ def pipeline(
 
         sample_targets = (
             elusive_edges
-            .select("samples", "target_ids")
-            .explode("samples")
+            .select("target_ids", recover_candidates = pl.col("samples"))
+            .explode("recover_candidates")
             .explode("target_ids")
             .unique()
-            .groupby("samples")
+            .groupby("recover_candidates")
             .agg("target_ids")
         )
 
