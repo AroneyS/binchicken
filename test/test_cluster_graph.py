@@ -5,7 +5,7 @@ import os
 os.environ["POLARS_MAX_THREADS"] = "1"
 import polars as pl
 from polars.testing import assert_frame_equal, assert_series_equal
-from ibis.workflow.scripts.cluster_graph import pipeline, join_list_subsets, accumulate_clusters
+from ibis.workflow.scripts.cluster_graph import pipeline, join_list_subsets, accumulate_clusters, find_recover_candidates
 
 ELUSIVE_EDGES_COLUMNS={
     "style": str,
@@ -21,6 +21,26 @@ ELUSIVE_CLUSTERS_COLUMNS={
     "total_size": int,
     "recover_samples": str,
     "coassembly": str,
+    }
+
+CAT_CLUSTERS_COLUMNS={
+    "samples": pl.List(pl.Utf8),
+    "length": int,
+    "target_ids": pl.List(pl.UInt32),
+    "total_targets": int,
+    "total_size": int,
+    }
+SAMPLE_TARGETS_COLUMNS={
+    "samples": pl.Utf8,
+    "target_ids": pl.List(pl.UInt32),
+    }
+CAT_RECOVERY_COLUMNS={
+    "samples": pl.List(pl.Utf8),
+    "length": int,
+    "target_ids": pl.List(pl.UInt32),
+    "total_targets": int,
+    "total_size": int,
+    "recover_candidates": pl.List(pl.Utf8),
     }
 
 class Tests(unittest.TestCase):
@@ -466,6 +486,123 @@ class Tests(unittest.TestCase):
         expected = pl.Series([], dtype=pl.Boolean)
         observed = accumulate_clusters(input)
         self.assertSeriesEqual(observed, expected)
+
+    def test_find_recover_candidates(self):
+        with pl.StringCache():
+            sample_targets = (
+                pl.DataFrame([
+                        ["1",  [1,2,3]],
+                        ["2",  [1,2,3]],
+                        ["3",  [1,2,3]],
+                        ["4",  [1,2,3]],
+                        ["5",  [4,5,6]],
+                        ["6",  [4,5,6]],
+                        ["7",  [4,5,6]],
+                        ["8",  [4,5,6]],
+                        ["9",  [1,2,3]],
+                        ["10", [1,2]],
+                        ["11", [1]],
+                        ["12", [4,5,6]],
+                        ["13", [4,5]],
+                        ["14", [4]],
+                    ],
+                    schema=SAMPLE_TARGETS_COLUMNS
+                    )
+                .with_columns(pl.col("samples").cast(pl.Categorical))
+            )
+
+            clusters = (
+                pl.DataFrame([
+                        [["1","2","3","4"], 4, [1,2,3], 3, 4000],
+                        [["5","6","7","8"], 4, [4,5,6], 3, 4000],
+                    ],
+                    schema=CAT_CLUSTERS_COLUMNS
+                    )
+                .with_columns(pl.col("samples").cast(pl.List(pl.Categorical)))
+            )
+
+            expected = (
+                pl.DataFrame([
+                        [["1","2","3","4"], 4, [1,2,3], 3, 4000, ["1","2","3","4","9","10"]],
+                        [["5","6","7","8"], 4, [4,5,6], 3, 4000, ["5","6","7","8","12","13"]],
+                    ],
+                    schema=CAT_RECOVERY_COLUMNS
+                    )
+                .with_columns(
+                    pl.col("samples").cast(pl.List(pl.Categorical)),
+                    pl.col("recover_candidates").cast(pl.List(pl.Categorical)),
+                    )
+            )
+
+            observed = (
+                find_recover_candidates(
+                    clusters,
+                    sample_targets,
+                    MAX_RECOVERY_SAMPLES=6,
+                    )
+                .with_columns(pl.col("recover_candidates").list.sort())
+            )
+            self.assertDataFrameEqual(expected, observed)
+
+    def test_find_recover_candidates_lazy(self):
+        with pl.StringCache():
+            sample_targets = (
+                pl.DataFrame([
+                        ["1",  [1,2,3]],
+                        ["2",  [1,2,3]],
+                        ["3",  [1,2,3]],
+                        ["4",  [1,2,3]],
+                        ["5",  [4,5,6]],
+                        ["6",  [4,5,6]],
+                        ["7",  [4,5,6]],
+                        ["8",  [4,5,6]],
+                        ["9",  [1,2,3]],
+                        ["10", [1,2]],
+                        ["11", [1]],
+                        ["12", [4,5,6]],
+                        ["13", [4,5]],
+                        ["14", [4]],
+                    ],
+                    schema=SAMPLE_TARGETS_COLUMNS
+                    )
+                .with_columns(pl.col("samples").cast(pl.Categorical))
+                .lazy()
+            )
+
+            clusters = (
+                pl.DataFrame([
+                        [["1","2","3","4"], 4, [1,2,3], 3, 4000],
+                        [["5","6","7","8"], 4, [4,5,6], 3, 4000],
+                    ],
+                    schema=CAT_CLUSTERS_COLUMNS
+                    )
+                .with_columns(pl.col("samples").cast(pl.List(pl.Categorical)))
+                .lazy()
+            )
+
+            expected = (
+                pl.DataFrame([
+                        [["1","2","3","4"], 4, [1,2,3], 3, 4000, ["1","2","3","4","9","10"]],
+                        [["5","6","7","8"], 4, [4,5,6], 3, 4000, ["5","6","7","8","12","13"]],
+                    ],
+                    schema=CAT_RECOVERY_COLUMNS
+                    )
+                .with_columns(
+                    pl.col("samples").cast(pl.List(pl.Categorical)),
+                    pl.col("recover_candidates").cast(pl.List(pl.Categorical)),
+                    )
+            )
+
+            observed = (
+                find_recover_candidates(
+                    clusters,
+                    sample_targets,
+                    MAX_RECOVERY_SAMPLES=6,
+                    )
+                .with_columns(pl.col("recover_candidates").list.sort())
+                .collect(streaming=True)
+            )
+            self.assertDataFrameEqual(expected, observed)
 
 
 if __name__ == '__main__':

@@ -77,6 +77,25 @@ def accumulate_clusters(x):
 
     return pl.Series(choices, dtype=pl.Boolean)
 
+def find_recover_candidates(df, samples_df, MAX_RECOVERY_SAMPLES=20):
+    return (
+        df.with_columns(
+            recover_candidates = pl.col("target_ids").apply(
+                lambda x: samples_df
+                        .lazy()
+                        .explode("target_ids")
+                        .filter(pl.col("target_ids").is_in(x))
+                        .groupby("samples")
+                        .agg(pl.col("target_ids").unique().count())
+                        .sort("target_ids", descending=True)
+                        .head(MAX_RECOVERY_SAMPLES)
+                        .collect()
+                        .get_column("samples"),
+                return_dtype=pl.List(pl.Categorical),
+            ),
+        )
+    )
+
 def pipeline(
         elusive_edges,
         read_size,
