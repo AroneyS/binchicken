@@ -78,22 +78,27 @@ def accumulate_clusters(x):
     return pl.Series(choices, dtype=pl.Boolean)
 
 def find_recover_candidates(df, samples_df, MAX_RECOVERY_SAMPLES=20):
+    samples_df = samples_df.explode("target_ids")
+    df = df.with_columns(join_col = pl.col("samples").hash())
+
+    output = (
+        df
+        .select("join_col", "target_ids")
+        .explode("target_ids")
+        .join(samples_df, on="target_ids", how="left")
+        .groupby("join_col", "samples")
+        .agg(pl.count())
+        .sort("count", descending=True)
+        .groupby("join_col")
+        .head(MAX_RECOVERY_SAMPLES)
+        .groupby("join_col")
+        .agg(recover_candidates = pl.col("samples"))
+    )
+
     return (
-        df.with_columns(
-            recover_candidates = pl.col("target_ids").apply(
-                lambda x: samples_df
-                        .lazy()
-                        .explode("target_ids")
-                        .filter(pl.col("target_ids").is_in(x))
-                        .groupby("samples")
-                        .agg(pl.col("target_ids").unique().count())
-                        .sort("target_ids", descending=True)
-                        .head(MAX_RECOVERY_SAMPLES)
-                        .collect()
-                        .get_column("samples"),
-                return_dtype=pl.List(pl.Categorical),
-            ),
-        )
+        df
+        .join(output, on="join_col", how="left")
+        .drop("join_col")
     )
 
 def pipeline(
