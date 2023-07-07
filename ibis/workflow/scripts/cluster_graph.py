@@ -26,7 +26,9 @@ def join_list_subsets(df1, df2, list_colname, value_colname, output_colname):
             pl.col(list_colname),
             pl.col(value_colname),
             )
-        .with_row_count()
+            .with_columns(
+                right_hash = pl.col(list_colname).list.sort().hash(),
+            )
     )
 
     output = (
@@ -34,21 +36,21 @@ def join_list_subsets(df1, df2, list_colname, value_colname, output_colname):
         .select(
             pl.col(list_colname),
             original_list = pl.col(list_colname),
+            left_hash = pl.col(list_colname).list.sort().hash(),
             )
-        .with_row_count()
         .explode(list_colname)
         .join(
             df2
             .explode(list_colname),
             on=list_colname,
         )
-        .groupby('row_nr', 'row_nr_right')
+        .groupby("left_hash", "right_hash")
         .agg(list_colname, pl.first("original_list"))
         .join(
             df2,
-            left_on='row_nr_right', right_on='row_nr'
+            on="right_hash"
         )
-        .filter(pl.col(list_colname).hash() == pl.col(list_colname + '_right').hash())
+        .filter(pl.col(list_colname).list.sort().hash() == pl.col("right_hash"))
         .groupby("original_list")
         .agg(pl.col(value_colname).flatten())
         .select(
