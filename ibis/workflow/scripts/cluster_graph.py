@@ -237,7 +237,7 @@ def pipeline(
                 .then(pl.col("total_size") <= MAX_COASSEMBLY_SIZE)
                 .otherwise(True)
                 )
-            .sort("total_targets", descending=True)
+            .sort("total_targets", pl.col("samples").hash(), descending=True)
             .with_columns(
                 unique_samples = 
                     pl.col("samples")
