@@ -224,7 +224,7 @@ def pipeline(
                 )
             .filter(pl.col("length") >= MIN_COASSEMBLY_SAMPLES)
             .explode("sample")
-            .join(read_size, on="sample", how="inner")
+            .join(read_size, on="sample", how="left")
             .groupby("samples")
             .agg(
                 pl.first("length"),
