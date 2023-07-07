@@ -109,7 +109,8 @@ def pipeline(
         MAX_COASSEMBLY_SIZE=None,
         MAX_COASSEMBLY_SAMPLES=2,
         MIN_COASSEMBLY_SAMPLES=2,
-        MAX_RECOVERY_SAMPLES=20):
+        MAX_RECOVERY_SAMPLES=20,
+        MIN_CLUSTER_TARGETS=1):
 
     logging.info(f"Polars using {str(pl.threadpool_size())} threads")
 
@@ -163,6 +164,7 @@ def pipeline(
                 elusive_edges
                 .filter(pl.col("style") == "match")
                 .filter(pl.col("length") == 2)
+                .filter(pl.col("target_ids").list.lengths() >= MIN_CLUSTER_TARGETS)
                 .select("samples", "target_ids", sample = pl.col("samples"))
             ]
 
@@ -187,6 +189,7 @@ def pipeline(
                         .select("samples", "target_ids")
                         .groupby("samples")
                         .agg(pl.col("target_ids").flatten())
+                        .filter(pl.col("target_ids").list.lengths() >= MIN_CLUSTER_TARGETS)
                         .pipe(
                             join_list_subsets,
                             df2=elusive_edges,
@@ -295,6 +298,7 @@ if __name__ == "__main__":
         MAX_COASSEMBLY_SIZE=MAX_COASSEMBLY_SIZE,
         MAX_COASSEMBLY_SAMPLES=MAX_COASSEMBLY_SAMPLES,
         MIN_COASSEMBLY_SAMPLES=MIN_COASSEMBLY_SAMPLES,
-        MAX_RECOVERY_SAMPLES=MAX_RECOVERY_SAMPLES
+        MAX_RECOVERY_SAMPLES=MAX_RECOVERY_SAMPLES,
+        MIN_CLUSTER_TARGETS=10,
         )
     clusters.write_csv(elusive_clusters_path, separator="\t")
