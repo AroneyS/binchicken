@@ -81,7 +81,7 @@ def accumulate_clusters(x):
 
 def find_recover_candidates(df, samples_df, MAX_RECOVERY_SAMPLES=20):
     samples_df = samples_df.explode("target_ids")
-    df = df.with_columns(join_col = pl.col("samples").hash())
+    df = df.with_columns(join_col = pl.col("samples").list.sort().hash())
 
     output = (
         df
