@@ -163,7 +163,6 @@ def pipeline(
                 # Pair clusters
                 elusive_edges
                 .filter(pl.col("style") == "match")
-                .filter(pl.col("length") == 2)
                 .filter(pl.col("target_ids").list.lengths() >= MIN_CLUSTER_TARGETS)
                 .select("samples", "target_ids", sample = pl.col("samples"))
             ]
