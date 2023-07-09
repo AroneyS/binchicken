@@ -247,7 +247,7 @@ class Tests(unittest.TestCase):
 
     def test_cluster_two_samples_among_many(self):
         elusive_edges = pl.DataFrame([
-            ["match", 2, "1,2", "some"],
+            ["match", 2, "1,2", "9,10"],
         ], schema = ELUSIVE_EDGES_COLUMNS)
         read_size = pl.DataFrame([
             ["1", 1000],
@@ -283,7 +283,7 @@ class Tests(unittest.TestCase):
 
     def test_cluster_only_large_clusters(self):
         elusive_edges = pl.DataFrame([
-            ["match", 2, "1,2", "some"],
+            ["match", 2, "1,2", "9,10"],
         ], schema = ELUSIVE_EDGES_COLUMNS)
         read_size = pl.DataFrame([
             ["1", 10000],
