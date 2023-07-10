@@ -476,7 +476,14 @@ class Tests(unittest.TestCase):
     def test_accumulate_clusters(self):
         input = [[1,2,3], [1,2,4], [4,5,6], [4,5,7], [7,8,9], [7,8,10], [10,11,12], [10,11]]
 
-        expected = pl.Series([True, False, True, False, True, False, True, False], dtype=pl.Boolean)
+        expected = pl.Series([True, False, True, False, True, False, True, True], dtype=pl.Boolean)
+        observed = accumulate_clusters(input)
+        self.assertSeriesEqual(observed, expected)
+
+    def test_accumulate_clusters_diff_sample_sizes(self):
+        input = [[1,2,3], [1,2], [1,2,4], [2,3], [4,5,6], [3,4], [4,5,7], [4,5], [7,8,9], [7,8,10], [10,11,12], [10,11], [1,2,3,4], [1,2,3,4,5], [1,2,3,4,5,6]]
+
+        expected = pl.Series([True, True, False, False, True, True, False, False, True, False, True, True, True, True, True], dtype=pl.Boolean)
         observed = accumulate_clusters(input)
         self.assertSeriesEqual(observed, expected)
 
