@@ -155,9 +155,9 @@ def pipeline(
                 .groupby("samples")
                 .agg(pl.col("target_ids").flatten())
                 .with_columns(
-                    pl.col("samples").apply(lambda x: [x], return_dtype=pl.List(pl.Utf8)).cast(pl.List(pl.Categorical)),
+                    pl.concat_list(pl.col("samples")),
                     pl.col("target_ids").list.sort().list.unique(),
-                    sample = pl.col("samples").apply(lambda x: [x], return_dtype=pl.List(pl.Utf8)).cast(pl.List(pl.Categorical)),
+                    sample = pl.concat_list(pl.col("samples")),
                 )
             ]
         else:
