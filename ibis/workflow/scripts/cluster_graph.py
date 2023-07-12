@@ -186,7 +186,7 @@ def pipeline(
                             else:
                                 cluster_combinations[samples].update(row["target_ids"])
 
-                    for samples in cluster_combinations:
+                    for samples in list(cluster_combinations.keys()):
                         extra_targets = (
                             elusive_edges
                             .filter(pl.col("samples").list.eval(pl.element().is_in(samples)).list.all())
