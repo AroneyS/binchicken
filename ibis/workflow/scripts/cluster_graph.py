@@ -163,7 +163,6 @@ def pipeline(
         else:
             logging.info("Forming candidate sample clusters")
             clusters = [
-                # Pair clusters
                 elusive_edges
                 .filter(pl.col("style") == "match")
                 .filter(pl.col("target_ids").list.lengths() >= MIN_CLUSTER_TARGETS)
@@ -171,37 +170,46 @@ def pipeline(
             ]
 
             if is_pooled:
-                    clusters.append(
-                        # 3+ way clusters
+                    cluster_combinations = {}
+                    for row in (
                         elusive_edges
                         .filter(pl.col("style") == "pool")
-                        # Prevent combinatorial explosion (also, large clusters are less useful for distinguishing between clusters)
-                        .filter(pl.col("samples").list.lengths() < 100)
-                        .with_columns(
-                            samples_combinations = pl.struct(["length", "cluster_size"]).apply(
-                                lambda x: [i for i in itertools.combinations(range(x["length"]), x["cluster_size"])],
-                                return_dtype=pl.List(pl.List(pl.Int64)),
-                                )
-                            )
-                        .explode("samples_combinations")
-                        .with_columns(
-                            pl.col("samples")
-                            .list.take(pl.col("samples_combinations"))
-                            )
-                        .select("samples", "target_ids")
-                        .groupby("samples")
-                        .agg(pl.col("target_ids").flatten())
-                        .filter(pl.col("target_ids").list.lengths() >= MIN_CLUSTER_TARGETS)
-                        .pipe(
-                            join_list_subsets,
-                            df2=elusive_edges,
-                            list_colname="samples",
-                            value_colname="target_ids",
-                            output_colname="extra_targets"
+                        .collect()
+                        .iter_rows(named=True)
+                        ):
+
+                        for cluster in itertools.combinations(row["samples"], row["cluster_size"]):
+                            samples = frozenset(cluster)
+
+                            if samples not in cluster_combinations:
+                                cluster_combinations[samples] = set(row["target_ids"])
+                            else:
+                                cluster_combinations[samples].update(row["target_ids"])
+
+                    for samples in cluster_combinations:
+                        extra_targets = (
+                            elusive_edges
+                            .filter(pl.col("samples").list.eval(pl.element().is_in(samples)).list.all())
+                            .groupby(1)
+                            .agg(pl.col("target_ids").flatten())
+                            .collect()
+                            .get_column("target_ids")
+                            .to_list()[0]
+                        )
+
+                        cluster_combinations[samples].update(extra_targets)
+
+                        if len(cluster_combinations[samples]) < MIN_CLUSTER_TARGETS:
+                            _ = cluster_combinations.pop(samples)
+
+                    clusters.append(
+                        pl.LazyFrame(
+                            [[list(k),list(v)] for k,v in cluster_combinations.items()],
+                            schema = {"samples": pl.List(pl.Categorical), "target_ids": pl.List(pl.UInt32)},
+                            orient="row",
                             )
                         .select(
-                            "samples",
-                            pl.concat_list("target_ids", "extra_targets").list.unique(),
+                            "samples", "target_ids",
                             sample = pl.col("samples"),
                             )
                     )
