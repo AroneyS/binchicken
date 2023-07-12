@@ -221,7 +221,6 @@ def pipeline(
             pl.concat(clusters)
             .with_columns(
                 "samples", "target_ids",
-                total_targets = pl.col("target_ids").list.lengths(),
                 length = pl.col("samples").list.lengths()
                 )
             .filter(pl.col("length") >= MIN_COASSEMBLY_SAMPLES)
@@ -231,7 +230,6 @@ def pipeline(
             .agg(
                 pl.first("length"),
                 pl.first("target_ids"),
-                pl.first("total_targets"),
                 total_size = pl.sum("read_size"),
                 )
             .filter(
@@ -239,7 +237,11 @@ def pipeline(
                 .then(pl.col("total_size") <= MAX_COASSEMBLY_SIZE)
                 .otherwise(True)
                 )
-            .sort("total_targets", pl.col("samples").hash(), descending=True)
+            .with_columns(
+                total_targets = pl.col("target_ids").list.lengths(),
+                samples_hash = pl.col("samples").hash(),
+            )
+            .sort("total_targets", "samples_hash", descending=True)
             .with_columns(
                 unique_samples = 
                     pl.col("samples")

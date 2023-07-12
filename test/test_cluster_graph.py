@@ -259,7 +259,7 @@ class Tests(unittest.TestCase):
         ], schema=READ_SIZE_COLUMNS)
 
         expected = pl.DataFrame([
-            ["1,2", 2, 1, 2000, "1,2", "coassembly_0"],
+            ["1,2", 2, 2, 2000, "1,2", "coassembly_0"],
         ], schema=ELUSIVE_CLUSTERS_COLUMNS)
         observed = pipeline(elusive_edges, read_size)
         self.assertDataFrameEqual(expected, observed)
