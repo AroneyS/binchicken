@@ -24,6 +24,7 @@ ELUSIVE_CLUSTERS_COLUMNS={
     }
 
 CAT_CLUSTERS_COLUMNS={
+    "samples_hash": pl.UInt64,
     "samples": pl.List(pl.Utf8),
     "length": int,
     "target_ids": pl.List(pl.UInt32),
@@ -35,6 +36,7 @@ SAMPLE_TARGETS_COLUMNS={
     "target_ids": pl.List(pl.UInt32),
     }
 CAT_RECOVERY_COLUMNS={
+    "samples_hash": pl.UInt64,
     "samples": pl.List(pl.Utf8),
     "length": int,
     "target_ids": pl.List(pl.UInt32),
@@ -439,31 +441,45 @@ class Tests(unittest.TestCase):
 
     def test_join_list_subsets(self):
         with pl.StringCache():
-            df1 = pl.DataFrame([
-                [["a", "b", "c"], ["1"]],
-                [["b", "c", "d"], ["2"]],
-                [["a", "b", "c", "d"], ["3"]],
-                [["d", "e", "f"], ["4"]],
-            ], schema=["col1", "col2"])
+            df1 = (
+                pl.DataFrame([
+                        [["a", "b", "c"], ["1"]],
+                        [["b", "c", "d"], ["2"]],
+                        [["a", "b", "c", "d"], ["3"]],
+                        [["d", "e", "f"], ["4"]],
+                    ], schema=["col1", "col2"])
+                .with_columns(pl.col("col1").cast(pl.List(pl.Categorical)))
+                .with_columns(hash = pl.col("col1").list.sort().hash())
+            )
 
-            df2 = pl.DataFrame([
-                [["a", "b"], ["1"]],
-                [["b", "c"], ["2"]],
-                [["c", "d"], ["3"]],
-                [["b", "c", "d"], ["4"]],
-            ], schema=["col1", "col2"])
+            df2 = (
+                pl.DataFrame([
+                        [["a", "b"], ["1"]],
+                        [["b", "c"], ["2"]],
+                        [["c", "d"], ["3"]],
+                        [["b", "c", "d"], ["4"]],
+                    ], schema=["col1", "col2"])
+                .with_columns(pl.col("col1").cast(pl.List(pl.Categorical)))
+                .with_columns(hash = pl.col("col1").list.sort().hash())
+            )
 
-            expected = pl.DataFrame([
-                [["a", "b", "c"], ["1"], ["1", "2"]],
-                [["b", "c", "d"], ["2"], ["2", "3", "4"]],
-                [["a", "b", "c", "d"], ["3"], ["1", "2", "3", "4"]],
-                [["d", "e", "f"], ["4"], []],
-            ], schema=["col1", "col2", "col3"])
+            expected = (
+                pl.DataFrame([
+                        [["a", "b", "c"], ["1"], ["1", "2"]],
+                        [["b", "c", "d"], ["2"], ["2", "3", "4"]],
+                        [["a", "b", "c", "d"], ["3"], ["1", "2", "3", "4"]],
+                        [["d", "e", "f"], ["4"], []],
+                    ], schema=["col1", "col2", "col3"])
+                .with_columns(pl.col("col1").cast(pl.List(pl.Categorical)))
+                .with_columns(hash = pl.col("col1").list.sort().hash())
+                .select("col1", "col2", "hash", "col3")
+            )
 
             observed = (
                 join_list_subsets(
-                    df1.with_columns(pl.col("col1").cast(pl.List(pl.Categorical))),
-                    df2.with_columns(pl.col("col1").cast(pl.List(pl.Categorical))),
+                    df1,
+                    df2,
+                    hash_colname="hash",
                     list_colname="col1",
                     value_colname="col2",
                     output_colname="col3"
@@ -474,31 +490,47 @@ class Tests(unittest.TestCase):
 
     def test_join_list_subsets_lazy(self):
         with pl.StringCache():
-            df1 = pl.DataFrame([
-                [["a", "b", "c"], ["1"]],
-                [["b", "c", "d"], ["2"]],
-                [["a", "b", "c", "d"], ["3"]],
-                [["d", "e", "f"], ["4"]],
-            ], schema=["col1", "col2"]).lazy()
+            df1 = (
+                pl.DataFrame([
+                        [["a", "b", "c"], ["1"]],
+                        [["b", "c", "d"], ["2"]],
+                        [["a", "b", "c", "d"], ["3"]],
+                        [["d", "e", "f"], ["4"]],
+                    ], schema=["col1", "col2"])
+                .lazy()
+                .with_columns(pl.col("col1").cast(pl.List(pl.Categorical)))
+                .with_columns(hash = pl.col("col1").list.sort().hash())
+            )
 
-            df2 = pl.DataFrame([
-                [["a", "b"], ["1"]],
-                [["b", "c"], ["2"]],
-                [["c", "d"], ["3"]],
-                [["b", "c", "d"], ["4"]],
-            ], schema=["col1", "col2"]).lazy()
+            df2 = (
+                pl.DataFrame([
+                        [["a", "b"], ["1"]],
+                        [["b", "c"], ["2"]],
+                        [["c", "d"], ["3"]],
+                        [["b", "c", "d"], ["4"]],
+                    ], schema=["col1", "col2"])
+                .lazy()
+                .with_columns(pl.col("col1").cast(pl.List(pl.Categorical)))
+                .with_columns(hash = pl.col("col1").list.sort().hash())
+            )
 
-            expected = pl.DataFrame([
-                [["a", "b", "c"], ["1"], ["1", "2"]],
-                [["b", "c", "d"], ["2"], ["2", "3", "4"]],
-                [["a", "b", "c", "d"], ["3"], ["1", "2", "3", "4"]],
-                [["d", "e", "f"], ["4"], []],
-            ], schema=["col1", "col2", "col3"])
+            expected = (
+                pl.DataFrame([
+                        [["a", "b", "c"], ["1"], ["1", "2"]],
+                        [["b", "c", "d"], ["2"], ["2", "3", "4"]],
+                        [["a", "b", "c", "d"], ["3"], ["1", "2", "3", "4"]],
+                        [["d", "e", "f"], ["4"], []],
+                    ], schema=["col1", "col2", "col3"])
+                .with_columns(pl.col("col1").cast(pl.List(pl.Categorical)))
+                .with_columns(hash = pl.col("col1").list.sort().hash())
+                .select("col1", "col2", "hash", "col3")
+            )
 
             observed = (
                 join_list_subsets(
-                    df1.with_columns(pl.col("col1").cast(pl.List(pl.Categorical))),
-                    df2.with_columns(pl.col("col1").cast(pl.List(pl.Categorical))),
+                    df1,
+                    df2,
+                    hash_colname="hash",
                     list_colname="col1",
                     value_colname="col2",
                     output_colname="col3"
@@ -555,8 +587,8 @@ class Tests(unittest.TestCase):
 
             clusters = (
                 pl.DataFrame([
-                        [["1","2","3","4"], 4, [1,2,3], 3, 4000],
-                        [["5","6","7","8"], 4, [4,5,6], 3, 4000],
+                        [12341234, ["1","2","3","4"], 4, [1,2,3], 3, 4000],
+                        [56785678, ["5","6","7","8"], 4, [4,5,6], 3, 4000],
                     ],
                     schema=CAT_CLUSTERS_COLUMNS
                     )
@@ -565,8 +597,8 @@ class Tests(unittest.TestCase):
 
             expected = (
                 pl.DataFrame([
-                        [["1","2","3","4"], 4, [1,2,3], 3, 4000, ["1","2","3","4","9","10"]],
-                        [["5","6","7","8"], 4, [4,5,6], 3, 4000, ["5","6","7","8","12","13"]],
+                        [12341234, ["1","2","3","4"], 4, [1,2,3], 3, 4000, ["1","2","3","4","9","10"]],
+                        [56785678, ["5","6","7","8"], 4, [4,5,6], 3, 4000, ["5","6","7","8","12","13"]],
                     ],
                     schema=CAT_RECOVERY_COLUMNS
                     )
@@ -613,8 +645,8 @@ class Tests(unittest.TestCase):
 
             clusters = (
                 pl.DataFrame([
-                        [["1","2","3","4"], 4, [1,2,3], 3, 4000],
-                        [["5","6","7","8"], 4, [4,5,6], 3, 4000],
+                        [12341234, ["1","2","3","4"], 4, [1,2,3], 3, 4000],
+                        [56785678, ["5","6","7","8"], 4, [4,5,6], 3, 4000],
                     ],
                     schema=CAT_CLUSTERS_COLUMNS
                     )
@@ -624,8 +656,8 @@ class Tests(unittest.TestCase):
 
             expected = (
                 pl.DataFrame([
-                        [["1","2","3","4"], 4, [1,2,3], 3, 4000, ["1","2","3","4","9","10"]],
-                        [["5","6","7","8"], 4, [4,5,6], 3, 4000, ["5","6","7","8","12","13"]],
+                        [12341234, ["1","2","3","4"], 4, [1,2,3], 3, 4000, ["1","2","3","4","9","10"]],
+                        [56785678, ["5","6","7","8"], 4, [4,5,6], 3, 4000, ["5","6","7","8","12","13"]],
                     ],
                     schema=CAT_RECOVERY_COLUMNS
                     )

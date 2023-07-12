@@ -17,7 +17,7 @@ OUTPUT_COLUMNS={
     "coassembly": str,
     }
 
-def join_list_subsets(df1, df2, list_colname, value_colname, output_colname):
+def join_list_subsets(df1, df2, hash_colname, list_colname, value_colname, output_colname):
     """
     Join two DataFrames/LazyFrames by strict subset of list column
     """
@@ -35,8 +35,8 @@ def join_list_subsets(df1, df2, list_colname, value_colname, output_colname):
         df1
         .select(
             pl.col(list_colname),
+            pl.col(hash_colname),
             original_list = pl.col(list_colname),
-            left_hash = pl.col(list_colname).list.sort().hash(),
             )
         .explode(list_colname)
         .join(
@@ -44,26 +44,24 @@ def join_list_subsets(df1, df2, list_colname, value_colname, output_colname):
             .explode(list_colname),
             on=list_colname,
         )
-        .groupby("left_hash", "right_hash")
+        .groupby(pl.col(hash_colname), "right_hash")
         .agg(list_colname, pl.first("original_list"))
         .join(
             df2,
             on="right_hash"
         )
         .filter(pl.col(list_colname).list.sort().hash() == pl.col("right_hash"))
-        .groupby("original_list")
+        .groupby(pl.col(hash_colname))
         .agg(pl.col(value_colname).flatten())
         .select(
             pl.col(value_colname).list.unique().alias(output_colname),
-            join_col = pl.col("original_list").list.sort().hash(),
+            pl.col(hash_colname),
             )
     )
 
     return (
         df1
-        .with_columns(join_col = pl.col(list_colname).list.sort().hash())
-        .join(output, on="join_col", how="left")
-        .drop("join_col")
+        .join(output, on=hash_colname, how="left")
         .with_columns(pl.col(output_colname).fill_null([]))
         )
 
@@ -84,27 +82,22 @@ def accumulate_clusters(x):
 
 def find_recover_candidates(df, samples_df, MAX_RECOVERY_SAMPLES=20):
     samples_df = samples_df.explode("target_ids")
-    df = df.with_columns(join_col = pl.col("samples").list.sort().hash())
 
     output = (
         df
-        .select("join_col", "target_ids")
+        .select("samples_hash", "target_ids")
         .explode("target_ids")
         .join(samples_df, on="target_ids", how="left")
-        .groupby("join_col", "recover_candidates")
+        .groupby("samples_hash", "recover_candidates")
         .agg(pl.count())
         .sort("count", descending=True)
-        .groupby("join_col")
+        .groupby("samples_hash")
         .head(MAX_RECOVERY_SAMPLES)
-        .groupby("join_col")
+        .groupby("samples_hash")
         .agg("recover_candidates")
     )
 
-    return (
-        df
-        .join(output, on="join_col", how="left")
-        .drop("join_col")
-    )
+    return df.join(output, on="samples_hash", how="left")
 
 def pipeline(
         elusive_edges,
@@ -136,14 +129,18 @@ def pipeline(
                     .str.split(",")
                     .cast(pl.List(pl.UInt32)),
                 )
-            .with_columns(length = pl.col("samples").list.lengths())
+            .with_columns(
+                samples_hash = pl.col("samples").list.sort().hash(),
+                length = pl.col("samples").list.lengths()
+                )
         )
 
         read_size = (
             read_size
             .lazy()
-            .with_columns(
-                pl.col("sample").cast(pl.Categorical),
+            .select(
+                "read_size",
+                samples = pl.col("sample").cast(pl.Categorical),
                 )
         )
 
@@ -157,7 +154,7 @@ def pipeline(
                 .with_columns(
                     pl.concat_list(pl.col("samples")),
                     pl.col("target_ids").list.sort().list.unique(),
-                    sample = pl.concat_list(pl.col("samples")),
+                    samples_hash = pl.concat_list(pl.col("samples")).list.sort().hash(),
                 )
             ]
         else:
@@ -166,7 +163,7 @@ def pipeline(
                 elusive_edges
                 .filter(pl.col("style") == "match")
                 .filter(pl.col("target_ids").list.lengths() >= MIN_CLUSTER_TARGETS)
-                .select("samples", "target_ids", sample = pl.col("samples"))
+                .select("samples", "target_ids", samples_hash = pl.col("samples").list.sort().hash())
             ]
 
             if is_pooled:
@@ -182,17 +179,16 @@ def pipeline(
                             )
                         )
                     .explode("samples_combinations")
-                    .with_columns(
-                        pl.col("samples")
-                        .list.take(pl.col("samples_combinations"))
-                        )
-                    .select("samples", "target_ids")
-                    .groupby("samples")
-                    .agg(pl.col("target_ids").flatten())
+                    .with_columns(pl.col("samples").list.take(pl.col("samples_combinations")))
+                    .with_columns(samples_hash = pl.col("samples").list.sort().hash())
+                    .select("samples_hash", "samples", "target_ids")
+                    .groupby("samples_hash")
+                    .agg(pl.first("samples"), pl.col("target_ids").flatten())
                     .filter(pl.col("target_ids").list.lengths() >= MIN_CLUSTER_TARGETS)
                     .pipe(
                         join_list_subsets,
                         df2=elusive_edges,
+                        hash_colname="samples_hash",
                         list_colname="samples",
                         value_colname="target_ids",
                         output_colname="extra_targets"
@@ -200,7 +196,7 @@ def pipeline(
                     .select(
                         "samples",
                         pl.concat_list("target_ids", "extra_targets").list.unique(),
-                        sample = pl.col("samples"),
+                        samples_hash = pl.col("samples").list.sort().hash(),
                         )
                 )
 
@@ -217,15 +213,13 @@ def pipeline(
         logging.info("Filtering clusters (each sample restricted to only once per cluster size)")
         clusters = (
             pl.concat(clusters)
-            .with_columns(
-                "samples", "target_ids",
-                length = pl.col("samples").list.lengths()
-                )
+            .with_columns(length = pl.col("samples").list.lengths())
             .filter(pl.col("length") >= MIN_COASSEMBLY_SAMPLES)
-            .explode("sample")
-            .join(read_size, on="sample", how="left")
-            .groupby("samples")
+            .explode("samples")
+            .join(read_size, on="samples", how="left")
+            .groupby("samples_hash")
             .agg(
+                pl.col("samples"),
                 pl.first("length"),
                 pl.first("target_ids"),
                 total_size = pl.sum("read_size"),
@@ -237,7 +231,6 @@ def pipeline(
                 )
             .with_columns(
                 total_targets = pl.col("target_ids").list.lengths(),
-                samples_hash = pl.col("samples").hash(),
             )
             .sort("total_targets", "samples_hash", descending=True)
             .with_columns(
