@@ -362,7 +362,7 @@ class Tests(unittest.TestCase):
         ], schema=READ_SIZE_COLUMNS)
 
         expected = pl.DataFrame([
-            ["4,5,6", 3, 7, 3000, "4,5,6", "coassembly_0"],
+            ["1,2,3", 3, 3, 3000, "1,2,3", "coassembly_0"],
         ], schema=ELUSIVE_CLUSTERS_COLUMNS)
         observed = pipeline(
             elusive_edges,
@@ -370,7 +370,7 @@ class Tests(unittest.TestCase):
             MAX_RECOVERY_SAMPLES=3,
             MIN_COASSEMBLY_SAMPLES=3,
             MAX_COASSEMBLY_SAMPLES=3,
-            MIN_CLUSTER_TARGETS=5,
+            MIN_CLUSTER_TARGETS=2,
             )
         self.assertDataFrameEqual(expected, observed)
 

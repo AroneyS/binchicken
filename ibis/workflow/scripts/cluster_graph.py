@@ -184,6 +184,7 @@ def pipeline(
                     .select("samples_hash", "samples", "target_ids")
                     .groupby("samples_hash")
                     .agg(pl.first("samples"), pl.col("target_ids").flatten())
+                    .filter(pl.col("target_ids").list.lengths() >= MIN_CLUSTER_TARGETS)
                     .pipe(
                         join_list_subsets,
                         df2=elusive_edges,
@@ -197,7 +198,6 @@ def pipeline(
                         pl.concat_list("target_ids", "extra_targets").list.unique(),
                         "samples_hash",
                         )
-                    .filter(pl.col("target_ids").list.lengths() >= MIN_CLUSTER_TARGETS)
                 )
 
         sample_targets = (
@@ -259,7 +259,7 @@ def pipeline(
                 "samples", "length", "total_targets", "total_size", "recover_samples",
                 coassembly = pl.lit("coassembly_") + pl.col("coassembly").cast(pl.Utf8)
                 )
-            .collect(streaming=True, projection_pushdown=False)
+            .collect(streaming=True)
         )
 
     logging.info("Done")
