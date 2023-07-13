@@ -287,6 +287,11 @@ if __name__ == "__main__":
     elusive_edges = pl.read_csv(elusive_edges_path, separator="\t", dtypes={"target_ids": str})
     read_size = pl.read_csv(read_size_path, has_header=False, new_columns=["sample", "read_size"])
 
+    if elusive_edges.height > 10**4:
+        min_cluster_targets = 10
+    else:
+        min_cluster_targets = 1
+
     clusters = pipeline(
         elusive_edges,
         read_size,
@@ -294,6 +299,6 @@ if __name__ == "__main__":
         MAX_COASSEMBLY_SAMPLES=MAX_COASSEMBLY_SAMPLES,
         MIN_COASSEMBLY_SAMPLES=MIN_COASSEMBLY_SAMPLES,
         MAX_RECOVERY_SAMPLES=MAX_RECOVERY_SAMPLES,
-        MIN_CLUSTER_TARGETS=10,
+        MIN_CLUSTER_TARGETS=min_cluster_targets,
         )
     clusters.write_csv(elusive_clusters_path, separator="\t")
