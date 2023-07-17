@@ -17,52 +17,52 @@ OUTPUT_COLUMNS={
     "coassembly": str,
     }
 
-def join_list_subsets(df1, df2, hash_colname, list_colname, value_colname, output_colname):
+def join_list_subsets(df1, df2):
     """
     Join two DataFrames/LazyFrames by strict subset of list column
     """
     df2 = (
         df2.select(
-            pl.col(list_colname),
-            pl.col(value_colname),
+            pl.col("samples"),
+            pl.col("target_ids"),
             )
             .with_columns(
-                right_hash = pl.col(list_colname).list.sort().hash(),
+                right_hash = pl.col("samples").list.sort().hash(),
             )
     )
 
     output = (
         df1
         .select(
-            pl.col(list_colname),
-            pl.col(hash_colname),
-            original_list = pl.col(list_colname),
+            pl.col("samples"),
+            pl.col("samples_hash"),
+            original_list = pl.col("samples"),
             )
-        .explode(list_colname)
+        .explode("samples")
         .join(
             df2
-            .explode(list_colname),
-            on=list_colname,
+            .explode("samples"),
+            on="samples",
         )
-        .groupby(pl.col(hash_colname), "right_hash")
-        .agg(list_colname, pl.first("original_list"))
+        .groupby(pl.col("samples_hash"), "right_hash")
+        .agg("samples", pl.first("original_list"))
         .join(
             df2,
             on="right_hash"
         )
-        .filter(pl.col(list_colname).list.sort().hash() == pl.col("right_hash"))
-        .groupby(pl.col(hash_colname))
-        .agg(pl.col(value_colname).flatten())
+        .filter(pl.col("samples").list.sort().hash() == pl.col("right_hash"))
+        .groupby(pl.col("samples_hash"))
+        .agg(pl.col("target_ids").flatten())
         .select(
-            pl.col(value_colname).list.unique().alias(output_colname),
-            pl.col(hash_colname),
+            pl.col("target_ids").list.unique().alias("extra_targets"),
+            pl.col("samples_hash"),
             )
     )
 
     return (
         df1
-        .join(output, on=hash_colname, how="left")
-        .with_columns(pl.col(output_colname).fill_null([]))
+        .join(output, on="samples_hash", how="left")
+        .with_columns(pl.col("extra_targets").fill_null([]))
         )
 
 def accumulate_clusters(x):
@@ -185,14 +185,7 @@ def pipeline(
                     .groupby("samples_hash")
                     .agg(pl.first("samples"), pl.col("target_ids").flatten())
                     .filter(pl.col("target_ids").list.lengths() >= MIN_CLUSTER_TARGETS)
-                    .pipe(
-                        join_list_subsets,
-                        df2=elusive_edges,
-                        hash_colname="samples_hash",
-                        list_colname="samples",
-                        value_colname="target_ids",
-                        output_colname="extra_targets"
-                        )
+                    .pipe(join_list_subsets, df2=elusive_edges)
                     .select(
                         "samples",
                         pl.concat_list("target_ids", "extra_targets").list.unique(),

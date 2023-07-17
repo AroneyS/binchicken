@@ -447,9 +447,9 @@ class Tests(unittest.TestCase):
                         [["b", "c", "d"], ["2"]],
                         [["a", "b", "c", "d"], ["3"]],
                         [["d", "e", "f"], ["4"]],
-                    ], schema=["col1", "col2"])
-                .with_columns(pl.col("col1").cast(pl.List(pl.Categorical)))
-                .with_columns(hash = pl.col("col1").list.sort().hash())
+                    ], schema=["samples", "target_ids"])
+                .with_columns(pl.col("samples").cast(pl.List(pl.Categorical)))
+                .with_columns(samples_hash = pl.col("samples").list.sort().hash())
             )
 
             df2 = (
@@ -458,9 +458,9 @@ class Tests(unittest.TestCase):
                         [["b", "c"], ["2"]],
                         [["c", "d"], ["3"]],
                         [["b", "c", "d"], ["4"]],
-                    ], schema=["col1", "col2"])
-                .with_columns(pl.col("col1").cast(pl.List(pl.Categorical)))
-                .with_columns(hash = pl.col("col1").list.sort().hash())
+                    ], schema=["samples", "target_ids"])
+                .with_columns(pl.col("samples").cast(pl.List(pl.Categorical)))
+                .with_columns(samples_hash = pl.col("samples").list.sort().hash())
             )
 
             expected = (
@@ -469,22 +469,15 @@ class Tests(unittest.TestCase):
                         [["b", "c", "d"], ["2"], ["2", "3", "4"]],
                         [["a", "b", "c", "d"], ["3"], ["1", "2", "3", "4"]],
                         [["d", "e", "f"], ["4"], []],
-                    ], schema=["col1", "col2", "col3"])
-                .with_columns(pl.col("col1").cast(pl.List(pl.Categorical)))
-                .with_columns(hash = pl.col("col1").list.sort().hash())
-                .select("col1", "col2", "hash", "col3")
+                    ], schema=["samples", "target_ids", "extra_targets"])
+                .with_columns(pl.col("samples").cast(pl.List(pl.Categorical)))
+                .with_columns(samples_hash = pl.col("samples").list.sort().hash())
+                .select("samples", "target_ids", "samples_hash", "extra_targets")
             )
 
             observed = (
-                join_list_subsets(
-                    df1,
-                    df2,
-                    hash_colname="hash",
-                    list_colname="col1",
-                    value_colname="col2",
-                    output_colname="col3"
-                    )
-                .with_columns(pl.col("col3").list.sort())
+                join_list_subsets(df1, df2)
+                .with_columns(pl.col("extra_targets").list.sort())
             )
             self.assertDataFrameEqual(expected, observed)
 
@@ -496,10 +489,10 @@ class Tests(unittest.TestCase):
                         [["b", "c", "d"], ["2"]],
                         [["a", "b", "c", "d"], ["3"]],
                         [["d", "e", "f"], ["4"]],
-                    ], schema=["col1", "col2"])
+                    ], schema=["samples", "target_ids"])
                 .lazy()
-                .with_columns(pl.col("col1").cast(pl.List(pl.Categorical)))
-                .with_columns(hash = pl.col("col1").list.sort().hash())
+                .with_columns(pl.col("samples").cast(pl.List(pl.Categorical)))
+                .with_columns(samples_hash = pl.col("samples").list.sort().hash())
             )
 
             df2 = (
@@ -508,10 +501,10 @@ class Tests(unittest.TestCase):
                         [["b", "c"], ["2"]],
                         [["c", "d"], ["3"]],
                         [["b", "c", "d"], ["4"]],
-                    ], schema=["col1", "col2"])
+                    ], schema=["samples", "target_ids"])
                 .lazy()
-                .with_columns(pl.col("col1").cast(pl.List(pl.Categorical)))
-                .with_columns(hash = pl.col("col1").list.sort().hash())
+                .with_columns(pl.col("samples").cast(pl.List(pl.Categorical)))
+                .with_columns(samples_hash = pl.col("samples").list.sort().hash())
             )
 
             expected = (
@@ -520,22 +513,15 @@ class Tests(unittest.TestCase):
                         [["b", "c", "d"], ["2"], ["2", "3", "4"]],
                         [["a", "b", "c", "d"], ["3"], ["1", "2", "3", "4"]],
                         [["d", "e", "f"], ["4"], []],
-                    ], schema=["col1", "col2", "col3"])
-                .with_columns(pl.col("col1").cast(pl.List(pl.Categorical)))
-                .with_columns(hash = pl.col("col1").list.sort().hash())
-                .select("col1", "col2", "hash", "col3")
+                    ], schema=["samples", "target_ids", "extra_targets"])
+                .with_columns(pl.col("samples").cast(pl.List(pl.Categorical)))
+                .with_columns(samples_hash = pl.col("samples").list.sort().hash())
+                .select("samples", "target_ids", "samples_hash", "extra_targets")
             )
 
             observed = (
-                join_list_subsets(
-                    df1,
-                    df2,
-                    hash_colname="hash",
-                    list_colname="col1",
-                    value_colname="col2",
-                    output_colname="col3"
-                    )
-                .with_columns(pl.col("col3").list.sort())
+                join_list_subsets(df1, df2)
+                .with_columns(pl.col("extra_targets").list.sort())
                 .collect()
             )
             self.assertDataFrameEqual(expected, observed)
