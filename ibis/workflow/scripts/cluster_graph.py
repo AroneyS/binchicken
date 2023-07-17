@@ -25,6 +25,7 @@ def join_list_subsets(df1, df2):
         df2.select(
             pl.col("samples"),
             pl.col("target_ids"),
+            pl.col("cluster_size"),
             )
             .with_columns(
                 right_hash = pl.col("samples").list.sort().hash(),
@@ -36,7 +37,6 @@ def join_list_subsets(df1, df2):
         .select(
             pl.col("samples"),
             pl.col("samples_hash"),
-            original_list = pl.col("samples"),
             )
         .explode("samples")
         .join(
@@ -45,12 +45,12 @@ def join_list_subsets(df1, df2):
             on="samples",
         )
         .groupby(pl.col("samples_hash"), "right_hash")
-        .agg("samples", pl.first("original_list"))
+        .agg(pl.count())
         .join(
             df2,
             on="right_hash"
         )
-        .filter(pl.col("samples").list.sort().hash() == pl.col("right_hash"))
+        .filter(pl.col("count") >= pl.col("cluster_size"))
         .groupby(pl.col("samples_hash"))
         .agg(pl.col("target_ids").flatten())
         .select(
