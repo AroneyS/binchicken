@@ -392,6 +392,8 @@ def evaluate(args):
     coassemble_dir = os.path.abspath(args.coassemble_output)
     coassemble_target_dir = os.path.join(coassemble_dir, "target")
     coassemble_appraise_dir = os.path.join(coassemble_dir, "appraise")
+    if args.new_genomes_list:
+        args.new_genomes = read_list(args.new_genomes_list)
 
     if args.aviary_outputs:
         bins = evaluate_bins(args.aviary_outputs, args.checkm_version, args.min_completeness, args.max_contamination)
@@ -775,6 +777,7 @@ def main():
     evaluate_base.add_argument("--coassemble-output", help="Output dir from cluster subcommand", required=True)
     evaluate_base.add_argument("--aviary-outputs", nargs='+', help="Output dir from Aviary coassembly and recover commands produced by coassemble subcommand")
     evaluate_base.add_argument("--new-genomes", nargs='+', help="New genomes to evaluate (alternative to --aviary-outputs, also requires --coassembly-run)")
+    evaluate_base.add_argument("--new-genomes-list", help="New genomes to evaluate (alternative to --aviary-outputs, also requires --coassembly-run) newline separated")
     evaluate_base.add_argument("--coassembly-run", help="Name of coassembly run to produce new genomes (alternative to --aviary-outputs, also requires --new-genomes)")
     evaluate_base.add_argument("--singlem-metapackage", help="SingleM metapackage for sequence searching")
     evaluate_base.add_argument("--prodigal-meta", action="store_true", help="Use prodigal \"-p meta\" argument (for testing)")
@@ -891,9 +894,9 @@ def main():
             raise Exception("SingleM metapackage (--singlem-metapackage or SINGLEM_METAPACKAGE_PATH environment variable, see SingleM data) must be provided")
         if args.cluster and not (args.genomes or args.genomes_list):
             raise Exception("Reference genomes must be provided to cluster with new genomes")
-        if not args.aviary_outputs and not args.new_genomes:
+        if not args.aviary_outputs and not (args.new_genomes or args.new_genomes_list):
             raise Exception("New genomes or aviary outputs must be provided for evaluation")
-        if args.new_genomes and not args.coassembly_run:
+        if (args.new_genomes or args.new_genomes_list) and not args.coassembly_run:
             raise Exception("Name of coassembly run must be provided to evaluate binning")
         evaluate(args)
 

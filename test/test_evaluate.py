@@ -24,6 +24,10 @@ TWO_GENOMES = " ".join([
     os.path.join(path_to_data, "GB_GCA_013286235.2.fna"),
     ])
 
+def write_string_to_file(string, filename):
+    with open(filename, "w") as f:
+        f.write("\n".join(string.split(" ")))
+
 class Tests(unittest.TestCase):
     def test_evaluate(self):
         with in_tempdir():
@@ -231,6 +235,33 @@ class Tests(unittest.TestCase):
             )
             with open(summarise_path) as f:
                 self.assertEqual(expected, f.read())
+
+    def test_evaluate_genome_files_input(self):
+        with in_tempdir():
+            write_string_to_file(MOCK_GENOMES, "genomes")
+
+            cmd = (
+                f"ibis evaluate "
+                f"--coassemble-output {MOCK_COASSEMBLE} "
+                f"--new-genomes-list genomes "
+                f"--prodigal-meta "
+                f"--coassembly-run coassembly_0 "
+                f"--singlem-metapackage {METAPACKAGE} "
+                f"--output test "
+                f"--conda-prefix {path_to_conda} "
+                f"--dryrun "
+                f"--snakemake-args \" --quiet\" "
+            )
+            output = extern.run(cmd)
+
+            self.assertTrue("prodigal_bins" in output)
+            self.assertTrue("singlem_pipe_bins" in output)
+            self.assertTrue("singlem_summarise_bins" in output)
+            self.assertTrue("cluster_original_bins" not in output)
+            self.assertTrue("cluster_updated_bins" not in output)
+            self.assertTrue("summarise_clusters" not in output)
+            self.assertTrue("evaluate" in output)
+            self.assertTrue("evaluate_plots" in output)
 
     def test_evaluate_default_config(self):
         with in_tempdir():
