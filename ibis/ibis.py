@@ -392,7 +392,15 @@ def evaluate(args):
     coassemble_dir = os.path.abspath(args.coassemble_output)
     coassemble_target_dir = os.path.join(coassemble_dir, "target")
     coassemble_appraise_dir = os.path.join(coassemble_dir, "appraise")
-    bins = evaluate_bins(args.aviary_outputs, args.checkm_version, args.min_completeness, args.max_contamination)
+    if args.new_genomes_list:
+        args.new_genomes = read_list(args.new_genomes_list)
+
+    if args.aviary_outputs:
+        bins = evaluate_bins(args.aviary_outputs, args.checkm_version, args.min_completeness, args.max_contamination)
+    elif args.new_genomes:
+        bins = {"-".join([args.coassembly_run, os.path.splitext(os.path.basename(g))[0]]): g for g in args.new_genomes}
+    else:
+        raise Exception("Programming error: no bins to evaluate")
 
     if args.singlem_metapackage:
         metapackage = os.path.abspath(args.singlem_metapackage)
@@ -421,6 +429,7 @@ def evaluate(args):
         "max_contamination": args.max_contamination,
         "cluster": cluster_ani,
         "original_bins": original_bins,
+        "prodigal_meta": args.prodigal_meta,
     }
 
     config_path = make_config(
@@ -508,7 +517,15 @@ def generate_genome_singlem(orig_args, new_genomes):
 
 def iterate(args):
     logging.info("Evaluating new bins")
-    bins = evaluate_bins(args.aviary_outputs, args.checkm_version, args.min_completeness, args.max_contamination, args.iteration)
+    if args.new_genomes_list:
+        args.new_genomes = read_list(args.new_genomes_list)
+
+    if args.aviary_outputs:
+        bins = evaluate_bins(args.aviary_outputs, args.checkm_version, args.min_completeness, args.max_contamination, args.iteration)
+    elif args.new_genomes:
+        bins = {os.path.splitext(os.path.basename(g))[0]: g for g in args.new_genomes}
+    else:
+        raise Exception("Programming error: no bins to evaluate")
 
     for bin in bins:
         copy_input(
@@ -529,7 +546,7 @@ def iterate(args):
 
     coassemble(args)
 
-    if args.elusive_clusters:
+    if args.elusive_clusters and not args.dryrun:
         new_cluster = pl.read_csv(os.path.join(args.output, "coassemble", "target", "elusive_clusters.tsv"), separator="\t")
         for cluster in args.elusive_clusters:
             old_cluster = pl.read_csv(cluster, separator="\t")
@@ -565,6 +582,7 @@ def build(args):
     args.forward_list = None
     args.reverse_list = None
     args.genomes_list = None
+    args.new_genomes_list = None
     args.aviary_gtdbtk_dir = "."
     args.aviary_checkm2_dir = "."
     args.aviary_cores = None
@@ -650,6 +668,10 @@ def main():
                     "evaluate a completed coassembly",
                     "ibis evaluate --coassemble-output coassemble_dir --aviary-outputs coassembly_0_dir ..."
                 ),
+                btu.Example(
+                    "evaluate a completed coassembly by providing genomes directly",
+                    "ibis evaluate --coassemble-output coassemble_dir --new-genomes genome_1.fna ... --coassembly-run coassembly_0"
+                ),
             ],
             "update": [
                 btu.Example(
@@ -669,6 +691,10 @@ def main():
                 btu.Example(
                     "rerun coassemble, adding new bins to database",
                     "ibis iterate --aviary-outputs coassembly_0_dir ... --forward reads_1.1.fq ... --reverse reads_1.2.fq ... --genomes genome_1.fna ..."
+                ),
+                btu.Example(
+                    "rerun coassemble, adding new bins to database, providing genomes directly",
+                    "ibis iterate --new-genomes new_genome_1.fna ... --forward reads_1.1.fq ... --reverse reads_1.2.fq ... --genomes genome_1.fna ..."
                 ),
             ],
             "build": [
@@ -760,8 +786,12 @@ def main():
     # Base arguments
     evaluate_base = evaluate_parser.add_argument_group("Base input arguments")
     evaluate_base.add_argument("--coassemble-output", help="Output dir from cluster subcommand", required=True)
-    evaluate_base.add_argument("--aviary-outputs", nargs='+', help="Output dir from Aviary coassembly and recover commands produced by coassemble subcommand", required=True)
+    evaluate_base.add_argument("--aviary-outputs", nargs='+', help="Output dir from Aviary coassembly and recover commands produced by coassemble subcommand")
+    evaluate_base.add_argument("--new-genomes", nargs='+', help="New genomes to evaluate (alternative to --aviary-outputs, also requires --coassembly-run)")
+    evaluate_base.add_argument("--new-genomes-list", help="New genomes to evaluate (alternative to --aviary-outputs, also requires --coassembly-run) newline separated")
+    evaluate_base.add_argument("--coassembly-run", help="Name of coassembly run to produce new genomes (alternative to --aviary-outputs, also requires --new-genomes)")
     evaluate_base.add_argument("--singlem-metapackage", help="SingleM metapackage for sequence searching")
+    evaluate_base.add_argument("--prodigal-meta", action="store_true", help="Use prodigal \"-p meta\" argument (for testing)")
     # Evaluate options
     evaluate_evaluation = evaluate_parser.add_argument_group("Evaluation options")
     add_evaluation_options(evaluate_evaluation)
@@ -804,7 +834,9 @@ def main():
     # Iterate options
     iterate_iteration = iterate_parser.add_argument_group("Iteration options")
     iterate_iteration.add_argument("--iteration", help="Iteration number used for unique bin naming", default="0")
-    iterate_iteration.add_argument("--aviary-outputs", nargs='+', help="Output dir from Aviary coassembly and recover commands produced by coassemble subcommand", required=True)
+    iterate_iteration.add_argument("--aviary-outputs", nargs='+', help="Output dir from Aviary coassembly and recover commands produced by coassemble subcommand")
+    iterate_iteration.add_argument("--new-genomes", nargs='+', help="New genomes to iterate (alternative to --aviary-outputs)")
+    iterate_iteration.add_argument("--new-genomes-list", help="New genomes to iterate (alternative to --aviary-outputs) newline separated")
     iterate_iteration.add_argument("--elusive-clusters", nargs='+', help="Previous elusive_clusters.tsv files produced by coassemble subcommand")
     add_evaluation_options(iterate_iteration)
     # Coassembly options
@@ -874,6 +906,10 @@ def main():
             raise Exception("SingleM metapackage (--singlem-metapackage or SINGLEM_METAPACKAGE_PATH environment variable, see SingleM data) must be provided")
         if args.cluster and not (args.genomes or args.genomes_list):
             raise Exception("Reference genomes must be provided to cluster with new genomes")
+        if not args.aviary_outputs and not (args.new_genomes or args.new_genomes_list):
+            raise Exception("New genomes or aviary outputs must be provided for evaluation")
+        if (args.new_genomes or args.new_genomes_list) and not args.coassembly_run:
+            raise Exception("Name of coassembly run must be provided to evaluate binning")
         evaluate(args)
 
     elif args.subparser_name == "update":
@@ -891,6 +927,8 @@ def main():
             raise Exception("Directory arguments are incompatible with Ibis iterate")
         if args.single_assembly:
             raise Exception("Single assembly is incompatible with Ibis iterate")
+        if not args.aviary_outputs and not (args.new_genomes or args.new_genomes_list):
+            raise Exception("New genomes or aviary outputs must be provided for iteration")
         coassemble_argument_verification(args)
         iterate(args)
 
