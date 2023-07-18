@@ -467,6 +467,7 @@ class Tests(unittest.TestCase):
                 f"--reverse {SAMPLE_READS_REVERSE} "
                 f"--singlem-metapackage {METAPACKAGE} "
                 f"--single-assembly "
+                f"--no-genomes "
                 f"--output test "
                 f"--conda-prefix {path_to_conda} "
                 f"--snakemake-args \"cluster_graph\" "

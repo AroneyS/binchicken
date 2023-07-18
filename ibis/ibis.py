@@ -336,7 +336,6 @@ def coassemble(args):
     if args.single_assembly:
         args.num_coassembly_samples = 1
         args.max_coassembly_samples = 1
-        args.no_genomes = True
 
     config_items = {
         # General config
@@ -837,8 +836,8 @@ def main():
                     raise Exception("Interleaved and long-reads not yet implemented")
             except AttributeError:
                 raise Exception("Interleaved and long-reads not yet implemented")
-        if not (args.genomes or args.genomes_list or args.no_genomes or args.single_assembly):
-            raise Exception("Input genomes must be provided")
+        if not (args.genomes or args.genomes_list or args.no_genomes):
+            raise Exception("Input genomes must be provided, or argument --no-genomes must be used")
         if (args.forward and args.forward_list) or (args.reverse and args.reverse_list) or (args.genomes and args.genomes_list):
             raise Exception("General and list arguments are mutually exclusive")
 
