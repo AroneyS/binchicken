@@ -30,6 +30,11 @@ METAPACKAGE = os.path.join(path_to_data, "singlem_metapackage.smpkg")
 
 MOCK_COASSEMBLE = os.path.join(path_to_data, "mock_coassemble")
 MOCK_COASSEMBLIES = ' '.join([os.path.join(MOCK_COASSEMBLE, "coassemble", "coassembly_0")])
+MOCK_GENOMES = " ".join([
+    os.path.join(MOCK_COASSEMBLE, "coassemble", "coassembly_0", "recover", "bins", "final_bins", "bin_1.fna"),
+    os.path.join(MOCK_COASSEMBLE, "coassemble", "coassembly_0", "recover", "bins", "final_bins", "bin_2.fna"),
+    os.path.join(MOCK_COASSEMBLE, "coassemble", "coassembly_0", "recover", "bins", "final_bins", "bin_3.fna"),
+])
 ELUSIVE_CLUSTERS = ' '.join([os.path.join(MOCK_COASSEMBLE, "target", "elusive_clusters_iterate.tsv")])
 
 SAMPLE_READ_SIZE = os.path.join(MOCK_COASSEMBLE, "read_size2.csv")
@@ -72,6 +77,71 @@ class Tests(unittest.TestCase):
 
             new_bin_2_path = os.path.join("test", "recovered_bins", "iteration_0-coassembly_0-2.fna")
             self.assertFalse(os.path.exists(new_bin_2_path))
+
+            bin_provenance_path = os.path.join("test", "recovered_bins", "bin_provenance.tsv")
+            self.assertTrue(os.path.exists(bin_provenance_path))
+
+            config_path = os.path.join("test", "config.yaml")
+            self.assertTrue(os.path.exists(config_path))
+
+            self.assertTrue("WARNING: coassembly_0 has been previously suggested" in output)
+
+            cluster_path = os.path.join("test", "coassemble", "target", "elusive_clusters.tsv")
+            self.assertTrue(os.path.exists(cluster_path))
+            expected = "\n".join(
+                [
+                    "\t".join([
+                        "samples",
+                        "length",
+                        "total_targets",
+                        "total_size",
+                        "recover_samples",
+                        "coassembly",
+                    ]),
+                    "\t".join([
+                        "sample_1,sample_2",
+                        "2",
+                        "3",
+                        "8456",
+                        "sample_1,sample_2,sample_3",
+                        "coassembly_0"
+                    ]),
+                    ""
+                ]
+            )
+            with open(cluster_path) as f:
+                self.assertEqual(expected, f.read())
+
+    def test_iterate_genome_input(self):
+        with in_tempdir():
+            cmd = (
+                f"ibis iterate "
+                f"--new-genomes {MOCK_GENOMES} "
+                f"--elusive-clusters {ELUSIVE_CLUSTERS} "
+                f"--forward {SAMPLE_READS_FORWARD} "
+                f"--reverse {SAMPLE_READS_REVERSE} "
+                f"--genomes {GENOMES} "
+                f"--genome-transcripts {GENOME_TRANSCRIPTS} "
+                f"--singlem-metapackage {METAPACKAGE} "
+                f"--output test "
+                f"--prodigal-meta "
+                f"--conda-prefix {path_to_conda} "
+            )
+            output_raw = subprocess.run(cmd, shell=True, check=True, capture_output=True)
+            output = output_raw.stderr.decode('ascii')
+
+            new_bin_0_path = os.path.join("test", "recovered_bins", "bin_1.fna")
+            self.assertTrue(os.path.exists(new_bin_0_path))
+            with open(new_bin_0_path) as f:
+                file = f.read()
+                self.assertTrue(">k141_1363016" in file)
+                self.assertTrue(">k141_177318" not in file)
+
+            new_bin_1_path = os.path.join("test", "recovered_bins", "bin_2.fna")
+            self.assertTrue(os.path.exists(new_bin_1_path))
+
+            new_bin_2_path = os.path.join("test", "recovered_bins", "bin_3.fna")
+            self.assertTrue(os.path.exists(new_bin_2_path))
 
             bin_provenance_path = os.path.join("test", "recovered_bins", "bin_provenance.tsv")
             self.assertTrue(os.path.exists(bin_provenance_path))

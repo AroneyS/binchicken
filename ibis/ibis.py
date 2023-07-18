@@ -515,7 +515,13 @@ def generate_genome_singlem(orig_args, new_genomes):
 
 def iterate(args):
     logging.info("Evaluating new bins")
-    bins = evaluate_bins(args.aviary_outputs, args.checkm_version, args.min_completeness, args.max_contamination, args.iteration)
+
+    if args.aviary_outputs:
+        bins = evaluate_bins(args.aviary_outputs, args.checkm_version, args.min_completeness, args.max_contamination, args.iteration)
+    elif args.new_genomes:
+        bins = {os.path.splitext(os.path.basename(g))[0]: g for g in args.new_genomes}
+    else:
+        raise Exception("Programming error: no bins to evaluate")
 
     for bin in bins:
         copy_input(
@@ -814,7 +820,8 @@ def main():
     # Iterate options
     iterate_iteration = iterate_parser.add_argument_group("Iteration options")
     iterate_iteration.add_argument("--iteration", help="Iteration number used for unique bin naming", default="0")
-    iterate_iteration.add_argument("--aviary-outputs", nargs='+', help="Output dir from Aviary coassembly and recover commands produced by coassemble subcommand", required=True)
+    iterate_iteration.add_argument("--aviary-outputs", nargs='+', help="Output dir from Aviary coassembly and recover commands produced by coassemble subcommand")
+    iterate_iteration.add_argument("--new-genomes", nargs='+', help="New genomes to evaluate (alternative to --aviary-outputs)")
     iterate_iteration.add_argument("--elusive-clusters", nargs='+', help="Previous elusive_clusters.tsv files produced by coassemble subcommand")
     add_evaluation_options(iterate_iteration)
     # Coassembly options
@@ -905,6 +912,8 @@ def main():
             raise Exception("Directory arguments are incompatible with Ibis iterate")
         if args.single_assembly:
             raise Exception("Single assembly is incompatible with Ibis iterate")
+        if not args.aviary_outputs and not args.new_genomes:
+            raise Exception("New genomes or aviary outputs must be provided for iteration")
         coassemble_argument_verification(args)
         iterate(args)
 
