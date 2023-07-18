@@ -34,10 +34,13 @@ rule prodigal_bins:
         output_dir + "/transcripts/{bin}_transcripts.fna"
     log:
         logs_dir + "/transcripts/{bin}.log"
+    params:
+        prodigal_meta = "-p meta" if config["prodigal_meta"] else ""
     conda:
         "env/prodigal.yml"
     shell:
         "prodigal -i {input} -d {output} "
+        "{params.prodigal_meta} "
         "&> {log}"
 
 rule singlem_pipe_bins:

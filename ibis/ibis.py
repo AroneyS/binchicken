@@ -392,7 +392,13 @@ def evaluate(args):
     coassemble_dir = os.path.abspath(args.coassemble_output)
     coassemble_target_dir = os.path.join(coassemble_dir, "target")
     coassemble_appraise_dir = os.path.join(coassemble_dir, "appraise")
-    bins = evaluate_bins(args.aviary_outputs, args.checkm_version, args.min_completeness, args.max_contamination)
+
+    if args.aviary_outputs:
+        bins = evaluate_bins(args.aviary_outputs, args.checkm_version, args.min_completeness, args.max_contamination)
+    elif args.new_genomes:
+        bins = {"-".join([args.coassembly_run, os.path.splitext(os.path.basename(g))[0]]): g for g in args.new_genomes}
+    else:
+        raise Exception("Programming error: no bins to evaluate")
 
     if args.singlem_metapackage:
         metapackage = os.path.abspath(args.singlem_metapackage)
@@ -421,6 +427,7 @@ def evaluate(args):
         "max_contamination": args.max_contamination,
         "cluster": cluster_ani,
         "original_bins": original_bins,
+        "prodigal_meta": args.prodigal_meta,
     }
 
     config_path = make_config(
@@ -760,8 +767,11 @@ def main():
     # Base arguments
     evaluate_base = evaluate_parser.add_argument_group("Base input arguments")
     evaluate_base.add_argument("--coassemble-output", help="Output dir from cluster subcommand", required=True)
-    evaluate_base.add_argument("--aviary-outputs", nargs='+', help="Output dir from Aviary coassembly and recover commands produced by coassemble subcommand", required=True)
+    evaluate_base.add_argument("--aviary-outputs", nargs='+', help="Output dir from Aviary coassembly and recover commands produced by coassemble subcommand")
+    evaluate_base.add_argument("--new-genomes", nargs='+', help="New genomes to evaluate (alternative to --aviary-outputs, also requires --coassembly-run)")
+    evaluate_base.add_argument("--coassembly-run", help="Name of coassembly run to produce new genomes (alternative to --aviary-outputs, also requires --new-genomes)")
     evaluate_base.add_argument("--singlem-metapackage", help="SingleM metapackage for sequence searching")
+    evaluate_base.add_argument("--prodigal-meta", action="store_true", help="Use prodigal \"-p meta\" argument (for testing)")
     # Evaluate options
     evaluate_evaluation = evaluate_parser.add_argument_group("Evaluation options")
     add_evaluation_options(evaluate_evaluation)
@@ -874,6 +884,10 @@ def main():
             raise Exception("SingleM metapackage (--singlem-metapackage or SINGLEM_METAPACKAGE_PATH environment variable, see SingleM data) must be provided")
         if args.cluster and not (args.genomes or args.genomes_list):
             raise Exception("Reference genomes must be provided to cluster with new genomes")
+        if not args.aviary_outputs and not args.new_genomes:
+            raise Exception("New genomes or aviary outputs must be provided for evaluation")
+        if args.new_genomes and not args.coassembly_run:
+            raise Exception("Name of coassembly run must be provided to evaluate binning")
         evaluate(args)
 
     elif args.subparser_name == "update":

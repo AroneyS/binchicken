@@ -12,6 +12,11 @@ path_to_conda = os.path.join(path_to_data,'.conda')
 METAPACKAGE = os.path.join(path_to_data, "singlem_metapackage.smpkg")
 MOCK_COASSEMBLE = os.path.join(path_to_data, "mock_coassemble")
 MOCK_COASSEMBLIES = ' '.join([os.path.join(MOCK_COASSEMBLE, "coassemble", "coassembly_0")])
+MOCK_GENOMES = " ".join([
+    os.path.join(MOCK_COASSEMBLE, "coassemble", "coassembly_0", "recover", "bins", "final_bins", "bin_1.fna"),
+    os.path.join(MOCK_COASSEMBLE, "coassemble", "coassembly_0", "recover", "bins", "final_bins", "bin_2.fna"),
+    os.path.join(MOCK_COASSEMBLE, "coassemble", "coassembly_0", "recover", "bins", "final_bins", "bin_3.fna"),
+])
 
 GENOMES = " ".join([os.path.join(path_to_data, "GB_GCA_013286235.1.fna")])
 TWO_GENOMES = " ".join([
@@ -117,6 +122,110 @@ class Tests(unittest.TestCase):
                     "\t".join(["S3.7.ribosomal_protein_S7", "coassembly_0-0_transcripts", "TATCAAGTTCCACAAGAAGTTAGAGGAGAAAGAAGAATCTCGTTAGCTATTAGATGGATT", "1", "1.14", "Root; d__Bacteria"]),
                     "\t".join(["S3.7.ribosomal_protein_S7", "coassembly_0-0_transcripts", "TTCCAGGTGCCTACTGAAGTTCGTCCCGAGCGTAAAATTGCATTGGGTATGAAATGGCTG", "1", "1.18", "Root; d__Bacteria; p__Bacteroidota; c__Bacteroidia; o__Sphingobacteriales; f__Sphingobacteriaceae; g__Mucilaginibacter; s__Mucilaginibacter_sp013286235"]),
                     "\t".join(["S3.7.ribosomal_protein_S7", "coassembly_0-1_transcripts", "TACCAGGTTCCTGTTGAAGTTCGCCCATCACGCCGTTCTGCTTTGGCAATGCGCTGGGTG", "1", "1.14", "Root; d__Bacteria; p__Proteobacteria; c__Gammaproteobacteria; o__Burkholderiales; f__Burkholderiaceae; g__Polynucleobacter; s__Polynucleobacter_sp018688335"]),
+                    ""
+                ]
+            )
+            with open(summarise_path) as f:
+                self.assertEqual(expected, f.read())
+
+    def test_evaluate_genome_input(self):
+        with in_tempdir():
+            cmd = (
+                f"ibis evaluate "
+                f"--coassemble-output {MOCK_COASSEMBLE} "
+                f"--new-genomes {MOCK_GENOMES} "
+                f"--prodigal-meta "
+                f"--coassembly-run coassembly_0 "
+                f"--singlem-metapackage {METAPACKAGE} "
+                f"--output test "
+                f"--conda-prefix {path_to_conda} "
+            )
+            extern.run(cmd)
+
+            config_path = os.path.join("test", "config.yaml")
+            self.assertTrue(os.path.exists(config_path))
+
+            summary_path = os.path.join("test", "evaluate", "evaluate", "summary_stats.tsv")
+            self.assertTrue(os.path.exists(summary_path))
+            expected = "\n".join(
+                [
+                    "\t".join([
+                        "coassembly",
+                        "statistic",
+                        "within",
+                        "match",
+                        "nonmatch",
+                        "total",
+                        "match_percent",
+                    ]),
+                    "\t".join([
+                        "coassembly_0",
+                        "sequences",
+                        "targets",
+                        "1",
+                        "1",
+                        "2",
+                        "50.0",
+                    ]),
+                    "\t".join([
+                        "coassembly_0",
+                        "taxonomy",
+                        "targets",
+                        "1",
+                        "1",
+                        "2",
+                        "50.0",
+                    ]),
+                    "\t".join([
+                        "coassembly_0",
+                        "bins",
+                        "recovery",
+                        "1",
+                        "2",
+                        "3",
+                        "33.33",
+                    ]),
+                    "\t".join([
+                        "coassembly_0",
+                        "nontarget_bin_sequences",
+                        "recovery",
+                        "1",
+                        "2",
+                        "3",
+                        "33.33",
+                    ]),
+                    "\t".join([
+                        "coassembly_0",
+                        "nontarget_unbin_sequences",
+                        "recovery",
+                        "0",
+                        "3",
+                        "3",
+                        "0.0",
+                    ]),
+                    "\t".join([
+                        "coassembly_0",
+                        "novel_sequences",
+                        "recovery",
+                        "1",
+                        "2",
+                        "3",
+                        "33.33",
+                    ]),
+                    ""
+                ]
+            )
+            with open(summary_path) as f:
+                self.assertEqual(expected, f.read())
+
+            summarise_path = os.path.join("test", "evaluate", "summarise", "bins_summarised.otu_table.tsv")
+            self.assertTrue(os.path.exists(summarise_path))
+            expected = "\n".join(
+                [
+                    "\t".join(["gene", "sample", "sequence", "num_hits", "coverage", "taxonomy"]),
+                    "\t".join(["S3.7.ribosomal_protein_S7", "coassembly_0-bin_1_transcripts", "TATCAAGTTCCACAAGAAGTTAGAGGAGAAAGAAGAATCTCGTTAGCTATTAGATGGATT", "1", "1.14", "Root; d__Bacteria"]),
+                    "\t".join(["S3.7.ribosomal_protein_S7", "coassembly_0-bin_1_transcripts", "TTCCAGGTGCCTACTGAAGTTCGTCCCGAGCGTAAAATTGCATTGGGTATGAAATGGCTG", "1", "1.14", "Root; d__Bacteria; p__Bacteroidota; c__Bacteroidia; o__Sphingobacteriales; f__Sphingobacteriaceae; g__Mucilaginibacter; s__Mucilaginibacter_sp013286235"]),
+                    "\t".join(["S3.7.ribosomal_protein_S7", "coassembly_0-bin_3_transcripts", "TACCAGGTTCCTGTTGAAGTTCGCCCATCACGCCGTTCTGCTTTGGCAATGCGCTGGGTG", "1", "1.14", "Root; d__Bacteria; p__Proteobacteria; c__Gammaproteobacteria; o__Burkholderiales; f__Burkholderiaceae; g__Polynucleobacter; s__Polynucleobacter_sp018688335"]),
                     ""
                 ]
             )
