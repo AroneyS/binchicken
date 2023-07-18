@@ -668,6 +668,10 @@ def main():
                     "evaluate a completed coassembly",
                     "ibis evaluate --coassemble-output coassemble_dir --aviary-outputs coassembly_0_dir ..."
                 ),
+                btu.Example(
+                    "evaluate a completed coassembly by providing genomes directly",
+                    "ibis evaluate --coassemble-output coassemble_dir --new-genomes genome_1.fna ... --coassembly-run coassembly_0"
+                ),
             ],
             "update": [
                 btu.Example(
@@ -687,6 +691,10 @@ def main():
                 btu.Example(
                     "rerun coassemble, adding new bins to database",
                     "ibis iterate --aviary-outputs coassembly_0_dir ... --forward reads_1.1.fq ... --reverse reads_1.2.fq ... --genomes genome_1.fna ..."
+                ),
+                btu.Example(
+                    "rerun coassemble, adding new bins to database, providing genomes directly",
+                    "ibis iterate --new-genomes new_genome_1.fna ... --forward reads_1.1.fq ... --reverse reads_1.2.fq ... --genomes genome_1.fna ..."
                 ),
             ],
             "build": [
