@@ -259,8 +259,6 @@ rule target_elusive:
     output:
         output_edges=output_dir + "/target/elusive_edges.tsv",
         output_targets=output_dir + "/target/targets.tsv",
-    log:
-        logs_dir + "/elusive_targets.log"
     params:
         min_coassembly_coverage=config["min_coassembly_coverage"],
         max_coassembly_samples=config["max_coassembly_samples"],
@@ -276,8 +274,6 @@ checkpoint cluster_graph:
         read_size=output_dir + "/read_size.csv",
     output:
         elusive_clusters=output_dir + "/target/elusive_clusters.tsv"
-    log:
-        logs_dir + "/cluster_graph.log"
     params:
         max_coassembly_size=config["max_coassembly_size"],
         num_coassembly_samples=config["num_coassembly_samples"],
