@@ -517,6 +517,8 @@ def generate_genome_singlem(orig_args, new_genomes):
 
 def iterate(args):
     logging.info("Evaluating new bins")
+    if args.new_genomes_list:
+        args.new_genomes = read_list(args.new_genomes_list)
 
     if args.aviary_outputs:
         bins = evaluate_bins(args.aviary_outputs, args.checkm_version, args.min_completeness, args.max_contamination, args.iteration)
@@ -544,7 +546,7 @@ def iterate(args):
 
     coassemble(args)
 
-    if args.elusive_clusters:
+    if args.elusive_clusters and not args.dryrun:
         new_cluster = pl.read_csv(os.path.join(args.output, "coassemble", "target", "elusive_clusters.tsv"), separator="\t")
         for cluster in args.elusive_clusters:
             old_cluster = pl.read_csv(cluster, separator="\t")
@@ -580,6 +582,7 @@ def build(args):
     args.forward_list = None
     args.reverse_list = None
     args.genomes_list = None
+    args.new_genomes_list = None
     args.aviary_gtdbtk_dir = "."
     args.aviary_checkm2_dir = "."
     args.aviary_cores = None
@@ -824,7 +827,8 @@ def main():
     iterate_iteration = iterate_parser.add_argument_group("Iteration options")
     iterate_iteration.add_argument("--iteration", help="Iteration number used for unique bin naming", default="0")
     iterate_iteration.add_argument("--aviary-outputs", nargs='+', help="Output dir from Aviary coassembly and recover commands produced by coassemble subcommand")
-    iterate_iteration.add_argument("--new-genomes", nargs='+', help="New genomes to evaluate (alternative to --aviary-outputs)")
+    iterate_iteration.add_argument("--new-genomes", nargs='+', help="New genomes to iterate (alternative to --aviary-outputs)")
+    iterate_iteration.add_argument("--new-genomes-list", help="New genomes to iterate (alternative to --aviary-outputs) newline separated")
     iterate_iteration.add_argument("--elusive-clusters", nargs='+', help="Previous elusive_clusters.tsv files produced by coassemble subcommand")
     add_evaluation_options(iterate_iteration)
     # Coassembly options
@@ -915,7 +919,7 @@ def main():
             raise Exception("Directory arguments are incompatible with Ibis iterate")
         if args.single_assembly:
             raise Exception("Single assembly is incompatible with Ibis iterate")
-        if not args.aviary_outputs and not args.new_genomes:
+        if not args.aviary_outputs and not (args.new_genomes or args.new_genomes_list):
             raise Exception("New genomes or aviary outputs must be provided for iteration")
         coassemble_argument_verification(args)
         iterate(args)

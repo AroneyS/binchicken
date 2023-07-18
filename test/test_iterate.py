@@ -46,6 +46,10 @@ SAMPLE_SINGLEM = ' '.join([
 GENOME_TRANSCRIPTS = ' '.join([os.path.join(path_to_data, "GB_GCA_013286235.1_protein.fna")])
 GENOME_SINGLEM = os.path.join(MOCK_COASSEMBLE, "summarise", "bins_summarised.otu_table2.tsv")
 
+def write_string_to_file(string, filename):
+    with open(filename, "w") as f:
+        f.write("\n".join(string.split(" ")))
+
 class Tests(unittest.TestCase):
     def test_iterate(self):
         with in_tempdir():
@@ -176,6 +180,37 @@ class Tests(unittest.TestCase):
             )
             with open(cluster_path) as f:
                 self.assertEqual(expected, f.read())
+
+    def test_iterate_genome_files_input(self):
+        with in_tempdir():
+            write_string_to_file(MOCK_GENOMES, "genomes")
+            cmd = (
+                f"ibis iterate "
+                f"--new-genomes-list genomes "
+                f"--elusive-clusters {ELUSIVE_CLUSTERS} "
+                f"--forward {SAMPLE_READS_FORWARD} "
+                f"--reverse {SAMPLE_READS_REVERSE} "
+                f"--genomes {GENOMES} "
+                f"--genome-transcripts {GENOME_TRANSCRIPTS} "
+                f"--singlem-metapackage {METAPACKAGE} "
+                f"--output test "
+                f"--conda-prefix {path_to_conda} "
+                f"--dryrun "
+                f"--snakemake-args \" --quiet\" "
+            )
+            output = extern.run(cmd)
+
+            self.assertTrue("count_bp_reads" in output)
+            self.assertTrue("singlem_pipe_reads" in output)
+            self.assertTrue("genome_transcripts" in output)
+            self.assertTrue("singlem_pipe_genomes" in output)
+            self.assertTrue("singlem_summarise_genomes" in output)
+            self.assertTrue("singlem_appraise" in output)
+            self.assertTrue("singlem_appraise_filtered" in output)
+            self.assertTrue("target_elusive" in output)
+            self.assertTrue("cluster_graph" in output)
+            self.assertTrue("aviary_commands" in output)
+            self.assertTrue("summary" in output)
 
     def test_iterate_default_config(self):
         with in_tempdir():
