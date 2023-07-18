@@ -862,6 +862,8 @@ def main():
                 raise Exception("Max recovery samples (--max-recovery-samples) must be greater than or equal to number of coassembly samples (--num-coassembly-samples)")
         if args.run_aviary and not (args.aviary_gtdbtk_dir and args.aviary_checkm2_dir):
             raise Exception("Run Aviary (--run-aviary) requires paths to GTDB-Tk and CheckM2 databases to be provided (--aviary-gtdbtk-dir and --aviary-checkm2-dir)")
+        if (args.sample_query or args.sample_query_list or args.sample_query_dir) and args.taxa_of_interest and args.assemble_unmapped:
+            raise Exception("Unmapping is incompatible with the combination of sample query and taxa of interest")
 
     if args.subparser_name == "coassemble":
         coassemble_argument_verification(args)
