@@ -398,7 +398,7 @@ def evaluate(args):
     if args.aviary_outputs:
         bins = evaluate_bins(args.aviary_outputs, args.checkm_version, args.min_completeness, args.max_contamination)
     elif args.new_genomes:
-        bins = {"-".join([args.coassembly_run, os.path.splitext(os.path.basename(g))[0]]): g for g in args.new_genomes}
+        bins = {"-".join([args.coassembly_run, os.path.splitext(os.path.basename(g))[0]]): os.path.abspath(g) for g in args.new_genomes}
     else:
         raise Exception("Programming error: no bins to evaluate")
 
@@ -523,7 +523,7 @@ def iterate(args):
     if args.aviary_outputs:
         bins = evaluate_bins(args.aviary_outputs, args.checkm_version, args.min_completeness, args.max_contamination, args.iteration)
     elif args.new_genomes:
-        bins = {os.path.splitext(os.path.basename(g))[0]: g for g in args.new_genomes}
+        bins = {os.path.splitext(os.path.basename(g))[0]: os.path.abspath(g) for g in args.new_genomes}
     else:
         raise Exception("Programming error: no bins to evaluate")
 
