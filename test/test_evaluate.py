@@ -132,6 +132,33 @@ class Tests(unittest.TestCase):
             with open(summarise_path) as f:
                 self.assertEqual(expected, f.read())
 
+    def test_evaluate_specified_files(self):
+        with in_tempdir():
+            cmd = (
+                f"ibis evaluate "
+                f"--coassemble-targets {MOCK_COASSEMBLE}/targets/targets.tsv "
+                f"--coassemble-binned {MOCK_COASSEMBLE}/appraise/binned.otu_table.tsv "
+                f"--coassemble-elusive-edges {MOCK_COASSEMBLE}/targets/elusive_edges.tsv "
+                f"--coassemble-elusive-clusters {MOCK_COASSEMBLE}/appraise/elusive_clusters.tsv "
+                f"--coassemble-summary {MOCK_COASSEMBLE}/summary.tsv "
+                f"--aviary-outputs {MOCK_COASSEMBLIES} "
+                f"--singlem-metapackage {METAPACKAGE} "
+                f"--output test "
+                f"--conda-prefix {path_to_conda} "
+                f"--dryrun "
+                f"--snakemake-args \" --quiet\" "
+            )
+            output = extern.run(cmd)
+
+            self.assertTrue("prodigal_bins" in output)
+            self.assertTrue("singlem_pipe_bins" in output)
+            self.assertTrue("singlem_summarise_bins" in output)
+            self.assertTrue("cluster_original_bins" not in output)
+            self.assertTrue("cluster_updated_bins" not in output)
+            self.assertTrue("summarise_clusters" not in output)
+            self.assertTrue("evaluate" in output)
+            self.assertTrue("evaluate_plots" in output)
+
     def test_evaluate_genome_input(self):
         with in_tempdir():
             cmd = (

@@ -389,9 +389,17 @@ def coassemble(args):
     logging.info(f"Aviary commands for coassembly and recovery in shell scripts at {os.path.join(args.output, 'coassemble', 'commands')}")
 
 def evaluate(args):
-    coassemble_dir = os.path.abspath(args.coassemble_output)
-    coassemble_target_dir = os.path.join(coassemble_dir, "target")
-    coassemble_appraise_dir = os.path.join(coassemble_dir, "appraise")
+    if args.coassemble_output:
+        coassemble_dir = os.path.abspath(args.coassemble_output)
+        coassemble_target_dir = os.path.join(coassemble_dir, "target")
+        coassemble_appraise_dir = os.path.join(coassemble_dir, "appraise")
+
+        args.coassemble_targets = os.path.join(coassemble_target_dir, "targets.tsv")
+        args.coassemble_binned = os.path.join(coassemble_appraise_dir, "binned.otu_table.tsv")
+        args.coassemble_elusive_edges = os.path.join(coassemble_target_dir, "elusive_edges.tsv")
+        args.coassemble_elusive_clusters = os.path.join(coassemble_target_dir, "elusive_clusters.tsv")
+        args.coassemble_summary = os.path.join(coassemble_dir, "summary.tsv")
+
     if args.new_genomes_list:
         args.new_genomes = read_list(args.new_genomes_list)
 
@@ -417,11 +425,11 @@ def evaluate(args):
         original_bins = None
 
     config_items = {
-        "targets": os.path.join(coassemble_target_dir, "targets.tsv"),
-        "binned": os.path.join(coassemble_appraise_dir, "binned.otu_table.tsv"),
-        "elusive_edges": os.path.join(coassemble_target_dir, "elusive_edges.tsv"),
-        "elusive_clusters": os.path.join(coassemble_target_dir, "elusive_clusters.tsv"),
-        "coassemble_summary": os.path.join(coassemble_dir, "summary.tsv"),
+        "targets": args.coassemble_targets,
+        "binned": args.coassemble_binned,
+        "elusive_edges": args.coassemble_elusive_edges,
+        "elusive_clusters": args.coassemble_elusive_clusters,
+        "coassemble_summary": args.coassemble_summary,
         "singlem_metapackage": metapackage,
         "recovered_bins": bins,
         "checkm_version": args.checkm_version,
@@ -785,7 +793,12 @@ def main():
     evaluate_parser = main_parser.new_subparser("evaluate", "Evaluate coassembled bins")
     # Base arguments
     evaluate_base = evaluate_parser.add_argument_group("Base input arguments")
-    evaluate_base.add_argument("--coassemble-output", help="Output dir from cluster subcommand", required=True)
+    evaluate_base.add_argument("--coassemble-output", help="Output dir from cluster subcommand")
+    evaluate_base.add_argument("--coassemble-targets", help="Target sequences output from Ibis coassemble (alternative to --coassemble-output)")
+    evaluate_base.add_argument("--coassemble-binned", help="SingleM appraise binned output from Ibis coassemble (alternative to --coassemble-output)")
+    evaluate_base.add_argument("--coassemble-elusive-edges", help="Elusive edges output from Ibis coassemble (alternative to --coassemble-output)")
+    evaluate_base.add_argument("--coassemble-elusive-clusters", help="Elusive clusters output from Ibis coassemble (alternative to --coassemble-output)")
+    evaluate_base.add_argument("--coassemble-summary", help="Summary output from Ibis coassemble (alternative to --coassemble-output)")
     evaluate_base.add_argument("--aviary-outputs", nargs='+', help="Output dir from Aviary coassembly and recover commands produced by coassemble subcommand")
     evaluate_base.add_argument("--new-genomes", nargs='+', help="New genomes to evaluate (alternative to --aviary-outputs, also requires --coassembly-run)")
     evaluate_base.add_argument("--new-genomes-list", help="New genomes to evaluate (alternative to --aviary-outputs, also requires --coassembly-run) newline separated")
@@ -904,6 +917,9 @@ def main():
     elif args.subparser_name == "evaluate":
         if not args.singlem_metapackage and not os.environ['SINGLEM_METAPACKAGE_PATH']:
             raise Exception("SingleM metapackage (--singlem-metapackage or SINGLEM_METAPACKAGE_PATH environment variable, see SingleM data) must be provided")
+        if not args.coassemble_output and not (args.coassemble_targets and args.coassemble_binned and args.coassemble_elusive_edges and \
+                                               args.coassemble_elusive_clusters and args.coassemble_summary):
+            raise Exception("Either Ibis coassemble output (--coassemble-output) or specific input files must be provided")
         if args.cluster and not (args.genomes or args.genomes_list):
             raise Exception("Reference genomes must be provided to cluster with new genomes")
         if not args.aviary_outputs and not (args.new_genomes or args.new_genomes_list):
@@ -915,7 +931,7 @@ def main():
     elif args.subparser_name == "update":
         base_argument_verification(args)
         if not args.coassemble_output and not (args.appraise_binned and args.appraise_unbinned and args.elusive_clusters):
-            raise Exception("Either Ibis coassemble output (--coassemble-output) or specific input files (--appraise-binned and --elusive-clusters) must be provided")
+            raise Exception("Either Ibis coassemble output (--coassemble-output) or specific input files must be provided")
         if args.run_aviary and not (args.aviary_gtdbtk_dir and args.aviary_checkm2_dir):
             raise Exception("Run Aviary (--run-aviary) requires paths to GTDB-Tk and CheckM2 databases to be provided (--aviary-gtdbtk-dir and --aviary-checkm2-dir)")
         update(args)
