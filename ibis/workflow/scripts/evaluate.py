@@ -55,11 +55,21 @@ def evaluate(target_otu_table, binned_otu_table, elusive_clusters, elusive_edges
 
     elusive_edges = (
         elusive_edges
-        .with_columns(pl.col("samples").str.split(",").list.eval(pl.element().str.replace(r"\.1$", "")))
-        .join(sample_coassemblies, left_on="sample1", right_on="samples", how="left")
-        .join(sample_coassemblies, left_on="sample2", right_on="samples", how="left", suffix="2")
-        .filter(pl.col("coassembly") == pl.col("coassembly2"))
-        .with_columns(pl.col("target_ids").str.split(",").alias("target"))
+        .with_columns(
+            pl.col("samples").str.split(",").list.eval(pl.element().str.replace(r"\.1$", "")),
+            pl.col("samples").hash().alias("samples_hash")
+            )
+        .explode("samples")
+        .join(sample_coassemblies, on="samples")
+        .groupby("samples_hash", "coassembly")
+        .agg(
+            pl.first("target_ids"),
+            pl.count(),
+            pl.first("cluster_size"),
+            pl.col("samples").unique(),
+            )
+        .filter(pl.col("count") == pl.col("cluster_size"))
+        .with_columns(target = pl.col("target_ids").str.split(","))
         .explode("target")
     )
 
@@ -72,19 +82,14 @@ def evaluate(target_otu_table, binned_otu_table, elusive_clusters, elusive_edges
     # Create otu table with original sequence, samples present, cluster id, target id and associated coassemblies
     sample_edges = (
         elusive_edges
-        .melt(
-            id_vars=["coassembly", "target"],
-            value_vars=["sample1", "sample2"],
-            value_name="sample"
-            )
-        .groupby(["coassembly", "target"])
-        .agg([
-            pl.col("sample")
+        .groupby("coassembly", "target")
+        .agg(
+            source_samples = pl.col("samples")
+                .flatten()
                 .unique()
                 .sort()
                 .str.concat(",")
-                .alias("source_samples")
-            ])
+            )
     )
 
     elusive_otu_table = (
