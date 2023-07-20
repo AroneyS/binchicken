@@ -27,10 +27,13 @@ TWO_GENOMES = " ".join([
     ])
 
 MOCK_COASSEMBLE = os.path.join(path_to_data, "mock_coassemble")
-APPRAISE_BINNED = os.path.join(MOCK_COASSEMBLE, "appraise", "binned.otu_table.tsv")
-APPRAISE_UNBINNED = os.path.join(MOCK_COASSEMBLE, "appraise", "unbinned.otu_table.tsv")
-ELUSIVE_CLUSTERS = os.path.join(MOCK_COASSEMBLE, "target", "elusive_clusters.tsv")
-ELUSIVE_CLUSTERS_TWO = os.path.join(MOCK_COASSEMBLE, 'target', 'elusive_clusters_two.tsv')
+MOCK_UNBINNED = os.path.join(MOCK_COASSEMBLE, "appraise", "unbinned.otu_table.tsv")
+MOCK_BINNED = os.path.join(MOCK_COASSEMBLE, "appraise", "binned.otu_table.tsv")
+MOCK_TARGETS = os.path.join(MOCK_COASSEMBLE, "target", "targets.tsv")
+MOCK_ELUSIVE_EDGES = os.path.join(MOCK_COASSEMBLE, "target", "elusive_edges.tsv")
+MOCK_ELUSIVE_CLUSTERS = os.path.join(MOCK_COASSEMBLE, "target", "elusive_clusters.tsv")
+MOCK_ELUSIVE_CLUSTERS_TWO = os.path.join(MOCK_COASSEMBLE, 'target', 'elusive_clusters_two.tsv')
+MOCK_SUMMARY = os.path.join(MOCK_COASSEMBLE, "summary.tsv")
 
 
 class Tests(unittest.TestCase):
@@ -123,9 +126,12 @@ class Tests(unittest.TestCase):
                 f"--forward {SAMPLE_READS_FORWARD} "
                 f"--reverse {SAMPLE_READS_REVERSE} "
                 f"--genomes {GENOMES} "
-                f"--appraise-binned {APPRAISE_BINNED} "
-                f"--appraise-unbinned {APPRAISE_UNBINNED} "
-                f"--elusive-clusters {ELUSIVE_CLUSTERS} "
+                f"--coassemble-unbinned {MOCK_UNBINNED} "
+                f"--coassemble-binned {MOCK_BINNED} "
+                f"--coassemble-targets {MOCK_TARGETS} "
+                f"--coassemble-elusive-edges {MOCK_ELUSIVE_EDGES} "
+                f"--coassemble-elusive-clusters {MOCK_ELUSIVE_CLUSTERS} "
+                f"--coassemble-summary {MOCK_SUMMARY} "
                 f"--output test "
                 f"--conda-prefix {path_to_conda} "
                 f"--dryrun "
@@ -362,9 +368,12 @@ class Tests(unittest.TestCase):
                 f"--forward {SAMPLE_READS_FORWARD} "
                 f"--reverse {SAMPLE_READS_REVERSE} "
                 f"--genomes {GENOMES} "
-                f"--appraise-binned {APPRAISE_BINNED} "
-                f"--appraise-unbinned {APPRAISE_UNBINNED} "
-                f"--elusive-clusters {ELUSIVE_CLUSTERS_TWO} "
+                f"--coassemble-unbinned {MOCK_UNBINNED} "
+                f"--coassemble-binned {MOCK_BINNED} "
+                f"--coassemble-targets {MOCK_TARGETS} "
+                f"--coassemble-elusive-edges {MOCK_ELUSIVE_EDGES} "
+                f"--coassemble-elusive-clusters {MOCK_ELUSIVE_CLUSTERS_TWO} "
+                f"--coassemble-summary {MOCK_SUMMARY} "
                 f"--coassemblies coassembly_0 "
                 f"--output test "
                 f"--conda-prefix {path_to_conda} "

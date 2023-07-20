@@ -11,6 +11,13 @@ path_to_conda = os.path.join(path_to_data,'.conda')
 
 METAPACKAGE = os.path.join(path_to_data, "singlem_metapackage.smpkg")
 MOCK_COASSEMBLE = os.path.join(path_to_data, "mock_coassemble")
+MOCK_UNBINNED = os.path.join(MOCK_COASSEMBLE, "appraise", "unbinned.otu_table.tsv")
+MOCK_BINNED = os.path.join(MOCK_COASSEMBLE, "appraise", "binned.otu_table.tsv")
+MOCK_TARGETS = os.path.join(MOCK_COASSEMBLE, "target", "targets.tsv")
+MOCK_ELUSIVE_EDGES = os.path.join(MOCK_COASSEMBLE, "target", "elusive_edges.tsv")
+MOCK_ELUSIVE_CLUSTERS = os.path.join(MOCK_COASSEMBLE, "target", "elusive_clusters.tsv")
+MOCK_SUMMARY = os.path.join(MOCK_COASSEMBLE, "summary.tsv")
+
 MOCK_COASSEMBLIES = ' '.join([os.path.join(MOCK_COASSEMBLE, "coassemble", "coassembly_0")])
 MOCK_GENOMES = " ".join([
     os.path.join(MOCK_COASSEMBLE, "coassemble", "coassembly_0", "recover", "bins", "final_bins", "bin_1.fna"),
@@ -136,11 +143,12 @@ class Tests(unittest.TestCase):
         with in_tempdir():
             cmd = (
                 f"ibis evaluate "
-                f"--coassemble-targets {MOCK_COASSEMBLE}/targets/targets.tsv "
-                f"--coassemble-binned {MOCK_COASSEMBLE}/appraise/binned.otu_table.tsv "
-                f"--coassemble-elusive-edges {MOCK_COASSEMBLE}/targets/elusive_edges.tsv "
-                f"--coassemble-elusive-clusters {MOCK_COASSEMBLE}/appraise/elusive_clusters.tsv "
-                f"--coassemble-summary {MOCK_COASSEMBLE}/summary.tsv "
+                f"--coassemble-unbinned {MOCK_UNBINNED} "
+                f"--coassemble-binned {MOCK_BINNED} "
+                f"--coassemble-targets {MOCK_TARGETS} "
+                f"--coassemble-elusive-edges {MOCK_ELUSIVE_EDGES} "
+                f"--coassemble-elusive-clusters {MOCK_ELUSIVE_CLUSTERS} "
+                f"--coassemble-summary {MOCK_SUMMARY} "
                 f"--aviary-outputs {MOCK_COASSEMBLIES} "
                 f"--singlem-metapackage {METAPACKAGE} "
                 f"--output test "
