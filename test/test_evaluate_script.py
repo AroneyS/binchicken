@@ -11,7 +11,7 @@ SINGLEM_COLUMNS=["gene", "sample", "sequence", "num_hits", "coverage", "taxonomy
 TARGET_COLUMNS=SINGLEM_COLUMNS+["target"]
 APPRAISE_COLUMNS=SINGLEM_COLUMNS+["found_in"]
 CLUSTER_COLUMNS=["samples", "length", "total_targets", "total_size", "recover_samples", "coassembly"]
-EDGE_COLUMNS=["taxa_group", "weight", "target_ids", "sample1", "sample2"]
+EDGE_COLUMNS=["style", "cluster_size", "samples", "target_ids"]
 
 OUTPUT_COLUMNS={
     "coassembly": str,
@@ -52,7 +52,7 @@ class Tests(unittest.TestCase):
             ["sample_1,sample_2", 2, 1, 100, "sample_1,sample_2,sample_3", "coassembly_0"],
         ], schema=CLUSTER_COLUMNS)
         edges = pl.DataFrame([
-            ["Root", 1, "10", "sample_1.1", "sample_2.1"],
+            ["match", 2, "sample_1.1,sample_2.1", "10"],
         ], schema=EDGE_COLUMNS)
         recovered = pl.DataFrame([
             ["S3.1", "coassembly_0-genome_1_transcripts", "AAA", 1, 2.0, "Root"],
@@ -101,7 +101,7 @@ class Tests(unittest.TestCase):
             ["sample_1,sample_2", 2, 1, 100, "sample_1,sample_2,sample_3", "coassembly_0"],
         ], schema=CLUSTER_COLUMNS)
         edges = pl.DataFrame([
-            ["Root", 1, "10", "sample_1.1", "sample_2.1"],
+            ["match", 2, "sample_1.1,sample_2.1", "10"],
         ], schema=EDGE_COLUMNS)
         recovered = pl.DataFrame([
             ["S3.1", "coassembly_0-genome_1_transcripts", "AAA", 1, 2.0, "Root"],
@@ -142,7 +142,7 @@ class Tests(unittest.TestCase):
             ["sample_1,sample_2", 2, 1, 100, "sample_1,sample_2,sample_3", "coassembly_0"],
         ], schema=CLUSTER_COLUMNS)
         edges = pl.DataFrame([
-            ["Root", 1, "10", "sample_1.1", "sample_2.1"],
+            ["match", 2, "sample_1.1,sample_2.1", "10"],
         ], schema=EDGE_COLUMNS)
         recovered = pl.DataFrame([
             ["S3.1", "coassembly_0-genome_1_transcripts", "AAB", 1, 2.0, "Root"],
@@ -186,7 +186,7 @@ class Tests(unittest.TestCase):
             ["sample_1,sample_2", 2, 1, 100, "sample_1,sample_2,sample_3", "coassembly_0"],
         ], schema=CLUSTER_COLUMNS)
         edges = pl.DataFrame([
-            ["Root", 1, "10", "sample_1.1", "sample_2.1"],
+            ["match", 2, "sample_1.1,sample_2.1", "10"],
         ], schema=EDGE_COLUMNS)
         recovered = pl.DataFrame([
         ], schema=SINGLEM_COLUMNS)
@@ -217,7 +217,7 @@ class Tests(unittest.TestCase):
             ["sample_1,sample_2", 2, 1, 100, "sample_1,sample_2,sample_3", "coassembly_0"],
         ], schema=CLUSTER_COLUMNS)
         edges = pl.DataFrame([
-            ["Root", 1, "10", "sample_1.1", "sample_2.1"],
+            ["match", 2, "sample_1.1,sample_2.1", "10"],
         ], schema=EDGE_COLUMNS)
         recovered = pl.DataFrame([
             ["S3.1", "coassembly_0-genome_1_transcripts", "AAA", 1, 2.0, "Root"],
@@ -263,7 +263,7 @@ class Tests(unittest.TestCase):
             ["sample_1,sample_2", 2, 1, 100, "sample_1,sample_2,sample_3", "coassembly_0"],
         ], schema=CLUSTER_COLUMNS)
         edges = pl.DataFrame([
-            ["Root", 1, "10", "sample_1.1", "sample_2.1"],
+            ["match", 2, "sample_1.1,sample_2.1", "10"],
         ], schema=EDGE_COLUMNS)
         recovered = pl.DataFrame([
             ["S3.1", "coassembly_0-genome_1_transcripts", "AAA", 1, 2.0, "Root"],
@@ -314,8 +314,8 @@ class Tests(unittest.TestCase):
             ["sample_1,sample_3", 2, 1, 100, "sample_1,sample_2,sample_3", "coassembly_1"],
         ], schema=CLUSTER_COLUMNS)
         edges = pl.DataFrame([
-            ["Root", 1, "10", "sample_1.1", "sample_2.1"],
-            ["Root", 1, "11", "sample_1.1", "sample_3.1"],
+            ["match", 2, "sample_1.1,sample_2.1", "10"],
+            ["match", 2, "sample_1.1,sample_3.1", "11"],
         ], schema=EDGE_COLUMNS)
         recovered = pl.DataFrame([
             ["S3.1", "coassembly_0-genome_1_transcripts", "AAA", 1, 2.0, "Root"],
@@ -380,8 +380,8 @@ class Tests(unittest.TestCase):
             ["sample_1,sample_2", 2, 1, 100, "sample_1,sample_2,sample_3", "coassembly_1"],
         ], schema=CLUSTER_COLUMNS)
         edges = pl.DataFrame([
-            ["Root", 1, "10", "sample_1.1", "sample_2.1"],
-            ["Root", 1, "11", "sample_1.1", "sample_3.1"],
+            ["match", 2, "sample_1.1,sample_2.1", "10"],
+            ["match", 2, "sample_1.1,sample_3.1", "11"],
         ], schema=EDGE_COLUMNS)
         recovered = pl.DataFrame([
             ["S3.1", "coassembly_0-genome_1_transcripts", "AAA", 1, 2.0, "Root"],
@@ -454,9 +454,9 @@ class Tests(unittest.TestCase):
             ["sample_1,sample_2", 2, 2, 2000, "sample_1,sample_2,sample_3", "coassembly_1"],
         ], schema=CLUSTER_COLUMNS)
         edges = pl.DataFrame([
-            ["Root", 1, "10", "sample_1.1", "sample_3.1"],
-            ["Root", 2, "11,98", "sample_1.1", "sample_2.1"],
-            ["Root", 1, "99", "sample_2.1", "sample_3.1"],
+            ["match", 2, "sample_1.1,sample_3.1", "10"],
+            ["match", 2, "sample_1.1,sample_2.1", "11,98"],
+            ["match", 2, "sample_2.1,sample_3.1", "99"],
         ], schema=EDGE_COLUMNS)
         recovered = pl.DataFrame([
             ["S3.1", "coassembly_0-genome_0_transcripts", "AAA", 1, 2.0, "Root"],
@@ -524,7 +524,7 @@ class Tests(unittest.TestCase):
             ["sample_1,sample_2", 2, 1, 100, "sample_1,sample_2,sample_3", "coassembly_0"],
         ], schema=CLUSTER_COLUMNS)
         edges = pl.DataFrame([
-            ["Root", 1, "10", "sample_1.1", "sample_2.1"],
+            ["match", 2, "sample_1.1,sample_2.1", "10"],
         ], schema=EDGE_COLUMNS)
         recovered = pl.DataFrame([
             ["S3.1", "coassembly_0-genome_1_transcripts", "AAA", 1, 2.0, "Root"],

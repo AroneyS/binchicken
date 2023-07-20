@@ -11,6 +11,13 @@ path_to_conda = os.path.join(path_to_data,'.conda')
 
 METAPACKAGE = os.path.join(path_to_data, "singlem_metapackage.smpkg")
 MOCK_COASSEMBLE = os.path.join(path_to_data, "mock_coassemble")
+MOCK_UNBINNED = os.path.join(MOCK_COASSEMBLE, "appraise", "unbinned.otu_table.tsv")
+MOCK_BINNED = os.path.join(MOCK_COASSEMBLE, "appraise", "binned.otu_table.tsv")
+MOCK_TARGETS = os.path.join(MOCK_COASSEMBLE, "target", "targets.tsv")
+MOCK_ELUSIVE_EDGES = os.path.join(MOCK_COASSEMBLE, "target", "elusive_edges.tsv")
+MOCK_ELUSIVE_CLUSTERS = os.path.join(MOCK_COASSEMBLE, "target", "elusive_clusters.tsv")
+MOCK_SUMMARY = os.path.join(MOCK_COASSEMBLE, "summary.tsv")
+
 MOCK_COASSEMBLIES = ' '.join([os.path.join(MOCK_COASSEMBLE, "coassemble", "coassembly_0")])
 MOCK_GENOMES = " ".join([
     os.path.join(MOCK_COASSEMBLE, "coassemble", "coassembly_0", "recover", "bins", "final_bins", "bin_1.fna"),
@@ -131,6 +138,34 @@ class Tests(unittest.TestCase):
             )
             with open(summarise_path) as f:
                 self.assertEqual(expected, f.read())
+
+    def test_evaluate_specified_files(self):
+        with in_tempdir():
+            cmd = (
+                f"ibis evaluate "
+                f"--coassemble-unbinned {MOCK_UNBINNED} "
+                f"--coassemble-binned {MOCK_BINNED} "
+                f"--coassemble-targets {MOCK_TARGETS} "
+                f"--coassemble-elusive-edges {MOCK_ELUSIVE_EDGES} "
+                f"--coassemble-elusive-clusters {MOCK_ELUSIVE_CLUSTERS} "
+                f"--coassemble-summary {MOCK_SUMMARY} "
+                f"--aviary-outputs {MOCK_COASSEMBLIES} "
+                f"--singlem-metapackage {METAPACKAGE} "
+                f"--output test "
+                f"--conda-prefix {path_to_conda} "
+                f"--dryrun "
+                f"--snakemake-args \" --quiet\" "
+            )
+            output = extern.run(cmd)
+
+            self.assertTrue("prodigal_bins" in output)
+            self.assertTrue("singlem_pipe_bins" in output)
+            self.assertTrue("singlem_summarise_bins" in output)
+            self.assertTrue("cluster_original_bins" not in output)
+            self.assertTrue("cluster_updated_bins" not in output)
+            self.assertTrue("summarise_clusters" not in output)
+            self.assertTrue("evaluate" in output)
+            self.assertTrue("evaluate_plots" in output)
 
     def test_evaluate_genome_input(self):
         with in_tempdir():
