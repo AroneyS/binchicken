@@ -35,6 +35,10 @@ MOCK_ELUSIVE_CLUSTERS = os.path.join(MOCK_COASSEMBLE, "target", "elusive_cluster
 MOCK_ELUSIVE_CLUSTERS_TWO = os.path.join(MOCK_COASSEMBLE, 'target', 'elusive_clusters_two.tsv')
 MOCK_SUMMARY = os.path.join(MOCK_COASSEMBLE, "summary.tsv")
 
+MOCK_UNBINNED_SRA = os.path.join(MOCK_COASSEMBLE, "appraise", "unbinned_sra.otu_table.tsv")
+MOCK_BINNED_SRA = os.path.join(MOCK_COASSEMBLE, "appraise", "binned_sra.otu_table.tsv")
+MOCK_ELUSIVE_CLUSTERS_SRA = os.path.join(MOCK_COASSEMBLE, "target", "elusive_clusters_sra.tsv")
+MOCK_ELUSIVE_CLUSTERS_SRA_MOCK = os.path.join(MOCK_COASSEMBLE, "target", "elusive_clusters_sra_mock.tsv")
 
 class Tests(unittest.TestCase):
     def test_update(self):
@@ -232,9 +236,12 @@ class Tests(unittest.TestCase):
                 f"--forward SRR3309137 SRR8334323 SRR8334324 "
                 f"--sra "
                 f"--genomes {GENOMES} "
-                f"--appraise-binned {os.path.join(MOCK_COASSEMBLE, 'appraise', 'binned_sra.otu_table.tsv')} "
-                f"--appraise-unbinned {os.path.join(MOCK_COASSEMBLE, 'appraise', 'unbinned_sra.otu_table.tsv')} "
-                f"--elusive-clusters {os.path.join(MOCK_COASSEMBLE, 'target', 'elusive_clusters_sra_mock.tsv')} "
+                f"--coassemble-unbinned {MOCK_UNBINNED_SRA} "
+                f"--coassemble-binned {MOCK_BINNED_SRA} "
+                f"--coassemble-targets {MOCK_TARGETS} "
+                f"--coassemble-elusive-edges {MOCK_ELUSIVE_EDGES} "
+                f"--coassemble-elusive-clusters {MOCK_ELUSIVE_CLUSTERS_SRA_MOCK} "
+                f"--coassemble-summary {MOCK_SUMMARY} "
                 f"--output test "
                 f"--conda-prefix {path_to_conda} "
                 f"--snakemake-args \" --config mock_sra=True\" "
@@ -262,9 +269,12 @@ class Tests(unittest.TestCase):
                 f"--forward SRR3309137_mismatched SRR8334323 SRR8334324 "
                 f"--sra "
                 f"--genomes {GENOMES} "
-                f"--appraise-binned {os.path.join(MOCK_COASSEMBLE, 'appraise', 'binned_sra.otu_table.tsv')} "
-                f"--appraise-unbinned {os.path.join(MOCK_COASSEMBLE, 'appraise', 'unbinned_sra.otu_table.tsv')} "
-                f"--elusive-clusters {os.path.join(MOCK_COASSEMBLE, 'target', 'elusive_clusters_sra_mock.tsv')} "
+                f"--coassemble-unbinned {MOCK_UNBINNED_SRA} "
+                f"--coassemble-binned {MOCK_BINNED_SRA} "
+                f"--coassemble-targets {MOCK_TARGETS} "
+                f"--coassemble-elusive-edges {MOCK_ELUSIVE_EDGES} "
+                f"--coassemble-elusive-clusters {MOCK_ELUSIVE_CLUSTERS_SRA_MOCK} "
+                f"--coassemble-summary {MOCK_SUMMARY} "
                 f"--output test "
                 f"--conda-prefix {path_to_conda} "
                 f"--snakemake-args \" --config mock_sra=True\" "
@@ -283,9 +293,12 @@ class Tests(unittest.TestCase):
                 f"--aviary-gtdbtk-dir gtdb_release "
                 f"--aviary-checkm2-dir CheckM2_database "
                 f"--genomes {GENOMES} "
-                f"--appraise-binned {os.path.join(MOCK_COASSEMBLE, 'appraise', 'binned_sra.otu_table.tsv')} "
-                f"--appraise-unbinned {os.path.join(MOCK_COASSEMBLE, 'appraise', 'unbinned_sra.otu_table.tsv')} "
-                f"--elusive-clusters {os.path.join(MOCK_COASSEMBLE, 'target', 'elusive_clusters_sra.tsv')} "
+                f"--coassemble-unbinned {MOCK_UNBINNED_SRA} "
+                f"--coassemble-binned {MOCK_BINNED_SRA} "
+                f"--coassemble-targets {MOCK_TARGETS} "
+                f"--coassemble-elusive-edges {MOCK_ELUSIVE_EDGES} "
+                f"--coassemble-elusive-clusters {MOCK_ELUSIVE_CLUSTERS_SRA} "
+                f"--coassemble-summary {MOCK_SUMMARY} "
                 f"--output test "
                 f"--conda-prefix {path_to_conda} "
                 f"--dryrun "
