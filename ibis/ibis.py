@@ -389,6 +389,7 @@ def coassemble(args):
     logging.info(f"Aviary commands for coassembly and recovery in shell scripts at {os.path.join(args.output, 'coassemble', 'commands')}")
 
 def evaluate(args):
+    logging.info("Loading Ibis coassemble info")
     if args.coassemble_output:
         coassemble_dir = os.path.abspath(args.coassemble_output)
         coassemble_target_dir = os.path.join(coassemble_dir, "target")
