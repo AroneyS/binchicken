@@ -66,8 +66,7 @@ class Tests(unittest.TestCase):
                 f"--output test "
                 f"--conda-prefix {path_to_conda} "
             )
-            output_raw = subprocess.run(cmd, shell=True, check=True, capture_output=True)
-            output = output_raw.stderr.decode('ascii')
+            extern.run(cmd)
 
             new_bin_0_path = os.path.join("test", "recovered_bins", "iteration_0-coassembly_0-0.fna")
             self.assertTrue(os.path.exists(new_bin_0_path))
@@ -85,10 +84,15 @@ class Tests(unittest.TestCase):
             bin_provenance_path = os.path.join("test", "recovered_bins", "bin_provenance.tsv")
             self.assertTrue(os.path.exists(bin_provenance_path))
 
+            binned_path = os.path.join("test", "coassemble", "appraise", "binned.otu_table.tsv")
+            self.assertTrue(os.path.exists(binned_path))
+            with open(binned_path) as f:
+                file = f.read()
+                self.assertTrue("TATCAAGTTCCACAAGAAGTTAGAGGAGAAAGAAGAATCTCGTTAGCTATTAGATGGATT" in file)
+                self.assertTrue("iteration_0-coassembly_0-0_protein" in file)
+
             config_path = os.path.join("test", "config.yaml")
             self.assertTrue(os.path.exists(config_path))
-
-            self.assertTrue("WARNING: coassembly_0 has been previously suggested" in output)
 
             cluster_path = os.path.join("test", "coassemble", "target", "elusive_clusters.tsv")
             self.assertTrue(os.path.exists(cluster_path))
@@ -103,9 +107,9 @@ class Tests(unittest.TestCase):
                         "coassembly",
                     ]),
                     "\t".join([
-                        "sample_1,sample_2",
+                        "sample_1,sample_3",
                         "2",
-                        "3",
+                        "2",
                         "8456",
                         "sample_1,sample_2,sample_3",
                         "coassembly_0"
@@ -131,8 +135,7 @@ class Tests(unittest.TestCase):
                 f"--prodigal-meta "
                 f"--conda-prefix {path_to_conda} "
             )
-            output_raw = subprocess.run(cmd, shell=True, check=True, capture_output=True)
-            output = output_raw.stderr.decode('ascii')
+            extern.run(cmd)
 
             new_bin_0_path = os.path.join("test", "recovered_bins", "bin_1.fna")
             self.assertTrue(os.path.exists(new_bin_0_path))
@@ -150,10 +153,15 @@ class Tests(unittest.TestCase):
             bin_provenance_path = os.path.join("test", "recovered_bins", "bin_provenance.tsv")
             self.assertTrue(os.path.exists(bin_provenance_path))
 
+            binned_path = os.path.join("test", "coassemble", "appraise", "binned.otu_table.tsv")
+            self.assertTrue(os.path.exists(binned_path))
+            with open(binned_path) as f:
+                file = f.read()
+                self.assertTrue("TATCAAGTTCCACAAGAAGTTAGAGGAGAAAGAAGAATCTCGTTAGCTATTAGATGGATT" in file)
+                self.assertTrue("bin_1_protein" in file)
+
             config_path = os.path.join("test", "config.yaml")
             self.assertTrue(os.path.exists(config_path))
-
-            self.assertTrue("WARNING: coassembly_0 has been previously suggested" in output)
 
             cluster_path = os.path.join("test", "coassemble", "target", "elusive_clusters.tsv")
             self.assertTrue(os.path.exists(cluster_path))
@@ -168,9 +176,9 @@ class Tests(unittest.TestCase):
                         "coassembly",
                     ]),
                     "\t".join([
-                        "sample_1,sample_2",
+                        "sample_1,sample_3",
                         "2",
-                        "3",
+                        "2",
                         "8456",
                         "sample_1,sample_2,sample_3",
                         "coassembly_0"
