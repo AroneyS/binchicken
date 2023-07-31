@@ -106,7 +106,8 @@ def pipeline(
         MAX_COASSEMBLY_SAMPLES=2,
         MIN_COASSEMBLY_SAMPLES=2,
         MAX_RECOVERY_SAMPLES=20,
-        MIN_CLUSTER_TARGETS=1):
+        MIN_CLUSTER_TARGETS=1,
+        EXCLUDE_COASSEMBLIES=[]):
 
     logging.info(f"Polars using {str(pl.threadpool_size())} threads")
 
@@ -143,6 +144,19 @@ def pipeline(
                 samples = pl.col("sample").cast(pl.Categorical),
                 )
         )
+
+        if EXCLUDE_COASSEMBLIES:
+            excluded_coassemblies = (
+                pl.LazyFrame({"samples": EXCLUDE_COASSEMBLIES})
+                .with_columns(
+                    samples_hash = pl.col("samples")
+                        .str.split(",")
+                        .cast(pl.List(pl.Categorical))
+                        .list.sort().hash()
+                    )
+            )
+        else:
+            excluded_coassemblies = pl.LazyFrame(schema={"samples_hash": pl.UInt64})
 
         if MAX_COASSEMBLY_SAMPLES == 1:
             logging.info("Skipping clustering, using single-sample clusters")
@@ -206,6 +220,7 @@ def pipeline(
         logging.info("Filtering clusters (each sample restricted to only once per cluster size)")
         clusters = (
             pl.concat(clusters)
+            .join(excluded_coassemblies, on="samples_hash", how="anti")
             .with_columns(length = pl.col("samples").list.lengths())
             .filter(pl.col("length") >= MIN_COASSEMBLY_SAMPLES)
             .explode("samples")
@@ -273,6 +288,7 @@ if __name__ == "__main__":
     MAX_COASSEMBLY_SAMPLES = snakemake.params.max_coassembly_samples
     MIN_COASSEMBLY_SAMPLES = snakemake.params.num_coassembly_samples
     MAX_RECOVERY_SAMPLES = snakemake.params.max_recovery_samples
+    EXCLUDE_COASSEMBLIES = snakemake.params.exclude_coassemblies
     elusive_edges_path = snakemake.input.elusive_edges
     read_size_path = snakemake.input.read_size
     elusive_clusters_path = snakemake.output.elusive_clusters
@@ -292,6 +308,7 @@ if __name__ == "__main__":
         MAX_COASSEMBLY_SAMPLES=MAX_COASSEMBLY_SAMPLES,
         MIN_COASSEMBLY_SAMPLES=MIN_COASSEMBLY_SAMPLES,
         MAX_RECOVERY_SAMPLES=MAX_RECOVERY_SAMPLES,
+        EXCLUDE_COASSEMBLIES=EXCLUDE_COASSEMBLIES,
         MIN_CLUSTER_TARGETS=min_cluster_targets,
         )
     clusters.write_csv(elusive_clusters_path, separator="\t")

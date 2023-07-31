@@ -216,6 +216,7 @@ def set_standard_args(args):
     args.min_sequence_coverage = 1
     args.single_assembly = False
     args.no_genomes = False
+    args.exclude_coassemblies = None
     args.num_coassembly_samples = 1
     args.max_coassembly_samples = None
     args.max_coassembly_size = None
@@ -349,6 +350,7 @@ def coassemble(args):
         "min_coassembly_coverage": args.min_sequence_coverage,
         "single_assembly": args.single_assembly,
         "no_genomes": args.no_genomes,
+        "exclude_coassemblies": args.exclude_coassemblies,
         "num_coassembly_samples": args.num_coassembly_samples,
         "max_coassembly_samples": args.max_coassembly_samples if args.max_coassembly_samples else args.num_coassembly_samples,
         "max_coassembly_size": args.max_coassembly_size,
@@ -798,6 +800,7 @@ def main():
         coassemble_clustering.add_argument("--min-sequence-coverage", type=int, help="Minimum combined coverage for sequence inclusion [default: 10]", default=10)
         coassemble_clustering.add_argument("--no-genomes", action="store_true", help="Run pipeline without genomes")
         coassemble_clustering.add_argument("--single-assembly", action="store_true", help="Skip appraise to discover samples to differential abundance binning. Forces --num-coassembly-samples and --max-coassembly-samples to 1")
+        coassemble_clustering.add_argument("--exclude-coassemblies", nargs='+', help="List of coassemblies to exclude, space separated, in the form \"sample_1,sample_2\"")
         coassemble_clustering.add_argument("--num-coassembly-samples", type=int, help="Number of samples per coassembly cluster [default: 2]", default=2)
         coassemble_clustering.add_argument("--max-coassembly-samples", type=int, help="Upper bound for number of samples per coassembly cluster [default: --num-coassembly-samples]", default=None)
         coassemble_clustering.add_argument("--max-coassembly-size", type=int, help="Maximum size (Gbp) of coassembly cluster [default: None]", default=None)
