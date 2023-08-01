@@ -255,6 +255,7 @@ class Tests(unittest.TestCase):
                 f"--iteration 0 "
                 f"--aviary-outputs {MOCK_COASSEMBLIES} "
                 f"--elusive-clusters {ELUSIVE_CLUSTERS} "
+                f"--exclude-coassemblies sample_1,sample_2 "
                 f"--forward {SAMPLE_READS_FORWARD} "
                 f"--reverse {SAMPLE_READS_REVERSE} "
                 f"--genomes {GENOMES} "
@@ -273,6 +274,32 @@ class Tests(unittest.TestCase):
             self.assertTrue(os.path.exists(config_path))
 
             self.assertTrue(re.search(r"singlem_pipe_genomes\s+2", output))
+
+            cluster_path = os.path.join("test", "coassemble", "target", "elusive_clusters.tsv")
+            self.assertTrue(os.path.exists(cluster_path))
+            expected = "\n".join(
+                [
+                    "\t".join([
+                        "samples",
+                        "length",
+                        "total_targets",
+                        "total_size",
+                        "recover_samples",
+                        "coassembly",
+                    ]),
+                    "\t".join([
+                        "sample_1,sample_3",
+                        "2",
+                        "2",
+                        "8456",
+                        "sample_1,sample_2,sample_3",
+                        "coassembly_0"
+                    ]),
+                    ""
+                ]
+            )
+            with open(cluster_path) as f:
+                self.assertEqual(expected, f.read())
 
 
 if __name__ == '__main__':

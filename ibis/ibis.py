@@ -725,6 +725,10 @@ def main():
                     "rerun coassemble, adding new bins to database, providing genomes directly",
                     "ibis iterate --new-genomes new_genome_1.fna ... --forward reads_1.1.fq ... --reverse reads_1.2.fq ... --genomes genome_1.fna ..."
                 ),
+                btu.Example(
+                    "rerun coassemble, adding new bins to database, excluding previous coassembly combinations",
+                    "ibis iterate --exclude-coassemblies reads_1,reads_2 --aviary-outputs coassembly_0_dir ... --forward reads_1.1.fq ... --reverse reads_1.2.fq ... --genomes genome_1.fna ..."
+                ),
             ],
             "build": [
                 btu.Example(
@@ -873,7 +877,7 @@ def main():
     iterate_iteration.add_argument("--aviary-outputs", nargs='+', help="Output dir from Aviary coassembly and recover commands produced by coassemble subcommand")
     iterate_iteration.add_argument("--new-genomes", nargs='+', help="New genomes to iterate (alternative to --aviary-outputs)")
     iterate_iteration.add_argument("--new-genomes-list", help="New genomes to iterate (alternative to --aviary-outputs) newline separated")
-    iterate_iteration.add_argument("--elusive-clusters", nargs='+', help="Previous elusive_clusters.tsv files produced by coassemble subcommand")
+    iterate_iteration.add_argument("--elusive-clusters", nargs='+', help="Previous elusive_clusters.tsv files produced by coassemble subcommand (used to check for duplicated coassembly suggestions)")
     add_evaluation_options(iterate_iteration)
     # Coassembly options
     add_coassemble_arguments(iterate_parser)

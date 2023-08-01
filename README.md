@@ -75,6 +75,9 @@ ibis iterate --aviary-outputs coassembly_0_dir ... --forward reads_1.1.fq ... --
 
 # Example: rerun coassemble, adding new bins to database, providing genomes directly
 ibis iterate --new-genomes new_genome_1.fna ... --forward reads_1.1.fq ... --reverse reads_1.2.fq ... --genomes genome_1.fna ...
+
+# Example: rerun coassemble, adding new bins to database, excluding previous coassembly combinations
+ibis iterate --exclude-coassemblies reads_1,reads_2 --new-genomes new_genome_1.fna ... --forward reads_1.1.fq ... --reverse reads_1.2.fq ... --genomes genome_1.fna ...
 ```
 
 ## Ibis update
