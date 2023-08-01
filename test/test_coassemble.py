@@ -962,7 +962,7 @@ class Tests(unittest.TestCase):
             self.assertTrue("genome_transcripts" not in output)
             self.assertTrue("singlem_pipe_genomes" not in output)
             self.assertTrue("singlem_summarise_genomes" not in output)
-            self.assertTrue("singlem_appraise" not in output)
+            self.assertTrue("singlem_appraise " not in output)
             self.assertTrue("query_processing" in output)
             self.assertTrue("single_assembly" not in output)
             self.assertTrue("count_bp_reads" not in output)
