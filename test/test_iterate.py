@@ -224,6 +224,12 @@ class Tests(unittest.TestCase):
             self.assertTrue("aviary_commands" in output)
             self.assertTrue("summary" in output)
 
+            config_path = os.path.join("test", "config.yaml")
+            self.assertTrue(os.path.exists(config_path))
+            config = load_configfile(config_path)
+            import pdb; pdb.set_trace()
+            self.assertEqual(config["genomes"], {os.path.splitext(os.path.basename(g))[0]: g.replace(MOCK_COASSEMBLE + "/coassemble/coassembly_0/recover/bins/final_bins/", os.getcwd() + "/test/recovered_bins/") for g in (GENOMES + " " + MOCK_GENOMES).split(" ")})
+
     def test_iterate_default_config(self):
         with in_tempdir():
             cmd = (
