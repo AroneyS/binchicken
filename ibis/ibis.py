@@ -217,6 +217,7 @@ def set_standard_args(args):
     args.single_assembly = False
     args.no_genomes = False
     args.exclude_coassemblies = None
+    args.exclude_coassemblies_list = None
     args.num_coassembly_samples = 1
     args.max_coassembly_samples = None
     args.max_coassembly_size = None
