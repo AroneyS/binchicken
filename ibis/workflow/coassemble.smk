@@ -1,7 +1,7 @@
 #############
 ### Setup ###
 #############
-ruleorder: no_genomes > query_processing > singlem_appraise_filtered
+ruleorder: no_genomes > query_processing > singlem_appraise
 ruleorder: mock_download_sra > download_sra
 
 import os
