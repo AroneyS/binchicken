@@ -867,6 +867,7 @@ class Tests(unittest.TestCase):
             write_string_to_file(SAMPLE_READS_REVERSE, "sample_reads_reverse")
             write_string_to_file(GENOMES, "genomes")
             write_string_to_file(GENOME_TRANSCRIPTS, "genome_transcripts")
+            write_string_to_file("sample_1,sample_2", "exclude_coassemblies")
 
             cmd = (
                 f"ibis coassemble "
@@ -875,6 +876,7 @@ class Tests(unittest.TestCase):
                 f"--genomes-list genomes "
                 f"--genome-transcripts-list genome_transcripts "
                 f"--singlem-metapackage {METAPACKAGE} "
+                f"--exclude-coassemblies-list exclude_coassemblies "
                 f"--assemble-unmapped "
                 f"--output test "
                 f"--conda-prefix {path_to_conda} "
@@ -897,6 +899,12 @@ class Tests(unittest.TestCase):
             self.assertTrue("map_reads" in output)
             self.assertTrue("finish_mapping" in output)
             self.assertTrue("aviary_commands" in output)
+
+            config = load_configfile(os.path.join("test", "config.yaml"))
+            self.assertEqual(config["genomes"], {os.path.splitext(os.path.basename(g))[0]: g for g in GENOMES.split(" ")})
+            self.assertEqual(config["exclude_coassemblies"], ["sample_1,sample_2"])
+            self.assertEqual(config["reads_1"], {os.path.splitext(os.path.splitext(os.path.basename(s))[0])[0]: s for s in SAMPLE_READS_FORWARD.split(" ")})
+            self.assertEqual(config["reads_2"], {os.path.splitext(os.path.splitext(os.path.basename(s))[0])[0]: s for s in SAMPLE_READS_REVERSE.split(" ")})
 
     def test_coassemble_singlem_inputs_files_of_paths(self):
         with in_tempdir():

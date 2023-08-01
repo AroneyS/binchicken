@@ -304,6 +304,9 @@ def coassemble(args):
             os.path.join(args.output, "coassemble", "read_size.csv"),
         )
 
+    if args.exclude_coassemblies_list:
+        args.exclude_coassemblies = read_list(args.exclude_coassemblies_list)
+
     logging.info("Loading genome info")
     if args.genomes_list:
         args.genomes = read_list(args.genomes_list)
@@ -805,6 +808,7 @@ def main():
         coassemble_clustering.add_argument("--no-genomes", action="store_true", help="Run pipeline without genomes")
         coassemble_clustering.add_argument("--single-assembly", action="store_true", help="Skip appraise to discover samples to differential abundance binning. Forces --num-coassembly-samples and --max-coassembly-samples to 1")
         coassemble_clustering.add_argument("--exclude-coassemblies", nargs='+', help="List of coassemblies to exclude, space separated, in the form \"sample_1,sample_2\"")
+        coassemble_clustering.add_argument("--exclude-coassemblies-list", help="List of coassemblies to exclude, space separated, in the form \"sample_1,sample_2\", newline separated")
         coassemble_clustering.add_argument("--num-coassembly-samples", type=int, help="Number of samples per coassembly cluster [default: 2]", default=2)
         coassemble_clustering.add_argument("--max-coassembly-samples", type=int, help="Upper bound for number of samples per coassembly cluster [default: --num-coassembly-samples]", default=None)
         coassemble_clustering.add_argument("--max-coassembly-size", type=int, help="Maximum size (Gbp) of coassembly cluster [default: None]", default=None)
