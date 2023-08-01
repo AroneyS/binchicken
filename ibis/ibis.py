@@ -705,7 +705,7 @@ def main():
             "update": [
                 btu.Example(
                     "update previous run to download SRA reads",
-                    "ibis update --sra --coassemble-output coassemble_dir --forward SRA000001 ... --reverse SRA000001 ... --genomes genome_1.fna ..."
+                    "ibis update --sra --coassemble-output coassemble_dir --forward SRA000001 ... --genomes genome_1.fna ..."
                 ),
                 btu.Example(
                     "update previous run to perform unmapping",
