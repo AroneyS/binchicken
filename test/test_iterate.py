@@ -88,6 +88,8 @@ class Tests(unittest.TestCase):
             self.assertTrue(os.path.exists(binned_path))
             with open(binned_path) as f:
                 file = f.read()
+                self.assertTrue("TTCCAGGTGCCTACCGAAGTTCGTCCCGAGCGTAAAATTGCATTGGGTATGAAATGGCTC" in file)
+                self.assertTrue("GB_GCA_013286235.1_protein" in file)
                 self.assertTrue("TATCAAGTTCCACAAGAAGTTAGAGGAGAAAGAAGAATCTCGTTAGCTATTAGATGGATT" in file)
                 self.assertTrue("iteration_0-coassembly_0-0_protein" in file)
 
@@ -157,6 +159,8 @@ class Tests(unittest.TestCase):
             self.assertTrue(os.path.exists(binned_path))
             with open(binned_path) as f:
                 file = f.read()
+                self.assertTrue("TTCCAGGTGCCTACCGAAGTTCGTCCCGAGCGTAAAATTGCATTGGGTATGAAATGGCTC" in file)
+                self.assertTrue("GB_GCA_013286235.1_protein" in file)
                 self.assertTrue("TATCAAGTTCCACAAGAAGTTAGAGGAGAAAGAAGAATCTCGTTAGCTATTAGATGGATT" in file)
                 self.assertTrue("bin_1_protein" in file)
 
