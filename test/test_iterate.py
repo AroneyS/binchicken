@@ -56,6 +56,7 @@ class Tests(unittest.TestCase):
             cmd = (
                 f"ibis iterate "
                 f"--iteration 0 "
+                f"--coassemble-output {MOCK_COASSEMBLE} "
                 f"--aviary-outputs {MOCK_COASSEMBLIES} "
                 f"--elusive-clusters {ELUSIVE_CLUSTERS} "
                 f"--forward {SAMPLE_READS_FORWARD} "
@@ -84,14 +85,20 @@ class Tests(unittest.TestCase):
             bin_provenance_path = os.path.join("test", "recovered_bins", "bin_provenance.tsv")
             self.assertTrue(os.path.exists(bin_provenance_path))
 
+            original_bin_singlem_path = os.path.join("test", "coassemble", "pipe", os.path.splitext(os.path.basename(GENOMES.split(" ")[0]))[0]+"_bin.otu_table.tsv")
+            self.assertFalse(os.path.exists(original_bin_singlem_path))
+
             binned_path = os.path.join("test", "coassemble", "appraise", "binned.otu_table.tsv")
             self.assertTrue(os.path.exists(binned_path))
             with open(binned_path) as f:
                 file = f.read()
-                self.assertTrue("TTCCAGGTGCCTACCGAAGTTCGTCCCGAGCGTAAAATTGCATTGGGTATGAAATGGCTC" in file)
+                self.assertTrue("TTCCAGGTGCCTACTGAAGTTCGTCCCGAGCGTAAAATTGCATTGGGTATGAAATGGCTG" in file)
                 self.assertTrue("GB_GCA_013286235.1_protein" in file)
                 self.assertTrue("TATCAAGTTCCACAAGAAGTTAGAGGAGAAAGAAGAATCTCGTTAGCTATTAGATGGATT" in file)
                 self.assertTrue("iteration_0-coassembly_0-0_protein" in file)
+                # Check that header is not repeated
+                header = "gene\tsample\tsequence\tnum_hits\tcoverage\ttaxonomy\tfound_in"
+                self.assertFalse(header in file.replace(header, "", 1))
 
             config_path = os.path.join("test", "config.yaml")
             self.assertTrue(os.path.exists(config_path))
@@ -111,9 +118,9 @@ class Tests(unittest.TestCase):
                     "\t".join([
                         "sample_1,sample_3",
                         "2",
-                        "2",
+                        "1",
                         "8456",
-                        "sample_1,sample_2,sample_3",
+                        "sample_1,sample_3",
                         "coassembly_0"
                     ]),
                     ""
@@ -154,6 +161,9 @@ class Tests(unittest.TestCase):
 
             bin_provenance_path = os.path.join("test", "recovered_bins", "bin_provenance.tsv")
             self.assertTrue(os.path.exists(bin_provenance_path))
+
+            original_bin_singlem_path = os.path.join("test", "coassemble", "pipe", os.path.splitext(os.path.basename(GENOMES.split(" ")[0]))[0]+"_bin.otu_table.tsv")
+            self.assertTrue(os.path.exists(original_bin_singlem_path))
 
             binned_path = os.path.join("test", "coassemble", "appraise", "binned.otu_table.tsv")
             self.assertTrue(os.path.exists(binned_path))

@@ -9,6 +9,7 @@ sra: false
 prodigal_meta: false
 single_assembly: false
 no_genomes: false
+new_genomes: false
 exclude_coassemblies: 
 appraise_sequence_identity: 1
 min_coassembly_coverage: 1

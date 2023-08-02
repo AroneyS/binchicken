@@ -216,6 +216,7 @@ def set_standard_args(args):
     args.min_sequence_coverage = 1
     args.single_assembly = False
     args.no_genomes = False
+    args.new_genomes = False
     args.exclude_coassemblies = None
     args.exclude_coassemblies_list = None
     args.num_coassembly_samples = 1
@@ -337,6 +338,11 @@ def coassemble(args):
         except KeyError:
             metapackage = None
 
+    try:
+        args.new_genomes
+    except AttributeError:
+        args.new_genomes = None
+
     # Load other info
     if args.single_assembly:
         args.num_coassembly_samples = 1
@@ -354,6 +360,7 @@ def coassemble(args):
         "min_coassembly_coverage": args.min_sequence_coverage,
         "single_assembly": args.single_assembly,
         "no_genomes": args.no_genomes,
+        "new_genomes": args.new_genomes,
         "exclude_coassemblies": args.exclude_coassemblies,
         "num_coassembly_samples": args.num_coassembly_samples,
         "max_coassembly_samples": args.max_coassembly_samples if args.max_coassembly_samples else args.num_coassembly_samples,
@@ -543,7 +550,12 @@ def generate_genome_singlem(orig_args, new_genomes):
         os.path.join(args.output, "coassemble", "pipe", "mock_genome_bin.otu_table.tsv")
         )
 
-    args.snakemake_args = args.snakemake_args + " --rerun-triggers mtime -- singlem_summarise_genomes" if args.snakemake_args else "--rerun-triggers mtime -- singlem_summarise_genomes"
+    bins_summarised_path = os.path.join(args.output, "coassemble", "summarise", "bins_summarised.otu_table.tsv")
+    if args.snakemake_args:
+        args.snakemake_args = args.snakemake_args + f" --rerun-triggers mtime -- {bins_summarised_path}"
+    else:
+        args.snakemake_args = f"--rerun-triggers mtime -- {bins_summarised_path}"
+
     coassemble(args)
 
     return os.path.join(args.output, "coassemble", "summarise", "bins_summarised.otu_table.tsv")
@@ -568,14 +580,35 @@ def iterate(args):
     with open(os.path.join(args.output, "recovered_bins", "bin_provenance.tsv"), "w") as f:
         f.writelines("\n".join(["\t".join([os.path.abspath(bins[bin]), bin + ".fna"]) for bin in bins]))
 
+    new_genomes = [os.path.join(args.output, "recovered_bins", bin + ".fna") for bin in bins]
+    args.new_genomes = {
+            os.path.splitext(os.path.basename(genome))[0]: os.path.abspath(genome) for genome in new_genomes
+            }
+
+    if args.coassemble_output:
+        coassemble_appraise_dir = os.path.join(os.path.abspath(args.coassemble_output), "appraise")
+        args.coassemble_unbinned = os.path.join(coassemble_appraise_dir, "unbinned.otu_table.tsv")
+        args.coassemble_binned = os.path.join(coassemble_appraise_dir, "binned.otu_table.tsv")
+    elif args.genome_singlem:
+        args.genome_singlem = generate_genome_singlem(args, new_genomes)
+        args.coassemble_unbinned = args.coassemble_binned = None
+    else:
+        args.coassemble_unbinned = args.coassemble_binned = None
+
+    if args.coassemble_unbinned and args.coassemble_binned:
+        copy_input(
+            os.path.abspath(args.coassemble_unbinned),
+            os.path.join(args.output, "coassemble", "appraise", "unbinned_prior.otu_table.tsv")
+        )
+        copy_input(
+            os.path.abspath(args.coassemble_binned),
+            os.path.join(args.output, "coassemble", "appraise", "binned_prior.otu_table.tsv")
+        )
+
     if args.genomes_list:
         args.genomes = read_list(args.genomes_list)
         args.genomes_list = None
-    new_genomes = [os.path.join(args.output, "recovered_bins", bin + ".fna") for bin in bins]
     args.genomes += new_genomes
-
-    if args.genome_singlem:
-        args.genome_singlem = generate_genome_singlem(args, new_genomes)
 
     coassemble(args)
 
@@ -771,8 +804,11 @@ def main():
         argument_group.add_argument("--aviary-cores", type=int, help="Maximum number of cores for Aviary to use", default=16)
         argument_group.add_argument("--aviary-memory", type=int, help="Maximum amount of memory for Aviary to use (Gigabytes)", default=250)
 
-    def add_coassemble_output_arguments(argument_group):
+    def add_main_coassemble_output_arguments(argument_group):
         argument_group.add_argument("--coassemble-output", help="Output dir from cluster subcommand")
+
+    def add_coassemble_output_arguments(argument_group):
+        add_main_coassemble_output_arguments(argument_group)
         argument_group.add_argument("--coassemble-unbinned", help="SingleM appraise unbinned output from Ibis coassemble (alternative to --coassemble-output)")
         argument_group.add_argument("--coassemble-binned", help="SingleM appraise binned output from Ibis coassemble (alternative to --coassemble-output)")
         argument_group.add_argument("--coassemble-targets", help="Target sequences output from Ibis coassemble (alternative to --coassemble-output)")
@@ -883,6 +919,7 @@ def main():
     iterate_iteration.add_argument("--new-genomes", nargs='+', help="New genomes to iterate (alternative to --aviary-outputs)")
     iterate_iteration.add_argument("--new-genomes-list", help="New genomes to iterate (alternative to --aviary-outputs) newline separated")
     iterate_iteration.add_argument("--elusive-clusters", nargs='+', help="Previous elusive_clusters.tsv files produced by coassemble subcommand (used to check for duplicated coassembly suggestions)")
+    add_main_coassemble_output_arguments(iterate_iteration)
     add_evaluation_options(iterate_iteration)
     # Coassembly options
     add_coassemble_arguments(iterate_parser)
