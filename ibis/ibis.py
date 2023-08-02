@@ -52,6 +52,8 @@ def make_config(template, output_dir, config_items):
         if value is not None:
             config[key] = value
 
+    config = {"Ibis_version": __version__, **config}
+
     with open(config_path, 'w') as f:
         yaml.dump(config, f)
     logging.info(f"Config file written to: {config_path}")
