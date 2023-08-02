@@ -1,7 +1,7 @@
 #############
 ### Setup ###
 #############
-ruleorder: no_genomes > query_processing > singlem_appraise_filtered
+ruleorder: no_genomes > query_processing > update_appraise > singlem_appraise
 ruleorder: mock_download_sra > download_sra
 
 import os
@@ -12,6 +12,15 @@ logs_dir = output_dir + "/logs"
 
 mapped_reads_1 = {read: output_dir + f"/mapping/{read}_unmapped.1.fq.gz" for read in config["reads_1"]}
 mapped_reads_2 = {read: output_dir + f"/mapping/{read}_unmapped.2.fq.gz" for read in config["reads_2"]}
+
+def get_genomes(wildcards, version=None):
+    version = version if version else wildcards.version
+    if version == "":
+        return expand(output_dir + "/pipe/{genome}_bin.otu_table.tsv", genome=config["genomes"])
+    elif version == "new_":
+        return expand(output_dir + "/pipe/{genome}_bin.otu_table.tsv", genome=config["new_genomes"])
+    else:
+        raise ValueError("Version should be empty or 'new'")
 
 def get_reads(wildcards, forward=True, version=None):
     version = version if version else wildcards.version
@@ -138,11 +147,11 @@ rule singlem_pipe_genomes:
 
 rule singlem_summarise_genomes:
     input:
-        expand(output_dir + "/pipe/{genome}_bin.otu_table.tsv", genome=config["genomes"])
+        lambda wildcards: get_genomes(wildcards)
     output:
-        output_dir + "/summarise/bins_summarised.otu_table.tsv"
+        output_dir + "/summarise/{version,.*}bins_summarised.otu_table.tsv"
     log:
-        logs_dir + "/summarise/genomes.log"
+        logs_dir + "/summarise/{version,.*}genomes.log"
     params:
         singlem_metapackage=config["singlem_metapackage"]
     conda:
@@ -163,8 +172,8 @@ rule singlem_appraise:
         reads=expand(output_dir + "/pipe/{read}_read.otu_table.tsv", read=config["reads_1"]),
         bins=output_dir + "/summarise/bins_summarised.otu_table.tsv",
     output:
-        unbinned=output_dir + "/appraise/unbinned_raw.otu_table.tsv",
-        binned=output_dir + "/appraise/binned_raw.otu_table.tsv",
+        unbinned=temp(output_dir + "/appraise/unbinned_raw.otu_table.tsv"),
+        binned=temp(output_dir + "/appraise/binned_raw.otu_table.tsv"),
     log:
         logs_dir + "/appraise/appraise.log"
     params:
@@ -197,6 +206,38 @@ rule singlem_appraise_filtered:
         "grep -v {params.bad_package} {input.unbinned} > {output.unbinned} && "
         "grep -v {params.bad_package} {input.binned} > {output.binned}"
 
+#####################################
+### Update appraise (alternative) ###
+#####################################
+rule update_appraise:
+    input:
+        unbinned=output_dir + "/appraise/unbinned_prior.otu_table.tsv",
+        binned=output_dir + "/appraise/binned_prior.otu_table.tsv",
+        bins=output_dir + "/summarise/new_bins_summarised.otu_table.tsv",
+    output:
+        unbinned=temp(output_dir + "/appraise/unbinned_raw.otu_table.tsv"),
+        binned=temp(output_dir + "/appraise/binned_raw.otu_table.tsv"),
+    log:
+        logs_dir + "/appraise/appraise.log"
+    params:
+        sequence_identity=config["appraise_sequence_identity"],
+        singlem_metapackage=config["singlem_metapackage"],
+        new_binned=output_dir + "/appraise/binned_new.otu_table.tsv",
+    conda:
+        "env/singlem.yml"
+    shell:
+        "singlem appraise "
+        "--metagenome-otu-tables {input.unbinned} "
+        "--genome-otu-tables {input.bins} "
+        "--metapackage {params.singlem_metapackage} "
+        "--output-unaccounted-for-otu-table {output.unbinned} "
+        "--output-binned-otu-table {params.new_binned} "
+        "--imperfect "
+        "--sequence-identity {params.sequence_identity} "
+        "--output-found-in "
+        "&> {log} "
+        "&& cat {input.binned} <(tail -n+2 {params.new_binned}) > {output.binned} "
+
 ###################################
 ### SingleM query (alternative) ###
 ###################################
@@ -205,8 +246,8 @@ rule query_processing:
         pipe_reads=expand(output_dir + "/pipe/{read}_read.otu_table.tsv", read=config["reads_1"]),
         query_reads=expand(output_dir + "/query/{read}_query.otu_table.tsv", read=config["reads_1"]),
     output:
-        unbinned=output_dir + "/appraise/unbinned.otu_table.tsv",
-        binned=output_dir + "/appraise/binned.otu_table.tsv",
+        unbinned=temp(output_dir + "/appraise/unbinned_raw.otu_table.tsv"),
+        binned=temp(output_dir + "/appraise/binned_raw.otu_table.tsv"),
     log:
         logs_dir + "/query/processing.log"
     params:
@@ -225,8 +266,8 @@ rule no_genomes:
     input:
         reads=expand(output_dir + "/pipe/{read}_read.otu_table.tsv", read=config["reads_1"]),
     output:
-        unbinned=output_dir + "/appraise/unbinned.otu_table.tsv" if config["no_genomes"] else [],
-        binned=output_dir + "/appraise/binned.otu_table.tsv" if config["no_genomes"] else [],
+        unbinned=temp(output_dir + "/appraise/unbinned_raw.otu_table.tsv") if config["no_genomes"] else [],
+        binned=temp(output_dir + "/appraise/binned_raw.otu_table.tsv") if config["no_genomes"] else [],
     log:
         logs_dir + "/appraise/appraise.log"
     script:
@@ -279,6 +320,7 @@ checkpoint cluster_graph:
         num_coassembly_samples=config["num_coassembly_samples"],
         max_coassembly_samples=config["max_coassembly_samples"],
         max_recovery_samples=config["max_recovery_samples"],
+        exclude_coassemblies=config["exclude_coassemblies"],
     threads:
         64
     script:

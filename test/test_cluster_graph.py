@@ -60,7 +60,7 @@ class Tests(unittest.TestCase):
         read_size = pl.DataFrame([
             ["sample_1", 1000],
             ["sample_2", 2000],
-            ["sample_3", 3000],
+            ["sample_3", 1000],
         ], schema=READ_SIZE_COLUMNS)
 
         expected = pl.DataFrame([
@@ -437,6 +437,31 @@ class Tests(unittest.TestCase):
             MIN_COASSEMBLY_SAMPLES=4,
             MAX_COASSEMBLY_SAMPLES=4,
             )
+        self.assertDataFrameEqual(expected, observed)
+
+    def test_cluster_exclude_coassemblies(self):
+        elusive_edges = pl.DataFrame([
+            ["match", 2, "1,2", "1"],
+            ["match", 2, "1,3", "1,2"],
+            ["match", 2, "2,3", "1,2,3"],
+            ["match", 2, "4,5", "4,5,6,7"],
+            ["match", 2, "4,6", "4,5,6,7,8"],
+            ["match", 2, "5,6", "4,5,6,7,8,9"],
+        ], schema = ELUSIVE_EDGES_COLUMNS)
+        read_size = pl.DataFrame([
+            ["1", 1000],
+            ["2", 1000],
+            ["3", 1000],
+            ["4", 1000],
+            ["5", 1000],
+            ["6", 1000],
+        ], schema=READ_SIZE_COLUMNS)
+
+        expected = pl.DataFrame([
+            ["4,6", 2, 5, 2000, "4,5,6", "coassembly_0"],
+            ["1,3", 2, 2, 2000, "1,2,3", "coassembly_1"],
+        ], schema=ELUSIVE_CLUSTERS_COLUMNS)
+        observed = pipeline(elusive_edges, read_size, EXCLUDE_COASSEMBLIES=["2,3", "5,6"])
         self.assertDataFrameEqual(expected, observed)
 
     def test_join_list_subsets(self):

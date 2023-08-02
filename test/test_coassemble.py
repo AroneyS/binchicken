@@ -88,7 +88,7 @@ class Tests(unittest.TestCase):
             expected = "\n".join(
                 [
                     ",".join(["sample_1", "4832"]),
-                    ",".join(["sample_2", "3624"]),
+                    ",".join(["sample_2", "3926"]),
                     ",".join(["sample_3", "3624"]),
                     ""
                 ]
@@ -119,7 +119,7 @@ class Tests(unittest.TestCase):
                         "sample_1,sample_2",
                         "2",
                         "3",
-                        "8456",
+                        "8758",
                         "sample_1,sample_2,sample_3",
                         "coassembly_0"
                     ]),
@@ -210,8 +210,8 @@ class Tests(unittest.TestCase):
                         "sample_1,sample_2",
                         "2",
                         "3",
+                        "8758",
                         "8456",
-                        "8154",
                     ]),
                     ""
                 ]
@@ -459,6 +459,54 @@ class Tests(unittest.TestCase):
             cluster_path = os.path.join("test", "coassemble", "target", "elusive_clusters.tsv")
             self.assertTrue(os.path.exists(cluster_path))
 
+    def test_coassemble_exclude_coassemblies(self):
+        with in_tempdir():
+            cmd = (
+                f"ibis coassemble "
+                f"--forward {SAMPLE_READS_FORWARD} "
+                f"--reverse {SAMPLE_READS_REVERSE} "
+                f"--genomes {GENOMES} "
+                f"--singlem-metapackage {METAPACKAGE} "
+                f"--exclude-coassemblies sample_1,sample_2 "
+                f"--assemble-unmapped "
+                f"--unmapping-max-identity 99 "
+                f"--unmapping-max-alignment 90 "
+                f"--prodigal-meta "
+                f"--output test "
+                f"--conda-prefix {path_to_conda} "
+            )
+            extern.run(cmd)
+
+            config_path = os.path.join("test", "config.yaml")
+            self.assertTrue(os.path.exists(config_path))
+
+            cluster_path = os.path.join("test", "coassemble", "target", "elusive_clusters.tsv")
+            self.assertTrue(os.path.exists(cluster_path))
+
+            expected = "\n".join(
+                [
+                    "\t".join([
+                        "samples",
+                        "length",
+                        "total_targets",
+                        "total_size",
+                        "recover_samples",
+                        "coassembly",
+                    ]),
+                    "\t".join([
+                        "sample_1,sample_3",
+                        "2",
+                        "2",
+                        "8456",
+                        "sample_1,sample_2,sample_3",
+                        "coassembly_0"
+                    ]),
+                    ""
+                ]
+            )
+            with open(cluster_path) as f:
+                self.assertEqual(expected, f.read())
+
     def test_coassemble_single_assembly(self):
         with in_tempdir():
             cmd = (
@@ -502,7 +550,7 @@ class Tests(unittest.TestCase):
                         "sample_2",
                         "1",
                         "3",
-                        "3624",
+                        "3926",
                         "sample_1,sample_2,sample_3",
                         "coassembly_1"
                     ]),
@@ -574,7 +622,7 @@ class Tests(unittest.TestCase):
                         "sample_1,sample_2",
                         "2",
                         "3",
-                        "8456",
+                        "8758",
                         "sample_1,sample_2,sample_3",
                         "coassembly_0"
                     ]),
@@ -819,6 +867,7 @@ class Tests(unittest.TestCase):
             write_string_to_file(SAMPLE_READS_REVERSE, "sample_reads_reverse")
             write_string_to_file(GENOMES, "genomes")
             write_string_to_file(GENOME_TRANSCRIPTS, "genome_transcripts")
+            write_string_to_file("sample_1,sample_2", "exclude_coassemblies")
 
             cmd = (
                 f"ibis coassemble "
@@ -827,6 +876,7 @@ class Tests(unittest.TestCase):
                 f"--genomes-list genomes "
                 f"--genome-transcripts-list genome_transcripts "
                 f"--singlem-metapackage {METAPACKAGE} "
+                f"--exclude-coassemblies-list exclude_coassemblies "
                 f"--assemble-unmapped "
                 f"--output test "
                 f"--conda-prefix {path_to_conda} "
@@ -849,6 +899,12 @@ class Tests(unittest.TestCase):
             self.assertTrue("map_reads" in output)
             self.assertTrue("finish_mapping" in output)
             self.assertTrue("aviary_commands" in output)
+
+            config = load_configfile(os.path.join("test", "config.yaml"))
+            self.assertEqual(config["genomes"], {os.path.splitext(os.path.basename(g))[0]: g for g in GENOMES.split(" ")})
+            self.assertEqual(config["exclude_coassemblies"], ["sample_1,sample_2"])
+            self.assertEqual(config["reads_1"], {os.path.splitext(os.path.splitext(os.path.basename(s))[0])[0]: s for s in SAMPLE_READS_FORWARD.split(" ")})
+            self.assertEqual(config["reads_2"], {os.path.splitext(os.path.splitext(os.path.basename(s))[0])[0]: s for s in SAMPLE_READS_REVERSE.split(" ")})
 
     def test_coassemble_singlem_inputs_files_of_paths(self):
         with in_tempdir():
@@ -914,7 +970,7 @@ class Tests(unittest.TestCase):
             self.assertTrue("genome_transcripts" not in output)
             self.assertTrue("singlem_pipe_genomes" not in output)
             self.assertTrue("singlem_summarise_genomes" not in output)
-            self.assertTrue("singlem_appraise" not in output)
+            self.assertTrue("singlem_appraise " not in output)
             self.assertTrue("query_processing" in output)
             self.assertTrue("single_assembly" not in output)
             self.assertTrue("count_bp_reads" not in output)

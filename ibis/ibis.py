@@ -216,6 +216,9 @@ def set_standard_args(args):
     args.min_sequence_coverage = 1
     args.single_assembly = False
     args.no_genomes = False
+    args.new_genomes = False
+    args.exclude_coassemblies = None
+    args.exclude_coassemblies_list = None
     args.num_coassembly_samples = 1
     args.max_coassembly_samples = None
     args.max_coassembly_size = None
@@ -303,6 +306,9 @@ def coassemble(args):
             os.path.join(args.output, "coassemble", "read_size.csv"),
         )
 
+    if args.exclude_coassemblies_list:
+        args.exclude_coassemblies = read_list(args.exclude_coassemblies_list)
+
     logging.info("Loading genome info")
     if args.genomes_list:
         args.genomes = read_list(args.genomes_list)
@@ -332,6 +338,11 @@ def coassemble(args):
         except KeyError:
             metapackage = None
 
+    try:
+        args.new_genomes
+    except AttributeError:
+        args.new_genomes = None
+
     # Load other info
     if args.single_assembly:
         args.num_coassembly_samples = 1
@@ -349,6 +360,8 @@ def coassemble(args):
         "min_coassembly_coverage": args.min_sequence_coverage,
         "single_assembly": args.single_assembly,
         "no_genomes": args.no_genomes,
+        "new_genomes": args.new_genomes,
+        "exclude_coassemblies": args.exclude_coassemblies,
         "num_coassembly_samples": args.num_coassembly_samples,
         "max_coassembly_samples": args.max_coassembly_samples if args.max_coassembly_samples else args.num_coassembly_samples,
         "max_coassembly_size": args.max_coassembly_size,
@@ -537,7 +550,12 @@ def generate_genome_singlem(orig_args, new_genomes):
         os.path.join(args.output, "coassemble", "pipe", "mock_genome_bin.otu_table.tsv")
         )
 
-    args.snakemake_args = args.snakemake_args + " --rerun-triggers mtime -- singlem_summarise_genomes" if args.snakemake_args else "--rerun-triggers mtime -- singlem_summarise_genomes"
+    bins_summarised_path = os.path.join(args.output, "coassemble", "summarise", "bins_summarised.otu_table.tsv")
+    if args.snakemake_args:
+        args.snakemake_args = args.snakemake_args + f" --rerun-triggers mtime -- {bins_summarised_path}"
+    else:
+        args.snakemake_args = f"--rerun-triggers mtime -- {bins_summarised_path}"
+
     coassemble(args)
 
     return os.path.join(args.output, "coassemble", "summarise", "bins_summarised.otu_table.tsv")
@@ -562,14 +580,43 @@ def iterate(args):
     with open(os.path.join(args.output, "recovered_bins", "bin_provenance.tsv"), "w") as f:
         f.writelines("\n".join(["\t".join([os.path.abspath(bins[bin]), bin + ".fna"]) for bin in bins]))
 
+    new_genomes = [os.path.join(args.output, "recovered_bins", bin + ".fna") for bin in bins]
+    args.new_genomes = {
+            os.path.splitext(os.path.basename(genome))[0]: os.path.abspath(genome) for genome in new_genomes
+            }
+
+    if args.coassemble_output:
+        coassemble_appraise_dir = os.path.join(os.path.abspath(args.coassemble_output), "appraise")
+        args.coassemble_unbinned = os.path.join(coassemble_appraise_dir, "unbinned.otu_table.tsv")
+        args.coassemble_binned = os.path.join(coassemble_appraise_dir, "binned.otu_table.tsv")
+    elif args.genome_singlem:
+        args.genome_singlem = generate_genome_singlem(args, new_genomes)
+        args.coassemble_unbinned = args.coassemble_binned = None
+
+    try:
+        args.coassemble_unbinned
+    except AttributeError:
+        args.coassemble_unbinned = None
+
+    try:
+        args.coassemble_binned
+    except AttributeError:
+        args.coassemble_binned = None
+
+    if args.coassemble_unbinned and args.coassemble_binned:
+        copy_input(
+            os.path.abspath(args.coassemble_unbinned),
+            os.path.join(args.output, "coassemble", "appraise", "unbinned_prior.otu_table.tsv")
+        )
+        copy_input(
+            os.path.abspath(args.coassemble_binned),
+            os.path.join(args.output, "coassemble", "appraise", "binned_prior.otu_table.tsv")
+        )
+
     if args.genomes_list:
         args.genomes = read_list(args.genomes_list)
         args.genomes_list = None
-    new_genomes = [os.path.join(args.output, "recovered_bins", bin + ".fna") for bin in bins]
     args.genomes += new_genomes
-
-    if args.genome_singlem:
-        args.genome_singlem = generate_genome_singlem(args, new_genomes)
 
     coassemble(args)
 
@@ -583,8 +630,8 @@ def iterate(args):
                 _ = comb_cluster.select(
                     pl.col("coassembly").apply(lambda x: logging.warn(f"{x} has been previously suggested"))
                     )
-    else:
-        logging.warn("Suggested coassemblies may match those from previous iterations. To check, use `--elusive-clusters`.")
+    elif not args.exclude_coassemblies:
+        logging.warn("Suggested coassemblies may match those from previous iterations. To check, use `--elusive-clusters`. To exclude manually, use `--exclude-coassembles`")
 
     logging.info(f"Ibis iterate complete.")
     logging.info(f"Cluster summary at {os.path.join(args.output, 'coassemble', 'summary.tsv')}")
@@ -703,7 +750,7 @@ def main():
             "update": [
                 btu.Example(
                     "update previous run to download SRA reads",
-                    "ibis update --sra --coassemble-output coassemble_dir --forward SRA000001 ... --reverse SRA000001 ... --genomes genome_1.fna ..."
+                    "ibis update --sra --coassemble-output coassemble_dir --forward SRA000001 ... --genomes genome_1.fna ..."
                 ),
                 btu.Example(
                     "update previous run to perform unmapping",
@@ -722,6 +769,10 @@ def main():
                 btu.Example(
                     "rerun coassemble, adding new bins to database, providing genomes directly",
                     "ibis iterate --new-genomes new_genome_1.fna ... --forward reads_1.1.fq ... --reverse reads_1.2.fq ... --genomes genome_1.fna ..."
+                ),
+                btu.Example(
+                    "rerun coassemble, adding new bins to database, excluding previous coassembly combinations",
+                    "ibis iterate --exclude-coassemblies reads_1,reads_2 --aviary-outputs coassembly_0_dir ... --forward reads_1.1.fq ... --reverse reads_1.2.fq ... --genomes genome_1.fna ..."
                 ),
             ],
             "build": [
@@ -761,10 +812,13 @@ def main():
         argument_group.add_argument("--aviary-cores", type=int, help="Maximum number of cores for Aviary to use", default=16)
         argument_group.add_argument("--aviary-memory", type=int, help="Maximum amount of memory for Aviary to use (Gigabytes)", default=250)
 
-    def add_coassemble_output_arguments(argument_group):
+    def add_main_coassemble_output_arguments(argument_group):
         argument_group.add_argument("--coassemble-output", help="Output dir from cluster subcommand")
         argument_group.add_argument("--coassemble-unbinned", help="SingleM appraise unbinned output from Ibis coassemble (alternative to --coassemble-output)")
         argument_group.add_argument("--coassemble-binned", help="SingleM appraise binned output from Ibis coassemble (alternative to --coassemble-output)")
+
+    def add_coassemble_output_arguments(argument_group):
+        add_main_coassemble_output_arguments(argument_group)
         argument_group.add_argument("--coassemble-targets", help="Target sequences output from Ibis coassemble (alternative to --coassemble-output)")
         argument_group.add_argument("--coassemble-elusive-edges", help="Elusive edges output from Ibis coassemble (alternative to --coassemble-output)")
         argument_group.add_argument("--coassemble-elusive-clusters", help="Elusive clusters output from Ibis coassemble (alternative to --coassemble-output)")
@@ -798,6 +852,8 @@ def main():
         coassemble_clustering.add_argument("--min-sequence-coverage", type=int, help="Minimum combined coverage for sequence inclusion [default: 10]", default=10)
         coassemble_clustering.add_argument("--no-genomes", action="store_true", help="Run pipeline without genomes")
         coassemble_clustering.add_argument("--single-assembly", action="store_true", help="Skip appraise to discover samples to differential abundance binning. Forces --num-coassembly-samples and --max-coassembly-samples to 1")
+        coassemble_clustering.add_argument("--exclude-coassemblies", nargs='+', help="List of coassemblies to exclude, space separated, in the form \"sample_1,sample_2\"")
+        coassemble_clustering.add_argument("--exclude-coassemblies-list", help="List of coassemblies to exclude, space separated, in the form \"sample_1,sample_2\", newline separated")
         coassemble_clustering.add_argument("--num-coassembly-samples", type=int, help="Number of samples per coassembly cluster [default: 2]", default=2)
         coassemble_clustering.add_argument("--max-coassembly-samples", type=int, help="Upper bound for number of samples per coassembly cluster [default: --num-coassembly-samples]", default=None)
         coassemble_clustering.add_argument("--max-coassembly-size", type=int, help="Maximum size (Gbp) of coassembly cluster [default: None]", default=None)
@@ -870,7 +926,8 @@ def main():
     iterate_iteration.add_argument("--aviary-outputs", nargs='+', help="Output dir from Aviary coassembly and recover commands produced by coassemble subcommand")
     iterate_iteration.add_argument("--new-genomes", nargs='+', help="New genomes to iterate (alternative to --aviary-outputs)")
     iterate_iteration.add_argument("--new-genomes-list", help="New genomes to iterate (alternative to --aviary-outputs) newline separated")
-    iterate_iteration.add_argument("--elusive-clusters", nargs='+', help="Previous elusive_clusters.tsv files produced by coassemble subcommand")
+    iterate_iteration.add_argument("--elusive-clusters", nargs='+', help="Previous elusive_clusters.tsv files produced by coassemble subcommand (used to check for duplicated coassembly suggestions)")
+    add_main_coassemble_output_arguments(iterate_iteration)
     add_evaluation_options(iterate_iteration)
     # Coassembly options
     add_coassemble_arguments(iterate_parser)
