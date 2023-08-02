@@ -192,8 +192,8 @@ def summarise_stats(matches, combined_otu_table, recovered_bins):
         .filter(pl.col("target").is_not_null())
         .with_columns(
             pl.when(pl.col("genome").is_not_null())
-                .then("match")
-                .otherwise("nonmatch")
+                .then(pl.lit("match"))
+                .otherwise(pl.lit("nonmatch"))
                 .alias("status")
             )
         .groupby([
@@ -210,7 +210,7 @@ def summarise_stats(matches, combined_otu_table, recovered_bins):
                 .with_columns(
                     pl.when(
                         pl.col("found_in").is_not_null()
-                    ).then("match").otherwise("nonmatch").alias("status")
+                    ).then(pl.lit("match")).otherwise(pl.lit("nonmatch")).alias("status")
                     )
                 .groupby(["coassembly", "status"])
                 .agg(pl.col("sequence").len().alias("nontarget_bin_sequences")),
@@ -222,7 +222,7 @@ def summarise_stats(matches, combined_otu_table, recovered_bins):
                 .with_columns(
                     pl.when(
                         pl.all_horizontal(pl.col(["target", "found_in"]).is_null()) & (pl.col("source_samples").is_not_null())
-                    ).then("match").otherwise("nonmatch").alias("status")
+                    ).then(pl.lit("match")).otherwise(pl.lit("nonmatch")).alias("status")
                     )
                 .groupby(["coassembly", "status"])
                 .agg(pl.col("sequence").len().alias("nontarget_unbin_sequences")),
@@ -234,7 +234,7 @@ def summarise_stats(matches, combined_otu_table, recovered_bins):
                 .with_columns(
                     pl.when(
                         pl.all_horizontal(pl.col(["target", "found_in", "source_samples"]).is_null())
-                    ).then("match").otherwise("nonmatch").alias("status")
+                    ).then(pl.lit("match")).otherwise(pl.lit("nonmatch")).alias("status")
                     )
                 .groupby(["coassembly", "status"])
                 .agg(pl.col("sequence").len().alias("novel_sequences")),
@@ -274,7 +274,7 @@ def summarise_stats(matches, combined_otu_table, recovered_bins):
         .pivot(index=["coassembly", "statistic"], values="value", columns="status", aggregate_function=None)
         .select(
             "coassembly", "statistic",
-            pl.when(pl.col("statistic").is_in(["sequences", "taxonomy"])).then("targets").otherwise("recovery").alias("within"),
+            pl.when(pl.col("statistic").is_in(["sequences", "taxonomy"])).then(pl.lit("targets")).otherwise(pl.lit("recovery")).alias("within"),
             "match", "nonmatch",
             pl.col("match").alias("total") + pl.col("nonmatch"),
             (pl.col("match") / (pl.col("match") + pl.col("nonmatch")) * 100).round(2).alias("match_percent"),
