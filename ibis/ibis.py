@@ -592,8 +592,16 @@ def iterate(args):
     elif args.genome_singlem:
         args.genome_singlem = generate_genome_singlem(args, new_genomes)
         args.coassemble_unbinned = args.coassemble_binned = None
-    else:
-        args.coassemble_unbinned = args.coassemble_binned = None
+
+    try:
+        args.coassemble_unbinned
+    except AttributeError:
+        args.coassemble_unbinned = None
+
+    try:
+        args.coassemble_binned
+    except AttributeError:
+        args.coassemble_binned = None
 
     if args.coassemble_unbinned and args.coassemble_binned:
         copy_input(
@@ -806,11 +814,11 @@ def main():
 
     def add_main_coassemble_output_arguments(argument_group):
         argument_group.add_argument("--coassemble-output", help="Output dir from cluster subcommand")
+        argument_group.add_argument("--coassemble-unbinned", help="SingleM appraise unbinned output from Ibis coassemble (alternative to --coassemble-output)")
+        argument_group.add_argument("--coassemble-binned", help="SingleM appraise binned output from Ibis coassemble (alternative to --coassemble-output)")
 
     def add_coassemble_output_arguments(argument_group):
         add_main_coassemble_output_arguments(argument_group)
-        argument_group.add_argument("--coassemble-unbinned", help="SingleM appraise unbinned output from Ibis coassemble (alternative to --coassemble-output)")
-        argument_group.add_argument("--coassemble-binned", help="SingleM appraise binned output from Ibis coassemble (alternative to --coassemble-output)")
         argument_group.add_argument("--coassemble-targets", help="Target sequences output from Ibis coassemble (alternative to --coassemble-output)")
         argument_group.add_argument("--coassemble-elusive-edges", help="Elusive edges output from Ibis coassemble (alternative to --coassemble-output)")
         argument_group.add_argument("--coassemble-elusive-clusters", help="Elusive clusters output from Ibis coassemble (alternative to --coassemble-output)")

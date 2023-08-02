@@ -29,6 +29,8 @@ TWO_GENOMES = " ".join([
 METAPACKAGE = os.path.join(path_to_data, "singlem_metapackage.smpkg")
 
 MOCK_COASSEMBLE = os.path.join(path_to_data, "mock_coassemble")
+MOCK_UNBINNED = os.path.join(MOCK_COASSEMBLE, "appraise", "unbinned.otu_table.tsv")
+MOCK_BINNED = os.path.join(MOCK_COASSEMBLE, "appraise", "binned.otu_table.tsv")
 MOCK_COASSEMBLIES = ' '.join([os.path.join(MOCK_COASSEMBLE, "coassemble", "coassembly_0")])
 MOCK_GENOMES = " ".join([
     os.path.join(MOCK_COASSEMBLE, "coassemble", "coassembly_0", "recover", "bins", "final_bins", "bin_1.fna"),
@@ -56,7 +58,8 @@ class Tests(unittest.TestCase):
             cmd = (
                 f"ibis iterate "
                 f"--iteration 0 "
-                f"--coassemble-output {MOCK_COASSEMBLE} "
+                f"--coassemble-unbinned {MOCK_UNBINNED} "
+                f"--coassemble-binned {MOCK_BINNED} "
                 f"--aviary-outputs {MOCK_COASSEMBLIES} "
                 f"--elusive-clusters {ELUSIVE_CLUSTERS} "
                 f"--forward {SAMPLE_READS_FORWARD} "
@@ -209,6 +212,7 @@ class Tests(unittest.TestCase):
             cmd = (
                 f"ibis iterate "
                 f"--new-genomes-list genomes "
+                f"--coassemble-output {MOCK_COASSEMBLE} "
                 f"--elusive-clusters {ELUSIVE_CLUSTERS} "
                 f"--forward {SAMPLE_READS_FORWARD} "
                 f"--reverse {SAMPLE_READS_REVERSE} "
@@ -223,11 +227,11 @@ class Tests(unittest.TestCase):
             output = extern.run(cmd)
 
             self.assertTrue("count_bp_reads" in output)
-            self.assertTrue("singlem_pipe_reads" in output)
+            self.assertTrue("singlem_pipe_reads" not in output)
             self.assertTrue("genome_transcripts" in output)
             self.assertTrue("singlem_pipe_genomes" in output)
             self.assertTrue("singlem_summarise_genomes" in output)
-            self.assertTrue("singlem_appraise" in output)
+            self.assertTrue("update_appraise" in output)
             self.assertTrue("singlem_appraise_filtered" in output)
             self.assertTrue("target_elusive" in output)
             self.assertTrue("cluster_graph" in output)
@@ -237,7 +241,19 @@ class Tests(unittest.TestCase):
             config_path = os.path.join("test", "config.yaml")
             self.assertTrue(os.path.exists(config_path))
             config = load_configfile(config_path)
-            self.assertEqual(config["genomes"], {os.path.splitext(os.path.basename(g))[0]: g.replace(MOCK_COASSEMBLE + "/coassemble/coassembly_0/recover/bins/final_bins/", os.getcwd() + "/test/recovered_bins/") for g in (GENOMES + " " + MOCK_GENOMES).split(" ")})
+            genomes_config = {
+                os.path.splitext(os.path.basename(g))[0]: g.replace(MOCK_COASSEMBLE + "/coassemble/coassembly_0/recover/bins/final_bins/", os.getcwd() + "/test/recovered_bins/")
+                for g in (GENOMES + " " + MOCK_GENOMES).split(" ")
+                }
+            self.assertEqual(genomes_config, config["genomes"])
+
+            binned_prior_path = os.path.join("test", "coassemble", "appraise", "binned_prior.otu_table.tsv")
+            self.assertTrue(os.path.islink(binned_prior_path))
+            self.assertEqual(MOCK_BINNED, os.path.realpath(binned_prior_path))
+
+            unbinned_prior_path = os.path.join("test", "coassemble", "appraise", "unbinned_prior.otu_table.tsv")
+            self.assertTrue(os.path.islink(unbinned_prior_path))
+            self.assertEqual(MOCK_UNBINNED, os.path.realpath(unbinned_prior_path))
 
     def test_iterate_default_config(self):
         with in_tempdir():
