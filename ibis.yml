@@ -12,7 +12,7 @@ dependencies:
   - bird_tool_utils_python=0.4.*
   - extern=0.4.*
   - ruamel.yaml=0.17.*
-  - polars=0.18.7
+  - polars=0.18.*
   - pyarrow=12.0.*
   - parallel=20230522
   - pyopenssl>22.1.0 # see https://github.com/pyca/cryptography/issues/7959#issuecomment-1368711852
