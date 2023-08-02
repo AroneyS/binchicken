@@ -163,14 +163,14 @@ def evaluate(target_otu_table, binned_otu_table, elusive_clusters, elusive_edges
     matches = (
         combined_otu_table
         .filter(
-            ~pl.all(pl.col(["target", "found_in", "source_samples"]).is_null())
+            ~pl.all_horizontal(pl.col(["target", "found_in", "source_samples"]).is_null())
             )
     )
 
     unmatched = (
         combined_otu_table
         .filter(
-            pl.all(pl.col(["target", "found_in", "source_samples"]).is_null())
+            pl.all_horizontal(pl.col(["target", "found_in", "source_samples"]).is_null())
             )
     )
 
@@ -221,7 +221,7 @@ def summarise_stats(matches, combined_otu_table, recovered_bins):
             recovered_hits
                 .with_columns(
                     pl.when(
-                        pl.all(pl.col(["target", "found_in"]).is_null()) & (pl.col("source_samples").is_not_null())
+                        pl.all_horizontal(pl.col(["target", "found_in"]).is_null()) & (pl.col("source_samples").is_not_null())
                     ).then("match").otherwise("nonmatch").alias("status")
                     )
                 .groupby(["coassembly", "status"])
@@ -233,7 +233,7 @@ def summarise_stats(matches, combined_otu_table, recovered_bins):
             recovered_hits
                 .with_columns(
                     pl.when(
-                        pl.all(pl.col(["target", "found_in", "source_samples"]).is_null())
+                        pl.all_horizontal(pl.col(["target", "found_in", "source_samples"]).is_null())
                     ).then("match").otherwise("nonmatch").alias("status")
                     )
                 .groupby(["coassembly", "status"])
