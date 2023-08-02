@@ -88,7 +88,7 @@ class Tests(unittest.TestCase):
             expected = "\n".join(
                 [
                     ",".join(["sample_1", "4832"]),
-                    ",".join(["sample_2", "3624"]),
+                    ",".join(["sample_2", "3926"]),
                     ",".join(["sample_3", "3624"]),
                     ""
                 ]
@@ -119,7 +119,7 @@ class Tests(unittest.TestCase):
                         "sample_1,sample_2",
                         "2",
                         "3",
-                        "8456",
+                        "8758",
                         "sample_1,sample_2,sample_3",
                         "coassembly_0"
                     ]),
@@ -210,8 +210,8 @@ class Tests(unittest.TestCase):
                         "sample_1,sample_2",
                         "2",
                         "3",
+                        "8758",
                         "8456",
-                        "8154",
                     ]),
                     ""
                 ]
@@ -550,7 +550,7 @@ class Tests(unittest.TestCase):
                         "sample_2",
                         "1",
                         "3",
-                        "3624",
+                        "3926",
                         "sample_1,sample_2,sample_3",
                         "coassembly_1"
                     ]),
@@ -622,7 +622,7 @@ class Tests(unittest.TestCase):
                         "sample_1,sample_2",
                         "2",
                         "3",
-                        "8456",
+                        "8758",
                         "sample_1,sample_2,sample_3",
                         "coassembly_0"
                     ]),

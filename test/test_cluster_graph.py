@@ -60,7 +60,7 @@ class Tests(unittest.TestCase):
         read_size = pl.DataFrame([
             ["sample_1", 1000],
             ["sample_2", 2000],
-            ["sample_3", 3000],
+            ["sample_3", 1000],
         ], schema=READ_SIZE_COLUMNS)
 
         expected = pl.DataFrame([

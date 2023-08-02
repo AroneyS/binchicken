@@ -240,7 +240,7 @@ def pipeline(
             .with_columns(
                 total_targets = pl.col("target_ids").list.lengths(),
             )
-            .sort("total_targets", "samples_hash", descending=True)
+            .sort("total_targets", "total_size", descending=[True, False])
             .with_columns(
                 unique_samples = 
                     pl.col("samples")
