@@ -589,8 +589,8 @@ def iterate(args):
                 _ = comb_cluster.select(
                     pl.col("coassembly").apply(lambda x: logging.warn(f"{x} has been previously suggested"))
                     )
-    else:
-        logging.warn("Suggested coassemblies may match those from previous iterations. To check, use `--elusive-clusters`.")
+    elif not args.exclude_coassemblies:
+        logging.warn("Suggested coassemblies may match those from previous iterations. To check, use `--elusive-clusters`. To exclude manually, use `--exclude-coassembles`")
 
     logging.info(f"Ibis iterate complete.")
     logging.info(f"Cluster summary at {os.path.join(args.output, 'coassemble', 'summary.tsv')}")
