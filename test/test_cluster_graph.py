@@ -468,18 +468,19 @@ class Tests(unittest.TestCase):
         with pl.StringCache():
             df1 = (
                 pl.DataFrame([
-                        [["a", "b", "c"], ["1"]],
-                        [["b", "c", "d"], ["2"]],
-                        [["a", "b", "c", "d"], ["3"]],
-                        [["d", "e", "f"], ["4"]],
-                    ], schema=["samples", "target_ids"])
+                        [["a", "b"], ["1"], 2],
+                        [["b", "c", "d"], ["2"], 3],
+                        [["a", "b", "c", "d"], ["3"], 4],
+                        [["d", "e", "f"], ["4"], 3],
+                        [["b", "c", "d", "g"], ["5"], 4],
+                    ], schema=["samples", "target_ids", "cluster_size"])
                 .with_columns(pl.col("samples").cast(pl.List(pl.Categorical)))
                 .with_columns(samples_hash = pl.col("samples").list.sort().hash())
             )
 
             df2 = (
                 pl.DataFrame([
-                        [["a", "b"], ["1"], 2],
+                        [["a", "b"], ["2"], 2],
                         [["b", "c"], ["2"], 2],
                         [["c", "d"], ["3"], 2],
                         [["b", "c", "d"], ["4"], 3],
@@ -491,14 +492,15 @@ class Tests(unittest.TestCase):
 
             expected = (
                 pl.DataFrame([
-                        [["a", "b", "c"], ["1"], ["1", "2"]],
-                        [["b", "c", "d"], ["2"], ["2", "3", "4", "5"]],
-                        [["a", "b", "c", "d"], ["3"], ["1", "2", "3", "4", "5"]],
-                        [["d", "e", "f"], ["4"], []],
-                    ], schema=["samples", "target_ids", "extra_targets"])
+                        [["a", "b"], ["1"], 2, ["2"]],
+                        [["b", "c", "d"], ["2"], 3, ["4", "5"]],
+                        [["a", "b", "c", "d"], ["3"], 4, []],
+                        [["d", "e", "f"], ["4"], 3, []],
+                        [["b", "c", "d", "g"], ["5"], 4, []],
+                    ], schema=["samples", "target_ids", "cluster_size", "extra_targets"])
                 .with_columns(pl.col("samples").cast(pl.List(pl.Categorical)))
                 .with_columns(samples_hash = pl.col("samples").list.sort().hash())
-                .select("samples", "target_ids", "samples_hash", "extra_targets")
+                .select("samples", "target_ids", "cluster_size", "samples_hash", "extra_targets")
             )
 
             observed = (
@@ -511,11 +513,12 @@ class Tests(unittest.TestCase):
         with pl.StringCache():
             df1 = (
                 pl.DataFrame([
-                        [["a", "b", "c"], ["1"]],
-                        [["b", "c", "d"], ["2"]],
-                        [["a", "b", "c", "d"], ["3"]],
-                        [["d", "e", "f"], ["4"]],
-                    ], schema=["samples", "target_ids"])
+                        [["a", "b"], ["1"], 2],
+                        [["b", "c", "d"], ["2"], 3],
+                        [["a", "b", "c", "d"], ["3"], 4],
+                        [["d", "e", "f"], ["4"], 3],
+                        [["b", "c", "d", "g"], ["5"], 4],
+                    ], schema=["samples", "target_ids", "cluster_size"])
                 .lazy()
                 .with_columns(pl.col("samples").cast(pl.List(pl.Categorical)))
                 .with_columns(samples_hash = pl.col("samples").list.sort().hash())
@@ -523,7 +526,7 @@ class Tests(unittest.TestCase):
 
             df2 = (
                 pl.DataFrame([
-                        [["a", "b"], ["1"], 2],
+                        [["a", "b"], ["2"], 2],
                         [["b", "c"], ["2"], 2],
                         [["c", "d"], ["3"], 2],
                         [["b", "c", "d"], ["4"], 3],
@@ -536,14 +539,15 @@ class Tests(unittest.TestCase):
 
             expected = (
                 pl.DataFrame([
-                        [["a", "b", "c"], ["1"], ["1", "2"]],
-                        [["b", "c", "d"], ["2"], ["2", "3", "4", "5"]],
-                        [["a", "b", "c", "d"], ["3"], ["1", "2", "3", "4", "5"]],
-                        [["d", "e", "f"], ["4"], []],
-                    ], schema=["samples", "target_ids", "extra_targets"])
+                        [["a", "b"], ["1"], 2, ["2"]],
+                        [["b", "c", "d"], ["2"], 3, ["4", "5"]],
+                        [["a", "b", "c", "d"], ["3"], 4, []],
+                        [["d", "e", "f"], ["4"], 3, []],
+                        [["b", "c", "d", "g"], ["5"], 4, []],
+                    ], schema=["samples", "target_ids", "cluster_size", "extra_targets"])
                 .with_columns(pl.col("samples").cast(pl.List(pl.Categorical)))
                 .with_columns(samples_hash = pl.col("samples").list.sort().hash())
-                .select("samples", "target_ids", "samples_hash", "extra_targets")
+                .select("samples", "target_ids", "cluster_size", "samples_hash", "extra_targets")
             )
 
             observed = (

@@ -37,12 +37,13 @@ def join_list_subsets(df1, df2):
         .select(
             pl.col("samples"),
             pl.col("samples_hash"),
+            pl.col("cluster_size"),
             )
         .explode("samples")
         .join(
             df2
             .explode("samples"),
-            on="samples",
+            on=["samples", "cluster_size"],
         )
         .groupby(pl.col("samples_hash"), "right_hash")
         .agg(pl.count())
@@ -195,9 +196,13 @@ def pipeline(
                     .explode("samples_combinations")
                     .with_columns(pl.col("samples").list.take(pl.col("samples_combinations")))
                     .with_columns(samples_hash = pl.col("samples").list.sort().hash())
-                    .select("samples_hash", "samples", "target_ids")
+                    .select("samples_hash", "samples", "target_ids", "cluster_size")
                     .groupby("samples_hash")
-                    .agg(pl.first("samples"), pl.col("target_ids").flatten())
+                    .agg(
+                        pl.first("samples"),
+                        pl.col("target_ids").flatten(),
+                        pl.first("cluster_size"),
+                        )
                     .filter(pl.col("target_ids").list.lengths() >= MIN_CLUSTER_TARGETS)
                     .pipe(join_list_subsets, df2=elusive_edges)
                     .select(
