@@ -417,24 +417,30 @@ class Tests(unittest.TestCase):
         ], schema = ELUSIVE_EDGES_COLUMNS)
         read_size = pl.DataFrame([
             ["1", 1000],
-            ["2", 1000],
-            ["3", 1000],
-            ["4", 1000],
-            ["5", 2000],
-            ["6", 2000],
-            ["7", 2000],
-            ["8", 2000],
+            ["2", 2000],
+            ["3", 3000],
+            ["4", 4000],
+            ["5", 5000],
+            ["6", 6000],
+            ["7", 7000],
+            ["8", 8000],
         ], schema=READ_SIZE_COLUMNS)
 
         expected = pl.DataFrame([
-            ["1,2,3,4", 4, 1, 4000, "1,2,3,4", "coassembly_0"],
-            ["5,6,7,8", 4, 1, 8000, "5,6,7,8", "coassembly_1"],
+            ["1,4", 2, 3, 5000, "1,2,3,4", "coassembly_0"],
+            ["5,8", 2, 3, 13000, "5,6,7,8", "coassembly_1"],
+            ["2,3", 2, 2, 5000, "2,3,4,5", "coassembly_2"],
+            ["1,2,4", 3, 2, 7000, "1,2,3,4", "coassembly_3"],
+            ["6,7", 2, 2, 13000, "5,6,7,8", "coassembly_4"],
+            ["1,2,3,4", 4, 1, 10000, "1,2,3,4", "coassembly_5"],
+            ["5,6,7", 3, 1, 18000, "5,6,7,8", "coassembly_6"],
+            ["5,6,7,8", 4, 1, 26000, "5,6,7,8", "coassembly_7"],
         ], schema=ELUSIVE_CLUSTERS_COLUMNS)
         observed = pipeline(
             elusive_edges,
             read_size,
             MAX_RECOVERY_SAMPLES=4,
-            MIN_COASSEMBLY_SAMPLES=4,
+            MIN_COASSEMBLY_SAMPLES=2,
             MAX_COASSEMBLY_SAMPLES=4,
             )
         self.assertDataFrameEqual(expected, observed)
