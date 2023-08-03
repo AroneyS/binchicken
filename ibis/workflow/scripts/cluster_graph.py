@@ -45,11 +45,11 @@ def join_list_subsets(df1, df2):
             .explode("samples"),
             on=["samples", "cluster_size"],
         )
-        .groupby(pl.col("samples_hash"), "right_hash")
+        .groupby(pl.col("samples_hash"), "right_hash", "cluster_size")
         .agg(pl.count())
         .join(
             df2,
-            on="right_hash"
+            on=["right_hash", "cluster_size"]
         )
         .filter(pl.col("count") >= pl.col("cluster_size"))
         .groupby(pl.col("samples_hash"))

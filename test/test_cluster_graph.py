@@ -485,6 +485,7 @@ class Tests(unittest.TestCase):
                         [["c", "d"], ["3"], 2],
                         [["b", "c", "d"], ["4"], 3],
                         [["b", "c", "d", "g"], ["5"], 3],
+                        [["b", "c", "d"], ["6"], 2],
                     ], schema=["samples", "target_ids", "cluster_size"])
                 .with_columns(pl.col("samples").cast(pl.List(pl.Categorical)))
                 .with_columns(samples_hash = pl.col("samples").list.sort().hash())
@@ -531,6 +532,7 @@ class Tests(unittest.TestCase):
                         [["c", "d"], ["3"], 2],
                         [["b", "c", "d"], ["4"], 3],
                         [["b", "c", "d", "g"], ["5"], 3],
+                        [["b", "c", "d"], ["6"], 2],
                     ], schema=["samples", "target_ids", "cluster_size"])
                 .lazy()
                 .with_columns(pl.col("samples").cast(pl.List(pl.Categorical)))
