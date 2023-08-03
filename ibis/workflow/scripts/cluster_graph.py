@@ -108,6 +108,7 @@ def pipeline(
         MIN_COASSEMBLY_SAMPLES=2,
         MAX_RECOVERY_SAMPLES=20,
         MIN_CLUSTER_TARGETS=1,
+        MAX_SAMPLES_COMBINATIONS=100,
         EXCLUDE_COASSEMBLIES=[]):
 
     logging.info(f"Polars using {str(pl.threadpool_size())} threads")
@@ -186,7 +187,7 @@ def pipeline(
                     elusive_edges
                     .filter(pl.col("style") == "pool")
                     # Prevent combinatorial explosion (also, large clusters are less useful for distinguishing between clusters)
-                    .filter(pl.col("samples").list.lengths() < 100)
+                    .filter(pl.col("samples").list.lengths() < MAX_SAMPLES_COMBINATIONS)
                     .with_columns(
                         samples_combinations = pl.struct(["length", "cluster_size"]).apply(
                             lambda x: [i for i in itertools.combinations(range(x["length"]), x["cluster_size"])],
@@ -204,7 +205,12 @@ def pipeline(
                         pl.first("cluster_size"),
                         )
                     .filter(pl.col("target_ids").list.lengths() >= MIN_CLUSTER_TARGETS)
-                    .pipe(join_list_subsets, df2=elusive_edges)
+                    .pipe(
+                        join_list_subsets,
+                        df2=elusive_edges
+                            .filter(pl.col("style") == "pool")
+                            .filter(pl.col("samples").list.lengths() >= MAX_SAMPLES_COMBINATIONS)
+                        )
                     .select(
                         "samples",
                         pl.concat_list("target_ids", "extra_targets").list.unique(),
@@ -315,5 +321,6 @@ if __name__ == "__main__":
         MAX_RECOVERY_SAMPLES=MAX_RECOVERY_SAMPLES,
         EXCLUDE_COASSEMBLIES=EXCLUDE_COASSEMBLIES,
         MIN_CLUSTER_TARGETS=min_cluster_targets,
+        MAX_SAMPLES_COMBINATIONS=100,
         )
     clusters.write_csv(elusive_clusters_path, separator="\t")

@@ -374,6 +374,33 @@ class Tests(unittest.TestCase):
             )
         self.assertDataFrameEqual(expected, observed)
 
+    def test_cluster_three_samples_max_sample(self):
+        elusive_edges = pl.DataFrame([
+            ["pool", 3, "1,2,3", "1,3"],
+            ["pool", 3, "1,2,3,4,5,6", "2"],
+        ], schema = ELUSIVE_EDGES_COLUMNS)
+        read_size = pl.DataFrame([
+            ["1", 1000],
+            ["2", 2000],
+            ["3", 3000],
+            ["4", 4000],
+            ["5", 5000],
+            ["6", 6000],
+        ], schema=READ_SIZE_COLUMNS)
+
+        expected = pl.DataFrame([
+            ["1,2,3", 3, 3, 6000, "1,2,3,4,5,6", "coassembly_0"],
+        ], schema=ELUSIVE_CLUSTERS_COLUMNS)
+        observed = pipeline(
+            elusive_edges,
+            read_size,
+            MAX_RECOVERY_SAMPLES=6,
+            MIN_COASSEMBLY_SAMPLES=3,
+            MAX_COASSEMBLY_SAMPLES=3,
+            MAX_SAMPLES_COMBINATIONS=5,
+            )
+        self.assertDataFrameEqual(expected, observed)
+
     def test_cluster_four_samples(self):
         # 1:   2 3 4
         # 2: 1   3 4
