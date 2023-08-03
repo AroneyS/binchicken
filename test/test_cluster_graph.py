@@ -106,18 +106,18 @@ class Tests(unittest.TestCase):
         ], schema = ELUSIVE_EDGES_COLUMNS)
         read_size = pl.DataFrame([
             ["1", 1000],
-            ["2", 1000],
-            ["3", 1000],
-            ["4", 1000],
-            ["5", 1000],
+            ["2", 2000],
+            ["3", 3000],
+            ["4", 4000],
+            ["5", 5000],
         ], schema=READ_SIZE_COLUMNS)
 
         expected = pl.DataFrame([
-            ["4", 1, 5, 1000, "1,2,3,4", "coassembly_0"],
-            ["3", 1, 4, 1000, "1,2,3,4", "coassembly_1"],
-            ["2", 1, 4, 1000, "1,2,3,4", "coassembly_2"],
-            ["1", 1, 4, 1000, "1,2,3,4", "coassembly_3"],
-            ["5", 1, 1, 1000, "4,5", "coassembly_4"],
+            ["4", 1, 5, 4000, "1,2,3,4", "coassembly_0"],
+            ["1", 1, 4, 1000, "1,2,3,4", "coassembly_1"],
+            ["2", 1, 4, 2000, "1,2,3,4", "coassembly_2"],
+            ["3", 1, 4, 3000, "1,2,3,4", "coassembly_3"],
+            ["5", 1, 1, 5000, "4,5", "coassembly_4"],
         ], schema=ELUSIVE_CLUSTERS_COLUMNS)
         observed = pipeline(
             elusive_edges,
@@ -168,17 +168,17 @@ class Tests(unittest.TestCase):
         ], schema = ELUSIVE_EDGES_COLUMNS)
         read_size = pl.DataFrame([
             ["1", 1000],
-            ["2", 1000],
-            ["3", 1000],
-            ["4", 1000],
-            ["5", 1000],
-            ["6", 1000],
+            ["2", 2000],
+            ["3", 3000],
+            ["4", 4000],
+            ["5", 5000],
+            ["6", 6000],
         ], schema=READ_SIZE_COLUMNS)
 
         expected = pl.DataFrame([
-            ["5,6", 2, 3, 2000, "4,5,6", "coassembly_0"],
-            ["3,4", 2, 3, 2000, "1,2,3,4", "coassembly_1"],
-            ["1,2", 2, 3, 2000, "1,2,3,4", "coassembly_2"],
+            ["1,2", 2, 3, 3000, "1,2,3,4", "coassembly_0"],
+            ["3,4", 2, 3, 7000, "1,2,3,4", "coassembly_1"],
+            ["5,6", 2, 3, 11000, "4,5,6", "coassembly_2"],
         ], schema=ELUSIVE_CLUSTERS_COLUMNS)
         observed = pipeline(
             elusive_edges,
@@ -200,15 +200,15 @@ class Tests(unittest.TestCase):
         ], schema = ELUSIVE_EDGES_COLUMNS)
         read_size = pl.DataFrame([
             ["1", 1000],
-            ["2", 1000],
-            ["3", 1000],
-            ["4", 1000],
-            ["5", 1000],
+            ["2", 2000],
+            ["3", 3000],
+            ["4", 4000],
+            ["5", 5000],
         ], schema=READ_SIZE_COLUMNS)
 
         expected = pl.DataFrame([
-            ["4,5", 2, 3, 2000, "3,4,5", "coassembly_0"],
-            ["1,2", 2, 3, 2000, "1,2,3", "coassembly_1"],
+            ["1,2", 2, 3, 3000, "1,2,3", "coassembly_0"],
+            ["4,5", 2, 3, 9000, "3,4,5", "coassembly_1"],
         ], schema=ELUSIVE_CLUSTERS_COLUMNS)
         observed = pipeline(
             elusive_edges,
@@ -230,15 +230,15 @@ class Tests(unittest.TestCase):
         ], schema = ELUSIVE_EDGES_COLUMNS)
         read_size = pl.DataFrame([
             ["1", 1000],
-            ["2", 1000],
-            ["3", 1000],
-            ["4", 1000],
-            ["5", 1000],
+            ["2", 2000],
+            ["3", 3000],
+            ["4", 4000],
+            ["5", 5000],
         ], schema=READ_SIZE_COLUMNS)
 
         expected = pl.DataFrame([
-            ["4,5", 2, 3, 2000, "1,4,5", "coassembly_0"],
-            ["1,2", 2, 3, 2000, "1,2,3", "coassembly_1"],
+            ["1,2", 2, 3, 3000, "1,2,3", "coassembly_0"],
+            ["4,5", 2, 3, 9000, "1,4,5", "coassembly_1"],
         ], schema=ELUSIVE_CLUSTERS_COLUMNS)
         observed = pipeline(
             elusive_edges,
@@ -319,16 +319,16 @@ class Tests(unittest.TestCase):
         ], schema = ELUSIVE_EDGES_COLUMNS)
         read_size = pl.DataFrame([
             ["1", 1000],
-            ["2", 1000],
-            ["3", 1000],
-            ["4", 1000],
-            ["5", 1000],
-            ["6", 1000],
+            ["2", 2000],
+            ["3", 3000],
+            ["4", 4000],
+            ["5", 5000],
+            ["6", 6000],
         ], schema=READ_SIZE_COLUMNS)
 
         expected = pl.DataFrame([
-            ["4,5,6", 3, 7, 3000, "4,5,6", "coassembly_0"],
-            ["1,2,3", 3, 3, 3000, "1,2,3", "coassembly_1"],
+            ["1,2,3", 3, 2, 6000, "1,2,3", "coassembly_0"],
+            ["4,5,6", 3, 1, 15000, "4,5,6", "coassembly_1"],
         ], schema=ELUSIVE_CLUSTERS_COLUMNS)
         observed = pipeline(
             elusive_edges,
@@ -354,15 +354,15 @@ class Tests(unittest.TestCase):
         ], schema = ELUSIVE_EDGES_COLUMNS)
         read_size = pl.DataFrame([
             ["1", 1000],
-            ["2", 1000],
-            ["3", 1000],
-            ["4", 1000],
-            ["5", 1000],
-            ["6", 1000],
+            ["2", 2000],
+            ["3", 3000],
+            ["4", 4000],
+            ["5", 5000],
+            ["6", 6000],
         ], schema=READ_SIZE_COLUMNS)
 
         expected = pl.DataFrame([
-            ["1,2,3", 3, 3, 3000, "1,2,3", "coassembly_0"],
+            ["1,2,3", 3, 2, 6000, "1,2,3", "coassembly_0"],
         ], schema=ELUSIVE_CLUSTERS_COLUMNS)
         observed = pipeline(
             elusive_edges,
@@ -420,15 +420,15 @@ class Tests(unittest.TestCase):
             ["2", 1000],
             ["3", 1000],
             ["4", 1000],
-            ["5", 1000],
-            ["6", 1000],
-            ["7", 1000],
-            ["8", 1000],
+            ["5", 2000],
+            ["6", 2000],
+            ["7", 2000],
+            ["8", 2000],
         ], schema=READ_SIZE_COLUMNS)
 
         expected = pl.DataFrame([
-            ["5,6,7,8", 4, 6, 4000, "5,6,7,8", "coassembly_0"],
-            ["1,2,3,4", 4, 4, 4000, "1,2,3,4", "coassembly_1"],
+            ["1,2,3,4", 4, 1, 4000, "1,2,3,4", "coassembly_0"],
+            ["5,6,7,8", 4, 1, 8000, "5,6,7,8", "coassembly_1"],
         ], schema=ELUSIVE_CLUSTERS_COLUMNS)
         observed = pipeline(
             elusive_edges,

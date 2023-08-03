@@ -266,7 +266,7 @@ def pipeline(
                 .list.sort()
                 .list.join(",")
                 )
-            .sort("total_targets", "samples", descending=True)
+            .sort("total_targets", "total_size", descending=[True, False])
             .with_row_count("coassembly")
             .select(
                 "samples", "length", "total_targets", "total_size", "recover_samples",
