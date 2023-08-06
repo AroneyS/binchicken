@@ -25,7 +25,7 @@ def join_list_subsets(df1, df2):
         df2.select(
             pl.col("samples"),
             pl.col("target_ids"),
-            pl.col("cluster_size"),
+            length = pl.col("cluster_size").cast(pl.UInt32),
             )
             .with_columns(
                 right_hash = pl.col("samples").list.sort().hash(),
@@ -37,21 +37,21 @@ def join_list_subsets(df1, df2):
         .select(
             pl.col("samples"),
             pl.col("samples_hash"),
-            pl.col("cluster_size"),
+            pl.col("length"),
             )
         .explode("samples")
         .join(
             df2
             .explode("samples"),
-            on=["samples", "cluster_size"],
+            on=["samples", "length"],
         )
-        .groupby(pl.col("samples_hash"), "right_hash", "cluster_size")
+        .groupby(pl.col("samples_hash"), "right_hash", "length")
         .agg(pl.count())
         .join(
             df2,
-            on=["right_hash", "cluster_size"]
+            on=["right_hash", "length"]
         )
-        .filter(pl.col("count") >= pl.col("cluster_size"))
+        .filter(pl.col("count") >= pl.col("length"))
         .groupby(pl.col("samples_hash"))
         .agg(pl.col("target_ids").flatten())
         .select(
@@ -205,17 +205,7 @@ def pipeline(
                         pl.first("cluster_size"),
                         )
                     .filter(pl.col("target_ids").list.lengths() >= MIN_CLUSTER_TARGETS)
-                    .pipe(
-                        join_list_subsets,
-                        df2=elusive_edges
-                            .filter(pl.col("style") == "pool")
-                            .filter(pl.col("samples").list.lengths() >= MAX_SAMPLES_COMBINATIONS)
-                        )
-                    .select(
-                        "samples",
-                        pl.concat_list("target_ids", "extra_targets").list.unique(),
-                        "samples_hash",
-                        )
+                    .select("samples", "target_ids", "samples_hash")
                 )
 
         sample_targets = (
@@ -258,6 +248,13 @@ def pipeline(
                     .map(accumulate_clusters, return_dtype=pl.Boolean),
                 )
             .filter(pl.col("unique_samples"))
+            .pipe(
+                join_list_subsets,
+                df2=elusive_edges
+                    .filter(pl.col("style") == "pool")
+                    .filter(pl.col("samples").list.lengths() >= MAX_SAMPLES_COMBINATIONS)
+                )
+            .with_columns(pl.concat_list("target_ids", "extra_targets").list.unique())
             .pipe(
                 find_recover_candidates,
                 sample_targets,
