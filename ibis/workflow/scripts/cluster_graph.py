@@ -255,6 +255,9 @@ def pipeline(
                     .filter(pl.col("samples").list.lengths() >= MAX_SAMPLES_COMBINATIONS)
                 )
             .with_columns(pl.concat_list("target_ids", "extra_targets").list.unique())
+            .with_columns(
+                total_targets = pl.col("target_ids").list.lengths(),
+            )
             .pipe(
                 find_recover_candidates,
                 sample_targets,
