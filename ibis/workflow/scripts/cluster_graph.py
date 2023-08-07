@@ -168,6 +168,7 @@ def pipeline(
             clusters = [
                 elusive_edges
                 .filter(pl.col("style") == "match")
+                .filter(pl.col("cluster_size") >= MIN_COASSEMBLY_SAMPLES)
                 .filter(pl.col("target_ids").list.lengths() >= MIN_CLUSTER_TARGETS)
                 .select("samples", "target_ids", samples_hash = pl.col("samples").list.sort().hash())
             ]
@@ -176,6 +177,7 @@ def pipeline(
                 clusters.append(
                     elusive_edges
                     .filter(pl.col("style") == "pool")
+                    .filter(pl.col("cluster_size") >= MIN_COASSEMBLY_SAMPLES)
                     # Prevent combinatorial explosion (also, large clusters are less useful for distinguishing between clusters)
                     .filter(pl.col("samples").list.lengths() < MAX_SAMPLES_COMBINATIONS)
                     .with_columns(
@@ -213,7 +215,6 @@ def pipeline(
             pl.concat(clusters)
             .join(excluded_coassemblies, on="samples_hash", how="anti")
             .with_columns(length = pl.col("samples").list.lengths())
-            .filter(pl.col("length") >= MIN_COASSEMBLY_SAMPLES)
             .explode("samples")
             .join(read_size, on="samples", how="left")
             .groupby("samples_hash")
