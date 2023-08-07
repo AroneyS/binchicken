@@ -23,12 +23,9 @@ def join_list_subsets(df1, df2):
     """
     df2 = (
         df2.select(
-            pl.col("samples"),
-            pl.col("target_ids"),
+            right_samples = pl.col("samples"),
+            extra_targets = pl.col("target_ids"),
             length = pl.col("cluster_size").cast(pl.UInt32),
-            )
-            .with_columns(
-                right_hash = pl.col("samples").list.sort().hash(),
             )
     )
 
@@ -39,24 +36,17 @@ def join_list_subsets(df1, df2):
             pl.col("samples_hash"),
             pl.col("length"),
             )
-        .explode("samples")
-        .join(
-            df2
-            .explode("samples"),
-            on=["samples", "length"],
-        )
-        .groupby(pl.col("samples_hash"), "right_hash", "length")
-        .agg(pl.count())
         .join(
             df2,
-            on=["right_hash", "length"]
+            on=["length"],
+            how="left",
         )
-        .filter(pl.col("count") >= pl.col("length"))
-        .groupby(pl.col("samples_hash"))
-        .agg(pl.col("target_ids").flatten())
+        .filter(pl.col("samples").list.set_intersection("right_samples").list.lengths() >= pl.col("length"))
+        .groupby("samples_hash")
+        .agg(pl.col("extra_targets").flatten())
         .select(
-            pl.col("target_ids").list.unique().alias("extra_targets"),
             pl.col("samples_hash"),
+            pl.col("extra_targets").list.unique().fill_null([]),
             )
     )
 
@@ -248,19 +238,19 @@ def pipeline(
                     .map(accumulate_clusters, return_dtype=pl.Boolean),
                 )
             .filter(pl.col("unique_samples"))
+            .drop("unique_samples")
+            .collect(streaming=True)
             .pipe(
                 join_list_subsets,
                 df2=elusive_edges
                     .filter(pl.col("style") == "pool")
                     .filter(pl.col("samples").list.lengths() >= MAX_SAMPLES_COMBINATIONS)
+                    .collect(streaming=True),
                 )
             .with_columns(pl.concat_list("target_ids", "extra_targets").list.unique())
-            .with_columns(
-                total_targets = pl.col("target_ids").list.lengths(),
-            )
             .pipe(
                 find_recover_candidates,
-                sample_targets,
+                sample_targets.collect(streaming=True),
                 MAX_RECOVERY_SAMPLES=MAX_RECOVERY_SAMPLES,
                 )
             .with_columns(
@@ -270,7 +260,8 @@ def pipeline(
                 .list.head(MAX_RECOVERY_SAMPLES)
                 .cast(pl.List(pl.Utf8))
                 .list.sort()
-                .list.join(",")
+                .list.join(","),
+                total_targets = pl.col("target_ids").list.lengths(),
                 )
             .sort("total_targets", "total_size", descending=[True, False])
             .with_row_count("coassembly")
@@ -278,7 +269,6 @@ def pipeline(
                 "samples", "length", "total_targets", "total_size", "recover_samples",
                 coassembly = pl.lit("coassembly_") + pl.col("coassembly").cast(pl.Utf8)
                 )
-            .collect(streaming=True)
         )
 
     logging.info("Done")
