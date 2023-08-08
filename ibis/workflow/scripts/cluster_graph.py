@@ -23,12 +23,9 @@ def join_list_subsets(df1, df2):
     """
     df2 = (
         df2.select(
-            pl.col("samples"),
-            pl.col("target_ids"),
-            pl.col("cluster_size"),
-            )
-            .with_columns(
-                right_hash = pl.col("samples").list.sort().hash(),
+            right_samples = pl.col("samples"),
+            extra_targets = pl.col("target_ids"),
+            length = pl.col("cluster_size").cast(pl.UInt32),
             )
     )
 
@@ -37,25 +34,19 @@ def join_list_subsets(df1, df2):
         .select(
             pl.col("samples"),
             pl.col("samples_hash"),
+            pl.col("length"),
             )
-        .explode("samples")
-        .join(
-            df2
-            .explode("samples"),
-            on="samples",
-        )
-        .groupby(pl.col("samples_hash"), "right_hash")
-        .agg(pl.count())
         .join(
             df2,
-            on="right_hash"
+            on=["length"],
+            how="left",
         )
-        .filter(pl.col("count") >= pl.col("cluster_size"))
-        .groupby(pl.col("samples_hash"))
-        .agg(pl.col("target_ids").flatten())
+        .filter(pl.col("samples").list.set_intersection("right_samples").list.lengths() >= pl.col("length"))
+        .groupby("samples_hash")
+        .agg(pl.col("extra_targets").flatten())
         .select(
-            pl.col("target_ids").list.unique().alias("extra_targets"),
             pl.col("samples_hash"),
+            pl.col("extra_targets").list.unique().fill_null([]),
             )
     )
 
@@ -107,6 +98,7 @@ def pipeline(
         MIN_COASSEMBLY_SAMPLES=2,
         MAX_RECOVERY_SAMPLES=20,
         MIN_CLUSTER_TARGETS=1,
+        MAX_SAMPLES_COMBINATIONS=100,
         EXCLUDE_COASSEMBLIES=[]):
 
     logging.info(f"Polars using {str(pl.threadpool_size())} threads")
@@ -176,6 +168,7 @@ def pipeline(
             clusters = [
                 elusive_edges
                 .filter(pl.col("style") == "match")
+                .filter(pl.col("cluster_size") >= MIN_COASSEMBLY_SAMPLES)
                 .filter(pl.col("target_ids").list.lengths() >= MIN_CLUSTER_TARGETS)
                 .select("samples", "target_ids", samples_hash = pl.col("samples").list.sort().hash())
             ]
@@ -184,8 +177,9 @@ def pipeline(
                 clusters.append(
                     elusive_edges
                     .filter(pl.col("style") == "pool")
+                    .filter(pl.col("cluster_size") >= MIN_COASSEMBLY_SAMPLES)
                     # Prevent combinatorial explosion (also, large clusters are less useful for distinguishing between clusters)
-                    .filter(pl.col("samples").list.lengths() < 100)
+                    .filter(pl.col("samples").list.lengths() < MAX_SAMPLES_COMBINATIONS)
                     .with_columns(
                         samples_combinations = pl.struct(["length", "cluster_size"]).apply(
                             lambda x: [i for i in itertools.combinations(range(x["length"]), x["cluster_size"])],
@@ -195,16 +189,15 @@ def pipeline(
                     .explode("samples_combinations")
                     .with_columns(pl.col("samples").list.take(pl.col("samples_combinations")))
                     .with_columns(samples_hash = pl.col("samples").list.sort().hash())
-                    .select("samples_hash", "samples", "target_ids")
+                    .select("samples_hash", "samples", "target_ids", "cluster_size")
                     .groupby("samples_hash")
-                    .agg(pl.first("samples"), pl.col("target_ids").flatten())
-                    .filter(pl.col("target_ids").list.lengths() >= MIN_CLUSTER_TARGETS)
-                    .pipe(join_list_subsets, df2=elusive_edges)
-                    .select(
-                        "samples",
-                        pl.concat_list("target_ids", "extra_targets").list.unique(),
-                        "samples_hash",
+                    .agg(
+                        pl.first("samples"),
+                        pl.col("target_ids").flatten(),
+                        pl.first("cluster_size"),
                         )
+                    .filter(pl.col("target_ids").list.lengths() >= MIN_CLUSTER_TARGETS)
+                    .select("samples", "target_ids", "samples_hash")
                 )
 
         sample_targets = (
@@ -222,7 +215,6 @@ def pipeline(
             pl.concat(clusters)
             .join(excluded_coassemblies, on="samples_hash", how="anti")
             .with_columns(length = pl.col("samples").list.lengths())
-            .filter(pl.col("length") >= MIN_COASSEMBLY_SAMPLES)
             .explode("samples")
             .join(read_size, on="samples", how="left")
             .groupby("samples_hash")
@@ -247,9 +239,19 @@ def pipeline(
                     .map(accumulate_clusters, return_dtype=pl.Boolean),
                 )
             .filter(pl.col("unique_samples"))
+            .drop("unique_samples")
+            .collect(streaming=True)
+            .pipe(
+                join_list_subsets,
+                df2=elusive_edges
+                    .filter(pl.col("style") == "pool")
+                    .filter(pl.col("samples").list.lengths() >= MAX_SAMPLES_COMBINATIONS)
+                    .collect(streaming=True),
+                )
+            .with_columns(pl.concat_list("target_ids", "extra_targets").list.unique())
             .pipe(
                 find_recover_candidates,
-                sample_targets,
+                sample_targets.collect(streaming=True),
                 MAX_RECOVERY_SAMPLES=MAX_RECOVERY_SAMPLES,
                 )
             .with_columns(
@@ -259,15 +261,15 @@ def pipeline(
                 .list.head(MAX_RECOVERY_SAMPLES)
                 .cast(pl.List(pl.Utf8))
                 .list.sort()
-                .list.join(",")
+                .list.join(","),
+                total_targets = pl.col("target_ids").list.lengths(),
                 )
-            .sort("total_targets", "samples", descending=True)
+            .sort("total_targets", "total_size", descending=[True, False])
             .with_row_count("coassembly")
             .select(
                 "samples", "length", "total_targets", "total_size", "recover_samples",
                 coassembly = pl.lit("coassembly_") + pl.col("coassembly").cast(pl.Utf8)
                 )
-            .collect(streaming=True)
         )
 
     logging.info("Done")
@@ -310,5 +312,6 @@ if __name__ == "__main__":
         MAX_RECOVERY_SAMPLES=MAX_RECOVERY_SAMPLES,
         EXCLUDE_COASSEMBLIES=EXCLUDE_COASSEMBLIES,
         MIN_CLUSTER_TARGETS=min_cluster_targets,
+        MAX_SAMPLES_COMBINATIONS=100,
         )
     clusters.write_csv(elusive_clusters_path, separator="\t")

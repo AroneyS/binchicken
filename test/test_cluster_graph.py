@@ -106,18 +106,18 @@ class Tests(unittest.TestCase):
         ], schema = ELUSIVE_EDGES_COLUMNS)
         read_size = pl.DataFrame([
             ["1", 1000],
-            ["2", 1000],
-            ["3", 1000],
-            ["4", 1000],
-            ["5", 1000],
+            ["2", 2000],
+            ["3", 3000],
+            ["4", 4000],
+            ["5", 5000],
         ], schema=READ_SIZE_COLUMNS)
 
         expected = pl.DataFrame([
-            ["4", 1, 5, 1000, "1,2,3,4", "coassembly_0"],
-            ["3", 1, 4, 1000, "1,2,3,4", "coassembly_1"],
-            ["2", 1, 4, 1000, "1,2,3,4", "coassembly_2"],
-            ["1", 1, 4, 1000, "1,2,3,4", "coassembly_3"],
-            ["5", 1, 1, 1000, "4,5", "coassembly_4"],
+            ["4", 1, 5, 4000, "1,2,3,4", "coassembly_0"],
+            ["1", 1, 4, 1000, "1,2,3,4", "coassembly_1"],
+            ["2", 1, 4, 2000, "1,2,3,4", "coassembly_2"],
+            ["3", 1, 4, 3000, "1,2,3,4", "coassembly_3"],
+            ["5", 1, 1, 5000, "4,5", "coassembly_4"],
         ], schema=ELUSIVE_CLUSTERS_COLUMNS)
         observed = pipeline(
             elusive_edges,
@@ -168,17 +168,17 @@ class Tests(unittest.TestCase):
         ], schema = ELUSIVE_EDGES_COLUMNS)
         read_size = pl.DataFrame([
             ["1", 1000],
-            ["2", 1000],
-            ["3", 1000],
-            ["4", 1000],
-            ["5", 1000],
-            ["6", 1000],
+            ["2", 2000],
+            ["3", 3000],
+            ["4", 4000],
+            ["5", 5000],
+            ["6", 6000],
         ], schema=READ_SIZE_COLUMNS)
 
         expected = pl.DataFrame([
-            ["5,6", 2, 3, 2000, "4,5,6", "coassembly_0"],
-            ["3,4", 2, 3, 2000, "1,2,3,4", "coassembly_1"],
-            ["1,2", 2, 3, 2000, "1,2,3,4", "coassembly_2"],
+            ["1,2", 2, 3, 3000, "1,2,3,4", "coassembly_0"],
+            ["3,4", 2, 3, 7000, "1,2,3,4", "coassembly_1"],
+            ["5,6", 2, 3, 11000, "4,5,6", "coassembly_2"],
         ], schema=ELUSIVE_CLUSTERS_COLUMNS)
         observed = pipeline(
             elusive_edges,
@@ -200,15 +200,15 @@ class Tests(unittest.TestCase):
         ], schema = ELUSIVE_EDGES_COLUMNS)
         read_size = pl.DataFrame([
             ["1", 1000],
-            ["2", 1000],
-            ["3", 1000],
-            ["4", 1000],
-            ["5", 1000],
+            ["2", 2000],
+            ["3", 3000],
+            ["4", 4000],
+            ["5", 5000],
         ], schema=READ_SIZE_COLUMNS)
 
         expected = pl.DataFrame([
-            ["4,5", 2, 3, 2000, "3,4,5", "coassembly_0"],
-            ["1,2", 2, 3, 2000, "1,2,3", "coassembly_1"],
+            ["1,2", 2, 3, 3000, "1,2,3", "coassembly_0"],
+            ["4,5", 2, 3, 9000, "3,4,5", "coassembly_1"],
         ], schema=ELUSIVE_CLUSTERS_COLUMNS)
         observed = pipeline(
             elusive_edges,
@@ -230,15 +230,15 @@ class Tests(unittest.TestCase):
         ], schema = ELUSIVE_EDGES_COLUMNS)
         read_size = pl.DataFrame([
             ["1", 1000],
-            ["2", 1000],
-            ["3", 1000],
-            ["4", 1000],
-            ["5", 1000],
+            ["2", 2000],
+            ["3", 3000],
+            ["4", 4000],
+            ["5", 5000],
         ], schema=READ_SIZE_COLUMNS)
 
         expected = pl.DataFrame([
-            ["4,5", 2, 3, 2000, "1,4,5", "coassembly_0"],
-            ["1,2", 2, 3, 2000, "1,2,3", "coassembly_1"],
+            ["1,2", 2, 3, 3000, "1,2,3", "coassembly_0"],
+            ["4,5", 2, 3, 9000, "1,4,5", "coassembly_1"],
         ], schema=ELUSIVE_CLUSTERS_COLUMNS)
         observed = pipeline(
             elusive_edges,
@@ -319,16 +319,16 @@ class Tests(unittest.TestCase):
         ], schema = ELUSIVE_EDGES_COLUMNS)
         read_size = pl.DataFrame([
             ["1", 1000],
-            ["2", 1000],
-            ["3", 1000],
-            ["4", 1000],
-            ["5", 1000],
-            ["6", 1000],
+            ["2", 2000],
+            ["3", 3000],
+            ["4", 4000],
+            ["5", 5000],
+            ["6", 6000],
         ], schema=READ_SIZE_COLUMNS)
 
         expected = pl.DataFrame([
-            ["4,5,6", 3, 7, 3000, "4,5,6", "coassembly_0"],
-            ["1,2,3", 3, 3, 3000, "1,2,3", "coassembly_1"],
+            ["1,2,3", 3, 2, 6000, "1,2,3", "coassembly_0"],
+            ["4,5,6", 3, 1, 15000, "4,5,6", "coassembly_1"],
         ], schema=ELUSIVE_CLUSTERS_COLUMNS)
         observed = pipeline(
             elusive_edges,
@@ -354,15 +354,15 @@ class Tests(unittest.TestCase):
         ], schema = ELUSIVE_EDGES_COLUMNS)
         read_size = pl.DataFrame([
             ["1", 1000],
-            ["2", 1000],
-            ["3", 1000],
-            ["4", 1000],
-            ["5", 1000],
-            ["6", 1000],
+            ["2", 2000],
+            ["3", 3000],
+            ["4", 4000],
+            ["5", 5000],
+            ["6", 6000],
         ], schema=READ_SIZE_COLUMNS)
 
         expected = pl.DataFrame([
-            ["1,2,3", 3, 3, 3000, "1,2,3", "coassembly_0"],
+            ["1,2,3", 3, 2, 6000, "1,2,3", "coassembly_0"],
         ], schema=ELUSIVE_CLUSTERS_COLUMNS)
         observed = pipeline(
             elusive_edges,
@@ -371,6 +371,33 @@ class Tests(unittest.TestCase):
             MIN_COASSEMBLY_SAMPLES=3,
             MAX_COASSEMBLY_SAMPLES=3,
             MIN_CLUSTER_TARGETS=2,
+            )
+        self.assertDataFrameEqual(expected, observed)
+
+    def test_cluster_three_samples_max_sample(self):
+        elusive_edges = pl.DataFrame([
+            ["pool", 3, "1,2,3", "1,3"],
+            ["pool", 3, "1,2,3,4,5,6", "2"],
+        ], schema = ELUSIVE_EDGES_COLUMNS)
+        read_size = pl.DataFrame([
+            ["1", 1000],
+            ["2", 2000],
+            ["3", 3000],
+            ["4", 4000],
+            ["5", 5000],
+            ["6", 6000],
+        ], schema=READ_SIZE_COLUMNS)
+
+        expected = pl.DataFrame([
+            ["1,2,3", 3, 3, 6000, "1,2,3,4,5,6", "coassembly_0"],
+        ], schema=ELUSIVE_CLUSTERS_COLUMNS)
+        observed = pipeline(
+            elusive_edges,
+            read_size,
+            MAX_RECOVERY_SAMPLES=6,
+            MIN_COASSEMBLY_SAMPLES=3,
+            MAX_COASSEMBLY_SAMPLES=3,
+            MAX_SAMPLES_COMBINATIONS=5,
             )
         self.assertDataFrameEqual(expected, observed)
 
@@ -417,24 +444,30 @@ class Tests(unittest.TestCase):
         ], schema = ELUSIVE_EDGES_COLUMNS)
         read_size = pl.DataFrame([
             ["1", 1000],
-            ["2", 1000],
-            ["3", 1000],
-            ["4", 1000],
-            ["5", 1000],
-            ["6", 1000],
-            ["7", 1000],
-            ["8", 1000],
+            ["2", 2000],
+            ["3", 3000],
+            ["4", 4000],
+            ["5", 5000],
+            ["6", 6000],
+            ["7", 7000],
+            ["8", 8000],
         ], schema=READ_SIZE_COLUMNS)
 
         expected = pl.DataFrame([
-            ["5,6,7,8", 4, 6, 4000, "5,6,7,8", "coassembly_0"],
-            ["1,2,3,4", 4, 4, 4000, "1,2,3,4", "coassembly_1"],
+            ["1,4", 2, 3, 5000, "1,2,3,4", "coassembly_0"],
+            ["5,8", 2, 3, 13000, "5,6,7,8", "coassembly_1"],
+            ["2,3", 2, 2, 5000, "2,3,4,5", "coassembly_2"],
+            ["1,2,4", 3, 2, 7000, "1,2,3,4", "coassembly_3"],
+            ["6,7", 2, 2, 13000, "5,6,7,8", "coassembly_4"],
+            ["1,2,3,4", 4, 1, 10000, "1,2,3,4", "coassembly_5"],
+            ["5,6,7", 3, 1, 18000, "5,6,7,8", "coassembly_6"],
+            ["5,6,7,8", 4, 1, 26000, "5,6,7,8", "coassembly_7"],
         ], schema=ELUSIVE_CLUSTERS_COLUMNS)
         observed = pipeline(
             elusive_edges,
             read_size,
             MAX_RECOVERY_SAMPLES=4,
-            MIN_COASSEMBLY_SAMPLES=4,
+            MIN_COASSEMBLY_SAMPLES=2,
             MAX_COASSEMBLY_SAMPLES=4,
             )
         self.assertDataFrameEqual(expected, observed)
@@ -468,22 +501,27 @@ class Tests(unittest.TestCase):
         with pl.StringCache():
             df1 = (
                 pl.DataFrame([
-                        [["a", "b", "c"], ["1"]],
-                        [["b", "c", "d"], ["2"]],
-                        [["a", "b", "c", "d"], ["3"]],
-                        [["d", "e", "f"], ["4"]],
-                    ], schema=["samples", "target_ids"])
-                .with_columns(pl.col("samples").cast(pl.List(pl.Categorical)))
+                        [["a", "b"], ["1"], 2],
+                        [["b", "c", "d"], ["2"], 3],
+                        [["a", "b", "c", "d"], ["3"], 4],
+                        [["d", "e", "f"], ["4"], 3],
+                        [["b", "c", "d", "g"], ["5"], 4],
+                    ], schema=["samples", "target_ids", "length"])
+                .with_columns(
+                    pl.col("samples").cast(pl.List(pl.Categorical)),
+                    pl.col("length").cast(pl.UInt32),
+                    )
                 .with_columns(samples_hash = pl.col("samples").list.sort().hash())
             )
 
             df2 = (
                 pl.DataFrame([
-                        [["a", "b"], ["1"], 2],
+                        [["a", "b"], ["2"], 2],
                         [["b", "c"], ["2"], 2],
                         [["c", "d"], ["3"], 2],
                         [["b", "c", "d"], ["4"], 3],
                         [["b", "c", "d", "g"], ["5"], 3],
+                        [["b", "c", "d"], ["6"], 2],
                     ], schema=["samples", "target_ids", "cluster_size"])
                 .with_columns(pl.col("samples").cast(pl.List(pl.Categorical)))
                 .with_columns(samples_hash = pl.col("samples").list.sort().hash())
@@ -491,14 +529,15 @@ class Tests(unittest.TestCase):
 
             expected = (
                 pl.DataFrame([
-                        [["a", "b", "c"], ["1"], ["1", "2"]],
-                        [["b", "c", "d"], ["2"], ["2", "3", "4", "5"]],
-                        [["a", "b", "c", "d"], ["3"], ["1", "2", "3", "4", "5"]],
-                        [["d", "e", "f"], ["4"], []],
-                    ], schema=["samples", "target_ids", "extra_targets"])
+                        [["a", "b"], ["1"], 2, ["2"]],
+                        [["b", "c", "d"], ["2"], 3, ["4", "5"]],
+                        [["a", "b", "c", "d"], ["3"], 4, []],
+                        [["d", "e", "f"], ["4"], 3, []],
+                        [["b", "c", "d", "g"], ["5"], 4, []],
+                    ], schema=["samples", "target_ids", "length", "extra_targets"])
                 .with_columns(pl.col("samples").cast(pl.List(pl.Categorical)))
                 .with_columns(samples_hash = pl.col("samples").list.sort().hash())
-                .select("samples", "target_ids", "samples_hash", "extra_targets")
+                .select("samples", "target_ids", "length", "samples_hash", "extra_targets")
             )
 
             observed = (
@@ -511,23 +550,28 @@ class Tests(unittest.TestCase):
         with pl.StringCache():
             df1 = (
                 pl.DataFrame([
-                        [["a", "b", "c"], ["1"]],
-                        [["b", "c", "d"], ["2"]],
-                        [["a", "b", "c", "d"], ["3"]],
-                        [["d", "e", "f"], ["4"]],
-                    ], schema=["samples", "target_ids"])
+                        [["a", "b"], ["1"], 2],
+                        [["b", "c", "d"], ["2"], 3],
+                        [["a", "b", "c", "d"], ["3"], 4],
+                        [["d", "e", "f"], ["4"], 3],
+                        [["b", "c", "d", "g"], ["5"], 4],
+                    ], schema=["samples", "target_ids", "length"])
                 .lazy()
-                .with_columns(pl.col("samples").cast(pl.List(pl.Categorical)))
+                .with_columns(
+                    pl.col("samples").cast(pl.List(pl.Categorical)),
+                    pl.col("length").cast(pl.UInt32),
+                    )
                 .with_columns(samples_hash = pl.col("samples").list.sort().hash())
             )
 
             df2 = (
                 pl.DataFrame([
-                        [["a", "b"], ["1"], 2],
+                        [["a", "b"], ["2"], 2],
                         [["b", "c"], ["2"], 2],
                         [["c", "d"], ["3"], 2],
                         [["b", "c", "d"], ["4"], 3],
                         [["b", "c", "d", "g"], ["5"], 3],
+                        [["b", "c", "d"], ["6"], 2],
                     ], schema=["samples", "target_ids", "cluster_size"])
                 .lazy()
                 .with_columns(pl.col("samples").cast(pl.List(pl.Categorical)))
@@ -536,14 +580,15 @@ class Tests(unittest.TestCase):
 
             expected = (
                 pl.DataFrame([
-                        [["a", "b", "c"], ["1"], ["1", "2"]],
-                        [["b", "c", "d"], ["2"], ["2", "3", "4", "5"]],
-                        [["a", "b", "c", "d"], ["3"], ["1", "2", "3", "4", "5"]],
-                        [["d", "e", "f"], ["4"], []],
-                    ], schema=["samples", "target_ids", "extra_targets"])
+                        [["a", "b"], ["1"], 2, ["2"]],
+                        [["b", "c", "d"], ["2"], 3, ["4", "5"]],
+                        [["a", "b", "c", "d"], ["3"], 4, []],
+                        [["d", "e", "f"], ["4"], 3, []],
+                        [["b", "c", "d", "g"], ["5"], 4, []],
+                    ], schema=["samples", "target_ids", "length", "extra_targets"])
                 .with_columns(pl.col("samples").cast(pl.List(pl.Categorical)))
                 .with_columns(samples_hash = pl.col("samples").list.sort().hash())
-                .select("samples", "target_ids", "samples_hash", "extra_targets")
+                .select("samples", "target_ids", "length", "samples_hash", "extra_targets")
             )
 
             observed = (
