@@ -3,55 +3,76 @@
 ##########################
 # Author: Samuel Aroney
 
-import pandas as pd
-
-def produce_command(row, reads_1, reads_2, output_dir, threads, memory):
-    coassembly_sample_names = row["samples"]
-    coassembly_samples_1 = [reads_1[sample] for sample in coassembly_sample_names]
-    coassembly_samples_2= [reads_2[sample] for sample in coassembly_sample_names]
-
-    all_samples_names = row["recover_samples"]
-    all_samples_1 = [reads_1[sample] for sample in all_samples_names]
-    all_samples_2 = [reads_2[sample] for sample in all_samples_names]
-
-    coassembly = row["coassembly"]
-    output_dir = output_dir + "/coassemble"
-
-    aviary_assemble = ("aviary assemble "
-    f"-1 {' '.join(coassembly_samples_1)} "
-    f"-2 {' '.join(coassembly_samples_2)} "
-    f"--output {output_dir}/{coassembly}/assemble "
-    f"-n {threads} "
-    f"-t {threads} "
-    f"-m {memory} "
-    f"&> {output_dir}/logs/{coassembly}_assemble.log ")
-
-    aviary_recover = ("aviary recover "
-    f"--assembly {output_dir}/{coassembly}/assemble/assembly/final_contigs.fasta "
-    f"-1 {' '.join(all_samples_1)} "
-    f"-2 {' '.join(all_samples_2)} "
-    f"--output {output_dir}/{coassembly}/recover "
-    f"-n {threads} "
-    f"-t {threads} "
-    f"-m {memory} "
-    f"&> {output_dir}/logs/{coassembly}_recover.log ")
-
-    return pd.Series([aviary_assemble, aviary_recover])
+import polars as pl
 
 def pipeline(coassemblies, reads_1, reads_2, output_dir, threads, memory):
-    coassemblies["samples"] = coassemblies["samples"].apply(lambda item: item.split(","))
-    coassemblies["recover_samples"] = coassemblies["recover_samples"].apply(lambda item: item.split(","))
-    coassemblies["coassembly"] = coassemblies.reset_index()["index"].apply(lambda x: "coassembly_" + str(x))
-    coassemblies[["assemble", "recover"]] = coassemblies.apply(
-        produce_command,
-        axis=1,
-        reads_1=reads_1, reads_2=reads_2, output_dir=output_dir, threads=threads, memory=memory)
+    output = (
+        coassemblies
+        .with_columns(
+            pl.col("samples").str.split(","),
+            pl.col("recover_samples").str.split(","),
+            )
+        .with_columns(
+            coassembly_samples_1 = pl.col("samples").list.eval(pl.element().map_dict(reads_1)),
+            coassembly_samples_2 = pl.col("samples").list.eval(pl.element().map_dict(reads_2)),
+            recover_samples_1 = pl.col("recover_samples").list.eval(pl.element().map_dict(reads_1)),
+            recover_samples_2 = pl.col("recover_samples").list.eval(pl.element().map_dict(reads_2)),
+            )
+        .with_columns(
+            assemble = pl.concat_str(
+                pl.lit("aviary assemble -1 "),
+                pl.col("coassembly_samples_1").list.join(" "),
+                pl.lit(" -2 "),
+                pl.col("coassembly_samples_2").list.join(" "),
+                pl.lit(" --output "),
+                pl.lit(output_dir),
+                pl.lit("/coassemble/"),
+                pl.col("coassembly"),
+                pl.lit("/assemble -n "),
+                pl.lit(threads),
+                pl.lit(" -t "),
+                pl.lit(threads),
+                pl.lit(" -m "),
+                pl.lit(memory),
+                pl.lit(" &> "),
+                pl.lit(output_dir),
+                pl.lit("/coassemble/logs/"),
+                pl.col("coassembly"),
+                pl.lit("_assemble.log ")
+                ),
+            recover = pl.concat_str(
+                pl.lit("aviary recover --assembly "),
+                pl.lit(output_dir),
+                pl.lit("/coassemble/"),
+                pl.col("coassembly"),
+                pl.lit("/assemble/assembly/final_contigs.fasta -1 "),
+                pl.col("recover_samples_1").list.join(" "),
+                pl.lit(" -2 "),
+                pl.col("recover_samples_2").list.join(" "),
+                pl.lit(" --output "),
+                pl.lit(output_dir),
+                pl.lit("/coassemble/"),
+                pl.col("coassembly"),
+                pl.lit("/recover -n "),
+                pl.lit(threads),
+                pl.lit(" -t "),
+                pl.lit(threads),
+                pl.lit(" -m "),
+                pl.lit(memory),
+                pl.lit(" &> "),
+                pl.lit(output_dir),
+                pl.lit("/coassemble/logs/"),
+                pl.col("coassembly"),
+                pl.lit("_recover.log ")
+                ),
+            )
+    )
 
-    return coassemblies
+    return output.select("assemble", "recover")
 
 if __name__ == "__main__":
-    coassemblies = pd.read_csv(snakemake.input.elusive_clusters, sep="\t")
-    if len(coassemblies.index) == 0:
+    coassemblies = pl.read_csv(snakemake.input.elusive_clusters, separator="\t")
+    if coassemblies.height == 0:
         with open(snakemake.output.coassemble_commands, "w") as f:
             pass
         with open(snakemake.output.recover_commands, "w") as f:
@@ -68,5 +89,5 @@ if __name__ == "__main__":
         snakemake.params.memory,
     )
 
-    coassemblies["assemble"].to_csv(snakemake.output.coassemble_commands, sep="\t", index=False, header=False)
-    coassemblies["recover"].to_csv(snakemake.output.recover_commands, sep="\t", index=False, header=False)
+    coassemblies.select("assemble").write_csv(snakemake.output.coassemble_commands, separator="\t", has_header=False)
+    coassemblies.select("recover").write_csv(snakemake.output.recover_commands, separator="\t", has_header=False)
