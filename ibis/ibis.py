@@ -512,11 +512,11 @@ def update(args):
     )
     copy_input(
         os.path.abspath(args.coassemble_elusive_edges),
-        os.path.join(args.output, "coassemble", "targets", "elusive_edges.tsv")
+        os.path.join(args.output, "coassemble", "target", "elusive_edges.tsv")
     )
     copy_input(
         os.path.abspath(args.coassemble_targets),
-        os.path.join(args.output, "coassemble", "targets", "targets.tsv")
+        os.path.join(args.output, "coassemble", "target", "targets.tsv")
     )
     copy_input(
         os.path.abspath(args.coassemble_summary),
