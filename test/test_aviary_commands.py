@@ -44,7 +44,7 @@ class Tests(unittest.TestCase):
     def test_aviary_commands(self):
         elusive_clusters = pl.DataFrame([
             ["1,2,3", 3, 2, 2000, "1,2,3,4,5,6", "coassembly_0"],
-            ["4,5,6", 3, 1, 3000, "4,5,6", "coassembly_1"],
+            ["4,5,6", 3, 1, 3000, "4,5,6", "coassembly_2"],
         ], schema=ELUSIVE_CLUSTERS_COLUMNS)
         output_dir = "test_output_dir"
         threads = 10
@@ -71,16 +71,16 @@ class Tests(unittest.TestCase):
                 f"aviary assemble "
                 f"-1 4_1.fq.gz 5_1.fq.gz 6_1.fq.gz "
                 f"-2 4_2.fq.gz 5_2.fq.gz 6_2.fq.gz "
-                f"--output {output_dir}/coassemble/coassembly_1/assemble "
+                f"--output {output_dir}/coassemble/coassembly_2/assemble "
                 f"-n {threads} -t {threads} -m {memory} "
-                f"&> {output_dir}/coassemble/logs/coassembly_1_assemble.log ",
+                f"&> {output_dir}/coassemble/logs/coassembly_2_assemble.log ",
 
-                f"aviary recover --assembly {output_dir}/coassemble/coassembly_1/assemble/assembly/final_contigs.fasta "
+                f"aviary recover --assembly {output_dir}/coassemble/coassembly_2/assemble/assembly/final_contigs.fasta "
                 f"-1 4_1.fq.gz 5_1.fq.gz 6_1.fq.gz "
                 f"-2 4_2.fq.gz 5_2.fq.gz 6_2.fq.gz "
-                f"--output {output_dir}/coassemble/coassembly_1/recover "
+                f"--output {output_dir}/coassemble/coassembly_2/recover "
                 f"-n {threads} -t {threads} -m {memory} "
-                f"&> {output_dir}/coassemble/logs/coassembly_1_recover.log ",
+                f"&> {output_dir}/coassemble/logs/coassembly_2_recover.log ",
             ],
         ], schema=COMMANDS_COLUMNS, orient="row")
 
