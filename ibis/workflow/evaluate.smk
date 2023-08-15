@@ -51,7 +51,7 @@ rule singlem_pipe_bins:
     log:
         logs_dir + "/pipe/{bin}.log"
     params:
-        singlem_metapackage=config["singlem_metapackage"]
+        singlem_metapackage = config["singlem_metapackage"]
     conda:
         "env/singlem.yml"
     shell:
@@ -69,7 +69,7 @@ rule singlem_summarise_bins:
     log:
         logs_dir + "/summarise/bins.log"
     params:
-        singlem_metapackage=config["singlem_metapackage"]
+        singlem_metapackage = config["singlem_metapackage"]
     conda:
         "env/singlem.yml"
     shell:
@@ -89,8 +89,8 @@ rule cluster_original_bins:
     log:
         logs_dir + "/cluster/original.log"
     params:
-        genomes=" ".join(config["original_bins"]),
-        ani=config["cluster"],
+        genomes = " ".join(config["original_bins"]),
+        ani = config["cluster"],
     threads: 64
     conda:
         "env/coverm.yml"
@@ -109,8 +109,8 @@ rule cluster_updated_bins:
     log:
         logs_dir + "/cluster/{coassembly}.log"
     params:
-        genomes=get_cluster_genomes,
-        ani=config["cluster"],
+        genomes = get_cluster_genomes,
+        ani = config["cluster"],
     threads: 64
     conda:
         "env/coverm.yml"
@@ -125,12 +125,12 @@ rule cluster_updated_bins:
 
 rule summarise_clusters:
     input:
-        original=output_dir + "/cluster/original.txt",
-        updated=expand(output_dir + "/cluster/{coassembly}.txt", coassembly=coassemblies),
+        original = output_dir + "/cluster/original.txt",
+        updated = expand(output_dir + "/cluster/{coassembly}.txt", coassembly=coassemblies),
     output:
         output_dir + "/evaluate/cluster_stats.csv",
     params:
-        names=["original"] + coassemblies
+        names = ["original"] + coassemblies
     shell:
         "parallel -k "
         "echo -n {{1}}, '&&' "
@@ -149,11 +149,11 @@ rule evaluate:
         novel_hits = output_dir + "/evaluate/novel_hits.tsv",
         summary_stats = output_dir + "/evaluate/summary_stats.tsv",
     params:
-        target_otu_table=config["targets"],
-        binned_otu_table=config["binned"],
-        elusive_edges=config["elusive_edges"],
-        elusive_clusters=config["elusive_clusters"],
-        recovered_bins=config["recovered_bins"],
+        target_otu_table = config["targets"],
+        binned_otu_table = config["binned"],
+        elusive_edges = config["elusive_edges"],
+        elusive_clusters = config["elusive_clusters"],
+        recovered_bins = config["recovered_bins"],
     threads:
         64
     script:
@@ -166,7 +166,7 @@ rule evaluate_plots:
         cluster_summary = output_dir + "/evaluate/cluster_stats.csv" if config["cluster"] else [],
         summary_stats = output_dir + "/evaluate/summary_stats.tsv",
     params:
-        coassemble_summary=config["coassemble_summary"],
+        coassemble_summary = config["coassemble_summary"],
     output:
         plots_dir = directory(output_dir + "/evaluate/plots"),
         summary_table = output_dir + "/evaluate/summary_table.png",

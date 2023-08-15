@@ -76,10 +76,10 @@ rule all:
 
 rule summary:
     input:
-        elusive_clusters=output_dir + "/target/elusive_clusters.tsv",
-        read_size=output_dir + "/unmapped_read_size.csv" if config["assemble_unmapped"] else [],
+        elusive_clusters = output_dir + "/target/elusive_clusters.tsv",
+        read_size = output_dir + "/unmapped_read_size.csv" if config["assemble_unmapped"] else [],
     output:
-        summary=output_dir + "/summary.tsv",
+        summary = output_dir + "/summary.tsv",
     script:
         "scripts/summarise_coassemblies.py"
 
@@ -88,14 +88,14 @@ rule summary:
 #####################
 rule singlem_pipe_reads:
     input:
-        reads_1=lambda wildcards: config["reads_1"][wildcards.read],
-        reads_2=lambda wildcards: config["reads_2"][wildcards.read],
+        reads_1 = lambda wildcards: config["reads_1"][wildcards.read],
+        reads_2 = lambda wildcards: config["reads_2"][wildcards.read],
     output:
         output_dir + "/pipe/{read}_read.otu_table.tsv"
     log:
         logs_dir + "/pipe/{read}_read.log"
     params:
-        singlem_metapackage=config["singlem_metapackage"]
+        singlem_metapackage = config["singlem_metapackage"]
     conda:
         "env/singlem.yml"
     shell:
@@ -135,7 +135,7 @@ rule singlem_pipe_genomes:
     log:
         logs_dir + "/pipe/{genome}_bin.log"
     params:
-        singlem_metapackage=config["singlem_metapackage"]
+        singlem_metapackage = config["singlem_metapackage"]
     conda:
         "env/singlem.yml"
     shell:
@@ -153,7 +153,7 @@ rule singlem_summarise_genomes:
     log:
         logs_dir + "/summarise/{version,.*}genomes.log"
     params:
-        singlem_metapackage=config["singlem_metapackage"]
+        singlem_metapackage = config["singlem_metapackage"]
     conda:
         "env/singlem.yml"
     shell:
@@ -169,16 +169,16 @@ rule singlem_summarise_genomes:
 ########################
 rule singlem_appraise:
     input:
-        reads=expand(output_dir + "/pipe/{read}_read.otu_table.tsv", read=config["reads_1"]),
-        bins=output_dir + "/summarise/bins_summarised.otu_table.tsv",
+        reads = expand(output_dir + "/pipe/{read}_read.otu_table.tsv", read=config["reads_1"]),
+        bins = output_dir + "/summarise/bins_summarised.otu_table.tsv",
     output:
-        unbinned=temp(output_dir + "/appraise/unbinned_raw.otu_table.tsv"),
-        binned=temp(output_dir + "/appraise/binned_raw.otu_table.tsv"),
+        unbinned = temp(output_dir + "/appraise/unbinned_raw.otu_table.tsv"),
+        binned = temp(output_dir + "/appraise/binned_raw.otu_table.tsv"),
     log:
         logs_dir + "/appraise/appraise.log"
     params:
-        sequence_identity=config["appraise_sequence_identity"],
-        singlem_metapackage=config["singlem_metapackage"],
+        sequence_identity = config["appraise_sequence_identity"],
+        singlem_metapackage = config["singlem_metapackage"],
     conda:
         "env/singlem.yml"
     shell:
@@ -195,13 +195,13 @@ rule singlem_appraise:
 
 rule singlem_appraise_filtered:
     input:
-        unbinned=output_dir + "/appraise/unbinned_raw.otu_table.tsv",
-        binned=output_dir + "/appraise/binned_raw.otu_table.tsv",
+        unbinned = output_dir + "/appraise/unbinned_raw.otu_table.tsv",
+        binned = output_dir + "/appraise/binned_raw.otu_table.tsv",
     output:
-        unbinned=output_dir + "/appraise/unbinned.otu_table.tsv",
-        binned=output_dir + "/appraise/binned.otu_table.tsv",
+        unbinned = output_dir + "/appraise/unbinned.otu_table.tsv",
+        binned = output_dir + "/appraise/binned.otu_table.tsv",
     params:
-        bad_package="S3.18.EIF_2_alpha",
+        bad_package = "S3.18.EIF_2_alpha",
     shell:
         "grep -v {params.bad_package} {input.unbinned} > {output.unbinned} && "
         "grep -v {params.bad_package} {input.binned} > {output.binned}"
@@ -211,18 +211,18 @@ rule singlem_appraise_filtered:
 #####################################
 rule update_appraise:
     input:
-        unbinned=output_dir + "/appraise/unbinned_prior.otu_table.tsv",
-        binned=output_dir + "/appraise/binned_prior.otu_table.tsv",
-        bins=output_dir + "/summarise/new_bins_summarised.otu_table.tsv",
+        unbinned = output_dir + "/appraise/unbinned_prior.otu_table.tsv",
+        binned = output_dir + "/appraise/binned_prior.otu_table.tsv",
+        bins = output_dir + "/summarise/new_bins_summarised.otu_table.tsv",
     output:
-        unbinned=temp(output_dir + "/appraise/unbinned_raw.otu_table.tsv"),
-        binned=temp(output_dir + "/appraise/binned_raw.otu_table.tsv"),
+        unbinned = temp(output_dir + "/appraise/unbinned_raw.otu_table.tsv"),
+        binned = temp(output_dir + "/appraise/binned_raw.otu_table.tsv"),
     log:
         logs_dir + "/appraise/appraise.log"
     params:
-        sequence_identity=config["appraise_sequence_identity"],
-        singlem_metapackage=config["singlem_metapackage"],
-        new_binned=output_dir + "/appraise/binned_new.otu_table.tsv",
+        sequence_identity = config["appraise_sequence_identity"],
+        singlem_metapackage = config["singlem_metapackage"],
+        new_binned = output_dir + "/appraise/binned_new.otu_table.tsv",
     conda:
         "env/singlem.yml"
     shell:
@@ -243,17 +243,17 @@ rule update_appraise:
 ###################################
 rule query_processing:
     input:
-        pipe_reads=expand(output_dir + "/pipe/{read}_read.otu_table.tsv", read=config["reads_1"]),
-        query_reads=expand(output_dir + "/query/{read}_query.otu_table.tsv", read=config["reads_1"]),
+        pipe_reads = expand(output_dir + "/pipe/{read}_read.otu_table.tsv", read=config["reads_1"]),
+        query_reads = expand(output_dir + "/query/{read}_query.otu_table.tsv", read=config["reads_1"]),
     output:
-        unbinned=temp(output_dir + "/appraise/unbinned_raw.otu_table.tsv"),
-        binned=temp(output_dir + "/appraise/binned_raw.otu_table.tsv"),
+        unbinned = temp(output_dir + "/appraise/unbinned_raw.otu_table.tsv"),
+        binned = temp(output_dir + "/appraise/binned_raw.otu_table.tsv"),
     log:
         logs_dir + "/query/processing.log"
     params:
-        sequence_identity=config["appraise_sequence_identity"],
-        window_size=60,
-        taxa_of_interest=config["taxa_of_interest"],
+        sequence_identity = config["appraise_sequence_identity"],
+        window_size = 60,
+        taxa_of_interest = config["taxa_of_interest"],
     threads:
         64
     script:
@@ -264,10 +264,10 @@ rule query_processing:
 ################################
 rule no_genomes:
     input:
-        reads=expand(output_dir + "/pipe/{read}_read.otu_table.tsv", read=config["reads_1"]),
+        reads = expand(output_dir + "/pipe/{read}_read.otu_table.tsv", read=config["reads_1"]),
     output:
-        unbinned=temp(output_dir + "/appraise/unbinned_raw.otu_table.tsv") if config["no_genomes"] else [],
-        binned=temp(output_dir + "/appraise/binned_raw.otu_table.tsv") if config["no_genomes"] else [],
+        unbinned = temp(output_dir + "/appraise/unbinned_raw.otu_table.tsv") if config["no_genomes"] else [],
+        binned = temp(output_dir + "/appraise/binned_raw.otu_table.tsv") if config["no_genomes"] else [],
     log:
         logs_dir + "/appraise/appraise.log"
     script:
@@ -279,12 +279,12 @@ rule no_genomes:
 rule count_bp_reads:
     input:
         reads_1 = lambda wildcards: get_reads(wildcards).values(),
-        reads_2 = lambda wildcards: get_reads(wildcards, forward = False).values()
+        reads_2 = lambda wildcards: get_reads(wildcards, forward=False).values()
     output:
         output_dir + "/{version,.*}read_size.csv"
     params:
-        names=list(config["reads_1"].keys()),
-        cat=get_cat,
+        names = list(config["reads_1"].keys()),
+        cat = get_cat,
     threads:
         8
     shell:
@@ -296,14 +296,14 @@ rule count_bp_reads:
 
 rule target_elusive:
     input:
-        unbinned=output_dir + "/appraise/unbinned.otu_table.tsv"
+        unbinned = output_dir + "/appraise/unbinned.otu_table.tsv"
     output:
-        output_edges=output_dir + "/target/elusive_edges.tsv",
-        output_targets=output_dir + "/target/targets.tsv",
+        output_edges = output_dir + "/target/elusive_edges.tsv",
+        output_targets = output_dir + "/target/targets.tsv",
     params:
-        min_coassembly_coverage=config["min_coassembly_coverage"],
-        max_coassembly_samples=config["max_coassembly_samples"],
-        taxa_of_interest=config["taxa_of_interest"],
+        min_coassembly_coverage = config["min_coassembly_coverage"],
+        max_coassembly_samples = config["max_coassembly_samples"],
+        taxa_of_interest = config["taxa_of_interest"],
     threads:
         64
     script:
@@ -311,16 +311,16 @@ rule target_elusive:
 
 checkpoint cluster_graph:
     input:
-        elusive_edges=output_dir + "/target/elusive_edges.tsv",
-        read_size=output_dir + "/read_size.csv",
+        elusive_edges = output_dir + "/target/elusive_edges.tsv",
+        read_size = output_dir + "/read_size.csv",
     output:
-        elusive_clusters=output_dir + "/target/elusive_clusters.tsv"
+        elusive_clusters = output_dir + "/target/elusive_clusters.tsv"
     params:
-        max_coassembly_size=config["max_coassembly_size"],
-        num_coassembly_samples=config["num_coassembly_samples"],
-        max_coassembly_samples=config["max_coassembly_samples"],
-        max_recovery_samples=config["max_recovery_samples"],
-        exclude_coassemblies=config["exclude_coassemblies"],
+        max_coassembly_size = config["max_coassembly_size"],
+        num_coassembly_samples = config["num_coassembly_samples"],
+        max_coassembly_samples = config["max_coassembly_samples"],
+        max_recovery_samples = config["max_recovery_samples"],
+        exclude_coassemblies = config["exclude_coassemblies"],
     threads:
         64
     script:
@@ -335,7 +335,7 @@ rule download_sra:
     threads:
         64
     params:
-        sra=" ".join(config["sra"]) if config["sra"] else ""
+        sra = " ".join(config["sra"]) if config["sra"] else ""
     conda:
         "env/kingfisher.yml"
     log:
@@ -356,10 +356,10 @@ rule mock_download_sra:
     threads:
         64
     params:
-        sra_f=" ".join([s + "_1.fastq.gz" for s in config["sra"][1:]]) if config["sra"] else "",
-        sra_r=" ".join([s + "_2.fastq.gz" for s in config["sra"][1:]]) if config["sra"] else "",
-        sra_u=config["sra"][0] + ".fastq.gz" if config["sra"] else "",
-        sra_basedir=workflow.basedir + "/../../test/data/sra",
+        sra_f = " ".join([s + "_1.fastq.gz" for s in config["sra"][1:]]) if config["sra"] else "",
+        sra_r = " ".join([s + "_2.fastq.gz" for s in config["sra"][1:]]) if config["sra"] else "",
+        sra_u = config["sra"][0] + ".fastq.gz" if config["sra"] else "",
+        sra_basedir = workflow.basedir + "/../../test/data/sra",
     conda:
         "env/kingfisher.yml"
     log:
@@ -375,24 +375,24 @@ rule mock_download_sra:
 #####################################
 rule collect_genomes:
     input:
-        appraise_binned=output_dir + "/appraise/binned.otu_table.tsv",
-        appraise_unbinned=output_dir + "/appraise/unbinned.otu_table.tsv",
+        appraise_binned = output_dir + "/appraise/binned.otu_table.tsv",
+        appraise_unbinned = output_dir + "/appraise/unbinned.otu_table.tsv",
     output:
         temp(output_dir + "/mapping/{read}_reference.fna"),
     params:
-        genomes=config["genomes"],
-        sample="{read}",
-        min_appraised=config["unmapping_min_appraised"],
+        genomes = config["genomes"],
+        sample = "{read}",
+        min_appraised = config["unmapping_min_appraised"],
     script:
         "scripts/collect_reference_bins.py"
 
 rule map_reads:
     input:
-        reads_1=lambda wildcards: config["reads_1"][wildcards.read],
-        reads_2=lambda wildcards: config["reads_2"][wildcards.read],
-        genomes=output_dir + "/mapping/{read}_reference.fna",
+        reads_1 = lambda wildcards: config["reads_1"][wildcards.read],
+        reads_2 = lambda wildcards: config["reads_2"][wildcards.read],
+        genomes = output_dir + "/mapping/{read}_reference.fna",
     output:
-        dir=temp(directory(output_dir + "/mapping/{read}_coverm")),
+        dir = temp(directory(output_dir + "/mapping/{read}_coverm")),
     log:
         logs_dir + "/mapping/{read}_coverm.log",
     threads:
@@ -416,10 +416,10 @@ rule filter_bam_files:
     log:
         logs_dir + "/mapping/{read}_filter.log",
     params:
-        genomes="{read}_reference.fna",
-        reads_1=lambda wildcards: os.path.basename(config["reads_1"][wildcards.read]),
-        sequence_identity=config["unmapping_max_identity"],
-        alignment_percent=config["unmapping_max_alignment"],
+        genomes = "{read}_reference.fna",
+        reads_1 = lambda wildcards: os.path.basename(config["reads_1"][wildcards.read]),
+        sequence_identity = config["unmapping_max_identity"],
+        alignment_percent = config["unmapping_max_alignment"],
     threads:
         32
     conda:
@@ -438,8 +438,8 @@ rule bam_to_fastq:
     input:
         output_dir + "/mapping/{read}_unmapped.bam",
     output:
-        reads_1=output_dir + "/mapping/{read}_unmapped.1.fq.gz",
-        reads_2=output_dir + "/mapping/{read}_unmapped.2.fq.gz",
+        reads_1 = output_dir + "/mapping/{read}_unmapped.1.fq.gz",
+        reads_2 = output_dir + "/mapping/{read}_unmapped.2.fq.gz",
     log:
         logs_dir + "/mapping/{read}_fastq.log",
     threads:
@@ -472,18 +472,18 @@ rule finish_mapping:
 rule aviary_commands:
     input:
         output_dir + "/mapping/done" if config["assemble_unmapped"] else [],
-        elusive_clusters=output_dir + "/target/elusive_clusters.tsv",
+        elusive_clusters = output_dir + "/target/elusive_clusters.tsv",
     output:
-        coassemble_commands=output_dir + "/commands/coassemble_commands.sh",
-        recover_commands=output_dir + "/commands/recover_commands.sh"
+        coassemble_commands = output_dir + "/commands/coassemble_commands.sh",
+        recover_commands = output_dir + "/commands/recover_commands.sh"
     threads:
         64
     params:
         reads_1 = mapped_reads_1 if config["assemble_unmapped"] else config["reads_1"],
         reads_2 = mapped_reads_2 if config["assemble_unmapped"] else config["reads_2"],
-        dir=output_dir,
-        memory=config["aviary_memory"],
-        threads=config["aviary_threads"],
+        dir = output_dir,
+        memory = config["aviary_memory"],
+        threads = config["aviary_threads"],
     log:
         logs_dir + "/aviary_commands.log"
     script:
@@ -495,20 +495,20 @@ rule aviary_commands:
 rule aviary_assemble:
     input:
         output_dir + "/mapping/done" if config["assemble_unmapped"] else [],
-        elusive_clusters=output_dir + "/target/elusive_clusters.tsv",
+        elusive_clusters = output_dir + "/target/elusive_clusters.tsv",
     output:
-        dir=directory(output_dir + "/coassemble/{coassembly}/assemble"),
-        assembly=output_dir + "/coassemble/{coassembly}/assemble/assembly/final_contigs.fasta",
+        dir = directory(output_dir + "/coassemble/{coassembly}/assemble"),
+        assembly = output_dir + "/coassemble/{coassembly}/assemble/assembly/final_contigs.fasta",
     params:
         reads_1 = lambda wildcards: get_reads_coassembly(wildcards),
         reads_2 = lambda wildcards: get_reads_coassembly(wildcards, forward=False),
-        memory=config["aviary_memory"],
+        memory = config["aviary_memory"],
         dryrun = "--dryrun" if config["aviary_dryrun"] else "",
         drymkdir = "&& mkdir -p "+output_dir+"/coassemble/{coassembly}/assemble/assembly" if config["aviary_dryrun"] else "",
         drytouch = "&& touch "+output_dir+"/coassemble/{coassembly}/assemble/assembly/final_contigs.fasta" if config["aviary_dryrun"] else "",
         conda_prefix = config["conda_prefix"] if config["conda_prefix"] else ".",
     threads:
-        threads=config["aviary_threads"]
+        threads = config["aviary_threads"]
     log:
         logs_dir + "/aviary/{coassembly}_assemble.log"
     conda:
@@ -532,18 +532,18 @@ rule aviary_assemble:
 
 rule aviary_recover:
     input:
-        assembly=output_dir + "/coassemble/{coassembly}/assemble/assembly/final_contigs.fasta",
-        elusive_clusters=output_dir + "/target/elusive_clusters.tsv",
+        assembly = output_dir + "/coassemble/{coassembly}/assemble/assembly/final_contigs.fasta",
+        elusive_clusters = output_dir + "/target/elusive_clusters.tsv",
     output:
         directory(output_dir + "/coassemble/{coassembly}/recover")
     params:
         reads_1 = lambda wildcards: get_reads_coassembly(wildcards, recover=True),
         reads_2 = lambda wildcards: get_reads_coassembly(wildcards, forward=False, recover=True),
-        memory=config["aviary_memory"],
+        memory = config["aviary_memory"],
         skip_binners = "--skip-binners rosella semibin metabat1 vamb concoct maxbin2 maxbin" if config["test"] else "",
         dryrun = "--dryrun" if config["aviary_dryrun"] else "",
-        gtdbtk=config["aviary_gtdbtk"],
-        checkm2=config["aviary_checkm2"],
+        gtdbtk = config["aviary_gtdbtk"],
+        checkm2 = config["aviary_checkm2"],
         conda_prefix = config["conda_prefix"] if config["conda_prefix"] else ".",
     threads:
         config["aviary_threads"]
@@ -571,8 +571,8 @@ rule aviary_recover:
 rule aviary_combine:
     input:
         get_coassemblies,
-        elusive_clusters=output_dir + "/target/elusive_clusters.tsv",
-        mapping=output_dir + "/mapping/done" if config["assemble_unmapped"] else [],
+        elusive_clusters = output_dir + "/target/elusive_clusters.tsv",
+        mapping = output_dir + "/mapping/done" if config["assemble_unmapped"] else [],
     output:
         output_dir + "/commands/done",
     shell:
