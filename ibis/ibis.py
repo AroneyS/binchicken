@@ -684,7 +684,11 @@ def build(args):
     otu_tables = [os.path.join(appraise_dir, t + ".otu_table.tsv") for t in ["binned", "unbinned"]]
     target_dir = os.path.join(args.coassemble_output, "target")
     os.makedirs(target_dir, exist_ok=True)
-    clusters = [os.path.join(target_dir, "elusive_clusters.tsv")]
+    clusters = [
+        os.path.join(target_dir, "elusive_clusters.tsv"),
+        os.path.join(target_dir, "elusive_edges.tsv"),
+        os.path.join(target_dir, "targets.tsv"),
+        ]
     clusters_text = "samples\tlength\ttotal_targets\ttotal_size\trecover_samples\tcoassembly\nSRR8334324,SRR8334323\t2\t2\t0\tSRR8334324,SRR8334323\tcoassembly_0\n"
     with open(clusters[0], "w") as f:
         f.write(clusters_text)
