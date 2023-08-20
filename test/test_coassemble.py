@@ -234,7 +234,6 @@ class Tests(unittest.TestCase):
                 f"--output test "
                 f"--taxa-of-interest \"p__Actinobacteriota\" "
                 f"--conda-prefix {path_to_conda} "
-                f"--snakemake-args \"cluster_graph\" "
             )
             extern.run(cmd)
 
@@ -272,6 +271,52 @@ class Tests(unittest.TestCase):
                 ]
             )
             with open(cluster_path) as f:
+                self.assertEqual(expected, f.read())
+
+            coassemble_path = os.path.join("test", "coassemble", "commands", "coassemble_commands.sh")
+            self.assertTrue(os.path.exists(coassemble_path))
+            test_dir = os.path.abspath("test")
+            expected = "\n".join(
+                [
+                    " ".join([
+                        "aviary assemble -1",
+                        os.path.join(os.path.abspath(path_to_data), "sample_1.1.fq"),
+                        os.path.join(os.path.abspath(path_to_data), "sample_3.1.fq"),
+                        "-2",
+                        os.path.join(os.path.abspath(path_to_data), "sample_1.2.fq"),
+                        os.path.join(os.path.abspath(path_to_data), "sample_3.2.fq"),
+                        "--output", os.path.join(test_dir, "coassemble", "coassemble", "coassembly_0", "assemble"),
+                        "-n 16 -t 16 -m 250 &>",
+                        os.path.join(test_dir, "coassemble", "coassemble", "logs", "coassembly_0_assemble.log"),
+                        ""
+                    ]),
+                    ""
+                ]
+            )
+            with open(coassemble_path) as f:
+                self.assertEqual(expected, f.read())
+
+            recover_path = os.path.join("test", "coassemble", "commands", "recover_commands.sh")
+            self.assertTrue(os.path.exists(recover_path))
+            expected = "\n".join(
+                [
+                    " ".join([
+                        "aviary recover --assembly", os.path.join(test_dir, "coassemble", "coassemble", "coassembly_0", "assemble", "assembly", "final_contigs.fasta"),
+                        "-1",
+                        os.path.join(os.path.abspath(path_to_data), "sample_1.1.fq"),
+                        os.path.join(os.path.abspath(path_to_data), "sample_3.1.fq"),
+                        "-2",
+                        os.path.join(os.path.abspath(path_to_data), "sample_1.2.fq"),
+                        os.path.join(os.path.abspath(path_to_data), "sample_3.2.fq"),
+                        "--output", os.path.join(test_dir, "coassemble", "coassemble", "coassembly_0", "recover"),
+                        "-n 16 -t 16 -m 250 &>",
+                        os.path.join(test_dir, "coassemble", "coassemble", "logs", "coassembly_0_recover.log"),
+                        ""
+                    ]),
+                    ""
+                ]
+            )
+            with open(recover_path) as f:
                 self.assertEqual(expected, f.read())
 
     def test_coassemble_query_input(self):
