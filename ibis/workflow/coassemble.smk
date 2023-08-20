@@ -484,6 +484,7 @@ rule aviary_commands:
         dir = output_dir,
         memory = config["aviary_memory"],
         threads = config["aviary_threads"],
+        speed = config["aviary_speed"],
     log:
         logs_dir + "/aviary_commands.log"
     script:

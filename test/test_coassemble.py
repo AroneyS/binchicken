@@ -183,6 +183,7 @@ class Tests(unittest.TestCase):
                         os.path.join(test_dir, "coassemble", "mapping", "sample_2_unmapped.2.fq.gz"),
                         os.path.join(test_dir, "coassemble", "mapping", "sample_3_unmapped.2.fq.gz"),
                         "--output", os.path.join(test_dir, "coassemble", "coassemble", "coassembly_0", "recover"),
+                        "--workflow recover_mags_no_singlem --skip-binners maxbin concoct rosella --refinery-max-iterations 0 "
                         "-n 16 -t 16 -m 250 &>",
                         os.path.join(test_dir, "coassemble", "coassemble", "logs", "coassembly_0_recover.log"),
                         ""
@@ -233,6 +234,7 @@ class Tests(unittest.TestCase):
                 f"--singlem-metapackage {METAPACKAGE} "
                 f"--output test "
                 f"--taxa-of-interest \"p__Actinobacteriota\" "
+                f"--aviary-speed comprehensive "
                 f"--conda-prefix {path_to_conda} "
             )
             extern.run(cmd)
@@ -733,6 +735,7 @@ class Tests(unittest.TestCase):
                         os.path.join(os.path.abspath(path_to_data), "sample_2.2.fq"),
                         os.path.join(os.path.abspath(path_to_data), "sample_3.2.fq"),
                         "--output", os.path.join(test_dir, "coassemble", "coassemble", "coassembly_0", "recover"),
+                        "--workflow recover_mags_no_singlem --skip-binners maxbin concoct rosella --refinery-max-iterations 0 "
                         "-n 16 -t 16 -m 250 &>",
                         os.path.join(test_dir, "coassemble", "coassemble", "logs", "coassembly_0_recover.log"),
                         ""

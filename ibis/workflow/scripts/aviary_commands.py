@@ -4,6 +4,7 @@
 # Author: Samuel Aroney
 
 import polars as pl
+from ibis.ibis import FAST_AVIARY_MODE
 
 def pipeline(coassemblies, reads_1, reads_2, output_dir, threads, memory, fast=False):
     output = (
@@ -82,6 +83,8 @@ if __name__ == "__main__":
         print("No coassemblies to perform")
         exit(0)
 
+    fast = snakemake.params.speed == FAST_AVIARY_MODE
+
     coassemblies = pipeline(
         coassemblies,
         reads_1=snakemake.params.reads_1,
@@ -89,6 +92,7 @@ if __name__ == "__main__":
         output_dir=snakemake.params.dir,
         threads=snakemake.params.threads,
         memory=snakemake.params.memory,
+        fast=fast,
     )
 
     coassemblies.select("assemble").write_csv(snakemake.output.coassemble_commands, separator="\t", has_header=False)

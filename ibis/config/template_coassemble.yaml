@@ -19,6 +19,7 @@ max_recovery_samples: 1
 unmapping_min_appraised: 1
 unmapping_max_identity: 1
 unmapping_max_alignment: 1
+aviary_speed: "fast"
 run_aviary: false
 aviary_gtdbtk: ""
 aviary_checkm2: ""
