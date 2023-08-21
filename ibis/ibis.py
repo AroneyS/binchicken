@@ -15,6 +15,9 @@ from snakemake.io import load_configfile
 from ruamel.yaml import YAML
 import copy
 
+FAST_AVIARY_MODE = "fast"
+COMPREHENSIVE_AVIARY_MODE = "comprehensive"
+
 def build_reads_list(forward, reverse):
     if reverse:
         if len(forward) != len(reverse):
@@ -374,6 +377,7 @@ def coassemble(args):
         "unmapping_min_appraised": args.unmapping_min_appraised,
         "unmapping_max_identity": args.unmapping_max_identity,
         "unmapping_max_alignment": args.unmapping_max_alignment,
+        "aviary_speed": args.aviary_speed,
         "run_aviary": args.run_aviary,
         "aviary_gtdbtk": args.aviary_gtdbtk_dir,
         "aviary_checkm2": args.aviary_checkm2_dir,
@@ -812,6 +816,8 @@ def main():
         argument_group.add_argument("--max-contamination", type=int, help="Include bins with at most this maximum contamination [default: 10]", default=10)
 
     def add_aviary_options(argument_group):
+        argument_group.add_argument("--aviary-speed", help="Run Aviary recover in 'fast' or 'comprehensive' mode. Fast mode skips slow binners and refinement steps.",
+                                    default=FAST_AVIARY_MODE, choices=[FAST_AVIARY_MODE, COMPREHENSIVE_AVIARY_MODE])
         argument_group.add_argument("--run-aviary", action="store_true", help="Run Aviary commands for all identified coassemblies (unless specified)")
         argument_group.add_argument("--aviary-gtdbtk-dir", help="Path to GTDB-Tk database directory for Aviary")
         argument_group.add_argument("--aviary-checkm2-dir", help="Path to CheckM2 database directory for Aviary")

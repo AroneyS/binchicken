@@ -4,8 +4,9 @@
 # Author: Samuel Aroney
 
 import polars as pl
+from ibis.ibis import FAST_AVIARY_MODE
 
-def pipeline(coassemblies, reads_1, reads_2, output_dir, threads, memory):
+def pipeline(coassemblies, reads_1, reads_2, output_dir, threads, memory, fast=False):
     output = (
         coassemblies
         .with_columns(
@@ -53,7 +54,9 @@ def pipeline(coassemblies, reads_1, reads_2, output_dir, threads, memory):
                 pl.lit(output_dir),
                 pl.lit("/coassemble/"),
                 pl.col("coassembly"),
-                pl.lit("/recover -n "),
+                pl.lit("/recover"),
+                pl.when(pl.lit(fast)).then(pl.lit(" --workflow recover_mags_no_singlem --skip-binners maxbin concoct rosella --refinery-max-iterations 0")).otherwise(pl.lit("")),
+                pl.lit(" -n "),
                 pl.lit(threads),
                 pl.lit(" -t "),
                 pl.lit(threads),
@@ -80,13 +83,16 @@ if __name__ == "__main__":
         print("No coassemblies to perform")
         exit(0)
 
+    fast = snakemake.params.speed == FAST_AVIARY_MODE
+
     coassemblies = pipeline(
         coassemblies,
-        snakemake.params.reads_1,
-        snakemake.params.reads_2,
-        snakemake.params.dir,
-        snakemake.params.threads,
-        snakemake.params.memory,
+        reads_1=snakemake.params.reads_1,
+        reads_2=snakemake.params.reads_2,
+        output_dir=snakemake.params.dir,
+        threads=snakemake.params.threads,
+        memory=snakemake.params.memory,
+        fast=fast,
     )
 
     coassemblies.select("assemble").write_csv(snakemake.output.coassemble_commands, separator="\t", has_header=False)

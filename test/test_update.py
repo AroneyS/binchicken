@@ -112,6 +112,7 @@ class Tests(unittest.TestCase):
                         os.path.join(test_dir, "coassemble", "mapping", "sample_2_unmapped.2.fq.gz"),
                         os.path.join(test_dir, "coassemble", "mapping", "sample_3_unmapped.2.fq.gz"),
                         "--output", os.path.join(test_dir, "coassemble", "coassemble", "coassembly_0", "recover"),
+                        "--workflow recover_mags_no_singlem --skip-binners maxbin concoct rosella --refinery-max-iterations 0 "
                         "-n 16 -t 16 -m 250 &>",
                         os.path.join(test_dir, "coassemble", "coassemble", "logs", "coassembly_0_recover.log"),
                         ""
@@ -342,7 +343,7 @@ class Tests(unittest.TestCase):
                 f"--genomes {GENOMES} "
                 f"--output test "
                 f"--conda-prefix {path_to_conda} "
-                f"--snakemake-args \" --config test=True aviary_dryrun=True\" "
+                f"--snakemake-args \" --config aviary_dryrun=True\" "
             )
             extern.run(cmd)
 
