@@ -3,4 +3,4 @@ channels:
   - bioconda
 dependencies:
   - python>=3.7
-  - aviary=0.5.*
+  - aviary=0.7.*

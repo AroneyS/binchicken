@@ -343,7 +343,7 @@ class Tests(unittest.TestCase):
                 f"--genomes {GENOMES} "
                 f"--output test "
                 f"--conda-prefix {path_to_conda} "
-                f"--snakemake-args \" --config test=True aviary_dryrun=True\" "
+                f"--snakemake-args \" --config aviary_dryrun=True\" "
             )
             extern.run(cmd)
 
