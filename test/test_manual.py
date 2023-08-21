@@ -4,7 +4,7 @@ import unittest
 import os
 import shutil
 import gzip
-import extern
+import subprocess
 
 path_to_data = os.path.join(os.path.dirname(os.path.realpath(__file__)),'data')
 path_to_conda = os.path.join(path_to_data,'.conda')
@@ -50,13 +50,16 @@ class Tests(unittest.TestCase):
             f"--forward SRR8334323 SRR8334324 "
             f"--sra "
             f"--genomes {GENOMES} "
-            f"--appraise-binned {os.path.join(MOCK_COASSEMBLE, 'appraise', 'binned_sra.otu_table.tsv')} "
-            f"--appraise-unbinned {os.path.join(MOCK_COASSEMBLE, 'appraise', 'unbinned_sra.otu_table.tsv')} "
-            f"--elusive-clusters {os.path.join(MOCK_COASSEMBLE, 'target', 'elusive_clusters_sra.tsv')} "
+            f"--coassemble-unbinned {os.path.join(MOCK_COASSEMBLE, 'appraise', 'unbinned_sra.otu_table.tsv')} "
+            f"--coassemble-binned {os.path.join(MOCK_COASSEMBLE, 'appraise', 'binned_sra.otu_table.tsv')} "
+            f"--coassemble-targets {os.path.join(MOCK_COASSEMBLE, 'target', 'targets.tsv')} "
+            f"--coassemble-elusive-edges {os.path.join(MOCK_COASSEMBLE, 'target', 'elusive_edges.tsv')} "
+            f"--coassemble-elusive-clusters {os.path.join(MOCK_COASSEMBLE, 'target', 'elusive_clusters_sra.tsv')} "
+            f"--coassemble-summary {os.path.join(MOCK_COASSEMBLE, 'summary.tsv')} "
             f"--output {output_dir} "
             f"--conda-prefix {path_to_conda} "
         )
-        extern.run(cmd)
+        subprocess.check_output(cmd, shell=True)
 
         config_path = os.path.join(output_dir, "config.yaml")
         self.assertTrue(os.path.exists(config_path))
@@ -88,14 +91,16 @@ class Tests(unittest.TestCase):
             f"--aviary-gtdbtk-dir /work/microbiome/db/gtdb/gtdb_release207_v2 "
             f"--aviary-checkm2-dir /work/microbiome/db/CheckM2_database "
             f"--genomes {GENOMES} "
-            f"--appraise-binned {os.path.join(MOCK_COASSEMBLE, 'appraise', 'binned_sra.otu_table.tsv')} "
-            f"--appraise-unbinned {os.path.join(MOCK_COASSEMBLE, 'appraise', 'unbinned_sra.otu_table.tsv')} "
-            f"--elusive-clusters {os.path.join(MOCK_COASSEMBLE, 'target', 'elusive_clusters_sra.tsv')} "
+            f"--coassemble-unbinned {os.path.join(MOCK_COASSEMBLE, 'appraise', 'unbinned_sra.otu_table.tsv')} "
+            f"--coassemble-binned {os.path.join(MOCK_COASSEMBLE, 'appraise', 'binned_sra.otu_table.tsv')} "
+            f"--coassemble-targets {os.path.join(MOCK_COASSEMBLE, 'target', 'targets.tsv')} "
+            f"--coassemble-elusive-edges {os.path.join(MOCK_COASSEMBLE, 'target', 'elusive_edges.tsv')} "
+            f"--coassemble-elusive-clusters {os.path.join(MOCK_COASSEMBLE, 'target', 'elusive_clusters_sra.tsv')} "
+            f"--coassemble-summary {os.path.join(MOCK_COASSEMBLE, 'summary.tsv')} "
             f"--output {output_dir} "
             f"--conda-prefix {path_to_conda} "
-            f"--snakemake-args \" --config test=True\" "
         )
-        extern.run(cmd)
+        subprocess.check_output(cmd, shell=True)
 
         config_path = os.path.join(output_dir, "config.yaml")
         self.assertTrue(os.path.exists(config_path))
@@ -124,14 +129,17 @@ class Tests(unittest.TestCase):
             f"--forward SRR8334323 SRR8334324 "
             f"--sra "
             f"--genomes {GENOMES} "
-            f"--appraise-binned {os.path.join(MOCK_COASSEMBLE, 'appraise', 'binned_sra.otu_table.tsv')} "
-            f"--appraise-unbinned {os.path.join(MOCK_COASSEMBLE, 'appraise', 'unbinned_sra.otu_table.tsv')} "
-            f"--elusive-clusters {os.path.join(MOCK_COASSEMBLE, 'target', 'elusive_clusters_sra_two.tsv')} "
+            f"--coassemble-unbinned {os.path.join(MOCK_COASSEMBLE, 'appraise', 'unbinned_sra.otu_table.tsv')} "
+            f"--coassemble-binned {os.path.join(MOCK_COASSEMBLE, 'appraise', 'binned_sra.otu_table.tsv')} "
+            f"--coassemble-targets {os.path.join(MOCK_COASSEMBLE, 'target', 'targets.tsv')} "
+            f"--coassemble-elusive-edges {os.path.join(MOCK_COASSEMBLE, 'target', 'elusive_edges.tsv')} "
+            f"--coassemble-elusive-clusters {os.path.join(MOCK_COASSEMBLE, 'target', 'elusive_clusters_sra_two.tsv')} "
+            f"--coassemble-summary {os.path.join(MOCK_COASSEMBLE, 'summary.tsv')} "
             f"--coassemblies coassembly_0 "
             f"--output {output_dir} "
             f"--conda-prefix {path_to_conda} "
         )
-        output = extern.run(cmd)
+        subprocess.check_output(cmd, shell=True)
 
         config_path = os.path.join(output_dir, "config.yaml")
         self.assertTrue(os.path.exists(config_path))

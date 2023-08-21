@@ -6,6 +6,7 @@ ruleorder: mock_download_sra > download_sra
 
 import os
 import pandas as pd
+from ibis.ibis import FAST_AVIARY_MODE
 
 output_dir = os.path.abspath("coassemble")
 logs_dir = output_dir + "/logs"
@@ -541,11 +542,11 @@ rule aviary_recover:
         reads_1 = lambda wildcards: get_reads_coassembly(wildcards, recover=True),
         reads_2 = lambda wildcards: get_reads_coassembly(wildcards, forward=False, recover=True),
         memory = config["aviary_memory"],
-        skip_binners = "--skip-binners rosella semibin metabat1 vamb concoct maxbin2 maxbin" if config["test"] else "",
         dryrun = "--dryrun" if config["aviary_dryrun"] else "",
         gtdbtk = config["aviary_gtdbtk"],
         checkm2 = config["aviary_checkm2"],
         conda_prefix = config["conda_prefix"] if config["conda_prefix"] else ".",
+        fast = "--workflow recover_mags_no_singlem --skip-binners maxbin concoct rosella --refinery-max-iterations 0" if config["aviary_speed"] == FAST_AVIARY_MODE else "",
     threads:
         config["aviary_threads"]
     log:
@@ -562,7 +563,7 @@ rule aviary_recover:
         "-1 {params.reads_1} "
         "-2 {params.reads_2} "
         "--output {output} "
-        "{params.skip_binners} "
+        "{params.fast} "
         "-n {threads} "
         "-t {threads} "
         "-m {params.memory} "
