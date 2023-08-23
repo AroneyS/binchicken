@@ -567,6 +567,15 @@ def generate_genome_singlem(orig_args, new_genomes):
 
     return os.path.join(args.output, "coassemble", "summarise", "bins_summarised.otu_table.tsv")
 
+def combine_genome_singlem(genome_singlem, new_genome_singlem, path):
+    with open(path, "w") as f:
+        with open(genome_singlem) as g:
+            f.write(g.read())
+
+        with open(new_genome_singlem) as g:
+            g.readline()
+            f.write(g.read())
+
 def iterate(args):
     logging.info("Evaluating new bins")
     if args.new_genomes_list:
@@ -596,12 +605,6 @@ def iterate(args):
         coassemble_appraise_dir = os.path.join(os.path.abspath(args.coassemble_output), "appraise")
         args.coassemble_unbinned = os.path.join(coassemble_appraise_dir, "unbinned.otu_table.tsv")
         args.coassemble_binned = os.path.join(coassemble_appraise_dir, "binned.otu_table.tsv")
-    elif args.genome_singlem and not args.new_genome_singlem:
-        args.genome_singlem = generate_genome_singlem(args, new_genomes)
-        args.coassemble_unbinned = args.coassemble_binned = None
-    elif args.genome_singlem and args.new_genome_singlem:
-        args.genome_singlem = generate_genome_singlem(args, new_genomes)
-        args.coassemble_unbinned = args.coassemble_binned = None
 
     try:
         args.coassemble_unbinned
@@ -612,6 +615,21 @@ def iterate(args):
         args.coassemble_binned
     except AttributeError:
         args.coassemble_binned = None
+
+    prior_otu_tables = bool(args.coassemble_binned) & bool(args.coassemble_unbinned)
+
+    if not prior_otu_tables and args.genome_singlem and not args.new_genome_singlem:
+        args.genome_singlem = generate_genome_singlem(args, new_genomes)
+    elif not prior_otu_tables and args.genome_singlem and args.new_genome_singlem:
+        combined_genome_singlem = os.path.join(args.output, "coassemble", "pipe", "genome_singlem.otu_table.tsv")
+        os.makedirs(os.path.dirname(combined_genome_singlem), exist_ok=True)
+        combine_genome_singlem(args.genome_singlem, args.new_genome_singlem, combined_genome_singlem)
+        args.genome_singlem = combined_genome_singlem
+    elif args.new_genome_singlem:
+        copy_input(
+            os.path.abspath(args.new_genome_singlem),
+            os.path.join(args.output, "coassemble", "summarise", "new_bins_summarised.otu_table.tsv")
+        )
 
     if args.coassemble_unbinned and args.coassemble_binned:
         copy_input(

@@ -344,18 +344,18 @@ class Tests(unittest.TestCase):
                 f"--iteration 0 "
                 f"--new-genomes {MOCK_GENOMES} "
                 f"--new-genome-singlem {MOCK_GENOME_SINGLEM} "
+                f"--coassemble-unbinned {MOCK_UNBINNED} "
+                f"--coassemble-binned {MOCK_BINNED} "
                 f"--elusive-clusters {ELUSIVE_CLUSTERS} "
                 f"--forward {SAMPLE_READS_FORWARD} "
                 f"--reverse {SAMPLE_READS_REVERSE} "
                 f"--genomes {GENOMES} "
-                f"--genome-singlem {GENOME_SINGLEM} "
                 f"--singlem-metapackage {METAPACKAGE} "
                 f"--output test "
-                f"--prodigal-meta "
                 f"--conda-prefix {path_to_conda} "
             )
-            output_raw = subprocess.run(cmd, shell=True, check=True)#, capture_output=True)
-            #output = output_raw.stderr.decode('ascii')
+            output_raw = subprocess.run(cmd, shell=True, check=True, capture_output=True)
+            output = output_raw.stderr.decode('ascii')
 
             bin_provenance_path = os.path.join("test", "recovered_bins", "bin_provenance.tsv")
             self.assertTrue(os.path.exists(bin_provenance_path))
@@ -363,13 +363,49 @@ class Tests(unittest.TestCase):
             config_path = os.path.join("test", "config.yaml")
             self.assertTrue(os.path.exists(config_path))
 
-            #self.assertFalse(re.search(r"singlem_pipe_genomes\s", output))
+            self.assertFalse(re.search(r"singlem_pipe_genomes\s", output))
 
             original_bin_singlem_path = os.path.join("test", "coassemble", "pipe", os.path.splitext(os.path.basename(GENOMES.split(" ")[0]))[0]+"_bin.otu_table.tsv")
             self.assertFalse(os.path.exists(original_bin_singlem_path))
 
             new_bin_singlem_path = os.path.join("test", "coassemble", "pipe", os.path.splitext(os.path.basename(MOCK_GENOMES.split(" ")[0]))[0]+"_bin.otu_table.tsv")
             self.assertFalse(os.path.exists(new_bin_singlem_path))
+
+            binned_path = os.path.join("test", "coassemble", "appraise", "binned.otu_table.tsv")
+            self.assertTrue(os.path.exists(binned_path))
+            with open(binned_path) as f:
+                file = f.read()
+                self.assertTrue("TTCCAGGTGCCTACTGAAGTTCGTCCCGAGCGTAAAATTGCATTGGGTATGAAATGGCTG" in file)
+                self.assertTrue("GB_GCA_013286235.1_protein" in file)
+                self.assertTrue("TATCAAGTTCCACAAGAAGTTAGAGGAGAAAGAAGAATCTCGTTAGCTATTAGATGGATT" in file)
+                self.assertTrue("bin_1_protein" in file)
+
+    def test_iterate_genome_singlem_and_new(self):
+        with in_tempdir():
+            cmd = (
+                f"ibis iterate "
+                f"--iteration 0 "
+                f"--new-genomes {MOCK_GENOMES} "
+                f"--new-genome-singlem {MOCK_GENOME_SINGLEM} "
+                f"--elusive-clusters {ELUSIVE_CLUSTERS} "
+                f"--forward {SAMPLE_READS_FORWARD} "
+                f"--reverse {SAMPLE_READS_REVERSE} "
+                f"--genomes {GENOMES} "
+                f"--genome-singlem {GENOME_SINGLEM} "
+                f"--singlem-metapackage {METAPACKAGE} "
+                f"--output test "
+                f"--conda-prefix {path_to_conda} "
+            )
+            output_raw = subprocess.run(cmd, shell=True, check=True, capture_output=True)
+            output = output_raw.stderr.decode('ascii')
+
+            bin_provenance_path = os.path.join("test", "recovered_bins", "bin_provenance.tsv")
+            self.assertTrue(os.path.exists(bin_provenance_path))
+
+            config_path = os.path.join("test", "config.yaml")
+            self.assertTrue(os.path.exists(config_path))
+
+            self.assertFalse(re.search(r"singlem_pipe_genomes\s", output))
 
             binned_path = os.path.join("test", "coassemble", "appraise", "binned.otu_table.tsv")
             self.assertTrue(os.path.exists(binned_path))
