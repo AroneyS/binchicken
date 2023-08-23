@@ -545,6 +545,7 @@ def generate_genome_singlem(orig_args, new_genomes):
     args = copy.deepcopy(orig_args)
     args = set_standard_args(args)
     args.singlem_metapackage = orig_args.singlem_metapackage
+    args.prodigal_meta = orig_args.prodigal_meta
     args.genomes = new_genomes + ["mock_genome"]
 
     args.output = os.path.join(orig_args.output, "mock")
