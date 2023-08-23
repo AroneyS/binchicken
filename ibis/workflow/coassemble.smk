@@ -368,7 +368,7 @@ rule mock_download_sra:
         "mkdir -p {output} && "
         "cp {params.sra_u} {params.sra_f} {params.sra_r} {output}"
 
-rule qc_sra:
+rule sra_qc:
     output:
         out1 = output_dir + "/sra_qc/{sra}_1.fastq.gz",
         out2 = output_dir + "/sra_qc/{sra}_2.fastq.gz",
@@ -394,7 +394,7 @@ rule qc_sra:
         "t={threads} "
         "&> {log} "
 
-rule compile_qc_sra:
+rule compile_sra_qc:
     input:
         expand(output_dir + "/sra_qc/{sra}_1.fastq.gz", sra=config["sra"]),
         expand(output_dir + "/sra_qc/{sra}_2.fastq.gz", sra=config["sra"]),

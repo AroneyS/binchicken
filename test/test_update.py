@@ -212,14 +212,14 @@ class Tests(unittest.TestCase):
 
             output_sra = output_comb.split("Building DAG of jobs...")[1]
             self.assertTrue("download_sra" in output_sra)
-            self.assertTrue("qc_sra" not in output_sra)
-            self.assertTrue("compile_qc_sra" not in output_sra)
+            self.assertTrue("sra_qc" not in output_sra)
+            self.assertTrue("compile_sra_qc" not in output_sra)
             self.assertTrue("aviary_commands" not in output_sra)
 
             output_sra = output_comb.split("Building DAG of jobs...")[2]
             self.assertTrue("download_sra" not in output_sra)
-            self.assertTrue("qc_sra" in output_sra)
-            self.assertTrue("compile_qc_sra" in output_sra)
+            self.assertTrue("sra_qc" in output_sra)
+            self.assertTrue("compile_sra_qc" in output_sra)
             self.assertTrue("aviary_commands" not in output_sra)
 
             output = output_comb.split("Building DAG of jobs...")[3]
@@ -287,12 +287,12 @@ class Tests(unittest.TestCase):
             self.assertTrue(os.path.exists(recover_path))
             with open(recover_path) as f:
                 file = f.readline()
-                self.assertTrue("qc_sra/SRR3309137_1.fastq.gz" in file)
-                self.assertTrue("qc_sra/SRR3309137_2.fastq.gz" in file)
-                self.assertTrue("qc_sra/SRR8334323_1.fastq.gz" in file)
-                self.assertTrue("qc_sra/SRR8334323_2.fastq.gz" in file)
-                self.assertTrue("qc_sra/SRR8334324_1.fastq.gz" in file)
-                self.assertTrue("qc_sra/SRR8334324_2.fastq.gz" in file)
+                self.assertTrue("sra_qc/SRR3309137_1.fastq.gz" in file)
+                self.assertTrue("sra_qc/SRR3309137_2.fastq.gz" in file)
+                self.assertTrue("sra_qc/SRR8334323_1.fastq.gz" in file)
+                self.assertTrue("sra_qc/SRR8334323_2.fastq.gz" in file)
+                self.assertTrue("sra_qc/SRR8334324_1.fastq.gz" in file)
+                self.assertTrue("sra_qc/SRR8334324_2.fastq.gz" in file)
 
     def test_update_sra_download_mock_fail(self):
         with in_tempdir():
@@ -340,14 +340,14 @@ class Tests(unittest.TestCase):
 
             output_sra = output_comb.split("Building DAG of jobs...")[1]
             self.assertTrue("download_sra" in output_sra)
-            self.assertTrue("qc_sra" not in output_sra)
-            self.assertTrue("compile_qc_sra" not in output_sra)
+            self.assertTrue("sra_qc" not in output_sra)
+            self.assertTrue("compile_sra_qc" not in output_sra)
             self.assertTrue("aviary_commands" not in output_sra)
 
             output_sra = output_comb.split("Building DAG of jobs...")[2]
             self.assertTrue("download_sra" not in output_sra)
-            self.assertTrue("qc_sra" in output_sra)
-            self.assertTrue("compile_qc_sra" in output_sra)
+            self.assertTrue("sra_qc" in output_sra)
+            self.assertTrue("compile_sra_qc" in output_sra)
             self.assertTrue("aviary_commands" not in output_sra)
 
             output = output_comb.split("Building DAG of jobs...")[3]
