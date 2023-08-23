@@ -37,6 +37,7 @@ MOCK_GENOMES = " ".join([
     os.path.join(MOCK_COASSEMBLE, "coassemble", "coassembly_0", "recover", "bins", "final_bins", "bin_2.fna"),
     os.path.join(MOCK_COASSEMBLE, "coassemble", "coassembly_0", "recover", "bins", "final_bins", "bin_3.fna"),
 ])
+MOCK_GENOME_SINGLEM = os.path.join(MOCK_COASSEMBLE, "summarise", "bins_summarised_mock.otu_table.tsv")
 ELUSIVE_CLUSTERS = ' '.join([os.path.join(MOCK_COASSEMBLE, "target", "elusive_clusters_iterate.tsv")])
 
 SAMPLE_READ_SIZE = os.path.join(MOCK_COASSEMBLE, "read_size2.csv")
@@ -335,6 +336,49 @@ class Tests(unittest.TestCase):
             )
             with open(cluster_path) as f:
                 self.assertEqual(expected, f.read())
+
+    def test_iterate_new_genome_singlem(self):
+        with in_tempdir():
+            cmd = (
+                f"ibis iterate "
+                f"--iteration 0 "
+                f"--new-genomes {MOCK_GENOMES} "
+                f"--new-genome-singlem {MOCK_GENOME_SINGLEM} "
+                f"--elusive-clusters {ELUSIVE_CLUSTERS} "
+                f"--forward {SAMPLE_READS_FORWARD} "
+                f"--reverse {SAMPLE_READS_REVERSE} "
+                f"--genomes {GENOMES} "
+                f"--genome-singlem {GENOME_SINGLEM} "
+                f"--singlem-metapackage {METAPACKAGE} "
+                f"--output test "
+                f"--prodigal-meta "
+                f"--conda-prefix {path_to_conda} "
+            )
+            output_raw = subprocess.run(cmd, shell=True, check=True)#, capture_output=True)
+            #output = output_raw.stderr.decode('ascii')
+
+            bin_provenance_path = os.path.join("test", "recovered_bins", "bin_provenance.tsv")
+            self.assertTrue(os.path.exists(bin_provenance_path))
+
+            config_path = os.path.join("test", "config.yaml")
+            self.assertTrue(os.path.exists(config_path))
+
+            #self.assertFalse(re.search(r"singlem_pipe_genomes\s", output))
+
+            original_bin_singlem_path = os.path.join("test", "coassemble", "pipe", os.path.splitext(os.path.basename(GENOMES.split(" ")[0]))[0]+"_bin.otu_table.tsv")
+            self.assertFalse(os.path.exists(original_bin_singlem_path))
+
+            new_bin_singlem_path = os.path.join("test", "coassemble", "pipe", os.path.splitext(os.path.basename(MOCK_GENOMES.split(" ")[0]))[0]+"_bin.otu_table.tsv")
+            self.assertFalse(os.path.exists(new_bin_singlem_path))
+
+            binned_path = os.path.join("test", "coassemble", "appraise", "binned.otu_table.tsv")
+            self.assertTrue(os.path.exists(binned_path))
+            with open(binned_path) as f:
+                file = f.read()
+                self.assertTrue("TTCCAGGTGCCTACCGAAGTTCGTCCCGAGCGTAAAATTGCATTGGGTATGAAATGGCTC" in file)
+                self.assertTrue("GB_GCA_013286235.1_protein" in file)
+                self.assertTrue("TATCAAGTTCCACAAGAAGTTAGAGGAGAAAGAAGAATCTCGTTAGCTATTAGATGGATT" in file)
+                self.assertTrue("bin_1_protein" in file)
 
 
 if __name__ == '__main__':

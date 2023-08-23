@@ -596,7 +596,10 @@ def iterate(args):
         coassemble_appraise_dir = os.path.join(os.path.abspath(args.coassemble_output), "appraise")
         args.coassemble_unbinned = os.path.join(coassemble_appraise_dir, "unbinned.otu_table.tsv")
         args.coassemble_binned = os.path.join(coassemble_appraise_dir, "binned.otu_table.tsv")
-    elif args.genome_singlem:
+    elif args.genome_singlem and not args.new_genome_singlem:
+        args.genome_singlem = generate_genome_singlem(args, new_genomes)
+        args.coassemble_unbinned = args.coassemble_binned = None
+    elif args.genome_singlem and args.new_genome_singlem:
         args.genome_singlem = generate_genome_singlem(args, new_genomes)
         args.coassemble_unbinned = args.coassemble_binned = None
 
@@ -939,6 +942,7 @@ def main():
     iterate_iteration.add_argument("--aviary-outputs", nargs='+', help="Output dir from Aviary coassembly and recover commands produced by coassemble subcommand")
     iterate_iteration.add_argument("--new-genomes", nargs='+', help="New genomes to iterate (alternative to --aviary-outputs)")
     iterate_iteration.add_argument("--new-genomes-list", help="New genomes to iterate (alternative to --aviary-outputs) newline separated")
+    iterate_iteration.add_argument("--new-genome-singlem", help="Combined SingleM otu tables for new genome transcripts. If provided, genome SingleM is skipped")
     iterate_iteration.add_argument("--elusive-clusters", nargs='+', help="Previous elusive_clusters.tsv files produced by coassemble subcommand (used to check for duplicated coassembly suggestions)")
     add_main_coassemble_output_arguments(iterate_iteration)
     add_evaluation_options(iterate_iteration)

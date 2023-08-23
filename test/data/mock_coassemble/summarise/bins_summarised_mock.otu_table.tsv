@@ -1,0 +1,4 @@
+gene	sample	sequence	num_hits	coverage	taxonomy
+S3.7.ribosomal_protein_S7	bin_1_protein	TATCAAGTTCCACAAGAAGTTAGAGGAGAAAGAAGAATCTCGTTAGCTATTAGATGGATT	1	1.14	Root; d__Bacteria
+S3.7.ribosomal_protein_S7	bin_3_protein	TTCCAGGTGCCTACTGAAGTTCGTCCCGAGCGTAAAATTGCATTGGGTATGAAATGGCTG	1	1.14	Root; d__Bacteria; p__Bacteroidota; c__Bacteroidia; o__Sphingobacteriales; f__Sphingobacteriaceae; g__Mucilaginibacter; s__Mucilaginibacter_sp013286235
+S3.7.ribosomal_protein_S7	bin_3_protein	TACCAGGTTCCTGTTGAAGTTCGCCCATCACGCCGTTCTGCTTTGGCAATGCGCTGGGTG	1	1.14	Root; d__Bacteria; p__Proteobacteria; c__Gammaproteobacteria; o__Burkholderiales; f__Burkholderiaceae; g__Polynucleobacter; s__Polynucleobacter_sp018688335
