@@ -191,16 +191,26 @@ def download_sra(args):
             )
             extern.run(cmd)
 
+    run_workflow(
+        config = config_path,
+        workflow = "coassemble.smk",
+        output_dir = args.output,
+        cores = args.cores,
+        dryrun = args.dryrun,
+        conda_prefix = args.conda_prefix,
+        snakemake_args = args.snakemake_args + " -- compile_qc_sra" if args.snakemake_args else "-- compile_qc_sra",
+    )
 
     # Need to convince Snakemake that the SRA data predates the completed outputs
     # Otherwise it will rerun all the rules with reason "updated input files"
     # Using Jan 1 2000 as pre-date
-    os.makedirs(sra_dir, exist_ok=True)
+    qc_sra_dir = args.output + "/coassemble/qc_sra/"
+    os.makedirs(qc_sra_dir, exist_ok=True)
     for sra in [f + s for f in args.forward for s in ["_1", "_2"]]:
-        subprocess.check_call(f"touch -t 200001011200 {sra_dir + sra + SRA_SUFFIX}", shell=True)
+        subprocess.check_call(f"touch -t 200001011200 {qc_sra_dir + sra + SRA_SUFFIX}", shell=True)
 
-    forward = sorted([sra_dir + f for f in os.listdir(sra_dir) if f.endswith("_1" + SRA_SUFFIX)])
-    reverse = sorted([sra_dir + f for f in os.listdir(sra_dir) if f.endswith("_2" + SRA_SUFFIX)])
+    forward = sorted([qc_sra_dir + f for f in os.listdir(qc_sra_dir) if f.endswith("_1" + SRA_SUFFIX)])
+    reverse = sorted([qc_sra_dir + f for f in os.listdir(qc_sra_dir) if f.endswith("_2" + SRA_SUFFIX)])
 
     return forward, reverse
 
