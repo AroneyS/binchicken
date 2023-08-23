@@ -75,6 +75,18 @@ class Tests(unittest.TestCase):
         self.assertTrue(os.path.exists(os.path.join(output_dir, "coassemble", "sra", "SRR8334324_1.fastq.gz")))
         self.assertTrue(os.path.exists(os.path.join(output_dir, "coassemble", "sra", "SRR8334324_2.fastq.gz")))
 
+        sra_1_path = os.path.join(output_dir, "coassemble", "sra_qc", "SRR8334323_1.fastq.gz")
+        self.assertTrue(os.path.exists(sra_1_path))
+        with gzip.open(sra_1_path) as f:
+            file = f.readline().decode()
+            self.assertTrue("@SRR8334323.1 HS2:487:H80UEADXX:1:1101:1148:1986/1" in file)
+            self.assertTrue("@SRR8334323.11 HS2:487:H80UEADXX:1:1101:2569:1958/1" not in file)
+            self.assertTrue("@SRR8334323.15 HS2:487:H80UEADXX:1:1101:3302:1937/1" not in file)
+
+        self.assertTrue(os.path.exists(os.path.join(output_dir, "coassemble", "sra_qc", "SRR8334323_2.fastq.gz")))
+        self.assertTrue(os.path.exists(os.path.join(output_dir, "coassemble", "sra_qc", "SRR8334324_1.fastq.gz")))
+        self.assertTrue(os.path.exists(os.path.join(output_dir, "coassemble", "sra_qc", "SRR8334324_2.fastq.gz")))
+
     def test_update_aviary_run_real(self):
         output_dir = os.path.join("example", "test_update_aviary_run_real")
         self.setup_output_dir(output_dir)
