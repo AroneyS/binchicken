@@ -280,8 +280,6 @@ rule query_processing:
     resources:
         mem_mb=8000,
         runtime = "24h",
-    threads:
-        64
     script:
         "scripts/query_processing.py"
 
@@ -387,8 +385,7 @@ rule download_sra:
 rule mock_download_sra:
     output:
         directory(output_dir + "/sra") if config["mock_sra"] else []
-    threads:
-        64
+    threads: 8
     params:
         sra_u = workflow.basedir + "/../../test/data/sra/" + config["sra"][0] + ".fastq.gz" if config["sra"] else "",
         sra_f = " ".join([workflow.basedir + "/../../test/data/sra/" + s + "_1.fastq.gz" for s in config["sra"][1:]]) if config["sra"] else "",
