@@ -369,7 +369,7 @@ rule download_sra:
     threads: 32
     resources:
         mem_mb=250*1000,
-        runtime = "168h",
+        runtime = "48h",
     conda:
         "env/kingfisher.yml"
     log:
@@ -412,7 +412,7 @@ rule sra_qc:
     threads: 32
     resources:
         mem_mb=250*1000,
-        runtime = "48h",
+        runtime = "24h",
     conda:
         "env/bbtools.yml"
     log:
@@ -584,7 +584,7 @@ rule aviary_assemble:
     threads:
         threads = config["aviary_threads"]
     resources:
-        mem_mb = lambda wildcards: int(config["aviary_memory"]*1024),
+        mem_mb = int(config["aviary_memory"]*1024),
         runtime = "96h",
     log:
         logs_dir + "/aviary/{coassembly}_assemble.log"
@@ -624,7 +624,7 @@ rule aviary_recover:
     threads:
         int(config["aviary_threads"]/2)
     resources:
-        mem_mb = lambda wildcards: int(config["aviary_memory"]*1024/2),
+        mem_mb = int(config["aviary_memory"]*1024/2),
         runtime = "168h",
     log:
         logs_dir + "/aviary/{coassembly}_recover.log"

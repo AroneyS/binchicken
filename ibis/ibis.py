@@ -930,8 +930,8 @@ def main():
         argument_group.add_argument("--run-aviary", action="store_true", help="Run Aviary commands for all identified coassemblies (unless specified)")
         argument_group.add_argument("--aviary-gtdbtk-dir", help="Path to GTDB-Tk database directory for Aviary")
         argument_group.add_argument("--aviary-checkm2-dir", help="Path to CheckM2 database directory for Aviary")
-        argument_group.add_argument("--aviary-cores", type=int, help="Maximum number of cores for Aviary to use", default=16)
-        argument_group.add_argument("--aviary-memory", type=int, help="Maximum amount of memory for Aviary to use (Gigabytes)", default=250)
+        argument_group.add_argument("--aviary-cores", type=int, help="Maximum number of cores for Aviary to use. Half used for recovery.", default=64)
+        argument_group.add_argument("--aviary-memory", type=int, help="Maximum amount of memory for Aviary to use (Gigabytes). Half used for recovery", default=500)
 
     def add_main_coassemble_output_arguments(argument_group):
         argument_group.add_argument("--coassemble-output", help="Output dir from cluster subcommand")
