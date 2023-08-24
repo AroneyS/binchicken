@@ -59,7 +59,7 @@ class Tests(unittest.TestCase):
             f"--output {output_dir} "
             f"--conda-prefix {path_to_conda} "
         )
-        subprocess.check_output(cmd, shell=True)
+        subprocess.run(cmd, shell=True, check=True)
 
         config_path = os.path.join(output_dir, "config.yaml")
         self.assertTrue(os.path.exists(config_path))
@@ -112,7 +112,7 @@ class Tests(unittest.TestCase):
             f"--output {output_dir} "
             f"--conda-prefix {path_to_conda} "
         )
-        subprocess.check_output(cmd, shell=True)
+        subprocess.run(cmd, shell=True, check=True)
 
         config_path = os.path.join(output_dir, "config.yaml")
         self.assertTrue(os.path.exists(config_path))
@@ -151,7 +151,7 @@ class Tests(unittest.TestCase):
             f"--output {output_dir} "
             f"--conda-prefix {path_to_conda} "
         )
-        subprocess.check_output(cmd, shell=True)
+        subprocess.run(cmd, shell=True, check=True)
 
         config_path = os.path.join(output_dir, "config.yaml")
         self.assertTrue(os.path.exists(config_path))
