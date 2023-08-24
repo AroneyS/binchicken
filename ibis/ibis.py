@@ -11,6 +11,7 @@ import extern
 import importlib.resources
 import bird_tool_utils as btu
 import polars as pl
+import polars.selectors as cs
 from snakemake.io import load_configfile
 from ruamel.yaml import YAML
 import copy
@@ -147,6 +148,7 @@ def download_sra(args):
     expected_reverse = [sra_dir + f + "_2" + SRA_SUFFIX for f in args.forward]
 
     # Fix single file outputs if interleaved or error if unpaired
+    single_ended = {}
     if not args.dryrun and args.sra != "build":
         for f, r in zip(expected_forward, expected_reverse):
             if os.path.isfile(f) & os.path.isfile(r):
@@ -174,7 +176,10 @@ def download_sra(args):
             output = extern.run(cmd).strip().split("\t")
 
             if output[0] != "True":
-                raise Exception(f"Download {u} was not interleaved: {output[1]}")
+                sra_name = os.path.basename(u).replace(SRA_SUFFIX, "")
+                single_ended[sra_name] = output[1]
+                logging.warning(f"Download {u} was not interleaved: {output[1]}")
+                continue
 
             logging.info(f"Download {u} was interleaved: {output[1]}")
             logging.info(f"Deinterleaving {u}")
@@ -191,16 +196,98 @@ def download_sra(args):
             )
             extern.run(cmd)
 
+    if single_ended:
+        with open(sra_dir + "single_ended.tsv", "w") as f:
+            f.write("sra\treason\n")
+            for sra, reason in single_ended.items():
+                f.write(f"{sra}\t{reason}\n")
+
+        try:
+            elusive_clusters_path = os.path.join(args.output, "coassemble", "target", "elusive_clusters.tsv")
+            elusive_clusters = (
+                pl.read_csv(elusive_clusters_path, separator="\t")
+                .with_columns(
+                    single_ended = pl.lit([list(single_ended)]),
+                    single_ended_samples =
+                        pl.col("samples")
+                        .str.split(",")
+                        .list.eval(pl.element().is_in(single_ended.keys()))
+                        .list.any(),
+                    single_ended_recover_samples =
+                        pl.col("recover_samples")
+                        .str.split(",")
+                        .list.eval(pl.element().is_in(single_ended.keys()))
+                        .list.any(),
+                    )
+                .with_columns(
+                    pl.col("recover_samples").str.split(",").list.set_difference("single_ended").list.join(","),
+                )
+            )
+
+            single_ended_sample_coassemblies = (
+                elusive_clusters
+                .filter(pl.col("single_ended_samples"))
+                .get_column("coassembly")
+                .to_list()
+            )
+            for coassembly in single_ended_sample_coassemblies:
+                logging.warn(f"Single-ended reads detected in assembly samples for coassembly: {coassembly}, skipping.")
+
+            single_ended_recover_coassemblies = (
+                elusive_clusters
+                .filter(~pl.col("single_ended_samples"))
+                .filter(pl.col("single_ended_recover_samples"))
+                .get_column("coassembly")
+                .to_list()
+            )
+            for coassembly in single_ended_recover_coassemblies:
+                logging.warn(f"Single-ended reads detected in recovery samples for coassembly: {coassembly}. Removing those samples from recovery.")
+
+            if elusive_clusters.filter(~pl.col("single_ended_samples")).height == 0:
+                raise Exception("Single-ended reads detected. All coassemblies contain these reads.")
+
+            os.remove(elusive_clusters_path)
+            (
+                elusive_clusters
+                .filter(~pl.col("single_ended_samples"))
+                .select(~cs.starts_with("single_ended"))
+                .write_csv(elusive_clusters_path, separator="\t")
+            )
+        except FileNotFoundError:
+            raise Exception("Single-ended reads detected. Remove from input SRA and try again.")
+
+    config_items = {
+        "sra": [s for s in args.forward if s not in single_ended],
+        "reads_1": {},
+        "reads_2": {},
+    }
+
+    config_path = make_config(
+        importlib.resources.files("ibis.config").joinpath("template_coassemble.yaml"),
+        args.output,
+        config_items
+        )
+
+    run_workflow(
+        config = config_path,
+        workflow = "coassemble.smk",
+        output_dir = args.output,
+        cores = args.cores,
+        dryrun = args.dryrun,
+        conda_prefix = args.conda_prefix,
+        snakemake_args = args.snakemake_args + " -- compile_sra_qc" if args.snakemake_args else "-- compile_sra_qc",
+    )
 
     # Need to convince Snakemake that the SRA data predates the completed outputs
     # Otherwise it will rerun all the rules with reason "updated input files"
     # Using Jan 1 2000 as pre-date
-    os.makedirs(sra_dir, exist_ok=True)
+    sra_qc_dir = args.output + "/coassemble/sra_qc/"
+    os.makedirs(sra_qc_dir, exist_ok=True)
     for sra in [f + s for f in args.forward for s in ["_1", "_2"]]:
-        subprocess.check_call(f"touch -t 200001011200 {sra_dir + sra + SRA_SUFFIX}", shell=True)
+        subprocess.check_call(f"touch -t 200001011200 {sra_qc_dir + sra + SRA_SUFFIX}", shell=True)
 
-    forward = sorted([sra_dir + f for f in os.listdir(sra_dir) if f.endswith("_1" + SRA_SUFFIX)])
-    reverse = sorted([sra_dir + f for f in os.listdir(sra_dir) if f.endswith("_2" + SRA_SUFFIX)])
+    forward = sorted([sra_qc_dir + f for f in os.listdir(sra_qc_dir) if f.endswith("_1" + SRA_SUFFIX)])
+    reverse = sorted([sra_qc_dir + f for f in os.listdir(sra_qc_dir) if f.endswith("_2" + SRA_SUFFIX)])
 
     return forward, reverse
 

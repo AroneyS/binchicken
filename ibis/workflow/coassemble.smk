@@ -357,19 +357,51 @@ rule mock_download_sra:
     threads:
         64
     params:
-        sra_f = " ".join([s + "_1.fastq.gz" for s in config["sra"][1:]]) if config["sra"] else "",
-        sra_r = " ".join([s + "_2.fastq.gz" for s in config["sra"][1:]]) if config["sra"] else "",
-        sra_u = config["sra"][0] + ".fastq.gz" if config["sra"] else "",
-        sra_basedir = workflow.basedir + "/../../test/data/sra",
+        sra_u = workflow.basedir + "/../../test/data/sra/" + config["sra"][0] + ".fastq.gz" if config["sra"] else "",
+        sra_f = " ".join([workflow.basedir + "/../../test/data/sra/" + s + "_1.fastq.gz" for s in config["sra"][1:]]) if config["sra"] else "",
+        sra_r = " ".join([workflow.basedir + "/../../test/data/sra/" + s + "_2.fastq.gz" for s in config["sra"][1:]]) if config["sra"] else "",
     conda:
         "env/kingfisher.yml"
     log:
         logs_dir + "/sra/kingfisher.log"
     shell:
         "mkdir -p {output} && "
-        "cd {output} && "
-        "touch {params.sra_f} {params.sra_r} && "
-        "cp {params.sra_basedir}/{params.sra_u} {params.sra_u} "
+        "cp {params.sra_u} {params.sra_f} {params.sra_r} {output}"
+
+rule sra_qc:
+    output:
+        out1 = output_dir + "/sra_qc/{sra}_1.fastq.gz",
+        out2 = output_dir + "/sra_qc/{sra}_2.fastq.gz",
+    params:
+        in1 = output_dir + "/sra/{sra}_1.fastq.gz",
+        in2 = output_dir + "/sra/{sra}_2.fastq.gz",
+        stats = output_dir + "/sra_qc/{sra}_qc.stats",
+    threads:
+        64
+    conda:
+        "env/bbtools.yml"
+    log:
+        logs_dir + "/sra_qc/{sra}_qc.log"
+    shell:
+        "bbduk.sh "
+        "in1={params.in1} in2={params.in2} "
+        "out1={output.out1} out2={output.out2} "
+        "ref=adapters,phix "
+        "ktrim=r k=23 mink=11 hdist=1 "
+        "qtrim=r trimq=10 "
+        "minlen=30 "
+        "stats={params.stats} statscolumns=3 "
+        "t={threads} "
+        "&> {log} "
+
+rule compile_sra_qc:
+    input:
+        expand(output_dir + "/sra_qc/{sra}_1.fastq.gz", sra=config["sra"]),
+        expand(output_dir + "/sra_qc/{sra}_2.fastq.gz", sra=config["sra"]),
+    output:
+        done = output_dir + "/sra_qc/done"
+    shell:
+        "touch {output.done} "
 
 #####################################
 ### Map reads to matching genomes ###

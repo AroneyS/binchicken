@@ -39,6 +39,8 @@ MOCK_UNBINNED_SRA = os.path.join(MOCK_COASSEMBLE, "appraise", "unbinned_sra.otu_
 MOCK_BINNED_SRA = os.path.join(MOCK_COASSEMBLE, "appraise", "binned_sra.otu_table.tsv")
 MOCK_ELUSIVE_CLUSTERS_SRA = os.path.join(MOCK_COASSEMBLE, "target", "elusive_clusters_sra.tsv")
 MOCK_ELUSIVE_CLUSTERS_SRA_MOCK = os.path.join(MOCK_COASSEMBLE, "target", "elusive_clusters_sra_mock.tsv")
+MOCK_ELUSIVE_CLUSTERS_SRA_MOCK2 = os.path.join(MOCK_COASSEMBLE, "target", "elusive_clusters_sra_mock2.tsv")
+MOCK_ELUSIVE_CLUSTERS_SRA_MOCK3 = os.path.join(MOCK_COASSEMBLE, "target", "elusive_clusters_sra_mock3.tsv")
 
 class Tests(unittest.TestCase):
     def test_update(self):
@@ -212,9 +214,17 @@ class Tests(unittest.TestCase):
 
             output_sra = output_comb.split("Building DAG of jobs...")[1]
             self.assertTrue("download_sra" in output_sra)
+            self.assertTrue("sra_qc" not in output_sra)
+            self.assertTrue("compile_sra_qc" not in output_sra)
             self.assertTrue("aviary_commands" not in output_sra)
 
-            output = output_comb.split("Building DAG of jobs...")[2]
+            output_sra = output_comb.split("Building DAG of jobs...")[2]
+            self.assertTrue("download_sra" not in output_sra)
+            self.assertTrue("sra_qc" in output_sra)
+            self.assertTrue("compile_sra_qc" in output_sra)
+            self.assertTrue("aviary_commands" not in output_sra)
+
+            output = output_comb.split("Building DAG of jobs...")[3]
             self.assertTrue("singlem_pipe_reads" not in output)
             self.assertTrue("genome_transcripts" not in output)
             self.assertTrue("singlem_pipe_genomes" not in output)
@@ -249,19 +259,85 @@ class Tests(unittest.TestCase):
             )
             extern.run(cmd)
 
-            sra_1_path = os.path.join("test", "coassemble", "sra", "SRR3309137_1.fastq.gz")
-            self.assertTrue(os.path.exists(sra_1_path))
-            with gzip.open(sra_1_path) as f:
+            sra_f0_path = os.path.join("test", "coassemble", "sra_qc", "SRR3309137_1.fastq.gz")
+            self.assertTrue(os.path.exists(sra_f0_path))
+            with gzip.open(sra_f0_path) as f:
                 file = f.readline().decode()
                 self.assertTrue("@SRR3309137.1 HISEQ06:195:D1DRHACXX:5:1101:1597:2236/1" in file)
                 self.assertTrue("@SRR3309137.2 HISEQ06:195:D1DRHACXX:5:1101:1597:2236/1" not in file)
 
-            sra_2_path = os.path.join("test", "coassemble", "sra", "SRR3309137_2.fastq.gz")
-            self.assertTrue(os.path.exists(sra_2_path))
-            with gzip.open(sra_2_path) as f:
+            sra_r0_path = os.path.join("test", "coassemble", "sra_qc", "SRR3309137_2.fastq.gz")
+            self.assertTrue(os.path.exists(sra_r0_path))
+            with gzip.open(sra_r0_path) as f:
                 file = f.readline().decode()
                 self.assertTrue("@SRR3309137.2 HISEQ06:195:D1DRHACXX:5:1101:1597:2236/1" in file)
                 self.assertTrue("@SRR3309137.1 HISEQ06:195:D1DRHACXX:5:1101:1597:2236/1" not in file)
+
+            sra_f1_path = os.path.join("test", "coassemble", "sra_qc", "SRR8334323_1.fastq.gz")
+            self.assertTrue(os.path.exists(sra_f1_path))
+            with gzip.open(sra_f1_path) as f:
+                file = f.readline().decode()
+                self.assertTrue("@SEQ_ID.1" not in file)
+
+            sra_f2_path = os.path.join("test", "coassemble", "sra_qc", "SRR8334324_1.fastq.gz")
+            self.assertTrue(os.path.exists(sra_f2_path))
+            with gzip.open(sra_f2_path) as f:
+                file = f.readline().decode()
+                self.assertTrue("@SEQ_ID.1" in file)
+
+            recover_path = os.path.join("test", "coassemble", "commands", "recover_commands.sh")
+            self.assertTrue(os.path.exists(recover_path))
+            with open(recover_path) as f:
+                file = f.readline()
+                self.assertTrue("sra_qc/SRR3309137_1.fastq.gz" in file)
+                self.assertTrue("sra_qc/SRR3309137_2.fastq.gz" in file)
+                self.assertTrue("sra_qc/SRR8334323_1.fastq.gz" in file)
+                self.assertTrue("sra_qc/SRR8334323_2.fastq.gz" in file)
+                self.assertTrue("sra_qc/SRR8334324_1.fastq.gz" in file)
+                self.assertTrue("sra_qc/SRR8334324_2.fastq.gz" in file)
+
+    def test_update_sra_download_mock_filter_single(self):
+        with in_tempdir():
+            cmd = (
+                f"ibis update "
+                f"--forward SRR3309137_mismatched SRR8334323 SRR8334324 "
+                f"--sra "
+                f"--genomes {GENOMES} "
+                f"--coassemble-unbinned {MOCK_UNBINNED_SRA} "
+                f"--coassemble-binned {MOCK_BINNED_SRA} "
+                f"--coassemble-targets {MOCK_TARGETS} "
+                f"--coassemble-elusive-edges {MOCK_ELUSIVE_EDGES} "
+                f"--coassemble-elusive-clusters {MOCK_ELUSIVE_CLUSTERS_SRA_MOCK2} "
+                f"--coassemble-summary {MOCK_SUMMARY} "
+                f"--output test "
+                f"--conda-prefix {path_to_conda} "
+                f"--snakemake-args \" --config mock_sra=True\" "
+            )
+            extern.run(cmd)
+
+            single_ended_path = os.path.join("test", "coassemble", "sra", "single_ended.tsv")
+            self.assertTrue(os.path.exists(single_ended_path))
+            expected = "\n".join(
+                [
+                    "\t".join(["sra", "reason"]),
+                    "\t".join(["SRR3309137_mismatched", "Consecutive reads do not match (1/10)"]),
+                    ""
+                ]
+            )
+            with open(single_ended_path) as f:
+                self.assertEqual(expected, f.read())
+
+            elusive_clusters_path = os.path.join("test", "coassemble", "target", "elusive_clusters.tsv")
+            self.assertTrue(os.path.exists(elusive_clusters_path))
+            expected = "\n".join(
+                [
+                    "\t".join(["samples", "length", "total_targets", "total_size", "recover_samples", "coassembly"]),
+                    "\t".join(["SRR8334324,SRR8334323", "2", "2", "0", "SRR8334323,SRR8334324", "coassembly_0"]),
+                    ""
+                ]
+            )
+            with open(elusive_clusters_path) as f:
+                self.assertEqual(expected, f.read())
 
     def test_update_sra_download_mock_fail(self):
         with in_tempdir():
@@ -274,7 +350,7 @@ class Tests(unittest.TestCase):
                 f"--coassemble-binned {MOCK_BINNED_SRA} "
                 f"--coassemble-targets {MOCK_TARGETS} "
                 f"--coassemble-elusive-edges {MOCK_ELUSIVE_EDGES} "
-                f"--coassemble-elusive-clusters {MOCK_ELUSIVE_CLUSTERS_SRA_MOCK} "
+                f"--coassemble-elusive-clusters {MOCK_ELUSIVE_CLUSTERS_SRA_MOCK3} "
                 f"--coassemble-summary {MOCK_SUMMARY} "
                 f"--output test "
                 f"--conda-prefix {path_to_conda} "
@@ -309,9 +385,17 @@ class Tests(unittest.TestCase):
 
             output_sra = output_comb.split("Building DAG of jobs...")[1]
             self.assertTrue("download_sra" in output_sra)
+            self.assertTrue("sra_qc" not in output_sra)
+            self.assertTrue("compile_sra_qc" not in output_sra)
             self.assertTrue("aviary_commands" not in output_sra)
 
-            output = output_comb.split("Building DAG of jobs...")[2]
+            output_sra = output_comb.split("Building DAG of jobs...")[2]
+            self.assertTrue("download_sra" not in output_sra)
+            self.assertTrue("sra_qc" in output_sra)
+            self.assertTrue("compile_sra_qc" in output_sra)
+            self.assertTrue("aviary_commands" not in output_sra)
+
+            output = output_comb.split("Building DAG of jobs...")[3]
             self.assertTrue("singlem_pipe_reads" not in output)
             self.assertTrue("genome_transcripts" not in output)
             self.assertTrue("singlem_pipe_genomes" not in output)
