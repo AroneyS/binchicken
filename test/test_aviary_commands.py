@@ -64,7 +64,7 @@ class Tests(unittest.TestCase):
                 f"-1 1_1.fq.gz 2_1.fq.gz 3_1.fq.gz 4_1.fq.gz 5_1.fq.gz 6_1.fq.gz "
                 f"-2 1_2.fq.gz 2_2.fq.gz 3_2.fq.gz 4_2.fq.gz 5_2.fq.gz 6_2.fq.gz "
                 f"--output {output_dir}/coassemble/coassembly_0/recover "
-                f"-n {threads} -t {threads} -m {memory} "
+                f"-n {threads//2} -t {threads//2} -m {memory//2} "
                 f"&> {output_dir}/coassemble/logs/coassembly_0_recover.log ",
             ],
             [
@@ -79,7 +79,7 @@ class Tests(unittest.TestCase):
                 f"-1 4_1.fq.gz 5_1.fq.gz 6_1.fq.gz "
                 f"-2 4_2.fq.gz 5_2.fq.gz 6_2.fq.gz "
                 f"--output {output_dir}/coassemble/coassembly_2/recover "
-                f"-n {threads} -t {threads} -m {memory} "
+                f"-n {threads//2} -t {threads//2} -m {memory//2} "
                 f"&> {output_dir}/coassemble/logs/coassembly_2_recover.log ",
             ],
         ], schema=COMMANDS_COLUMNS, orient="row")
@@ -113,7 +113,7 @@ class Tests(unittest.TestCase):
                 f"--workflow recover_mags_no_singlem "
                 f"--skip-binners maxbin concoct rosella "
                 f"--refinery-max-iterations 0 "
-                f"-n {threads} -t {threads} -m {memory} "
+                f"-n {threads//2} -t {threads//2} -m {memory//2} "
                 f"&> {output_dir}/coassemble/logs/coassembly_0_recover.log ",
             ],
             [
@@ -131,7 +131,7 @@ class Tests(unittest.TestCase):
                 f"--workflow recover_mags_no_singlem "
                 f"--skip-binners maxbin concoct rosella "
                 f"--refinery-max-iterations 0 "
-                f"-n {threads} -t {threads} -m {memory} "
+                f"-n {threads//2} -t {threads//2} -m {memory//2} "
                 f"&> {output_dir}/coassemble/logs/coassembly_2_recover.log ",
             ],
         ], schema=COMMANDS_COLUMNS, orient="row")
