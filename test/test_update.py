@@ -313,8 +313,7 @@ class Tests(unittest.TestCase):
                 f"--conda-prefix {path_to_conda} "
                 f"--snakemake-args \" --config mock_sra=True\" "
             )
-            with self.assertRaises(Exception):
-                extern.run(cmd)
+            extern.run(cmd)
 
             single_ended_path = os.path.join("test", "coassemble", "sra", "single_ended.tsv")
             self.assertTrue(os.path.exists(single_ended_path))
@@ -326,6 +325,18 @@ class Tests(unittest.TestCase):
                 ]
             )
             with open(single_ended_path) as f:
+                self.assertEqual(expected, f.read())
+
+            elusive_clusters_path = os.path.join("test", "coassemble", "target", "elusive_clusters.tsv")
+            self.assertTrue(os.path.exists(elusive_clusters_path))
+            expected = "\n".join(
+                [
+                    "\t".join(["samples", "length", "total_targets", "total_size", "recover_samples", "coassembly"]),
+                    "\t".join(["SRR8334324,SRR8334323", "2", "2", "0", "SRR8334323,SRR8334324", "coassembly_0"]),
+                    ""
+                ]
+            )
+            with open(elusive_clusters_path) as f:
                 self.assertEqual(expected, f.read())
 
     def test_update_sra_download_mock_fail(self):

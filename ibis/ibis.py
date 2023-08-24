@@ -11,6 +11,7 @@ import extern
 import importlib.resources
 import bird_tool_utils as btu
 import polars as pl
+import polars.selectors as cs
 from snakemake.io import load_configfile
 from ruamel.yaml import YAML
 import copy
@@ -201,7 +202,71 @@ def download_sra(args):
             for sra, reason in single_ended.items():
                 f.write(f"{sra}\t{reason}\n")
 
-        raise Exception("Single-ended reads detected")
+        try:
+            elusive_clusters_path = os.path.join(args.output, "coassemble", "target", "elusive_clusters.tsv")
+            elusive_clusters = (
+                pl.read_csv(elusive_clusters_path, separator="\t")
+                .with_columns(
+                    single_ended = pl.lit([list(single_ended)]),
+                    single_ended_samples =
+                        pl.col("samples")
+                        .str.split(",")
+                        .list.eval(pl.element().is_in(single_ended.keys()))
+                        .list.any(),
+                    single_ended_recover_samples =
+                        pl.col("recover_samples")
+                        .str.split(",")
+                        .list.eval(pl.element().is_in(single_ended.keys()))
+                        .list.any(),
+                    )
+                .with_columns(
+                    pl.col("recover_samples").str.split(",").list.set_difference("single_ended").list.join(","),
+                )
+            )
+
+            single_ended_sample_coassemblies = (
+                elusive_clusters
+                .filter(pl.col("single_ended_samples"))
+                .get_column("coassembly")
+                .to_list()
+            )
+            for coassembly in single_ended_sample_coassemblies:
+                logging.warn(f"Single-ended reads detected in assembly samples for coassembly: {coassembly}, skipping.")
+
+            single_ended_recover_coassemblies = (
+                elusive_clusters
+                .filter(~pl.col("single_ended_samples"))
+                .filter(pl.col("single_ended_recover_samples"))
+                .get_column("coassembly")
+                .to_list()
+            )
+            for coassembly in single_ended_recover_coassemblies:
+                logging.warn(f"Single-ended reads detected in recovery samples for coassembly: {coassembly}. Removing those samples from recovery.")
+
+            if elusive_clusters.filter(~pl.col("single_ended_samples")).height == 0:
+                raise Exception("Single-ended reads detected. All coassemblies contain these reads.")
+
+            os.remove(elusive_clusters_path)
+            (
+                elusive_clusters
+                .filter(~pl.col("single_ended_samples"))
+                .select(~cs.starts_with("single_ended"))
+                .write_csv(elusive_clusters_path, separator="\t")
+            )
+        except FileNotFoundError:
+            raise Exception("Single-ended reads detected. Remove from input SRA and try again.")
+
+    config_items = {
+        "sra": [s for s in args.forward if s not in single_ended],
+        "reads_1": {},
+        "reads_2": {},
+    }
+
+    config_path = make_config(
+        importlib.resources.files("ibis.config").joinpath("template_coassemble.yaml"),
+        args.output,
+        config_items
+        )
 
     run_workflow(
         config = config_path,
