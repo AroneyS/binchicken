@@ -576,7 +576,6 @@ rule aviary_assemble:
     params:
         reads_1 = lambda wildcards: get_reads_coassembly(wildcards),
         reads_2 = lambda wildcards: get_reads_coassembly(wildcards, forward=False),
-        memory = config["aviary_memory"],
         dryrun = "--dryrun" if config["aviary_dryrun"] else "",
         drymkdir = "&& mkdir -p "+output_dir+"/coassemble/{coassembly}/assemble/assembly" if config["aviary_dryrun"] else "",
         drytouch = "&& touch "+output_dir+"/coassemble/{coassembly}/assemble/assembly/final_contigs.fasta" if config["aviary_dryrun"] else "",
@@ -586,6 +585,7 @@ rule aviary_assemble:
     resources:
         mem_mb = int(config["aviary_memory"]*1000),
         runtime = "96h",
+        assembler = lambda wildcards, attempt: "" if attempt == 1 else "--use-megahit",
     log:
         logs_dir + "/aviary/{coassembly}_assemble.log"
     conda:
@@ -601,7 +601,8 @@ rule aviary_assemble:
         "--output {output.dir} "
         "-n {threads} "
         "-t {threads} "
-        "-m {params.memory} "
+        "-m {resources.mem_mb} "
+        "{resources.assembler} "
         "{params.dryrun} "
         "&> {log} "
         "{params.drymkdir} "
