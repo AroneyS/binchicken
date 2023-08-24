@@ -584,7 +584,7 @@ rule aviary_assemble:
     threads:
         threads = config["aviary_threads"]
     resources:
-        mem_mb = int(config["aviary_memory"]*1024),
+        mem_mb = int(config["aviary_memory"]*1000),
         runtime = "96h",
     log:
         logs_dir + "/aviary/{coassembly}_assemble.log"
@@ -624,7 +624,7 @@ rule aviary_recover:
     threads:
         int(config["aviary_threads"]/2)
     resources:
-        mem_mb = int(config["aviary_memory"]*1024/2),
+        mem_mb = int(config["aviary_memory"]*1000/2),
         runtime = "168h",
     log:
         logs_dir + "/aviary/{coassembly}_recover.log"
