@@ -98,8 +98,6 @@ class Tests(unittest.TestCase):
             f"--sra "
             f"--run-aviary "
             f"--cores 32 "
-            f"--aviary-cores 32 "
-            f"--aviary-memory 500 "
             f"--aviary-gtdbtk-dir /work/microbiome/db/gtdb/gtdb_release207_v2 "
             f"--aviary-checkm2-dir /work/microbiome/db/CheckM2_database "
             f"--genomes {GENOMES} "
@@ -111,6 +109,7 @@ class Tests(unittest.TestCase):
             f"--coassemble-summary {os.path.join(MOCK_COASSEMBLE, 'summary.tsv')} "
             f"--output {output_dir} "
             f"--conda-prefix {path_to_conda} "
+            f"--snakemake-args '--profile mqsub' "
         )
         subprocess.run(cmd, shell=True, check=True)
 
