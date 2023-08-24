@@ -39,6 +39,8 @@ MOCK_UNBINNED_SRA = os.path.join(MOCK_COASSEMBLE, "appraise", "unbinned_sra.otu_
 MOCK_BINNED_SRA = os.path.join(MOCK_COASSEMBLE, "appraise", "binned_sra.otu_table.tsv")
 MOCK_ELUSIVE_CLUSTERS_SRA = os.path.join(MOCK_COASSEMBLE, "target", "elusive_clusters_sra.tsv")
 MOCK_ELUSIVE_CLUSTERS_SRA_MOCK = os.path.join(MOCK_COASSEMBLE, "target", "elusive_clusters_sra_mock.tsv")
+MOCK_ELUSIVE_CLUSTERS_SRA_MOCK2 = os.path.join(MOCK_COASSEMBLE, "target", "elusive_clusters_sra_mock2.tsv")
+MOCK_ELUSIVE_CLUSTERS_SRA_MOCK3 = os.path.join(MOCK_COASSEMBLE, "target", "elusive_clusters_sra_mock3.tsv")
 
 class Tests(unittest.TestCase):
     def test_update(self):
@@ -294,6 +296,38 @@ class Tests(unittest.TestCase):
                 self.assertTrue("sra_qc/SRR8334324_1.fastq.gz" in file)
                 self.assertTrue("sra_qc/SRR8334324_2.fastq.gz" in file)
 
+    def test_update_sra_download_mock_filter_single(self):
+        with in_tempdir():
+            cmd = (
+                f"ibis update "
+                f"--forward SRR3309137_mismatched SRR8334323 SRR8334324 "
+                f"--sra "
+                f"--genomes {GENOMES} "
+                f"--coassemble-unbinned {MOCK_UNBINNED_SRA} "
+                f"--coassemble-binned {MOCK_BINNED_SRA} "
+                f"--coassemble-targets {MOCK_TARGETS} "
+                f"--coassemble-elusive-edges {MOCK_ELUSIVE_EDGES} "
+                f"--coassemble-elusive-clusters {MOCK_ELUSIVE_CLUSTERS_SRA_MOCK2} "
+                f"--coassemble-summary {MOCK_SUMMARY} "
+                f"--output test "
+                f"--conda-prefix {path_to_conda} "
+                f"--snakemake-args \" --config mock_sra=True\" "
+            )
+            with self.assertRaises(Exception):
+                extern.run(cmd)
+
+            single_ended_path = os.path.join("test", "coassemble", "sra", "single_ended.tsv")
+            self.assertTrue(os.path.exists(single_ended_path))
+            expected = "\n".join(
+                [
+                    "\t".join(["sra", "reason"]),
+                    "\t".join(["SRR3309137_mismatched", "Consecutive reads do not match (1/10)"]),
+                    ""
+                ]
+            )
+            with open(single_ended_path) as f:
+                self.assertEqual(expected, f.read())
+
     def test_update_sra_download_mock_fail(self):
         with in_tempdir():
             cmd = (
@@ -305,7 +339,7 @@ class Tests(unittest.TestCase):
                 f"--coassemble-binned {MOCK_BINNED_SRA} "
                 f"--coassemble-targets {MOCK_TARGETS} "
                 f"--coassemble-elusive-edges {MOCK_ELUSIVE_EDGES} "
-                f"--coassemble-elusive-clusters {MOCK_ELUSIVE_CLUSTERS_SRA_MOCK} "
+                f"--coassemble-elusive-clusters {MOCK_ELUSIVE_CLUSTERS_SRA_MOCK3} "
                 f"--coassemble-summary {MOCK_SUMMARY} "
                 f"--output test "
                 f"--conda-prefix {path_to_conda} "

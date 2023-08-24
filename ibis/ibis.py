@@ -147,6 +147,7 @@ def download_sra(args):
     expected_reverse = [sra_dir + f + "_2" + SRA_SUFFIX for f in args.forward]
 
     # Fix single file outputs if interleaved or error if unpaired
+    single_ended = {}
     if not args.dryrun and args.sra != "build":
         for f, r in zip(expected_forward, expected_reverse):
             if os.path.isfile(f) & os.path.isfile(r):
@@ -174,7 +175,10 @@ def download_sra(args):
             output = extern.run(cmd).strip().split("\t")
 
             if output[0] != "True":
-                raise Exception(f"Download {u} was not interleaved: {output[1]}")
+                sra_name = os.path.basename(u).replace(SRA_SUFFIX, "")
+                single_ended[sra_name] = output[1]
+                logging.warning(f"Download {u} was not interleaved: {output[1]}")
+                continue
 
             logging.info(f"Download {u} was interleaved: {output[1]}")
             logging.info(f"Deinterleaving {u}")
@@ -190,6 +194,14 @@ def download_sra(args):
                 threads = max(1, args.cores // 2),
             )
             extern.run(cmd)
+
+    if single_ended:
+        with open(sra_dir + "single_ended.tsv", "w") as f:
+            f.write("sra\treason\n")
+            for sra, reason in single_ended.items():
+                f.write(f"{sra}\t{reason}\n")
+
+        raise Exception("Single-ended reads detected")
 
     run_workflow(
         config = config_path,

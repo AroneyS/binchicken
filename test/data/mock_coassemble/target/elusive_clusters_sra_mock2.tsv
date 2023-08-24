@@ -1,0 +1,3 @@
+samples	length	total_targets	total_size	recover_samples	coassembly
+SRR8334324,SRR8334323	2	2	0	SRR3309137_mismatched,SRR8334324,SRR8334323	coassembly_0
+SRR3309137_mismatched,SRR8334323	2	2	0	SRR3309137_mismatched,SRR8334324,SRR8334323	coassembly_1
