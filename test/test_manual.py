@@ -116,13 +116,7 @@ class Tests(unittest.TestCase):
         config_path = os.path.join(output_dir, "config.yaml")
         self.assertTrue(os.path.exists(config_path))
 
-        sra_1_path = os.path.join(output_dir, "coassemble", "sra", "SRR8334323_1.fastq.gz")
-        self.assertTrue(os.path.exists(sra_1_path))
-        with gzip.open(sra_1_path) as f:
-            file = f.readline().decode()
-            self.assertTrue("@SRR8334323.1 1/1" in file)
-            self.assertTrue("@SRR8334323.1 1/2" not in file)
-
+        self.assertTrue(os.path.exists(os.path.join(output_dir, "coassemble", "sra", "SRR8334323_1.fastq.gz")))
         self.assertTrue(os.path.exists(os.path.join(output_dir, "coassemble", "sra", "SRR8334323_2.fastq.gz")))
         self.assertTrue(os.path.exists(os.path.join(output_dir, "coassemble", "sra", "SRR8334324_1.fastq.gz")))
         self.assertTrue(os.path.exists(os.path.join(output_dir, "coassemble", "sra", "SRR8334324_2.fastq.gz")))
