@@ -148,7 +148,6 @@ class Tests(unittest.TestCase):
             f"--coassemble-summary {os.path.join(MOCK_COASSEMBLE, 'summary.tsv')} "
             f"--output {output_dir} "
             f"--conda-prefix {path_to_conda} "
-            f"--dryrun "
             f"--snakemake-args '--profile mqsub --retries 1' "
         )
         subprocess.run(cmd, shell=True, check=True)
