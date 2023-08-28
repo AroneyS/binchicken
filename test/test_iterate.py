@@ -279,8 +279,8 @@ class Tests(unittest.TestCase):
             self.assertEqual(config["max_threads"], 8)
             self.assertEqual(config["taxa_of_interest"], "")
             self.assertEqual(config["assemble_unmapped"], False)
-            self.assertEqual(config["aviary_threads"], 16)
-            self.assertEqual(config["aviary_memory"], 250)
+            self.assertEqual(config["aviary_threads"], 64)
+            self.assertEqual(config["aviary_memory"], 500)
 
             self.assertTrue("Evaluating bins using CheckM2 with completeness >= 70 and contamination <= 10" in output)
 

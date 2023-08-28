@@ -33,7 +33,10 @@ def pipeline(appraise_binned, appraise_unbinned, sample, MIN_APPRAISED=0.1, TRIM
 
     num_binned = sum(appraise_binned.get_column("num_hits").to_list())
     num_unbinned = sum(appraise_unbinned.get_column("num_hits").to_list())
-    perc_binned = num_binned / (num_binned + num_unbinned)
+    try:
+        perc_binned = num_binned / (num_binned + num_unbinned)
+    except ZeroDivisionError:
+        return set()
 
     if perc_binned < MIN_APPRAISED:
         return set()

@@ -492,7 +492,8 @@ def coassemble(args):
     logging.info(f"Ibis coassemble complete.")
     logging.info(f"Cluster summary at {os.path.join(args.output, 'coassemble', 'summary.tsv')}")
     logging.info(f"More details at {os.path.join(args.output, 'coassemble', 'target', 'elusive_clusters.tsv')}")
-    logging.info(f"Aviary commands for coassembly and recovery in shell scripts at {os.path.join(args.output, 'coassemble', 'commands')}")
+    if not args.run_aviary:
+        logging.info(f"Aviary commands for coassembly and recovery in shell scripts at {os.path.join(args.output, 'coassemble', 'commands')}")
 
 def evaluate(args):
     logging.info("Loading Ibis coassemble info")
@@ -626,7 +627,8 @@ def update(args):
     coassemble(args)
 
     logging.info(f"Ibis update complete.")
-    logging.info(f"Aviary commands for coassembly and recovery in shell scripts at {os.path.join(args.output, 'coassemble', 'commands')}")
+    if not args.run_aviary:
+        logging.info(f"Aviary commands for coassembly and recovery in shell scripts at {os.path.join(args.output, 'coassemble', 'commands')}")
 
 def generate_genome_singlem(orig_args, new_genomes):
     args = copy.deepcopy(orig_args)
@@ -759,6 +761,11 @@ def build(args):
     conda_prefix = args.conda_prefix
     args.build = True
 
+    # Setup env variables
+    os.environ["SNAKEMAKE_CONDA_PREFIX"] = conda_prefix
+    extern.run(f"conda env config vars set SNAKEMAKE_CONDA_PREFIX={conda_prefix}")
+
+    # Set args
     args = set_standard_args(args)
     coassemble_config = load_config(importlib.resources.files("ibis.config").joinpath("template_coassemble.yaml"))
     vars(args).update(coassemble_config)
@@ -906,7 +913,7 @@ def main():
     ###########################################################################
     def add_general_snakemake_options(argument_group, required_conda_prefix=False):
         argument_group.add_argument("--output", help="Output directory [default: .]", default="./")
-        argument_group.add_argument("--conda-prefix", help="Path to conda environment install location", default=None, required=required_conda_prefix)
+        argument_group.add_argument("--conda-prefix", help="Path to conda environment install location. default: Use path from CONDA_ENV_PATH env variable", default=None, required=required_conda_prefix)
         argument_group.add_argument("--cores", type=int, help="Maximum number of cores to use", default=1)
         argument_group.add_argument("--dryrun", action="store_true", help="dry run workflow")
         argument_group.add_argument("--snakemake-args", help="Additional commands to be supplied to snakemake in the form of a space-prefixed single string e.g. \" --quiet\"", default="")
@@ -930,8 +937,8 @@ def main():
         argument_group.add_argument("--run-aviary", action="store_true", help="Run Aviary commands for all identified coassemblies (unless specified)")
         argument_group.add_argument("--aviary-gtdbtk-dir", help="Path to GTDB-Tk database directory for Aviary")
         argument_group.add_argument("--aviary-checkm2-dir", help="Path to CheckM2 database directory for Aviary")
-        argument_group.add_argument("--aviary-cores", type=int, help="Maximum number of cores for Aviary to use", default=16)
-        argument_group.add_argument("--aviary-memory", type=int, help="Maximum amount of memory for Aviary to use (Gigabytes)", default=250)
+        argument_group.add_argument("--aviary-cores", type=int, help="Maximum number of cores for Aviary to use. Half used for recovery.", default=64)
+        argument_group.add_argument("--aviary-memory", type=int, help="Maximum amount of memory for Aviary to use (Gigabytes). Half used for recovery", default=500)
 
     def add_main_coassemble_output_arguments(argument_group):
         argument_group.add_argument("--coassemble-output", help="Output dir from cluster subcommand")

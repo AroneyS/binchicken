@@ -3,6 +3,7 @@
 #############
 ruleorder: no_genomes > query_processing > update_appraise > singlem_appraise
 ruleorder: mock_download_sra > download_sra
+localrules: all, summary, singlem_summarise_genomes, singlem_appraise_filtered, no_genomes, mock_download_sra, compile_sra_qc, collect_genomes, finish_mapping, aviary_commands, aviary_combine
 
 import os
 import pandas as pd
@@ -97,6 +98,10 @@ rule singlem_pipe_reads:
         logs_dir + "/pipe/{read}_read.log"
     params:
         singlem_metapackage = config["singlem_metapackage"]
+    threads: 1
+    resources:
+        mem_mb=8000,
+        runtime = "24h",
     conda:
         "env/singlem.yml"
     shell:
@@ -119,6 +124,10 @@ rule genome_transcripts:
         logs_dir + "/transcripts/{genome}_protein.log"
     params:
         prodigal_meta = "-p meta" if config["prodigal_meta"] else ""
+    threads: 1
+    resources:
+        mem_mb=8000,
+        runtime = "24h",
     conda:
         "env/prodigal.yml"
     shell:
@@ -137,6 +146,10 @@ rule singlem_pipe_genomes:
         logs_dir + "/pipe/{genome}_bin.log"
     params:
         singlem_metapackage = config["singlem_metapackage"]
+    threads: 1
+    resources:
+        mem_mb=8000,
+        runtime = "24h",
     conda:
         "env/singlem.yml"
     shell:
@@ -180,6 +193,10 @@ rule singlem_appraise:
     params:
         sequence_identity = config["appraise_sequence_identity"],
         singlem_metapackage = config["singlem_metapackage"],
+    threads: 1
+    resources:
+        mem_mb=8000,
+        runtime = "24h",
     conda:
         "env/singlem.yml"
     shell:
@@ -224,6 +241,10 @@ rule update_appraise:
         sequence_identity = config["appraise_sequence_identity"],
         singlem_metapackage = config["singlem_metapackage"],
         new_binned = output_dir + "/appraise/binned_new.otu_table.tsv",
+    threads: 1
+    resources:
+        mem_mb=8000,
+        runtime = "24h",
     conda:
         "env/singlem.yml"
     shell:
@@ -255,8 +276,10 @@ rule query_processing:
         sequence_identity = config["appraise_sequence_identity"],
         window_size = 60,
         taxa_of_interest = config["taxa_of_interest"],
-    threads:
-        64
+    threads: 1
+    resources:
+        mem_mb=8000,
+        runtime = "24h",
     script:
         "scripts/query_processing.py"
 
@@ -286,8 +309,10 @@ rule count_bp_reads:
     params:
         names = list(config["reads_1"].keys()),
         cat = get_cat,
-    threads:
-        8
+    threads: 8
+    resources:
+        mem_mb=64000,
+        runtime = "24h",
     shell:
         "parallel -k -j {threads} "
         "echo -n {{1}}, '&&' "
@@ -305,8 +330,10 @@ rule target_elusive:
         min_coassembly_coverage = config["min_coassembly_coverage"],
         max_coassembly_samples = config["max_coassembly_samples"],
         taxa_of_interest = config["taxa_of_interest"],
-    threads:
-        64
+    threads: 32
+    resources:
+        mem_mb=250*1000,
+        runtime = "24h",
     script:
         "scripts/target_elusive.py"
 
@@ -322,8 +349,10 @@ checkpoint cluster_graph:
         max_coassembly_samples = config["max_coassembly_samples"],
         max_recovery_samples = config["max_recovery_samples"],
         exclude_coassemblies = config["exclude_coassemblies"],
-    threads:
-        64
+    threads: 64
+    resources:
+        mem_mb=500*1000,
+        runtime = "168h",
     script:
         "scripts/cluster_graph.py"
 
@@ -333,10 +362,12 @@ checkpoint cluster_graph:
 rule download_sra:
     output:
         directory(output_dir + "/sra")
-    threads:
-        64
     params:
         sra = " ".join(config["sra"]) if config["sra"] else ""
+    threads: 32
+    resources:
+        mem_mb=250*1000,
+        runtime = "48h",
     conda:
         "env/kingfisher.yml"
     log:
@@ -354,8 +385,7 @@ rule download_sra:
 rule mock_download_sra:
     output:
         directory(output_dir + "/sra") if config["mock_sra"] else []
-    threads:
-        64
+    threads: 8
     params:
         sra_u = workflow.basedir + "/../../test/data/sra/" + config["sra"][0] + ".fastq.gz" if config["sra"] else "",
         sra_f = " ".join([workflow.basedir + "/../../test/data/sra/" + s + "_1.fastq.gz" for s in config["sra"][1:]]) if config["sra"] else "",
@@ -376,8 +406,10 @@ rule sra_qc:
         in1 = output_dir + "/sra/{sra}_1.fastq.gz",
         in2 = output_dir + "/sra/{sra}_2.fastq.gz",
         stats = output_dir + "/sra_qc/{sra}_qc.stats",
-    threads:
-        64
+    threads: 16
+    resources:
+        mem_mb=125*1000,
+        runtime = "24h",
     conda:
         "env/bbtools.yml"
     log:
@@ -426,10 +458,12 @@ rule map_reads:
         genomes = output_dir + "/mapping/{read}_reference.fna",
     output:
         dir = temp(directory(output_dir + "/mapping/{read}_coverm")),
+    threads: 16
+    resources:
+        mem_mb=125*1000,
+        runtime = "24h",
     log:
         logs_dir + "/mapping/{read}_coverm.log",
-    threads:
-        32
     conda:
         "env/coverm.yml"
     shell:
@@ -446,15 +480,17 @@ rule filter_bam_files:
         output_dir + "/mapping/{read}_coverm",
     output:
         temp(output_dir + "/mapping/{read}_unmapped.bam"),
-    log:
-        logs_dir + "/mapping/{read}_filter.log",
     params:
         genomes = "{read}_reference.fna",
         reads_1 = lambda wildcards: os.path.basename(config["reads_1"][wildcards.read]),
         sequence_identity = config["unmapping_max_identity"],
         alignment_percent = config["unmapping_max_alignment"],
-    threads:
-        32
+    threads: 16
+    resources:
+        mem_mb=125*1000,
+        runtime = "24h",
+    log:
+        logs_dir + "/mapping/{read}_filter.log",
     conda:
         "env/coverm.yml"
     shell:
@@ -473,10 +509,12 @@ rule bam_to_fastq:
     output:
         reads_1 = output_dir + "/mapping/{read}_unmapped.1.fq.gz",
         reads_2 = output_dir + "/mapping/{read}_unmapped.2.fq.gz",
+    threads: 16
+    resources:
+        mem_mb=125*1000,
+        runtime = "24h",
     log:
         logs_dir + "/mapping/{read}_fastq.log",
-    threads:
-        32
     conda:
         "env/coverm.yml"
     shell:
@@ -509,8 +547,7 @@ rule aviary_commands:
     output:
         coassemble_commands = output_dir + "/commands/coassemble_commands.sh",
         recover_commands = output_dir + "/commands/recover_commands.sh"
-    threads:
-        64
+    threads: 8
     params:
         reads_1 = mapped_reads_1 if config["assemble_unmapped"] else config["reads_1"],
         reads_2 = mapped_reads_2 if config["assemble_unmapped"] else config["reads_2"],
@@ -536,13 +573,16 @@ rule aviary_assemble:
     params:
         reads_1 = lambda wildcards: get_reads_coassembly(wildcards),
         reads_2 = lambda wildcards: get_reads_coassembly(wildcards, forward=False),
-        memory = config["aviary_memory"],
         dryrun = "--dryrun" if config["aviary_dryrun"] else "",
         drymkdir = "&& mkdir -p "+output_dir+"/coassemble/{coassembly}/assemble/assembly" if config["aviary_dryrun"] else "",
         drytouch = "&& touch "+output_dir+"/coassemble/{coassembly}/assemble/assembly/final_contigs.fasta" if config["aviary_dryrun"] else "",
         conda_prefix = config["conda_prefix"] if config["conda_prefix"] else ".",
     threads:
         threads = config["aviary_threads"]
+    resources:
+        mem_mb = int(config["aviary_memory"]*1000),
+        runtime = "96h",
+        assembler = lambda wildcards, attempt: "" if attempt == 1 else "--use-megahit",
     log:
         logs_dir + "/aviary/{coassembly}_assemble.log"
     conda:
@@ -558,7 +598,8 @@ rule aviary_assemble:
         "--output {output.dir} "
         "-n {threads} "
         "-t {threads} "
-        "-m {params.memory} "
+        "-m {resources.mem_mb} "
+        "{resources.assembler} "
         "{params.dryrun} "
         "&> {log} "
         "{params.drymkdir} "
@@ -573,14 +614,16 @@ rule aviary_recover:
     params:
         reads_1 = lambda wildcards: get_reads_coassembly(wildcards, recover=True),
         reads_2 = lambda wildcards: get_reads_coassembly(wildcards, forward=False, recover=True),
-        memory = config["aviary_memory"],
         dryrun = "--dryrun" if config["aviary_dryrun"] else "",
         gtdbtk = config["aviary_gtdbtk"],
         checkm2 = config["aviary_checkm2"],
         conda_prefix = config["conda_prefix"] if config["conda_prefix"] else ".",
-        fast = "--workflow recover_mags_no_singlem --skip-binners maxbin concoct rosella --refinery-max-iterations 0" if config["aviary_speed"] == FAST_AVIARY_MODE else "",
+        fast = "--workflow recover_mags_no_singlem --skip-binners maxbin concoct rosella --skip-abundances --refinery-max-iterations 0" if config["aviary_speed"] == FAST_AVIARY_MODE else "",
     threads:
-        config["aviary_threads"]
+        int(config["aviary_threads"]/2)
+    resources:
+        mem_mb = int(config["aviary_memory"]*1000/2),
+        runtime = "168h",
     log:
         logs_dir + "/aviary/{coassembly}_recover.log"
     conda:
@@ -598,7 +641,7 @@ rule aviary_recover:
         "{params.fast} "
         "-n {threads} "
         "-t {threads} "
-        "-m {params.memory} "
+        "-m {resources.mem_mb} "
         "{params.dryrun} "
         "&> {log} "
 

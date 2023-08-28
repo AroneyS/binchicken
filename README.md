@@ -6,14 +6,6 @@ Ibis (bin chicken) - targeted recovery of low abundance genomes through intellig
 
 ## Installation options
 
-### Install from pip
-
-Install latest release via pip.
-
-```bash
-pip install ibis-genome
-```
-
 ### Install from source
 
 Create conda env from `ibis.yml` and install from source.
@@ -24,6 +16,26 @@ cd ibis
 conda env create -f ibis.yml
 conda activate ibis
 pip install -e .
+```
+
+Create subprocess conda environments
+
+```bash
+ibis build --conda-prefix /path/to/conda/envs
+```
+
+Alternatively, set directory to contain subprocess conda environments
+
+```bash
+conda env config vars set SNAKEMAKE_CONDA_PREFIX="/path/to/conda/envs"
+```
+
+### Install from pip
+
+Install latest release via pip.
+
+```bash
+pip install ibis-genome
 ```
 
 ## Ibis coassemble
