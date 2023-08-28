@@ -759,6 +759,11 @@ def build(args):
     conda_prefix = args.conda_prefix
     args.build = True
 
+    # Setup env variables
+    os.environ["SNAKEMAKE_CONDA_PREFIX"] = conda_prefix
+    extern.run(f"conda env config vars set SNAKEMAKE_CONDA_PREFIX={conda_prefix}")
+
+    # Set args
     args = set_standard_args(args)
     coassemble_config = load_config(importlib.resources.files("ibis.config").joinpath("template_coassemble.yaml"))
     vars(args).update(coassemble_config)
@@ -906,7 +911,7 @@ def main():
     ###########################################################################
     def add_general_snakemake_options(argument_group, required_conda_prefix=False):
         argument_group.add_argument("--output", help="Output directory [default: .]", default="./")
-        argument_group.add_argument("--conda-prefix", help="Path to conda environment install location", default=None, required=required_conda_prefix)
+        argument_group.add_argument("--conda-prefix", help="Path to conda environment install location. default: Use path from CONDA_ENV_PATH env variable", default=None, required=required_conda_prefix)
         argument_group.add_argument("--cores", type=int, help="Maximum number of cores to use", default=1)
         argument_group.add_argument("--dryrun", action="store_true", help="dry run workflow")
         argument_group.add_argument("--snakemake-args", help="Additional commands to be supplied to snakemake in the form of a space-prefixed single string e.g. \" --quiet\"", default="")
