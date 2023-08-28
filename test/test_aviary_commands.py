@@ -112,6 +112,7 @@ class Tests(unittest.TestCase):
                 f"--output {output_dir}/coassemble/coassembly_0/recover "
                 f"--workflow recover_mags_no_singlem "
                 f"--skip-binners maxbin concoct rosella "
+                f"--skip-abundances "
                 f"--refinery-max-iterations 0 "
                 f"-n {threads//2} -t {threads//2} -m {memory//2} "
                 f"&> {output_dir}/coassemble/logs/coassembly_0_recover.log ",
@@ -130,6 +131,7 @@ class Tests(unittest.TestCase):
                 f"--output {output_dir}/coassemble/coassembly_2/recover "
                 f"--workflow recover_mags_no_singlem "
                 f"--skip-binners maxbin concoct rosella "
+                f"--skip-abundances "
                 f"--refinery-max-iterations 0 "
                 f"-n {threads//2} -t {threads//2} -m {memory//2} "
                 f"&> {output_dir}/coassemble/logs/coassembly_2_recover.log ",
