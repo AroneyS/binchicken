@@ -406,9 +406,9 @@ rule sra_qc:
         in1 = output_dir + "/sra/{sra}_1.fastq.gz",
         in2 = output_dir + "/sra/{sra}_2.fastq.gz",
         stats = output_dir + "/sra_qc/{sra}_qc.stats",
-    threads: 32
+    threads: 16
     resources:
-        mem_mb=250*1000,
+        mem_mb=125*1000,
         runtime = "24h",
     conda:
         "env/bbtools.yml"
@@ -458,9 +458,9 @@ rule map_reads:
         genomes = output_dir + "/mapping/{read}_reference.fna",
     output:
         dir = temp(directory(output_dir + "/mapping/{read}_coverm")),
-    threads: 32
+    threads: 16
     resources:
-        mem_mb=250*1000,
+        mem_mb=125*1000,
         runtime = "24h",
     log:
         logs_dir + "/mapping/{read}_coverm.log",
@@ -485,9 +485,9 @@ rule filter_bam_files:
         reads_1 = lambda wildcards: os.path.basename(config["reads_1"][wildcards.read]),
         sequence_identity = config["unmapping_max_identity"],
         alignment_percent = config["unmapping_max_alignment"],
-    threads: 32
+    threads: 16
     resources:
-        mem_mb=250*1000,
+        mem_mb=125*1000,
         runtime = "24h",
     log:
         logs_dir + "/mapping/{read}_filter.log",
@@ -509,9 +509,9 @@ rule bam_to_fastq:
     output:
         reads_1 = output_dir + "/mapping/{read}_unmapped.1.fq.gz",
         reads_2 = output_dir + "/mapping/{read}_unmapped.2.fq.gz",
-    threads: 32
+    threads: 16
     resources:
-        mem_mb=250*1000,
+        mem_mb=125*1000,
         runtime = "24h",
     log:
         logs_dir + "/mapping/{read}_fastq.log",
