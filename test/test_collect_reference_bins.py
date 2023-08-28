@@ -32,6 +32,16 @@ class Tests(unittest.TestCase):
         observed = pipeline(appraise_binned, appraise_unbinned, "sample_1")
         self.assertEqual(expected, observed)
 
+    def test_collect_reference_bins_no_sequences(self):
+        appraise_binned = pl.DataFrame([
+        ], schema=APPRAISE_COLUMNS)
+        appraise_unbinned = pl.DataFrame([
+        ], schema=APPRAISE_COLUMNS)
+
+        expected = set()
+        observed = pipeline(appraise_binned, appraise_unbinned, "sample_1")
+        self.assertEqual(expected, observed)
+
     def test_collect_reference_bins_low_hits(self):
         appraise_binned = pl.DataFrame([
             ["S3.1", "sample_1.1", "AAA", 1, 2, "Root", "genome_1_protein,genome_2_protein"],
