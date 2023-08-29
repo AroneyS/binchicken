@@ -69,6 +69,23 @@ class Tests(unittest.TestCase):
         observed = pipeline(elusive_edges, read_size)
         self.assertDataFrameEqual(expected, observed)
 
+    def test_cluster_graph_underscore(self):
+        elusive_edges = pl.DataFrame([
+            ["match", 2, "sample_2_1,sample_1_1", "0,1,2"],
+            ["match", 2, "sample_1_1,sample_3_1", "1,2"],
+        ], schema=ELUSIVE_EDGES_COLUMNS)
+        read_size = pl.DataFrame([
+            ["sample_1", 1000],
+            ["sample_2", 2000],
+            ["sample_3", 1000],
+        ], schema=READ_SIZE_COLUMNS)
+
+        expected = pl.DataFrame([
+            ["sample_1,sample_2", 2, 3, 3000, "sample_1,sample_2,sample_3", "coassembly_0"],
+        ], schema=ELUSIVE_CLUSTERS_COLUMNS)
+        observed = pipeline(elusive_edges, read_size)
+        self.assertDataFrameEqual(expected, observed)
+
     def test_cluster_two_components(self):
         elusive_edges = pl.DataFrame([
             ["match", 2, "1,2", "1"],

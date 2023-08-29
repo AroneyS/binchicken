@@ -56,7 +56,7 @@ def evaluate(target_otu_table, binned_otu_table, elusive_clusters, elusive_edges
     elusive_edges = (
         elusive_edges
         .with_columns(
-            pl.col("samples").str.split(",").list.eval(pl.element().str.replace(r"\.1$", "")),
+            pl.col("samples").str.split(",").list.eval(pl.element().str.replace(r"_1$", "").str.replace(r"\.1$", "")),
             pl.col("samples").hash().alias("samples_hash")
             )
         .explode("samples")
@@ -113,7 +113,7 @@ def evaluate(target_otu_table, binned_otu_table, elusive_clusters, elusive_edges
                 .with_columns(pl.lit(None).cast(str).alias("found_in"))
             ])
         .select([
-            pl.col("sample").str.replace(r"\.1$", ""),
+            pl.col("sample").str.replace(r"_1$", "").str.replace(r"\.1$", ""),
             "gene", "sequence", "taxonomy", "found_in"
             ])
         .join(sample_coassemblies, left_on="sample", right_on="samples", how="left")

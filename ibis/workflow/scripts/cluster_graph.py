@@ -116,7 +116,7 @@ def pipeline(
             .with_columns(
                 pl.col("samples")
                     .str.split(",")
-                    .list.eval(pl.element().str.replace(r"\.1$", ""))
+                    .list.eval(pl.element().str.replace(r"_1$", "").str.replace(r"\.1$", ""))
                     .cast(pl.List(pl.Categorical)),
                 pl.col("target_ids")
                     .str.split(",")

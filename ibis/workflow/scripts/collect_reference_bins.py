@@ -20,13 +20,13 @@ def pipeline(appraise_binned, appraise_unbinned, sample, MIN_APPRAISED=0.1, TRIM
     print(f"Polars using {str(pl.threadpool_size())} threads")
 
     appraise_binned = appraise_binned.with_columns(
-        pl.col("sample").str.replace("\.1$", "")
+        pl.col("sample").str.replace(r"_1$", "").str.replace(r"\.1$", "")
     ).filter(
         pl.col("sample") == sample
     )
 
     appraise_unbinned = appraise_unbinned.with_columns(
-        pl.col("sample").str.replace("\.1$", "")
+        pl.col("sample").str.replace(r"_1$", "").str.replace(r"\.1$", "")
     ).filter(
         pl.col("sample") == sample
     )
