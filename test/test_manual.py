@@ -122,7 +122,7 @@ class Tests(unittest.TestCase):
         self.assertTrue(os.path.exists(os.path.join(output_dir, "coassemble", "sra", "SRR8334324_1.fastq.gz")))
         self.assertTrue(os.path.exists(os.path.join(output_dir, "coassemble", "sra", "SRR8334324_2.fastq.gz")))
 
-        self.assertTrue(os.path.exists(os.path.join(output_dir, "coassemble", "coassemble", "coassembly_0", "assemble", "assembly", "final_contigs.fna")))
+        self.assertTrue(os.path.exists(os.path.join(output_dir, "coassemble", "coassemble", "coassembly_0", "assemble", "assembly", "final_contigs.fasta")))
 
         self.assertTrue(os.path.exists(os.path.join(output_dir, "coassemble", "coassemble", "coassembly_0", "recover", "bins", "checkm_minimal.tsv")))
 
