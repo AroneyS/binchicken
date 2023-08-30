@@ -580,7 +580,8 @@ rule aviary_assemble:
     threads:
         threads = config["aviary_threads"]
     resources:
-        mem_mb = int(config["aviary_memory"]*1000),
+        mem_mb = int(config["aviary_memory"])*1000,
+        mem_gb = int(config["aviary_memory"]),
         runtime = "96h",
         assembler = lambda wildcards, attempt: "" if attempt == 1 else "--use-megahit",
     log:
@@ -598,7 +599,7 @@ rule aviary_assemble:
         "--output {output.dir} "
         "-n {threads} "
         "-t {threads} "
-        "-m {resources.mem_mb} "
+        "-m {resources.mem_gb} "
         "{resources.assembler} "
         "{params.dryrun} "
         "&> {log} "
@@ -620,9 +621,10 @@ rule aviary_recover:
         conda_prefix = config["conda_prefix"] if config["conda_prefix"] else ".",
         fast = "--workflow recover_mags_no_singlem --skip-binners maxbin concoct rosella --skip-abundances --refinery-max-iterations 0" if config["aviary_speed"] == FAST_AVIARY_MODE else "",
     threads:
-        int(config["aviary_threads"]/2)
+        int(config["aviary_threads"])/2
     resources:
-        mem_mb = int(config["aviary_memory"]*1000/2),
+        mem_mb = int(config["aviary_memory"])*1000/2,
+        mem_gb = int(config["aviary_memory"])/2,
         runtime = "168h",
     log:
         logs_dir + "/aviary/{coassembly}_recover.log"
@@ -641,7 +643,7 @@ rule aviary_recover:
         "{params.fast} "
         "-n {threads} "
         "-t {threads} "
-        "-m {resources.mem_mb} "
+        "-m {resources.mem_gb} "
         "{params.dryrun} "
         "&> {log} "
 
