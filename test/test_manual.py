@@ -161,7 +161,7 @@ class Tests(unittest.TestCase):
         self.assertTrue(os.path.exists(os.path.join(output_dir, "coassemble", "sra", "SRR5753874_1.fastq.gz")))
         self.assertTrue(os.path.exists(os.path.join(output_dir, "coassemble", "sra", "SRR5753874_2.fastq.gz")))
 
-        self.assertTrue(os.path.exists(os.path.join(output_dir, "coassemble", "coassemble", "coassembly_0", "assemble", "assembly", "final_contigs.fna")))
+        self.assertTrue(os.path.exists(os.path.join(output_dir, "coassemble", "coassemble", "coassembly_0", "assemble", "assembly", "final_contigs.fasta")))
 
         config_path = os.path.join(output_dir, "coassemble", "coassemble", "coassembly_0", "assemble", "config.yaml")
         self.assertTrue(os.path.exists(config_path))
