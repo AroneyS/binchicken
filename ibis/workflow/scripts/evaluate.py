@@ -56,7 +56,11 @@ def evaluate(target_otu_table, binned_otu_table, elusive_clusters, elusive_edges
     elusive_edges = (
         elusive_edges
         .with_columns(
-            pl.col("samples").str.split(",").list.eval(pl.element().str.replace(r"_1$", "").str.replace(r"\.1$", "")),
+            pl.col("samples").str.split(",").list.eval(
+                        pl.when(pl.all_horizontal(pl.element().is_in(sample_coassemblies.get_column("samples"))))
+                        .then(pl.element())
+                        .otherwise(pl.element().str.replace(r"(_|\.)1$", ""))
+                        ),
             pl.col("samples").hash().alias("samples_hash")
             )
         .explode("samples")
