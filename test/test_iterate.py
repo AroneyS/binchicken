@@ -341,7 +341,6 @@ class Tests(unittest.TestCase):
         with in_tempdir():
             cmd = (
                 f"ibis iterate "
-                f"--iteration 0 "
                 f"--new-genomes {MOCK_GENOMES} "
                 f"--new-genome-singlem {MOCK_GENOME_SINGLEM} "
                 f"--coassemble-unbinned {MOCK_UNBINNED} "
@@ -384,7 +383,6 @@ class Tests(unittest.TestCase):
         with in_tempdir():
             cmd = (
                 f"ibis iterate "
-                f"--iteration 0 "
                 f"--new-genomes {MOCK_GENOMES} "
                 f"--new-genome-singlem {MOCK_GENOME_SINGLEM} "
                 f"--elusive-clusters {ELUSIVE_CLUSTERS} "
