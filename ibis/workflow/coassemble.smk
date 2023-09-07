@@ -620,8 +620,8 @@ rule aviary_recover:
         checkm2 = config["aviary_checkm2"],
         conda_prefix = config["conda_prefix"] if config["conda_prefix"] else ".",
         fast = "--workflow recover_mags_no_singlem --skip-binners maxbin concoct rosella --skip-abundances --refinery-max-iterations 0" if config["aviary_speed"] == FAST_AVIARY_MODE else "",
-        snakemake_profile = f"--snakemake-profile {config["snakemake_profile"]}" if config["snakemake_profile"] else "",
-        cluster_retries = f"--cluster-retries {config["cluster_retries"]}" if config["cluster_retries"] else "",
+        snakemake_profile = f"--snakemake-profile {config['snakemake_profile']}" if config["snakemake_profile"] else "",
+        cluster_retries = f"--cluster-retries {config['cluster_retries']}" if config["cluster_retries"] else "",
     threads:
         int(config["aviary_threads"])//2
     resources:
