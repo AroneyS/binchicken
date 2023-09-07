@@ -478,6 +478,8 @@ def coassemble(args):
         "aviary_threads": args.aviary_cores,
         "aviary_memory": args.aviary_memory,
         "conda_prefix": args.conda_prefix,
+        "snakemake_profile": args.snakemake_profile,
+        "cluster_retries": args.cluster_retries,
     }
 
     config_path = make_config(
@@ -555,6 +557,8 @@ def evaluate(args):
         "cluster": cluster_ani,
         "original_bins": original_bins,
         "prodigal_meta": args.prodigal_meta,
+        "snakemake_profile": args.snakemake_profile,
+        "cluster_retries": args.cluster_retries,
     }
 
     config_path = make_config(
