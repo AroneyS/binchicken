@@ -364,9 +364,9 @@ rule download_sra:
         directory(output_dir + "/sra")
     params:
         sra = " ".join(config["sra"]) if config["sra"] else ""
-    threads: 32
+    threads: 4
     resources:
-        mem_mb=250*1000,
+        mem_mb=32*1000,
         runtime = "48h",
     conda:
         "env/kingfisher.yml"
