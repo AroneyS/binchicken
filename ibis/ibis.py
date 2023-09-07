@@ -122,6 +122,8 @@ def download_sra(args):
         "sra": args.forward,
         "reads_1": {},
         "reads_2": {},
+        "snakemake_profile": args.snakemake_profile,
+        "cluster_retries": args.cluster_retries,
     }
 
     config_path = make_config(
@@ -265,6 +267,8 @@ def download_sra(args):
         "sra": [s for s in args.forward if s not in single_ended],
         "reads_1": {},
         "reads_2": {},
+        "snakemake_profile": args.snakemake_profile,
+        "cluster_retries": args.cluster_retries,
     }
 
     config_path = make_config(
