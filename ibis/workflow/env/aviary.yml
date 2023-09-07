@@ -2,5 +2,17 @@ channels:
   - conda-forge
   - bioconda
 dependencies:
-  - python>=3.7
-  - aviary=0.7.2
+  - python>=3.8
+  - snakemake>=6.0.5
+  - ruamel.yaml>=0.15.99
+  - numpy
+  - pandas
+  - biopython
+  - mamba>=0.8.2
+  - pigz = 2.6
+  - parallel
+  - bbmap
+  - pip
+  - git
+  - pip:
+    - git+https://github.com/rhysnewell/aviary.git@de1a48a
