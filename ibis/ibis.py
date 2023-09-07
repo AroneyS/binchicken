@@ -96,7 +96,7 @@ def run_workflow(config, workflow, output_dir, cores=16, dryrun=False,
 
     cmd = (
         "snakemake --snakefile {snakefile} --configfile '{config}' --directory {output_dir} "
-        "{jobs} --rerun-incomplete --nolock "
+        "{jobs} --rerun-incomplete --keep-going --nolock "
         "--use-conda {conda_frontend} {conda_prefix} "
         "{dryrun} "
         "{snakemake_args} "
@@ -917,7 +917,7 @@ def main():
         argument_group.add_argument("--cores", type=int, help="Maximum number of cores to use", default=1)
         argument_group.add_argument("--dryrun", action="store_true", help="dry run workflow")
         argument_group.add_argument("--snakemake-args", help="Additional commands to be supplied to snakemake in the form of a space-prefixed single string e.g. \" --quiet\"", default="")
-    
+
     def add_base_arguments(argument_group):
         argument_group.add_argument("--forward", "--reads", "--sequences", nargs='+', help="input forward/unpaired nucleotide read sequence(s)")
         argument_group.add_argument("--forward-list", "--reads-list", "--sequences-list", help="input forward/unpaired nucleotide read sequence(s) newline separated")
