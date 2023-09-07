@@ -91,13 +91,14 @@ def read_list(path):
         return [line.strip() for line in f]
 
 def run_workflow(config, workflow, output_dir, cores=16, dryrun=False,
+                 profile=None, cluster_retries=None,
                  snakemake_args="", conda_frontend="mamba", conda_prefix=None):
     load_configfile(config)
 
     cmd = (
         "snakemake --snakefile {snakefile} --configfile '{config}' --directory {output_dir} "
         "{jobs} --rerun-incomplete --keep-going --nolock "
-        "--use-conda {conda_frontend} {conda_prefix} "
+        "{profile} {retries} --use-conda {conda_frontend} {conda_prefix} "
         "{dryrun} "
         "{snakemake_args} "
     ).format(
@@ -105,6 +106,8 @@ def run_workflow(config, workflow, output_dir, cores=16, dryrun=False,
         config=config,
         output_dir=output_dir,
         jobs=f"--jobs {cores}" if cores is not None else "",
+        profile="" if not profile else f"--profile {profile}",
+        retries="" if (cluster_retries is None) else f"--retries {cluster_retries}",
         conda_frontend=f"--conda-frontend {conda_frontend}" if conda_frontend is not None else "",
         conda_prefix=f"--conda-prefix {conda_prefix}" if conda_prefix is not None else "",
         dryrun="--dryrun" if dryrun else "",
@@ -138,6 +141,8 @@ def download_sra(args):
         output_dir = args.output,
         cores = args.cores,
         dryrun = args.dryrun,
+        profile = args.snakemake_profile,
+        cluster_retries = args.cluster_retries,
         conda_prefix = args.conda_prefix,
         snakemake_args = args.snakemake_args + " -- " + target_rule if args.snakemake_args else "-- " + target_rule,
     )
@@ -274,6 +279,8 @@ def download_sra(args):
         output_dir = args.output,
         cores = args.cores,
         dryrun = args.dryrun,
+        profile = args.snakemake_profile,
+        cluster_retries = args.cluster_retries,
         conda_prefix = args.conda_prefix,
         snakemake_args = args.snakemake_args + " -- compile_sra_qc" if args.snakemake_args else "-- compile_sra_qc",
     )
@@ -485,6 +492,8 @@ def coassemble(args):
         output_dir = args.output,
         cores = args.cores,
         dryrun = args.dryrun,
+        profile = args.snakemake_profile,
+        cluster_retries = args.cluster_retries,
         conda_prefix = args.conda_prefix,
         snakemake_args = args.snakemake_args,
     )
@@ -560,6 +569,8 @@ def evaluate(args):
         output_dir = args.output,
         cores = args.cores,
         dryrun = args.dryrun,
+        profile = args.snakemake_profile,
+        cluster_retries = args.cluster_retries,
         conda_prefix = args.conda_prefix,
         snakemake_args = args.snakemake_args,
     )
@@ -916,6 +927,10 @@ def main():
         argument_group.add_argument("--conda-prefix", help="Path to conda environment install location. default: Use path from CONDA_ENV_PATH env variable", default=None, required=required_conda_prefix)
         argument_group.add_argument("--cores", type=int, help="Maximum number of cores to use", default=1)
         argument_group.add_argument("--dryrun", action="store_true", help="dry run workflow")
+        argument_group.add_argument("--snakemake-profile", default="",
+                                    help="Snakemake profile (see https://snakemake.readthedocs.io/en/stable/executing/cli.html#profiles).\n"
+                                         "Can be used to submit rules as jobs to cluster engine (see https://snakemake.readthedocs.io/en/stable/executing/cluster.html).")
+        argument_group.add_argument("--cluster-retries", help="Number of times to retry a failed job when using cluster submission (see `--snakemake-profile`).", default=0)
         argument_group.add_argument("--snakemake-args", help="Additional commands to be supplied to snakemake in the form of a space-prefixed single string e.g. \" --quiet\"", default="")
 
     def add_base_arguments(argument_group):
