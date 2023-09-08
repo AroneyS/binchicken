@@ -584,6 +584,7 @@ rule aviary_assemble:
         mem_gb = int(config["aviary_memory"]),
         runtime = "96h",
         assembler = lambda wildcards, attempt: "" if attempt == 1 else "--use-megahit",
+        queue = "microbiome",
     log:
         logs_dir + "/aviary/{coassembly}_assemble.log"
     conda:
