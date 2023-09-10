@@ -402,10 +402,10 @@ rule sra_qc:
     output:
         out1 = output_dir + "/sra_qc/{sra}_1.fastq.gz",
         out2 = output_dir + "/sra_qc/{sra}_2.fastq.gz",
+        stats = output_dir + "/sra_qc/{sra}_qc.stats",
     params:
         in1 = output_dir + "/sra/{sra}_1.fastq.gz",
         in2 = output_dir + "/sra/{sra}_2.fastq.gz",
-        stats = output_dir + "/sra_qc/{sra}_qc.stats",
     threads: 16
     resources:
         mem_mb=125*1000,
@@ -422,7 +422,7 @@ rule sra_qc:
         "ktrim=r k=23 mink=11 hdist=1 "
         "qtrim=r trimq=10 "
         "minlen=30 "
-        "stats={params.stats} statscolumns=3 "
+        "stats={output.stats} statscolumns=3 "
         "t={threads} "
         "&> {log} "
 
