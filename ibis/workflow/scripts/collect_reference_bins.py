@@ -98,6 +98,11 @@ if __name__ == "__main__":
         cmd = f"touch {output_path}"
         extern.run(cmd)
     else:
-        for bin in reference_bins:
-            cmd = f"cat {genomes[bin]} >> {output_path}"
-            extern.run(cmd)
+        with open(str(output_path), "w") as outfile:
+            for bin in reference_bins:
+                bin_name = os.path.splitext(os.path.basename(genomes[bin]))[0]
+                with open(genomes[bin], "r") as infile:
+                    for line in infile:
+                        if line.startswith(">"):
+                            line = f">{bin_name}~{line[1:]}"
+                        outfile.write(line)
