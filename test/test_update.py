@@ -25,10 +25,16 @@ TWO_GENOMES = " ".join([
     os.path.join(path_to_data, "GB_GCA_013286235.1.fna"),
     os.path.join(path_to_data, "GB_GCA_013286235.2.fna"),
     ])
+THREE_GENOMES = " ".join([
+    os.path.join(path_to_data, "GB_GCA_013286235.1.fna"),
+    os.path.join(path_to_data, "GB_GCA_013286235.2.fna"),
+    os.path.join(path_to_data, "GB_GCA_013286235.3.fna"),
+    ])
 
 MOCK_COASSEMBLE = os.path.join(path_to_data, "mock_coassemble")
 MOCK_UNBINNED = os.path.join(MOCK_COASSEMBLE, "appraise", "unbinned.otu_table.tsv")
 MOCK_BINNED = os.path.join(MOCK_COASSEMBLE, "appraise", "binned.otu_table.tsv")
+MOCK_BINNED_THREE = os.path.join(MOCK_COASSEMBLE, "appraise", "binned_three.otu_table.tsv")
 MOCK_TARGETS = os.path.join(MOCK_COASSEMBLE, "target", "targets.tsv")
 MOCK_ELUSIVE_EDGES = os.path.join(MOCK_COASSEMBLE, "target", "elusive_edges.tsv")
 MOCK_ELUSIVE_CLUSTERS = os.path.join(MOCK_COASSEMBLE, "target", "elusive_clusters.tsv")
@@ -489,6 +495,41 @@ class Tests(unittest.TestCase):
             self.assertTrue(os.path.exists(os.path.join("test", "coassemble", "mapping", "sample_3_unmapped.2.fq.gz")))
             self.assertFalse(os.path.exists(os.path.join("test", "coassemble", "mapping", "sample_4_unmapped.1.fq.gz")))
             self.assertFalse(os.path.exists(os.path.join("test", "coassemble", "mapping", "sample_4_unmapped.2.fq.gz")))
+
+    def test_update_duplicate_contig_names(self):
+        with in_tempdir():
+            cmd = (
+                f"ibis update "
+                f"--assemble-unmapped "
+                f"--forward {SAMPLE_READS_FORWARD} "
+                f"--reverse {SAMPLE_READS_REVERSE} "
+                f"--genomes {THREE_GENOMES} "
+                f"--coassemble-unbinned {MOCK_UNBINNED} "
+                f"--coassemble-binned {MOCK_BINNED_THREE} "
+                f"--coassemble-targets {MOCK_TARGETS} "
+                f"--coassemble-elusive-edges {MOCK_ELUSIVE_EDGES} "
+                f"--coassemble-elusive-clusters {MOCK_ELUSIVE_CLUSTERS} "
+                f"--coassemble-summary {MOCK_SUMMARY} "
+                f"--output test "
+                f"--conda-prefix {path_to_conda} "
+                f"--snakemake-args \" --notemp\" "
+            )
+            extern.run(cmd)
+            # try:
+            #     import subprocess
+            #     subprocess.run(cmd, shell=True, check=True)
+            # except:
+            #     pass
+            # import pdb; pdb.set_trace()
+
+            bins_reference_path = os.path.join("test", "coassemble", "mapping", "sample_1_reference.fna")
+            self.assertTrue(os.path.exists(bins_reference_path))
+            with open(bins_reference_path) as f:
+                file = f.read()
+                self.assertTrue(">GB_GCA_013286235.1~JABDGE010000038.1_13" in file)
+                self.assertTrue(">GB_GCA_013286235.1~JABDGE010000038.1_14" in file)
+                self.assertTrue(">GB_GCA_013286235.3~JABDGE010000038.1_13" in file)
+                self.assertTrue(">GB_GCA_013286235.3~JABDGE010000038.1_14" in file)
 
 
 if __name__ == '__main__':
