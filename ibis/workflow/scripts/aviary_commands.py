@@ -21,7 +21,7 @@ def pipeline(coassemblies, reads_1, reads_2, output_dir, threads, memory, fast=F
             )
         .with_columns(
             assemble = pl.concat_str(
-                pl.lit("aviary assemble -1 "),
+                pl.lit("aviary assemble --coassemble -1 "),
                 pl.col("coassembly_samples_1").list.join(" "),
                 pl.lit(" -2 "),
                 pl.col("coassembly_samples_2").list.join(" "),
