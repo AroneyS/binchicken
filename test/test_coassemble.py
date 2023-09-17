@@ -151,7 +151,7 @@ class Tests(unittest.TestCase):
             expected = "\n".join(
                 [
                     " ".join([
-                        "aviary assemble -1",
+                        "aviary assemble --coassemble -1",
                         os.path.join(test_dir, "coassemble", "mapping", "sample_1_unmapped.1.fq.gz"),
                         os.path.join(test_dir, "coassemble", "mapping", "sample_2_unmapped.1.fq.gz"),
                         "-2",
@@ -281,7 +281,7 @@ class Tests(unittest.TestCase):
             expected = "\n".join(
                 [
                     " ".join([
-                        "aviary assemble -1",
+                        "aviary assemble --coassemble -1",
                         os.path.join(os.path.abspath(path_to_data), "sample_1.1.fq"),
                         os.path.join(os.path.abspath(path_to_data), "sample_3.1.fq"),
                         "-2",
@@ -703,7 +703,7 @@ class Tests(unittest.TestCase):
             expected = "\n".join(
                 [
                     " ".join([
-                        "aviary assemble -1",
+                        "aviary assemble --coassemble -1",
                         os.path.join(os.path.abspath(path_to_data), "sample_1.1.fq"),
                         os.path.join(os.path.abspath(path_to_data), "sample_2.1.fq"),
                         "-2",
