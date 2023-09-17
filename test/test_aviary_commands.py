@@ -53,7 +53,7 @@ class Tests(unittest.TestCase):
 
         expected_commands = pl.DataFrame([
             [
-                f"aviary assemble "
+                f"aviary assemble --coassemble "
                 f"-1 1_1.fq.gz 2_1.fq.gz 3_1.fq.gz "
                 f"-2 1_2.fq.gz 2_2.fq.gz 3_2.fq.gz "
                 f"--output {output_dir}/coassemble/coassembly_0/assemble "
@@ -68,7 +68,7 @@ class Tests(unittest.TestCase):
                 f"&> {output_dir}/coassemble/logs/coassembly_0_recover.log ",
             ],
             [
-                f"aviary assemble "
+                f"aviary assemble --coassemble "
                 f"-1 4_1.fq.gz 5_1.fq.gz 6_1.fq.gz "
                 f"-2 4_2.fq.gz 5_2.fq.gz 6_2.fq.gz "
                 f"--output {output_dir}/coassemble/coassembly_2/assemble "
@@ -99,7 +99,7 @@ class Tests(unittest.TestCase):
 
         expected_commands = pl.DataFrame([
             [
-                f"aviary assemble "
+                f"aviary assemble --coassemble "
                 f"-1 1_1.fq.gz 2_1.fq.gz 3_1.fq.gz "
                 f"-2 1_2.fq.gz 2_2.fq.gz 3_2.fq.gz "
                 f"--output {output_dir}/coassemble/coassembly_0/assemble "
@@ -118,7 +118,7 @@ class Tests(unittest.TestCase):
                 f"&> {output_dir}/coassemble/logs/coassembly_0_recover.log ",
             ],
             [
-                f"aviary assemble "
+                f"aviary assemble --coassemble "
                 f"-1 4_1.fq.gz 5_1.fq.gz 6_1.fq.gz "
                 f"-2 4_2.fq.gz 5_2.fq.gz 6_2.fq.gz "
                 f"--output {output_dir}/coassemble/coassembly_2/assemble "

@@ -594,6 +594,7 @@ rule aviary_assemble:
         "EGGNOG_DATA_DIR=. "
         "CONDA_ENV_PATH={params.conda_prefix} "
         "aviary assemble "
+        "--coassemble "
         "-1 {params.reads_1} "
         "-2 {params.reads_2} "
         "--output {output.dir} "
