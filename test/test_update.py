@@ -82,7 +82,7 @@ class Tests(unittest.TestCase):
             expected = "\n".join(
                 [
                     " ".join([
-                        "aviary assemble -1",
+                        "aviary assemble --coassemble -1",
                         os.path.join(test_dir, "coassemble", "mapping", "sample_1_unmapped.1.fq.gz"),
                         os.path.join(test_dir, "coassemble", "mapping", "sample_2_unmapped.1.fq.gz"),
                         "-2",
