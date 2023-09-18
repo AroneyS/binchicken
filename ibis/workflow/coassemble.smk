@@ -330,6 +330,7 @@ rule target_elusive:
         min_coassembly_coverage = config["min_coassembly_coverage"],
         max_coassembly_samples = config["max_coassembly_samples"],
         taxa_of_interest = config["taxa_of_interest"],
+        samples = config["read_1"].keys(),
     threads: 32
     resources:
         mem_mb=250*1000,
