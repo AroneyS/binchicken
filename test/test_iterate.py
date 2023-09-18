@@ -21,6 +21,15 @@ SAMPLE_READS_REVERSE = " ".join([
     os.path.join(path_to_data, "sample_2.2.fq"),
     os.path.join(path_to_data, "sample_3.2.fq"),
 ])
+SAMPLE_READS_FORWARD_NO_TWO = " ".join([
+    os.path.join(path_to_data, "sample_1.1.fq"),
+    os.path.join(path_to_data, "sample_3.1.fq"),
+])
+SAMPLE_READS_REVERSE_NO_TWO = " ".join([
+    os.path.join(path_to_data, "sample_1.2.fq"),
+    os.path.join(path_to_data, "sample_3.2.fq"),
+])
+
 GENOMES = " ".join([os.path.join(path_to_data, "GB_GCA_013286235.1.fna")])
 TWO_GENOMES = " ".join([
     os.path.join(path_to_data, "GB_GCA_013286235.1.fna"),
@@ -30,6 +39,7 @@ METAPACKAGE = os.path.join(path_to_data, "singlem_metapackage.smpkg")
 
 MOCK_COASSEMBLE = os.path.join(path_to_data, "mock_coassemble")
 MOCK_UNBINNED = os.path.join(MOCK_COASSEMBLE, "appraise", "unbinned.otu_table.tsv")
+MOCK_UNBINNED_BIASED = os.path.join(MOCK_COASSEMBLE, "appraise", "unbinned_biased.otu_table.tsv")
 MOCK_BINNED = os.path.join(MOCK_COASSEMBLE, "appraise", "binned.otu_table.tsv")
 MOCK_COASSEMBLIES = ' '.join([os.path.join(MOCK_COASSEMBLE, "coassemble", "coassembly_0")])
 MOCK_GENOMES = " ".join([
@@ -413,6 +423,41 @@ class Tests(unittest.TestCase):
                 self.assertTrue("GB_GCA_013286235.1_protein" in file)
                 self.assertTrue("TATCAAGTTCCACAAGAAGTTAGAGGAGAAAGAAGAATCTCGTTAGCTATTAGATGGATT" in file)
                 self.assertTrue("bin_1_protein" in file)
+
+    def test_iterate_missing_samples(self):
+        with in_tempdir():
+            cmd = (
+                f"ibis iterate "
+                f"--forward {SAMPLE_READS_FORWARD_NO_TWO} "
+                f"--reverse {SAMPLE_READS_REVERSE_NO_TWO} "
+                f"--aviary-outputs {MOCK_COASSEMBLIES} "
+                f"--coassemble-unbinned {MOCK_UNBINNED_BIASED} "
+                f"--coassemble-binned {MOCK_BINNED} "
+                f"--genomes {GENOMES} "
+                f"--sample-read-size {SAMPLE_READ_SIZE} "
+                f"--singlem-metapackage {METAPACKAGE} "
+                f"--output test "
+                f"--conda-prefix {path_to_conda} "
+            )
+            extern.run(cmd)
+
+            bin_provenance_path = os.path.join("test", "recovered_bins", "bin_provenance.tsv")
+            self.assertTrue(os.path.exists(bin_provenance_path))
+
+            config_path = os.path.join("test", "config.yaml")
+            self.assertTrue(os.path.exists(config_path))
+
+            elusive_clusters_path = os.path.join("test", "coassemble", "target", "elusive_clusters.tsv")
+            self.assertTrue(os.path.exists(elusive_clusters_path))
+            expected = "\n".join(
+                [
+                    "\t".join(["samples", "length", "total_targets", "total_size", "recover_samples", "coassembly"]),
+                    "\t".join(["sample_1,sample_3", "2", "1", "2869", "sample_1,sample_3", "coassembly_0"]),
+                    ""
+                ]
+            )
+            with open(elusive_clusters_path) as f:
+                self.assertEqual(expected, f.read())
 
 
 if __name__ == '__main__':

@@ -224,6 +224,31 @@ class Tests(unittest.TestCase):
         self.assertDataFrameEqual(expected_targets, observed_targets)
         self.assertDataFrameEqual(expected_edges, observed_edges)
 
+    def test_target_elusive_skip_samples(self):
+        unbinned = pl.DataFrame([
+            ["S3.1", "sample_1", "AAA", 5, 10, "Root", ""],
+            ["S3.1", "sample_1", "AAB", 5, 10, "Root", ""],
+            ["S3.1", "sample_2", "AAA", 5, 10, "Root", ""],
+            ["S3.1", "sample_2", "AAB", 5, 10, "Root", ""],
+            ["S3.1", "sample_3", "AAA", 5, 10, "Root", ""],
+            ["S3.1", "sample_3", "AAC", 5, 10, "Root", ""],
+        ], schema=APPRAISE_COLUMNS)
+        samples = set(["sample_1", "sample_2"])
+
+        expected_targets = pl.DataFrame([
+            ["S3.1", "sample_1", "AAA", 5, 10, "Root", "0"],
+            ["S3.1", "sample_1", "AAB", 5, 10, "Root", "1"],
+            ["S3.1", "sample_2", "AAA", 5, 10, "Root", "0"],
+            ["S3.1", "sample_2", "AAB", 5, 10, "Root", "1"],
+        ], schema=TARGETS_COLUMNS)
+        expected_edges = pl.DataFrame([
+            ["match", 2, "sample_1,sample_2", "0,1"],
+        ], schema=EDGES_COLUMNS)
+
+        observed_targets, observed_edges = pipeline(unbinned, samples)
+        self.assertDataFrameEqual(expected_targets, observed_targets)
+        self.assertDataFrameEqual(expected_edges, observed_edges)
+
     def test_target_elusive_three_way_targets(self):
         unbinned = pl.DataFrame([
             ["S3.1", "sample_1", "AAA", 3, 6, "Root", ""],

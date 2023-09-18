@@ -46,6 +46,7 @@ def pipeline(
             .then(pl.col("sample"))
             .otherwise(pl.col("sample").str.replace(r"(_|\.)1$", ""))
             )
+        .filter(pl.col("sample").is_in(samples))
         .drop("found_in")
         .with_row_count("target")
         .select(
