@@ -334,6 +334,8 @@ rule target_elusive:
     resources:
         mem_mb=250*1000,
         runtime = "24h",
+    log:
+        logs_dir + "/target/target_elusive.log"
     script:
         "scripts/target_elusive.py"
 
@@ -353,6 +355,8 @@ checkpoint cluster_graph:
     resources:
         mem_mb=500*1000,
         runtime = "168h",
+    log:
+        logs_dir + "/target/cluster_graph.log"
     script:
         "scripts/cluster_graph.py"
 
