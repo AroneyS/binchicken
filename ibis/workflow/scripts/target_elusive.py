@@ -16,6 +16,7 @@ EDGES_COLUMNS={
 
 def pipeline(
     unbinned,
+    samples,
     MIN_COASSEMBLY_COVERAGE=10,
     TAXA_OF_INTEREST="",
     MAX_COASSEMBLY_SAMPLES=2):
@@ -40,6 +41,12 @@ def pipeline(
     logging.info("Grouping hits by marker gene sequences to form targets")
     unbinned = (
         unbinned
+        .with_columns(
+            pl.when(pl.col("sample").is_in(samples))
+            .then(pl.col("sample"))
+            .otherwise(pl.col("sample").str.replace(r"(_|\.)1$", ""))
+            )
+        .filter(pl.col("sample").is_in(samples))
         .drop("found_in")
         .with_row_count("target")
         .select(
@@ -117,6 +124,7 @@ if __name__ == "__main__":
     import polars as pl
 
     logging.basicConfig(
+        filename=snakemake.log[0],
         level=logging.INFO,
         format='%(asctime)s %(levelname)s: %(message)s',
         datefmt='%Y/%m/%d %I:%M:%S %p'
@@ -128,11 +136,13 @@ if __name__ == "__main__":
     unbinned_path = snakemake.input.unbinned
     targets_path = snakemake.output.output_targets
     edges_path = snakemake.output.output_edges
+    samples = set(snakemake.params.samples)
 
     unbinned = pl.read_csv(unbinned_path, separator="\t")
 
     targets, edges = pipeline(
         unbinned,
+        samples,
         MIN_COASSEMBLY_COVERAGE=MIN_COASSEMBLY_COVERAGE,
         TAXA_OF_INTEREST=TAXA_OF_INTEREST,
         MAX_COASSEMBLY_SAMPLES=MAX_COASSEMBLY_SAMPLES,
