@@ -116,11 +116,6 @@ def pipeline(
             .with_columns(
                 pl.col("samples")
                     .str.split(",")
-                    .list.eval(
-                        pl.when(pl.all_horizontal(pl.element().is_in(read_size.get_column("sample"))))
-                        .then(pl.element())
-                        .otherwise(pl.element().str.replace(r"(_|\.)1$", ""))
-                        )
                     .cast(pl.List(pl.Categorical)),
                 pl.col("target_ids")
                     .str.split(",")
@@ -285,6 +280,7 @@ if __name__ == "__main__":
     import polars as pl
 
     logging.basicConfig(
+        filename=snakemake.log[0],
         level=logging.INFO,
         format='%(asctime)s %(levelname)s: %(message)s',
         datefmt='%Y/%m/%d %I:%M:%S %p'

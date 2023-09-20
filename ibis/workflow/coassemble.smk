@@ -330,10 +330,13 @@ rule target_elusive:
         min_coassembly_coverage = config["min_coassembly_coverage"],
         max_coassembly_samples = config["max_coassembly_samples"],
         taxa_of_interest = config["taxa_of_interest"],
+        samples = config["reads_1"],
     threads: 32
     resources:
         mem_mb=250*1000,
         runtime = "24h",
+    log:
+        logs_dir + "/target/target_elusive.log"
     script:
         "scripts/target_elusive.py"
 
@@ -353,6 +356,8 @@ checkpoint cluster_graph:
     resources:
         mem_mb=500*1000,
         runtime = "168h",
+    log:
+        logs_dir + "/target/cluster_graph.log"
     script:
         "scripts/cluster_graph.py"
 
