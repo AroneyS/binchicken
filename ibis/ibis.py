@@ -263,42 +263,16 @@ def download_sra(args):
         except FileNotFoundError:
             raise Exception("Single-ended reads detected. Remove from input SRA and try again.")
 
-    config_items = {
-        "sra": [s for s in args.forward if s not in single_ended],
-        "reads_1": {},
-        "reads_2": {},
-        "snakemake_profile": args.snakemake_profile,
-        "cluster_retries": args.cluster_retries,
-    }
-
-    config_path = make_config(
-        importlib.resources.files("ibis.config").joinpath("template_coassemble.yaml"),
-        args.output,
-        config_items
-        )
-
-    run_workflow(
-        config = config_path,
-        workflow = "coassemble.smk",
-        output_dir = args.output,
-        cores = args.cores,
-        dryrun = args.dryrun,
-        profile = args.snakemake_profile,
-        cluster_retries = args.cluster_retries,
-        conda_prefix = args.conda_prefix,
-        snakemake_args = args.snakemake_args + " -- compile_sra_qc" if args.snakemake_args else "-- compile_sra_qc",
-    )
-
     # Need to convince Snakemake that the SRA data predates the completed outputs
     # Otherwise it will rerun all the rules with reason "updated input files"
     # Using Jan 1 2000 as pre-date
-    sra_qc_dir = args.output + "/coassemble/sra_qc/"
-    os.makedirs(sra_qc_dir, exist_ok=True)
+    sra_dir = args.output + "/coassemble/sra/"
+    os.makedirs(sra_dir, exist_ok=True)
     for sra in [f + s for f in args.forward for s in ["_1", "_2"]]:
-        subprocess.check_call(f"touch -t 200001011200 {sra_qc_dir + sra + SRA_SUFFIX}", shell=True)
+        subprocess.check_call(f"touch -t 200001011200 {sra_dir + sra + SRA_SUFFIX}", shell=True)
 
-    forward = sorted([sra_qc_dir + f for f in os.listdir(sra_qc_dir) if f.endswith("_1" + SRA_SUFFIX)])
-    reverse = sorted([sra_qc_dir + f for f in os.listdir(sra_qc_dir) if f.endswith("_2" + SRA_SUFFIX)])
+    forward = sorted([sra_dir + f for f in os.listdir(sra_dir) if f.endswith("_1" + SRA_SUFFIX)])
+    reverse = sorted([sra_dir + f for f in os.listdir(sra_dir) if f.endswith("_2" + SRA_SUFFIX)])
 
     return forward, reverse
 
