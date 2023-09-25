@@ -3,7 +3,7 @@
 #############
 ruleorder: no_genomes > query_processing > update_appraise > singlem_appraise
 ruleorder: mock_download_sra > download_sra
-localrules: all, summary, singlem_summarise_genomes, singlem_appraise_filtered, no_genomes, mock_download_sra, compile_sra_qc, collect_genomes, finish_mapping, aviary_commands, aviary_recover, aviary_combine
+localrules: all, summary, singlem_summarise_genomes, singlem_appraise_filtered, no_genomes, mock_download_sra, collect_genomes, finish_mapping, aviary_commands, aviary_recover, aviary_combine
 
 import os
 import pandas as pd
@@ -403,43 +403,6 @@ rule mock_download_sra:
         "mkdir -p {output} && "
         "cp {params.sra_u} {params.sra_f} {params.sra_r} {output}"
 
-rule sra_qc:
-    output:
-        out1 = output_dir + "/sra_qc/{sra}_1.fastq.gz",
-        out2 = output_dir + "/sra_qc/{sra}_2.fastq.gz",
-        stats = output_dir + "/sra_qc/{sra}_qc.stats",
-    params:
-        in1 = output_dir + "/sra/{sra}_1.fastq.gz",
-        in2 = output_dir + "/sra/{sra}_2.fastq.gz",
-    threads: 16
-    resources:
-        mem_mb=125*1000,
-        runtime = "24h",
-    conda:
-        "env/bbtools.yml"
-    log:
-        logs_dir + "/sra_qc/{sra}_qc.log"
-    shell:
-        "bbduk.sh "
-        "in1={params.in1} in2={params.in2} "
-        "out1={output.out1} out2={output.out2} "
-        "ref=adapters,phix "
-        "ktrim=r k=23 mink=11 hdist=1 "
-        "qtrim=r trimq=10 "
-        "minlen=30 "
-        "stats={output.stats} statscolumns=3 "
-        "t={threads} "
-        "&> {log} "
-
-rule compile_sra_qc:
-    input:
-        expand(output_dir + "/sra_qc/{sra}_1.fastq.gz", sra=config["sra"]),
-        expand(output_dir + "/sra_qc/{sra}_2.fastq.gz", sra=config["sra"]),
-    output:
-        done = output_dir + "/sra_qc/done"
-    shell:
-        "touch {output.done} "
-
 #####################################
 ### Map reads to matching genomes ###
 #####################################
@@ -463,10 +426,11 @@ rule map_reads:
         genomes = output_dir + "/mapping/{read}_reference.fna",
     output:
         dir = temp(directory(output_dir + "/mapping/{read}_coverm")),
+    group: "unmapping"
     threads: 16
     resources:
         mem_mb=125*1000,
-        runtime = "24h",
+        runtime = "12h",
     log:
         logs_dir + "/mapping/{read}_coverm.log",
     conda:
@@ -485,6 +449,7 @@ rule filter_bam_files:
         output_dir + "/mapping/{read}_coverm",
     output:
         temp(output_dir + "/mapping/{read}_unmapped.bam"),
+    group: "unmapping"
     params:
         genomes = "{read}_reference.fna",
         reads_1 = lambda wildcards: os.path.basename(config["reads_1"][wildcards.read]),
@@ -493,7 +458,7 @@ rule filter_bam_files:
     threads: 16
     resources:
         mem_mb=125*1000,
-        runtime = "24h",
+        runtime = "4h",
     log:
         logs_dir + "/mapping/{read}_filter.log",
     conda:
@@ -514,10 +479,11 @@ rule bam_to_fastq:
     output:
         reads_1 = output_dir + "/mapping/{read}_unmapped.1.fq.gz",
         reads_2 = output_dir + "/mapping/{read}_unmapped.2.fq.gz",
+    group: "unmapping"
     threads: 16
     resources:
         mem_mb=125*1000,
-        runtime = "24h",
+        runtime = "4h",
     log:
         logs_dir + "/mapping/{read}_fastq.log",
     conda:
