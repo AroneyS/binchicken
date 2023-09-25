@@ -146,7 +146,7 @@ def download_sra(args):
         profile = args.snakemake_profile,
         cluster_retries = args.cluster_retries,
         conda_prefix = args.conda_prefix,
-        snakemake_args = args.snakemake_args + " -- " + target_rule if args.snakemake_args else "-- " + target_rule,
+        snakemake_args = args.snakemake_args + " " + target_rule if args.snakemake_args else " " + target_rule,
     )
 
     sra_dir = args.output + "/coassemble/sra/"
@@ -612,9 +612,9 @@ def update(args):
         args.forward, args.reverse = download_sra(args)
 
     if args.run_aviary:
-        args.snakemake_args = args.snakemake_args + " --rerun-triggers mtime -- aviary_combine" if args.snakemake_args else "--rerun-triggers mtime -- aviary_combine"
+        args.snakemake_args = args.snakemake_args + " aviary_combine --rerun-triggers mtime" if args.snakemake_args else "aviary_combine --rerun-triggers mtime"
     else:
-        args.snakemake_args = args.snakemake_args + " --rerun-triggers mtime -- aviary_commands" if args.snakemake_args else "--rerun-triggers mtime -- aviary_commands"
+        args.snakemake_args = args.snakemake_args + " aviary_commands --rerun-triggers mtime" if args.snakemake_args else "aviary_commands --rerun-triggers mtime"
 
     args = set_standard_args(args)
     coassemble(args)
@@ -641,9 +641,9 @@ def generate_genome_singlem(orig_args, new_genomes):
 
     bins_summarised_path = os.path.join(args.output, "coassemble", "summarise", "bins_summarised.otu_table.tsv")
     if args.snakemake_args:
-        args.snakemake_args = args.snakemake_args + f" --rerun-triggers mtime -- {bins_summarised_path}"
+        args.snakemake_args = args.snakemake_args + f" {bins_summarised_path} --rerun-triggers mtime "
     else:
-        args.snakemake_args = f"--rerun-triggers mtime -- {bins_summarised_path}"
+        args.snakemake_args = f"{bins_summarised_path} --rerun-triggers mtime "
 
     coassemble(args)
 
