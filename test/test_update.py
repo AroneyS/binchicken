@@ -220,17 +220,9 @@ class Tests(unittest.TestCase):
 
             output_sra = output_comb.split("Building DAG of jobs...")[1]
             self.assertTrue("download_sra" in output_sra)
-            self.assertTrue("sra_qc" not in output_sra)
-            self.assertTrue("compile_sra_qc" not in output_sra)
             self.assertTrue("aviary_commands" not in output_sra)
 
-            output_sra = output_comb.split("Building DAG of jobs...")[2]
-            self.assertTrue("download_sra" not in output_sra)
-            self.assertTrue("sra_qc" in output_sra)
-            self.assertTrue("compile_sra_qc" in output_sra)
-            self.assertTrue("aviary_commands" not in output_sra)
-
-            output = output_comb.split("Building DAG of jobs...")[3]
+            output = output_comb.split("Building DAG of jobs...")[2]
             self.assertTrue("singlem_pipe_reads" not in output)
             self.assertTrue("genome_transcripts" not in output)
             self.assertTrue("singlem_pipe_genomes" not in output)
@@ -265,27 +257,27 @@ class Tests(unittest.TestCase):
             )
             extern.run(cmd)
 
-            sra_f0_path = os.path.join("test", "coassemble", "sra_qc", "SRR3309137_1.fastq.gz")
+            sra_f0_path = os.path.join("test", "coassemble", "sra", "SRR3309137_1.fastq.gz")
             self.assertTrue(os.path.exists(sra_f0_path))
             with gzip.open(sra_f0_path) as f:
                 file = f.readline().decode()
                 self.assertTrue("@SRR3309137.1 HISEQ06:195:D1DRHACXX:5:1101:1597:2236/1" in file)
                 self.assertTrue("@SRR3309137.2 HISEQ06:195:D1DRHACXX:5:1101:1597:2236/1" not in file)
 
-            sra_r0_path = os.path.join("test", "coassemble", "sra_qc", "SRR3309137_2.fastq.gz")
+            sra_r0_path = os.path.join("test", "coassemble", "sra", "SRR3309137_2.fastq.gz")
             self.assertTrue(os.path.exists(sra_r0_path))
             with gzip.open(sra_r0_path) as f:
                 file = f.readline().decode()
                 self.assertTrue("@SRR3309137.2 HISEQ06:195:D1DRHACXX:5:1101:1597:2236/1" in file)
                 self.assertTrue("@SRR3309137.1 HISEQ06:195:D1DRHACXX:5:1101:1597:2236/1" not in file)
 
-            sra_f1_path = os.path.join("test", "coassemble", "sra_qc", "SRR8334323_1.fastq.gz")
+            sra_f1_path = os.path.join("test", "coassemble", "sra", "SRR8334323_1.fastq.gz")
             self.assertTrue(os.path.exists(sra_f1_path))
             with gzip.open(sra_f1_path) as f:
                 file = f.readline().decode()
-                self.assertTrue("@SEQ_ID.1" not in file)
+                self.assertTrue("@SEQ_ID.1" in file)
 
-            sra_f2_path = os.path.join("test", "coassemble", "sra_qc", "SRR8334324_1.fastq.gz")
+            sra_f2_path = os.path.join("test", "coassemble", "sra", "SRR8334324_1.fastq.gz")
             self.assertTrue(os.path.exists(sra_f2_path))
             with gzip.open(sra_f2_path) as f:
                 file = f.readline().decode()
@@ -295,12 +287,12 @@ class Tests(unittest.TestCase):
             self.assertTrue(os.path.exists(recover_path))
             with open(recover_path) as f:
                 file = f.readline()
-                self.assertTrue("sra_qc/SRR3309137_1.fastq.gz" in file)
-                self.assertTrue("sra_qc/SRR3309137_2.fastq.gz" in file)
-                self.assertTrue("sra_qc/SRR8334323_1.fastq.gz" in file)
-                self.assertTrue("sra_qc/SRR8334323_2.fastq.gz" in file)
-                self.assertTrue("sra_qc/SRR8334324_1.fastq.gz" in file)
-                self.assertTrue("sra_qc/SRR8334324_2.fastq.gz" in file)
+                self.assertTrue("sra/SRR3309137_1.fastq.gz" in file)
+                self.assertTrue("sra/SRR3309137_2.fastq.gz" in file)
+                self.assertTrue("sra/SRR8334323_1.fastq.gz" in file)
+                self.assertTrue("sra/SRR8334323_2.fastq.gz" in file)
+                self.assertTrue("sra/SRR8334324_1.fastq.gz" in file)
+                self.assertTrue("sra/SRR8334324_2.fastq.gz" in file)
 
     def test_update_sra_download_mock_filter_single(self):
         with in_tempdir():
@@ -391,17 +383,9 @@ class Tests(unittest.TestCase):
 
             output_sra = output_comb.split("Building DAG of jobs...")[1]
             self.assertTrue("download_sra" in output_sra)
-            self.assertTrue("sra_qc" not in output_sra)
-            self.assertTrue("compile_sra_qc" not in output_sra)
             self.assertTrue("aviary_commands" not in output_sra)
 
-            output_sra = output_comb.split("Building DAG of jobs...")[2]
-            self.assertTrue("download_sra" not in output_sra)
-            self.assertTrue("sra_qc" in output_sra)
-            self.assertTrue("compile_sra_qc" in output_sra)
-            self.assertTrue("aviary_commands" not in output_sra)
-
-            output = output_comb.split("Building DAG of jobs...")[3]
+            output = output_comb.split("Building DAG of jobs...")[2]
             self.assertTrue("singlem_pipe_reads" not in output)
             self.assertTrue("genome_transcripts" not in output)
             self.assertTrue("singlem_pipe_genomes" not in output)
@@ -515,12 +499,6 @@ class Tests(unittest.TestCase):
                 f"--snakemake-args \" --notemp\" "
             )
             extern.run(cmd)
-            # try:
-            #     import subprocess
-            #     subprocess.run(cmd, shell=True, check=True)
-            # except:
-            #     pass
-            # import pdb; pdb.set_trace()
 
             bins_reference_path = os.path.join("test", "coassemble", "mapping", "sample_1_reference.fna")
             self.assertTrue(os.path.exists(bins_reference_path))
