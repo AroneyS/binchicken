@@ -275,7 +275,7 @@ class Tests(unittest.TestCase):
             self.assertTrue(os.path.exists(sra_f1_path))
             with gzip.open(sra_f1_path) as f:
                 file = f.readline().decode()
-                self.assertTrue("@SEQ_ID.1" not in file)
+                self.assertTrue("@SEQ_ID.1" in file)
 
             sra_f2_path = os.path.join("test", "coassemble", "sra", "SRR8334324_1.fastq.gz")
             self.assertTrue(os.path.exists(sra_f2_path))
