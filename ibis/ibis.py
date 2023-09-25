@@ -98,9 +98,9 @@ def run_workflow(config, workflow, output_dir, cores=16, dryrun=False,
     cmd = (
         "snakemake --snakefile {snakefile} --configfile '{config}' --directory {output_dir} "
         "{jobs} --rerun-incomplete --keep-going --nolock "
+        "{snakemake_args} "
         "{profile} {retries} --use-conda {conda_frontend} {conda_prefix} "
         "{dryrun} "
-        "{snakemake_args} "
     ).format(
         snakefile=os.path.join(os.path.dirname(__file__), "workflow", workflow),
         config=config,
