@@ -15,4 +15,4 @@ dependencies:
   - pip
   - git
   - pip:
-    - git+https://github.com/AroneyS/aviary.git@f6c9bc7d17048d2e1433d9c421ebc706d1403d5f
+    - git+https://github.com/AroneyS/aviary.git@7e88bb5ba43c2d842c7eec9430b1aa368bf595cd
