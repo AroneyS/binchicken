@@ -426,7 +426,7 @@ rule map_reads:
         genomes = output_dir + "/mapping/{read}_reference.fna",
     output:
         dir = temp(directory(output_dir + "/mapping/{read}_coverm")),
-    group: unmapping
+    group: "unmapping"
     threads: 16
     resources:
         mem_mb=125*1000,
@@ -449,7 +449,7 @@ rule filter_bam_files:
         output_dir + "/mapping/{read}_coverm",
     output:
         temp(output_dir + "/mapping/{read}_unmapped.bam"),
-    group: unmapping
+    group: "unmapping"
     params:
         genomes = "{read}_reference.fna",
         reads_1 = lambda wildcards: os.path.basename(config["reads_1"][wildcards.read]),
@@ -479,7 +479,7 @@ rule bam_to_fastq:
     output:
         reads_1 = output_dir + "/mapping/{read}_unmapped.1.fq.gz",
         reads_2 = output_dir + "/mapping/{read}_unmapped.2.fq.gz",
-    group: unmapping
+    group: "unmapping"
     threads: 16
     resources:
         mem_mb=125*1000,
