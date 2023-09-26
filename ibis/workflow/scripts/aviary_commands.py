@@ -3,6 +3,7 @@
 ##########################
 # Author: Samuel Aroney
 
+import os
 import polars as pl
 from ibis.ibis import FAST_AVIARY_MODE
 
