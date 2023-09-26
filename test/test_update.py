@@ -95,7 +95,7 @@ class Tests(unittest.TestCase):
                         os.path.join(test_dir, "coassemble", "mapping", "sample_1_unmapped.2.fq.gz"),
                         os.path.join(test_dir, "coassemble", "mapping", "sample_2_unmapped.2.fq.gz"),
                         "--output", os.path.join(test_dir, "coassemble", "coassemble", "coassembly_0", "assemble"),
-                        "-n 64 -t 64 -m 500 --no-qc &>",
+                        "-n 64 -t 64 -m 500 --skip-qc &>",
                         os.path.join(test_dir, "coassemble", "coassemble", "logs", "coassembly_0_assemble.log"),
                         ""
                     ]),
@@ -121,7 +121,7 @@ class Tests(unittest.TestCase):
                         os.path.join(test_dir, "coassemble", "mapping", "sample_3_unmapped.2.fq.gz"),
                         "--output", os.path.join(test_dir, "coassemble", "coassemble", "coassembly_0", "recover"),
                         "--workflow recover_mags_no_singlem --skip-binners maxbin concoct rosella --skip-abundances --refinery-max-iterations 0 "
-                        "-n 32 -t 32 -m 250 --no-qc &>",
+                        "-n 32 -t 32 -m 250 --skip-qc &>",
                         os.path.join(test_dir, "coassemble", "coassemble", "logs", "coassembly_0_recover.log"),
                         ""
                     ]),
@@ -281,7 +281,7 @@ class Tests(unittest.TestCase):
             self.assertTrue(os.path.exists(sra_f2_path))
             with gzip.open(sra_f2_path) as f:
                 file = f.readline().decode()
-                self.assertTrue("@SEQ_ID.1" in file)
+                self.assertTrue("@SEQ_ID.1" not in file)
 
             recover_path = os.path.join("test", "coassemble", "commands", "recover_commands.sh")
             self.assertTrue(os.path.exists(recover_path))
@@ -419,7 +419,10 @@ class Tests(unittest.TestCase):
                 f"--conda-prefix {path_to_conda} "
                 f"--snakemake-args \" --config aviary_dryrun=True\" "
             )
-            extern.run(cmd)
+            try:
+                extern.run(cmd)
+            except:
+                import pdb; pdb.set_trace()
 
             config_path = os.path.join("test", "config.yaml")
             self.assertTrue(os.path.exists(config_path))

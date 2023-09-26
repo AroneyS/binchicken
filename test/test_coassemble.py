@@ -158,7 +158,7 @@ class Tests(unittest.TestCase):
                         os.path.join(test_dir, "coassemble", "mapping", "sample_1_unmapped.2.fq.gz"),
                         os.path.join(test_dir, "coassemble", "mapping", "sample_2_unmapped.2.fq.gz"),
                         "--output", os.path.join(test_dir, "coassemble", "coassemble", "coassembly_0", "assemble"),
-                        "-n 64 -t 64 -m 500 --no-qc &>",
+                        "-n 64 -t 64 -m 500 --skip-qc &>",
                         os.path.join(test_dir, "coassemble", "coassemble", "logs", "coassembly_0_assemble.log"),
                         ""
                     ]),
@@ -184,7 +184,7 @@ class Tests(unittest.TestCase):
                         os.path.join(test_dir, "coassemble", "mapping", "sample_3_unmapped.2.fq.gz"),
                         "--output", os.path.join(test_dir, "coassemble", "coassemble", "coassembly_0", "recover"),
                         "--workflow recover_mags_no_singlem --skip-binners maxbin concoct rosella --skip-abundances --refinery-max-iterations 0 "
-                        "-n 32 -t 32 -m 250 --no-qc &>",
+                        "-n 32 -t 32 -m 250 --skip-qc &>",
                         os.path.join(test_dir, "coassemble", "coassemble", "logs", "coassembly_0_recover.log"),
                         ""
                     ]),
@@ -288,7 +288,7 @@ class Tests(unittest.TestCase):
                         os.path.join(os.path.abspath(path_to_data), "sample_1.2.fq"),
                         os.path.join(os.path.abspath(path_to_data), "sample_3.2.fq"),
                         "--output", os.path.join(test_dir, "coassemble", "coassemble", "coassembly_0", "assemble"),
-                        "-n 64 -t 64 -m 500 --no-qc &>",
+                        "-n 64 -t 64 -m 500 --skip-qc &>",
                         os.path.join(test_dir, "coassemble", "coassemble", "logs", "coassembly_0_assemble.log"),
                         ""
                     ]),
@@ -311,7 +311,7 @@ class Tests(unittest.TestCase):
                         os.path.join(os.path.abspath(path_to_data), "sample_1.2.fq"),
                         os.path.join(os.path.abspath(path_to_data), "sample_3.2.fq"),
                         "--output", os.path.join(test_dir, "coassemble", "coassemble", "coassembly_0", "recover"),
-                        "-n 32 -t 32 -m 250 --no-qc &>",
+                        "-n 32 -t 32 -m 250 --skip-qc &>",
                         os.path.join(test_dir, "coassemble", "coassemble", "logs", "coassembly_0_recover.log"),
                         ""
                     ]),
@@ -710,7 +710,7 @@ class Tests(unittest.TestCase):
                         os.path.join(os.path.abspath(path_to_data), "sample_1.2.fq"),
                         os.path.join(os.path.abspath(path_to_data), "sample_2.2.fq"),
                         "--output", os.path.join(test_dir, "coassemble", "coassemble", "coassembly_0", "assemble"),
-                        "-n 64 -t 64 -m 500 --no-qc &>",
+                        "-n 64 -t 64 -m 500 --skip-qc &>",
                         os.path.join(test_dir, "coassemble", "coassemble", "logs", "coassembly_0_assemble.log"),
                         ""
                     ]),
@@ -736,7 +736,7 @@ class Tests(unittest.TestCase):
                         os.path.join(os.path.abspath(path_to_data), "sample_3.2.fq"),
                         "--output", os.path.join(test_dir, "coassemble", "coassemble", "coassembly_0", "recover"),
                         "--workflow recover_mags_no_singlem --skip-binners maxbin concoct rosella --skip-abundances --refinery-max-iterations 0 "
-                        "-n 32 -t 32 -m 250 --no-qc &>",
+                        "-n 32 -t 32 -m 250 --skip-qc &>",
                         os.path.join(test_dir, "coassemble", "coassemble", "logs", "coassembly_0_recover.log"),
                         ""
                     ]),
