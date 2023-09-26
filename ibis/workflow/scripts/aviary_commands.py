@@ -75,6 +75,9 @@ def pipeline(coassemblies, reads_1, reads_2, output_dir, threads, memory, fast=F
     return output.select("assemble", "recover")
 
 if __name__ == "__main__":
+    os.environ["POLARS_MAX_THREADS"] = str(snakemake.threads)
+    import polars as pl
+
     coassemblies = pl.read_csv(snakemake.input.elusive_clusters, separator="\t")
     if coassemblies.height == 0:
         with open(snakemake.output.coassemble_commands, "w") as f:
