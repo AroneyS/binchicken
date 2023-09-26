@@ -1069,6 +1069,9 @@ def main():
     logging.info(f"Ibis v{__version__}")
     logging.info(f"Command: {' '.join(['ibis'] + sys.argv[1:])}")
 
+    os.environ["POLARS_MAX_THREADS"] = str(args.cores)
+    import polars as pl
+
     args.output = os.path.abspath(args.output)
     if not os.path.exists(args.output):
         os.makedirs(args.output)
