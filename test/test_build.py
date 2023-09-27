@@ -52,6 +52,7 @@ class Tests(unittest.TestCase):
             self.assertFalse("ibis/workflow/env/kingfisher.yml will be created." in output)
             self.assertFalse("ibis/workflow/env/prodigal.yml will be created." in output)
             self.assertFalse("ibis/workflow/env/aviary.yml will be created." in output)
+            self.assertFalse("ibis/workflow/env/fastp.yml will be created." in output)
 
             # Dryrun evaluate
             cmd = (
@@ -70,6 +71,7 @@ class Tests(unittest.TestCase):
             self.assertFalse("ibis/workflow/env/kingfisher.yml will be created." in output)
             self.assertFalse("ibis/workflow/env/prodigal.yml will be created." in output)
             self.assertFalse("ibis/workflow/env/aviary.yml will be created." in output)
+            self.assertFalse("ibis/workflow/env/fastp.yml will be created." in output)
 
             # Dryrun update
             cmd = (
@@ -98,6 +100,7 @@ class Tests(unittest.TestCase):
             self.assertFalse("ibis/workflow/env/kingfisher.yml will be created." in output)
             self.assertFalse("ibis/workflow/env/prodigal.yml will be created." in output)
             self.assertFalse("ibis/workflow/env/aviary.yml will be created." in output)
+            self.assertFalse("ibis/workflow/env/fastp.yml will be created." in output)
 
             # Dryrun iterate
             cmd = (
@@ -118,6 +121,7 @@ class Tests(unittest.TestCase):
             self.assertFalse("ibis/workflow/env/kingfisher.yml will be created." in output)
             self.assertFalse("ibis/workflow/env/prodigal.yml will be created." in output)
             self.assertFalse("ibis/workflow/env/aviary.yml will be created." in output)
+            self.assertFalse("ibis/workflow/env/fastp.yml will be created." in output)
 
 
 if __name__ == '__main__':

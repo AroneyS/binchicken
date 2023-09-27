@@ -95,7 +95,7 @@ class Tests(unittest.TestCase):
                         os.path.join(test_dir, "coassemble", "mapping", "sample_1_unmapped.2.fq.gz"),
                         os.path.join(test_dir, "coassemble", "mapping", "sample_2_unmapped.2.fq.gz"),
                         "--output", os.path.join(test_dir, "coassemble", "coassemble", "coassembly_0", "assemble"),
-                        "-n 64 -t 64 -m 500 &>",
+                        "-n 64 -t 64 -m 500 --skip-qc &>",
                         os.path.join(test_dir, "coassemble", "coassemble", "logs", "coassembly_0_assemble.log"),
                         ""
                     ]),
@@ -121,7 +121,7 @@ class Tests(unittest.TestCase):
                         os.path.join(test_dir, "coassemble", "mapping", "sample_3_unmapped.2.fq.gz"),
                         "--output", os.path.join(test_dir, "coassemble", "coassemble", "coassembly_0", "recover"),
                         "--workflow recover_mags_no_singlem --skip-binners maxbin concoct rosella --skip-abundances --refinery-max-iterations 0 "
-                        "-n 32 -t 32 -m 250 &>",
+                        "-n 32 -t 32 -m 250 --skip-qc &>",
                         os.path.join(test_dir, "coassemble", "coassemble", "logs", "coassembly_0_recover.log"),
                         ""
                     ]),
@@ -136,6 +136,7 @@ class Tests(unittest.TestCase):
             cmd = (
                 f"ibis update "
                 f"--assemble-unmapped "
+                f"--run-qc "
                 f"--forward {SAMPLE_READS_FORWARD} "
                 f"--reverse {SAMPLE_READS_REVERSE} "
                 f"--genomes {GENOMES} "
@@ -162,6 +163,7 @@ class Tests(unittest.TestCase):
             self.assertTrue("count_bp_reads" not in output)
             self.assertTrue("target_elusive" not in output)
             self.assertTrue("cluster_graph" not in output)
+            self.assertTrue("qc_reads" in output)
             self.assertTrue("collect_genomes" in output)
             self.assertTrue("map_reads" in output)
             self.assertTrue("finish_mapping" in output)
@@ -233,6 +235,7 @@ class Tests(unittest.TestCase):
             self.assertTrue("count_bp_reads" not in output)
             self.assertTrue("target_elusive" not in output)
             self.assertTrue("cluster_graph" not in output)
+            self.assertTrue("qc_reads" in output)
             self.assertTrue("collect_genomes" in output)
             self.assertTrue("map_reads" in output)
             self.assertTrue("finish_mapping" in output)
@@ -244,6 +247,7 @@ class Tests(unittest.TestCase):
                 f"ibis update "
                 f"--forward SRR3309137 SRR8334323 SRR8334324 "
                 f"--sra "
+                f"--assemble-unmapped "
                 f"--genomes {GENOMES} "
                 f"--coassemble-unbinned {MOCK_UNBINNED_SRA} "
                 f"--coassemble-binned {MOCK_BINNED_SRA} "
@@ -277,22 +281,22 @@ class Tests(unittest.TestCase):
                 file = f.readline().decode()
                 self.assertTrue("@SEQ_ID.1" in file)
 
-            sra_f2_path = os.path.join("test", "coassemble", "sra", "SRR8334324_1.fastq.gz")
+            sra_f2_path = os.path.join("test", "coassemble", "qc", "SRR8334323_1.fastq.gz")
             self.assertTrue(os.path.exists(sra_f2_path))
             with gzip.open(sra_f2_path) as f:
                 file = f.readline().decode()
-                self.assertTrue("@SEQ_ID.1" in file)
+                self.assertTrue("@SEQ_ID.1" not in file)
 
             recover_path = os.path.join("test", "coassemble", "commands", "recover_commands.sh")
             self.assertTrue(os.path.exists(recover_path))
             with open(recover_path) as f:
                 file = f.readline()
-                self.assertTrue("sra/SRR3309137_1.fastq.gz" in file)
-                self.assertTrue("sra/SRR3309137_2.fastq.gz" in file)
-                self.assertTrue("sra/SRR8334323_1.fastq.gz" in file)
-                self.assertTrue("sra/SRR8334323_2.fastq.gz" in file)
-                self.assertTrue("sra/SRR8334324_1.fastq.gz" in file)
-                self.assertTrue("sra/SRR8334324_2.fastq.gz" in file)
+                self.assertTrue("mapping/SRR3309137_unmapped.1.fq.gz" in file)
+                self.assertTrue("mapping/SRR3309137_unmapped.2.fq.gz" in file)
+                self.assertTrue("mapping/SRR8334323_unmapped.1.fq.gz" in file)
+                self.assertTrue("mapping/SRR8334323_unmapped.2.fq.gz" in file)
+                self.assertTrue("mapping/SRR8334324_unmapped.1.fq.gz" in file)
+                self.assertTrue("mapping/SRR8334324_unmapped.2.fq.gz" in file)
 
     def test_update_sra_download_mock_filter_single(self):
         with in_tempdir():
@@ -396,6 +400,7 @@ class Tests(unittest.TestCase):
             self.assertTrue("count_bp_reads" not in output)
             self.assertTrue("target_elusive" not in output)
             self.assertTrue("cluster_graph" not in output)
+            self.assertTrue("qc_reads" in output)
             self.assertTrue("collect_genomes" in output)
             self.assertTrue("map_reads" in output)
             self.assertTrue("finish_mapping" in output)
@@ -419,7 +424,10 @@ class Tests(unittest.TestCase):
                 f"--conda-prefix {path_to_conda} "
                 f"--snakemake-args \" --config aviary_dryrun=True\" "
             )
-            extern.run(cmd)
+            try:
+                extern.run(cmd)
+            except:
+                import pdb; pdb.set_trace()
 
             config_path = os.path.join("test", "config.yaml")
             self.assertTrue(os.path.exists(config_path))

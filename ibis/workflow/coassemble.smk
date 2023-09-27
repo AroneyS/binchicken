@@ -406,6 +406,42 @@ rule mock_download_sra:
 #####################################
 ### Map reads to matching genomes ###
 #####################################
+rule qc_reads:
+    input:
+        reads_1 = lambda wildcards: config["reads_1"][wildcards.read],
+        reads_2 = lambda wildcards: config["reads_2"][wildcards.read],
+    output:
+        reads_1 = output_dir + "/qc/{read}_1.fastq.gz",
+        reads_2 = output_dir + "/qc/{read}_2.fastq.gz",
+        json = output_dir + "/qc/{read}.json",
+        html = output_dir + "/qc/{read}.html",
+    group: "unmapping"
+    params:
+        quality_cutoff = 15,
+        unqualified_percent_limit = 40,
+        min_length = 100,
+    threads: 16
+    resources:
+        mem_mb=125*1000,
+        runtime = "4h",
+    log:
+        logs_dir + "/mapping/{read}_qc.log"
+    conda:
+        "env/fastp.yml"
+    shell:
+        "fastp "
+        "-i {input.reads_1} "
+        "-I {input.reads_2} "
+        "-o {output.reads_1} "
+        "-O {output.reads_2} "
+        "-j {output.json} "
+        "-h {output.html} "
+        "-w {threads} "
+        "-q {params.quality_cutoff} "
+        "-u {params.unqualified_percent_limit} "
+        "-l {params.min_length} "
+        "&> {log}"
+
 rule collect_genomes:
     input:
         appraise_binned = output_dir + "/appraise/binned.otu_table.tsv",
@@ -421,8 +457,8 @@ rule collect_genomes:
 
 rule map_reads:
     input:
-        reads_1 = lambda wildcards: config["reads_1"][wildcards.read],
-        reads_2 = lambda wildcards: config["reads_2"][wildcards.read],
+        reads_1 = lambda wildcards: config["reads_1"][wildcards.read] if not config["run_qc"] else output_dir + "/qc/{read}_1.fastq.gz",
+        reads_2 = lambda wildcards: config["reads_2"][wildcards.read] if not config["run_qc"] else output_dir + "/qc/{read}_2.fastq.gz",
         genomes = output_dir + "/mapping/{read}_reference.fna",
     output:
         dir = temp(directory(output_dir + "/mapping/{read}_coverm")),
@@ -573,6 +609,7 @@ rule aviary_assemble:
         "-n {threads} "
         "-t {threads} "
         "-m {resources.mem_gb} "
+        "--skip-qc "
         "{resources.assembler} "
         "{params.dryrun} "
         "&> {log} "
@@ -619,6 +656,7 @@ rule aviary_recover:
         "-n {threads} "
         "-t {threads} "
         "-m {resources.mem_gb} "
+        "--skip-qc "
         "{params.snakemake_profile} "
         "{params.cluster_retries} "
         "{params.dryrun} "

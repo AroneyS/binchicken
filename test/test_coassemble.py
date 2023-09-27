@@ -158,7 +158,7 @@ class Tests(unittest.TestCase):
                         os.path.join(test_dir, "coassemble", "mapping", "sample_1_unmapped.2.fq.gz"),
                         os.path.join(test_dir, "coassemble", "mapping", "sample_2_unmapped.2.fq.gz"),
                         "--output", os.path.join(test_dir, "coassemble", "coassemble", "coassembly_0", "assemble"),
-                        "-n 64 -t 64 -m 500 &>",
+                        "-n 64 -t 64 -m 500 --skip-qc &>",
                         os.path.join(test_dir, "coassemble", "coassemble", "logs", "coassembly_0_assemble.log"),
                         ""
                     ]),
@@ -184,7 +184,7 @@ class Tests(unittest.TestCase):
                         os.path.join(test_dir, "coassemble", "mapping", "sample_3_unmapped.2.fq.gz"),
                         "--output", os.path.join(test_dir, "coassemble", "coassemble", "coassembly_0", "recover"),
                         "--workflow recover_mags_no_singlem --skip-binners maxbin concoct rosella --skip-abundances --refinery-max-iterations 0 "
-                        "-n 32 -t 32 -m 250 &>",
+                        "-n 32 -t 32 -m 250 --skip-qc &>",
                         os.path.join(test_dir, "coassemble", "coassemble", "logs", "coassembly_0_recover.log"),
                         ""
                     ]),
@@ -288,7 +288,7 @@ class Tests(unittest.TestCase):
                         os.path.join(os.path.abspath(path_to_data), "sample_1.2.fq"),
                         os.path.join(os.path.abspath(path_to_data), "sample_3.2.fq"),
                         "--output", os.path.join(test_dir, "coassemble", "coassemble", "coassembly_0", "assemble"),
-                        "-n 64 -t 64 -m 500 &>",
+                        "-n 64 -t 64 -m 500 --skip-qc &>",
                         os.path.join(test_dir, "coassemble", "coassemble", "logs", "coassembly_0_assemble.log"),
                         ""
                     ]),
@@ -311,7 +311,7 @@ class Tests(unittest.TestCase):
                         os.path.join(os.path.abspath(path_to_data), "sample_1.2.fq"),
                         os.path.join(os.path.abspath(path_to_data), "sample_3.2.fq"),
                         "--output", os.path.join(test_dir, "coassemble", "coassemble", "coassembly_0", "recover"),
-                        "-n 32 -t 32 -m 250 &>",
+                        "-n 32 -t 32 -m 250 --skip-qc &>",
                         os.path.join(test_dir, "coassemble", "coassemble", "logs", "coassembly_0_recover.log"),
                         ""
                     ]),
@@ -710,7 +710,7 @@ class Tests(unittest.TestCase):
                         os.path.join(os.path.abspath(path_to_data), "sample_1.2.fq"),
                         os.path.join(os.path.abspath(path_to_data), "sample_2.2.fq"),
                         "--output", os.path.join(test_dir, "coassemble", "coassemble", "coassembly_0", "assemble"),
-                        "-n 64 -t 64 -m 500 &>",
+                        "-n 64 -t 64 -m 500 --skip-qc &>",
                         os.path.join(test_dir, "coassemble", "coassemble", "logs", "coassembly_0_assemble.log"),
                         ""
                     ]),
@@ -736,7 +736,7 @@ class Tests(unittest.TestCase):
                         os.path.join(os.path.abspath(path_to_data), "sample_3.2.fq"),
                         "--output", os.path.join(test_dir, "coassemble", "coassemble", "coassembly_0", "recover"),
                         "--workflow recover_mags_no_singlem --skip-binners maxbin concoct rosella --skip-abundances --refinery-max-iterations 0 "
-                        "-n 32 -t 32 -m 250 &>",
+                        "-n 32 -t 32 -m 250 --skip-qc &>",
                         os.path.join(test_dir, "coassemble", "coassemble", "logs", "coassembly_0_recover.log"),
                         ""
                     ]),
@@ -823,6 +823,7 @@ class Tests(unittest.TestCase):
             self.assertTrue("count_bp_reads" not in output)
             self.assertTrue("target_elusive" in output)
             self.assertTrue("cluster_graph" in output)
+            self.assertTrue("qc_reads" not in output)
             self.assertTrue("collect_genomes" not in output)
             self.assertTrue("map_reads" not in output)
             self.assertTrue("finish_mapping" not in output)
@@ -860,6 +861,7 @@ class Tests(unittest.TestCase):
             self.assertTrue("count_bp_reads" not in output)
             self.assertTrue("target_elusive" in output)
             self.assertTrue("cluster_graph" in output)
+            self.assertTrue("qc_reads" not in output)
             self.assertTrue("collect_genomes" not in output)
             self.assertTrue("map_reads" not in output)
             self.assertTrue("finish_mapping" not in output)
@@ -901,6 +903,50 @@ class Tests(unittest.TestCase):
             self.assertTrue("count_bp_reads" in output)
             self.assertTrue("target_elusive" in output)
             self.assertTrue("cluster_graph" in output)
+            self.assertTrue("qc_reads" not in output)
+            self.assertTrue("collect_genomes" in output)
+            self.assertTrue("map_reads" in output)
+            self.assertTrue("finish_mapping" in output)
+            self.assertTrue("aviary_commands" not in output)
+            self.assertTrue("aviary_assemble" not in output)
+            self.assertTrue("aviary_recover" not in output)
+            self.assertTrue("aviary_combine" in output)
+
+    def test_coassemble_run_aviary_unmapped_qc(self):
+        with in_tempdir():
+            cmd = (
+                f"ibis coassemble "
+                f"--assemble-unmapped "
+                f"--run-qc "
+                f"--run-aviary "
+                f"--aviary-gtdbtk-dir gtdb_release "
+                f"--aviary-checkm2-dir CheckM2_database "
+                f"--forward {SAMPLE_READS_FORWARD} "
+                f"--reverse {SAMPLE_READS_REVERSE} "
+                f"--genomes {GENOMES} "
+                f"--genome-transcripts {GENOME_TRANSCRIPTS} "
+                f"--sample-singlem {SAMPLE_SINGLEM} "
+                f"--sample-read-size {SAMPLE_READ_SIZE} "
+                f"--genome-singlem {GENOME_SINGLEM} "
+                f"--singlem-metapackage {METAPACKAGE} "
+                f"--output test "
+                f"--conda-prefix {path_to_conda} "
+                f"--dryrun "
+                f"--snakemake-args \" --quiet\" "
+            )
+            output = extern.run(cmd)
+
+            self.assertTrue("singlem_pipe_reads" not in output)
+            self.assertTrue("genome_transcripts" not in output)
+            self.assertTrue("singlem_pipe_genomes" not in output)
+            self.assertTrue("singlem_summarise_genomes" not in output)
+            self.assertTrue("singlem_appraise" in output)
+            self.assertTrue("query_processing" not in output)
+            self.assertTrue("single_assembly" not in output)
+            self.assertTrue("count_bp_reads" in output)
+            self.assertTrue("target_elusive" in output)
+            self.assertTrue("cluster_graph" in output)
+            self.assertTrue("qc_reads" in output)
             self.assertTrue("collect_genomes" in output)
             self.assertTrue("map_reads" in output)
             self.assertTrue("finish_mapping" in output)
@@ -943,6 +989,7 @@ class Tests(unittest.TestCase):
             self.assertTrue("count_bp_reads" in output)
             self.assertTrue("target_elusive" in output)
             self.assertTrue("cluster_graph" in output)
+            self.assertTrue("qc_reads" not in output)
             self.assertTrue("collect_genomes" in output)
             self.assertTrue("map_reads" in output)
             self.assertTrue("finish_mapping" in output)
@@ -989,6 +1036,7 @@ class Tests(unittest.TestCase):
             self.assertTrue("count_bp_reads" not in output)
             self.assertTrue("target_elusive" in output)
             self.assertTrue("cluster_graph" in output)
+            self.assertTrue("qc_reads" not in output)
             self.assertTrue("collect_genomes" not in output)
             self.assertTrue("map_reads" not in output)
             self.assertTrue("finish_mapping" not in output)
@@ -1024,6 +1072,7 @@ class Tests(unittest.TestCase):
             self.assertTrue("count_bp_reads" not in output)
             self.assertTrue("target_elusive" in output)
             self.assertTrue("cluster_graph" in output)
+            self.assertTrue("qc_reads" not in output)
             self.assertTrue("collect_genomes" not in output)
             self.assertTrue("map_reads" not in output)
             self.assertTrue("finish_mapping" not in output)
