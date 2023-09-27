@@ -91,7 +91,7 @@ def read_list(path):
         return [line.strip() for line in f]
 
 def run_workflow(config, workflow, output_dir, cores=16, dryrun=False,
-                 profile=None, cluster_retries=None,
+                 profile=None, local_cores=1, cluster_retries=None,
                  snakemake_args="", conda_frontend="mamba", conda_prefix=None):
     load_configfile(config)
 
@@ -99,7 +99,7 @@ def run_workflow(config, workflow, output_dir, cores=16, dryrun=False,
         "snakemake --snakefile {snakefile} --configfile '{config}' --directory {output_dir} "
         "{jobs} --rerun-incomplete --keep-going --nolock "
         "{snakemake_args} "
-        "{profile} {retries} --use-conda {conda_frontend} {conda_prefix} "
+        "{profile} {local} {retries} --use-conda {conda_frontend} {conda_prefix} "
         "{dryrun} "
     ).format(
         snakefile=os.path.join(os.path.dirname(__file__), "workflow", workflow),
@@ -107,6 +107,7 @@ def run_workflow(config, workflow, output_dir, cores=16, dryrun=False,
         output_dir=output_dir,
         jobs=f"--cores {cores}" if cores is not None else "--cores 1",
         profile="" if not profile else f"--profile {profile}",
+        local=f"--local-cores {local_cores}",
         retries="" if (cluster_retries is None) else f"--retries {cluster_retries}",
         conda_frontend=f"--conda-frontend {conda_frontend}" if conda_frontend is not None else "",
         conda_prefix=f"--conda-prefix {conda_prefix}" if conda_prefix is not None else "",
@@ -144,6 +145,7 @@ def download_sra(args):
         cores = args.cores,
         dryrun = args.dryrun,
         profile = args.snakemake_profile,
+        local_cores = args.local_cores,
         cluster_retries = args.cluster_retries,
         conda_prefix = args.conda_prefix,
         snakemake_args = target_rule + " " + args.snakemake_args if args.snakemake_args else target_rule,
@@ -446,6 +448,7 @@ def coassemble(args):
         "prodigal_meta": args.prodigal_meta,
         # Coassembly config
         "assemble_unmapped": args.assemble_unmapped,
+        "run_qc": args.run_qc,
         "unmapping_min_appraised": args.unmapping_min_appraised,
         "unmapping_max_identity": args.unmapping_max_identity,
         "unmapping_max_alignment": args.unmapping_max_alignment,
@@ -473,6 +476,7 @@ def coassemble(args):
         cores = args.cores,
         dryrun = args.dryrun,
         profile = args.snakemake_profile,
+        local_cores = args.local_cores,
         cluster_retries = args.cluster_retries,
         conda_prefix = args.conda_prefix,
         snakemake_args = args.snakemake_args,
@@ -552,6 +556,7 @@ def evaluate(args):
         cores = args.cores,
         dryrun = args.dryrun,
         profile = args.snakemake_profile,
+        local_cores = args.local_cores,
         cluster_retries = args.cluster_retries,
         conda_prefix = args.conda_prefix,
         snakemake_args = args.snakemake_args,
@@ -610,6 +615,7 @@ def update(args):
 
     if args.sra:
         args.forward, args.reverse = download_sra(args)
+        args.run_qc = True
 
     if args.run_aviary:
         args.snakemake_args = "aviary_combine --rerun-triggers mtime " + args.snakemake_args if args.snakemake_args else "aviary_combine --rerun-triggers mtime"
@@ -776,6 +782,7 @@ def build(args):
     args.aviary_checkm2_dir = "."
     args.aviary_cores = None
     args.assemble_unmapped = True
+    args.run_qc = True
     args.coassemblies = None
     args.singlem_metapackage = "."
 
@@ -912,6 +919,7 @@ def main():
         argument_group.add_argument("--snakemake-profile", default="",
                                     help="Snakemake profile (see https://snakemake.readthedocs.io/en/stable/executing/cli.html#profiles).\n"
                                          "Can be used to submit rules as jobs to cluster engine (see https://snakemake.readthedocs.io/en/stable/executing/cluster.html).")
+        argument_group.add_argument("--local-cores", type=int, help="Maximum number of cores to use on localrules when running in cluster mode", default=1)
         argument_group.add_argument("--cluster-retries", help="Number of times to retry a failed job when using cluster submission (see `--snakemake-profile`).", default=0)
         argument_group.add_argument("--snakemake-args", help="Additional commands to be supplied to snakemake in the form of a space-prefixed single string e.g. \" --quiet\"", default="")
 
@@ -987,6 +995,7 @@ def main():
         # Coassembly options
         coassemble_coassembly = parser.add_argument_group("Coassembly options")
         coassemble_coassembly.add_argument("--assemble-unmapped", action="store_true", help="Only assemble reads that do not map to reference genomes")
+        coassemble_coassembly.add_argument("--run-qc", action="store_true", help="Run Fastp QC on reads. Requires unmapping.")
         coassemble_coassembly.add_argument("--unmapping-min-appraised", type=int, help="Minimum fraction of sequences binned to justify unmapping [default: 0.1]", default=0.1)
         coassemble_coassembly.add_argument("--unmapping-max-identity", type=float, help="Maximum sequence identity of mapped sequences kept for coassembly [default: 99%]", default=99)
         coassemble_coassembly.add_argument("--unmapping-max-alignment", type=float, help="Maximum percent alignment of mapped sequences kept for coassembly [default: 99%]", default=99)
@@ -1028,12 +1037,13 @@ def main():
     # Base arguments
     update_base = update_parser.add_argument_group("Input arguments")
     add_base_arguments(update_base)
-    update_base.add_argument("--sra", action="store_true", help="Download reads from SRA (read argument still required)")
+    update_base.add_argument("--sra", action="store_true", help="Download reads from SRA (read argument still required). Also sets --run-qc.")
     # Coassembly options
     update_coassembly = update_parser.add_argument_group("Coassembly options")
     add_coassemble_output_arguments(update_coassembly)
     update_coassembly.add_argument("--coassemblies", nargs='+', help="Choose specific coassemblies from elusive clusters (e.g. coassembly_0)")
     update_coassembly.add_argument("--assemble-unmapped", action="store_true", help="Only assemble reads that do not map to reference genomes")
+    update_coassembly.add_argument("--run-qc", action="store_true", help="Run Fastp QC on reads. Requires unmapping.")
     update_coassembly.add_argument("--unmapping-min-appraised", type=float, help="Minimum fraction of sequences binned to justify unmapping [default: 0.1]", default=0.1)
     update_coassembly.add_argument("--unmapping-max-identity", type=float, help="Maximum sequence identity of mapped sequences kept for coassembly [default: 99%]", default=99)
     update_coassembly.add_argument("--unmapping-max-alignment", type=float, help="Maximum percent alignment of mapped sequences kept for coassembly [default: 99%]", default=99)
@@ -1098,6 +1108,8 @@ def main():
             raise Exception("Input SingleM query (--sample-query) requires SingleM otu tables (--sample-singlem) for coverage")
         if args.assemble_unmapped and args.single_assembly:
             raise Exception("Assemble unmapped is incompatible with single-sample assembly")
+        if args.run_qc and not args.assemble_unmapped:
+            raise Exception("Run QC requires unmapping (--assemble-unmapped)")
         if args.assemble_unmapped and not args.genomes and not args.genomes_list:
             raise Exception("Reference genomes must be provided to assemble unmapped reads")
         if not args.singlem_metapackage and not os.environ['SINGLEM_METAPACKAGE_PATH'] and not args.sample_query and not args.sample_query_list:

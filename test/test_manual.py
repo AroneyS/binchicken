@@ -100,6 +100,7 @@ class Tests(unittest.TestCase):
             f"--output {output_dir} "
             f"--conda-prefix {path_to_conda} "
             f"--snakemake-profile mqsub "
+            f"--local-cores 5 "
             f"--cluster-retries 1 "
         )
         subprocess.run(cmd, shell=True, check=True)

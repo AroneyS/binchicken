@@ -5,6 +5,7 @@ genomes:
 taxa_of_interest: ""
 max_coassembly_size: 
 assemble_unmapped: false
+read_qc: false
 sra: false
 prodigal_meta: false
 single_assembly: false
