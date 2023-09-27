@@ -448,6 +448,7 @@ def coassemble(args):
         "prodigal_meta": args.prodigal_meta,
         # Coassembly config
         "assemble_unmapped": args.assemble_unmapped,
+        "run_qc": args.run_qc,
         "unmapping_min_appraised": args.unmapping_min_appraised,
         "unmapping_max_identity": args.unmapping_max_identity,
         "unmapping_max_alignment": args.unmapping_max_alignment,
@@ -780,6 +781,7 @@ def build(args):
     args.aviary_checkm2_dir = "."
     args.aviary_cores = None
     args.assemble_unmapped = True
+    args.run_qc = True
     args.coassemblies = None
     args.singlem_metapackage = "."
 
@@ -992,6 +994,7 @@ def main():
         # Coassembly options
         coassemble_coassembly = parser.add_argument_group("Coassembly options")
         coassemble_coassembly.add_argument("--assemble-unmapped", action="store_true", help="Only assemble reads that do not map to reference genomes")
+        coassemble_coassembly.add_argument("--run-qc", action="store_true", help="Run Fastp QC on reads. Requires unmapping.")
         coassemble_coassembly.add_argument("--unmapping-min-appraised", type=int, help="Minimum fraction of sequences binned to justify unmapping [default: 0.1]", default=0.1)
         coassemble_coassembly.add_argument("--unmapping-max-identity", type=float, help="Maximum sequence identity of mapped sequences kept for coassembly [default: 99%]", default=99)
         coassemble_coassembly.add_argument("--unmapping-max-alignment", type=float, help="Maximum percent alignment of mapped sequences kept for coassembly [default: 99%]", default=99)
@@ -1103,6 +1106,8 @@ def main():
             raise Exception("Input SingleM query (--sample-query) requires SingleM otu tables (--sample-singlem) for coverage")
         if args.assemble_unmapped and args.single_assembly:
             raise Exception("Assemble unmapped is incompatible with single-sample assembly")
+        if args.run_qc and not args.assemble_unmapped:
+            raise Exception("Run QC requires unmapping (--assemble-unmapped)")
         if args.assemble_unmapped and not args.genomes and not args.genomes_list:
             raise Exception("Reference genomes must be provided to assemble unmapped reads")
         if not args.singlem_metapackage and not os.environ['SINGLEM_METAPACKAGE_PATH'] and not args.sample_query and not args.sample_query_list:

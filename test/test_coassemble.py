@@ -823,6 +823,7 @@ class Tests(unittest.TestCase):
             self.assertTrue("count_bp_reads" not in output)
             self.assertTrue("target_elusive" in output)
             self.assertTrue("cluster_graph" in output)
+            self.assertTrue("qc_reads" not in output)
             self.assertTrue("collect_genomes" not in output)
             self.assertTrue("map_reads" not in output)
             self.assertTrue("finish_mapping" not in output)
@@ -860,6 +861,7 @@ class Tests(unittest.TestCase):
             self.assertTrue("count_bp_reads" not in output)
             self.assertTrue("target_elusive" in output)
             self.assertTrue("cluster_graph" in output)
+            self.assertTrue("qc_reads" not in output)
             self.assertTrue("collect_genomes" not in output)
             self.assertTrue("map_reads" not in output)
             self.assertTrue("finish_mapping" not in output)
@@ -901,6 +903,50 @@ class Tests(unittest.TestCase):
             self.assertTrue("count_bp_reads" in output)
             self.assertTrue("target_elusive" in output)
             self.assertTrue("cluster_graph" in output)
+            self.assertTrue("qc_reads" not in output)
+            self.assertTrue("collect_genomes" in output)
+            self.assertTrue("map_reads" in output)
+            self.assertTrue("finish_mapping" in output)
+            self.assertTrue("aviary_commands" not in output)
+            self.assertTrue("aviary_assemble" not in output)
+            self.assertTrue("aviary_recover" not in output)
+            self.assertTrue("aviary_combine" in output)
+
+    def test_coassemble_run_aviary_unmapped_qc(self):
+        with in_tempdir():
+            cmd = (
+                f"ibis coassemble "
+                f"--assemble-unmapped "
+                f"--run-qc "
+                f"--run-aviary "
+                f"--aviary-gtdbtk-dir gtdb_release "
+                f"--aviary-checkm2-dir CheckM2_database "
+                f"--forward {SAMPLE_READS_FORWARD} "
+                f"--reverse {SAMPLE_READS_REVERSE} "
+                f"--genomes {GENOMES} "
+                f"--genome-transcripts {GENOME_TRANSCRIPTS} "
+                f"--sample-singlem {SAMPLE_SINGLEM} "
+                f"--sample-read-size {SAMPLE_READ_SIZE} "
+                f"--genome-singlem {GENOME_SINGLEM} "
+                f"--singlem-metapackage {METAPACKAGE} "
+                f"--output test "
+                f"--conda-prefix {path_to_conda} "
+                f"--dryrun "
+                f"--snakemake-args \" --quiet\" "
+            )
+            output = extern.run(cmd)
+
+            self.assertTrue("singlem_pipe_reads" not in output)
+            self.assertTrue("genome_transcripts" not in output)
+            self.assertTrue("singlem_pipe_genomes" not in output)
+            self.assertTrue("singlem_summarise_genomes" not in output)
+            self.assertTrue("singlem_appraise" in output)
+            self.assertTrue("query_processing" not in output)
+            self.assertTrue("single_assembly" not in output)
+            self.assertTrue("count_bp_reads" in output)
+            self.assertTrue("target_elusive" in output)
+            self.assertTrue("cluster_graph" in output)
+            self.assertTrue("qc_reads" in output)
             self.assertTrue("collect_genomes" in output)
             self.assertTrue("map_reads" in output)
             self.assertTrue("finish_mapping" in output)
@@ -943,6 +989,7 @@ class Tests(unittest.TestCase):
             self.assertTrue("count_bp_reads" in output)
             self.assertTrue("target_elusive" in output)
             self.assertTrue("cluster_graph" in output)
+            self.assertTrue("qc_reads" not in output)
             self.assertTrue("collect_genomes" in output)
             self.assertTrue("map_reads" in output)
             self.assertTrue("finish_mapping" in output)
@@ -989,6 +1036,7 @@ class Tests(unittest.TestCase):
             self.assertTrue("count_bp_reads" not in output)
             self.assertTrue("target_elusive" in output)
             self.assertTrue("cluster_graph" in output)
+            self.assertTrue("qc_reads" not in output)
             self.assertTrue("collect_genomes" not in output)
             self.assertTrue("map_reads" not in output)
             self.assertTrue("finish_mapping" not in output)
@@ -1024,6 +1072,7 @@ class Tests(unittest.TestCase):
             self.assertTrue("count_bp_reads" not in output)
             self.assertTrue("target_elusive" in output)
             self.assertTrue("cluster_graph" in output)
+            self.assertTrue("qc_reads" not in output)
             self.assertTrue("collect_genomes" not in output)
             self.assertTrue("map_reads" not in output)
             self.assertTrue("finish_mapping" not in output)
