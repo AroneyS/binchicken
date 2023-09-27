@@ -3,7 +3,7 @@
 #############
 ruleorder: no_genomes > query_processing > update_appraise > singlem_appraise
 ruleorder: mock_download_sra > download_sra
-localrules: all, summary, singlem_summarise_genomes, singlem_appraise_filtered, no_genomes, mock_download_sra, collect_genomes, finish_mapping, aviary_commands, aviary_recover, aviary_combine
+localrules: all, summary, singlem_summarise_genomes, singlem_appraise_filtered, no_genomes, download_sra, mock_download_sra, collect_genomes, finish_mapping, aviary_commands, aviary_recover, aviary_combine
 
 import os
 import pandas as pd
@@ -364,28 +364,39 @@ checkpoint cluster_graph:
 #######################
 ### SRA downloading ###
 #######################
-rule download_sra:
+rule download_read:
     output:
-        directory(output_dir + "/sra")
+        read_1 = output_dir + "/sra/{read}_1.fastq.gz",
+        read_2 = output_dir + "/sra/{read}_2.fastq.gz",
     params:
-        sra = " ".join(config["sra"]) if config["sra"] else ""
+        dir = output_dir + "/sra",
+        name = "{read}",
     threads: 4
     resources:
         mem_mb=32*1000,
-        runtime = "48h",
+        runtime = "4h",
+        downloading = 1,
     conda:
         "env/kingfisher.yml"
     log:
-        logs_dir + "/sra/kingfisher.log"
+        logs_dir + "/sra/kingfisher_{read}.log"
     shell:
-        "mkdir -p {output} && "
-        "cd {output} && "
+        "cd {params.dir} && "
         "kingfisher get "
-        "-r {params.sra} "
+        "-r {params.name} "
         "-f fastq.gz "
         "-m ena-ftp prefetch ena-ascp aws-http aws-cp "
         "-t {threads} "
         "&> {log} "
+
+rule download_sra:
+    input:
+        expand(output_dir + "/sra/{read}_1.fastq.gz", read=config["sra"]) if config["sra"] else [],
+        expand(output_dir + "/sra/{read}_2.fastq.gz", read=config["sra"]) if config["sra"] else [],
+    output:
+        output_dir + "/sra/done"
+    shell:
+        "touch {output}"
 
 rule mock_download_sra:
     output:
