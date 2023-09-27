@@ -235,7 +235,7 @@ class Tests(unittest.TestCase):
             self.assertTrue("count_bp_reads" not in output)
             self.assertTrue("target_elusive" not in output)
             self.assertTrue("cluster_graph" not in output)
-            self.assertTrue("qc_reads" not in output)
+            self.assertTrue("qc_reads" in output)
             self.assertTrue("collect_genomes" in output)
             self.assertTrue("map_reads" in output)
             self.assertTrue("finish_mapping" in output)
