@@ -375,6 +375,7 @@ rule download_read:
     resources:
         mem_mb=32*1000,
         runtime = "4h",
+        downloading = 1,
     conda:
         "env/kingfisher.yml"
     log:
