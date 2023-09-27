@@ -436,6 +436,7 @@ rule qc_reads:
         "-q {params.quality_cutoff} "
         "-u {params.unqualified_percent_limit} "
         "-l {params.min_length} "
+        "&> {log}"
 
 rule collect_genomes:
     input:
