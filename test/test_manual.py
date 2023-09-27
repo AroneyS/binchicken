@@ -99,8 +99,8 @@ class Tests(unittest.TestCase):
             f"--coassemble-summary {os.path.join(MOCK_COASSEMBLE, 'summary.tsv')} "
             f"--output {output_dir} "
             f"--conda-prefix {path_to_conda} "
-            f"--snakemake-profile mqsub "
             f"--local-cores 5 "
+            f"--snakemake-profile mqsub-lyra "
             f"--cluster-retries 1 "
         )
         subprocess.run(cmd, shell=True, check=True)
