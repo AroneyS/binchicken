@@ -281,7 +281,7 @@ class Tests(unittest.TestCase):
             self.assertTrue(os.path.exists(sra_f2_path))
             with gzip.open(sra_f2_path) as f:
                 file = f.readline().decode()
-                self.assertTrue("@SEQ_ID.1" not in file)
+                self.assertTrue("@SEQ_ID.1" in file)
 
             recover_path = os.path.join("test", "coassemble", "commands", "recover_commands.sh")
             self.assertTrue(os.path.exists(recover_path))
