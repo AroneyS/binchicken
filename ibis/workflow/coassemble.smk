@@ -411,8 +411,8 @@ rule qc_reads:
         reads_1 = lambda wildcards: config["reads_1"][wildcards.read],
         reads_2 = lambda wildcards: config["reads_2"][wildcards.read],
     output:
-        reads_1 = output_dir + "/qc/{read}_1.fq.gz",
-        reads_2 = output_dir + "/qc/{read}_2.fq.gz",
+        reads_1 = output_dir + "/qc/{read}_1.fastq.gz",
+        reads_2 = output_dir + "/qc/{read}_2.fastq.gz",
         json = output_dir + "/qc/{read}.json",
         html = output_dir + "/qc/{read}.html",
     group: "unmapping"
@@ -457,8 +457,8 @@ rule collect_genomes:
 
 rule map_reads:
     input:
-        reads_1 = lambda wildcards: config["reads_1"][wildcards.read] if not config["run_qc"] else output_dir + "/qc/{read}_1.fq.gz",
-        reads_2 = lambda wildcards: config["reads_2"][wildcards.read] if not config["run_qc"] else output_dir + "/qc/{read}_2.fq.gz",
+        reads_1 = lambda wildcards: config["reads_1"][wildcards.read] if not config["run_qc"] else output_dir + "/qc/{read}_1.fastq.gz",
+        reads_2 = lambda wildcards: config["reads_2"][wildcards.read] if not config["run_qc"] else output_dir + "/qc/{read}_2.fastq.gz",
         genomes = output_dir + "/mapping/{read}_reference.fna",
     output:
         dir = temp(directory(output_dir + "/mapping/{read}_coverm")),
