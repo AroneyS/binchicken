@@ -615,6 +615,7 @@ def update(args):
 
     if args.sra:
         args.forward, args.reverse = download_sra(args)
+        args.run_qc = True
 
     if args.run_aviary:
         args.snakemake_args = "aviary_combine --rerun-triggers mtime " + args.snakemake_args if args.snakemake_args else "aviary_combine --rerun-triggers mtime"
@@ -1036,7 +1037,7 @@ def main():
     # Base arguments
     update_base = update_parser.add_argument_group("Input arguments")
     add_base_arguments(update_base)
-    update_base.add_argument("--sra", action="store_true", help="Download reads from SRA (read argument still required)")
+    update_base.add_argument("--sra", action="store_true", help="Download reads from SRA (read argument still required). Also sets --run-qc.")
     # Coassembly options
     update_coassembly = update_parser.add_argument_group("Coassembly options")
     add_coassemble_output_arguments(update_coassembly)
