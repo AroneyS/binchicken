@@ -413,6 +413,8 @@ rule qc_reads:
     output:
         reads_1 = output_dir + "/qc/{read}_1.fq.gz",
         reads_2 = output_dir + "/qc/{read}_2.fq.gz",
+        json = output_dir + "/qc/{read}.json",
+        html = output_dir + "/qc/{read}.html",
     group: "unmapping"
     params:
         quality_cutoff = 15,
@@ -432,6 +434,8 @@ rule qc_reads:
         "-I {input.reads_2} "
         "-o {output.reads_1} "
         "-O {output.reads_2} "
+        "-j {output.json} "
+        "-h {output.html} "
         "-w {threads} "
         "-q {params.quality_cutoff} "
         "-u {params.unqualified_percent_limit} "
