@@ -406,6 +406,37 @@ rule mock_download_sra:
 #####################################
 ### Map reads to matching genomes ###
 #####################################
+rule qc_reads:
+    input:
+        reads_1 = lambda wildcards: config["reads_1"][wildcards.read],
+        reads_2 = lambda wildcards: config["reads_2"][wildcards.read],
+    output:
+        reads_1 = output_dir + "/qc/{read}_1.fq.gz",
+        reads_2 = output_dir + "/qc/{read}_2.fq.gz",
+    group: "unmapping"
+    params:
+        quality_cutoff = 15,
+        unqualified_percent_limit = 40,
+        min_length = 100,
+    threads: 16
+    resources:
+        mem_mb=125*1000,
+        runtime = "4h",
+    log:
+        logs_dir + "/mapping/{read}_qc.log"
+    conda:
+        "env/fastp.yml"
+    shell:
+        "fastp "
+        "-i {input.reads_1} "
+        "-I {input.reads_2} "
+        "-o {output.reads_1} "
+        "-O {output.reads_2} "
+        "-w {threads} "
+        "-q {params.quality_cutoff} "
+        "-u {params.unqualified_percent_limit} "
+        "-l {params.min_length} "
+
 rule collect_genomes:
     input:
         appraise_binned = output_dir + "/appraise/binned.otu_table.tsv",
