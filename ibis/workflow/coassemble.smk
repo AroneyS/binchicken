@@ -366,8 +366,7 @@ checkpoint cluster_graph:
 #######################
 rule download_read:
     output:
-        read_1 = output_dir + "/sra/{read}_1.fastq.gz",
-        read_2 = output_dir + "/sra/{read}_2.fastq.gz",
+        done = output_dir + "/sra/{read}.done",
     params:
         dir = output_dir + "/sra",
         name = "{read}",
@@ -388,13 +387,13 @@ rule download_read:
         "-m ena-ftp prefetch ena-ascp aws-http aws-cp "
         "-t {threads} "
         "&> {log} "
+        "&& touch {output.done}"
 
 rule download_sra:
     input:
-        expand(output_dir + "/sra/{read}_1.fastq.gz", read=config["sra"]) if config["sra"] else [],
-        expand(output_dir + "/sra/{read}_2.fastq.gz", read=config["sra"]) if config["sra"] else [],
+        expand(output_dir + "/sra/{read}.done", read=config["sra"]) if config["sra"] else [],
     output:
-        output_dir + "/sra/done"
+        output_dir + "/sra/all_done"
     shell:
         "touch {output}"
 
