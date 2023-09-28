@@ -270,7 +270,7 @@ def download_sra(args):
     # Using Jan 1 2000 as pre-date
     sra_dir = args.output + "/coassemble/sra/"
     os.makedirs(sra_dir, exist_ok=True)
-    for sra in [f + s for f in args.forward for s in ["_1", "_2"]]:
+    for sra in [f + s for f in args.forward for s in ["_1", "_2"] if f not in single_ended]:
         subprocess.check_call(f"touch -t 200001011200 {sra_dir + sra + SRA_SUFFIX}", shell=True)
 
     forward = sorted([sra_dir + f for f in os.listdir(sra_dir) if f.endswith("_1" + SRA_SUFFIX)])

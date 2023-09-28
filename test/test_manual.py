@@ -48,7 +48,7 @@ class Tests(unittest.TestCase):
         cmd = (
             f"ibis update "
             f"--assemble-unmapped "
-            f"--forward SRR8334323 SRR8334324 "
+            f"--forward SRR8334323 SRR8334324 SRR7039260 "
             f"--sra "
             f"--genomes {GENOMES} "
             f"--coassemble-unbinned {os.path.join(MOCK_COASSEMBLE, 'appraise', 'unbinned_sra.otu_table.tsv')} "
