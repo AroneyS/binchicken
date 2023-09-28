@@ -387,6 +387,7 @@ rule download_read:
         "-m ena-ftp prefetch ena-ascp aws-http aws-cp "
         "-t {threads} "
         "&> {log} "
+        "&& touch {output.done}"
 
 rule download_sra:
     input:
