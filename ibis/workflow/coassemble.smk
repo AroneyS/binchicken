@@ -66,7 +66,7 @@ def get_coassemblies(wildcards):
     elusive_clusters = pd.read_csv(checkpoint_output, sep = "\t")
     coassemblies = elusive_clusters["coassembly"].to_list()
 
-    return [output_dir + f"/coassemble/{c}/recover" for c in coassemblies]
+    return [output_dir + f"/coassemble/{c}/recover.done" for c in coassemblies]
 
 rule all:
     input:
@@ -630,8 +630,9 @@ rule aviary_recover:
         assembly = output_dir + "/coassemble/{coassembly}/assemble/assembly/final_contigs.fasta",
         elusive_clusters = output_dir + "/target/elusive_clusters.tsv",
     output:
-        directory(output_dir + "/coassemble/{coassembly}/recover")
+        output_dir + "/coassemble/{coassembly}/recover.done",
     params:
+        output = output_dir + "/coassemble/{coassembly}/recover",
         reads_1 = lambda wildcards: get_reads_coassembly(wildcards, recover=True),
         reads_2 = lambda wildcards: get_reads_coassembly(wildcards, forward=False, recover=True),
         dryrun = "--dryrun" if config["aviary_dryrun"] else "",
@@ -660,7 +661,7 @@ rule aviary_recover:
         "--assembly {input.assembly} "
         "-1 {params.reads_1} "
         "-2 {params.reads_2} "
-        "--output {output} "
+        "--output {params.output} "
         "{params.fast} "
         "-n {threads} "
         "-t {threads} "
@@ -670,6 +671,7 @@ rule aviary_recover:
         "{params.cluster_retries} "
         "{params.dryrun} "
         "&> {log} "
+        "&& touch {output} "
 
 rule aviary_combine:
     input:
