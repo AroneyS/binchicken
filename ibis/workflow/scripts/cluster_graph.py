@@ -42,7 +42,7 @@ def join_list_subsets(df1, df2):
             how="left",
         )
         .filter(pl.col("samples").list.set_intersection("right_samples").list.lengths() >= pl.col("length"))
-        .groupby("samples_hash")
+        .group_by("samples_hash")
         .agg(pl.col("extra_targets").flatten())
         .select(
             pl.col("samples_hash"),
@@ -79,12 +79,12 @@ def find_recover_candidates(df, samples_df, MAX_RECOVERY_SAMPLES=20):
         .select("samples_hash", "target_ids")
         .explode("target_ids")
         .join(samples_df, on="target_ids", how="left")
-        .groupby("samples_hash", "recover_candidates")
+        .group_by("samples_hash", "recover_candidates")
         .agg(pl.count())
         .sort("count", descending=True)
-        .groupby("samples_hash")
+        .group_by("samples_hash")
         .head(MAX_RECOVERY_SAMPLES)
-        .groupby("samples_hash")
+        .group_by("samples_hash")
         .agg("recover_candidates")
     )
 
@@ -154,7 +154,7 @@ def pipeline(
             clusters = [
                 elusive_edges
                 .explode("samples")
-                .groupby("samples")
+                .group_by("samples")
                 .agg(pl.col("target_ids").flatten())
                 .with_columns(
                     pl.concat_list(pl.col("samples")),
@@ -180,7 +180,7 @@ def pipeline(
                     # Prevent combinatorial explosion (also, large clusters are less useful for distinguishing between clusters)
                     .filter(pl.col("samples").list.lengths() < MAX_SAMPLES_COMBINATIONS)
                     .with_columns(
-                        samples_combinations = pl.struct(["length", "cluster_size"]).apply(
+                        samples_combinations = pl.struct(["length", "cluster_size"]).map_elements(
                             lambda x: [i for i in itertools.combinations(range(x["length"]), x["cluster_size"])],
                             return_dtype=pl.List(pl.List(pl.Int64)),
                             )
@@ -189,7 +189,7 @@ def pipeline(
                     .with_columns(pl.col("samples").list.take(pl.col("samples_combinations")))
                     .with_columns(samples_hash = pl.col("samples").list.sort().hash())
                     .select("samples_hash", "samples", "target_ids", "cluster_size")
-                    .groupby("samples_hash")
+                    .group_by("samples_hash")
                     .agg(
                         pl.first("samples"),
                         pl.col("target_ids").flatten(),
@@ -205,7 +205,7 @@ def pipeline(
             .explode("recover_candidates")
             .explode("target_ids")
             .unique()
-            .groupby("recover_candidates")
+            .group_by("recover_candidates")
             .agg("target_ids")
         )
 
@@ -216,7 +216,7 @@ def pipeline(
             .with_columns(length = pl.col("samples").list.lengths())
             .explode("samples")
             .join(read_size, on="samples", how="left")
-            .groupby("samples_hash")
+            .group_by("samples_hash")
             .agg(
                 pl.col("samples"),
                 pl.first("length"),
