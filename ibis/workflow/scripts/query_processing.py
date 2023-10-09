@@ -43,7 +43,7 @@ def processing(
         "taxonomy", "num_hits", "coverage"
     ]).join(
         pipe_read, on=["gene", "sample", "sequence"], how="inner"
-    ).groupby(
+    ).group_by(
         ["gene", "sample", "sequence", "num_hits", "coverage", "taxonomy", "divergence"]
     ).agg(
         pl.col("found_in").sort().str.concat(",")

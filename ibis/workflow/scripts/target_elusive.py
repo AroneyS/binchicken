@@ -90,7 +90,7 @@ def pipeline(
             df
             .join(cluster_sizes, how="cross")
             .filter(pl.col("coverage") > float(MIN_COASSEMBLY_COVERAGE) / pl.col("cluster_size").cast(float))
-            .groupby("target", "cluster_size")
+            .group_by("target", "cluster_size")
             .agg(pl.concat_list("samples").flatten())
             .filter(pl.col("samples").list.lengths() >= pl.col("cluster_size"))
             .select(
@@ -109,11 +109,11 @@ def pipeline(
         .select(
             "target",
             "coverage",
-            samples = pl.col("sample").apply(lambda x: [x], return_dtype=pl.List(pl.Utf8)),
+            samples = pl.col("sample").map_elements(lambda x: [x], return_dtype=pl.List(pl.Utf8)),
             )
-        .groupby("target")
-        .apply(process_groups)
-        .groupby(["style", "cluster_size", "samples"])
+        .group_by("target")
+        .map_groups(process_groups)
+        .group_by(["style", "cluster_size", "samples"])
         .agg(target_ids = pl.col("target").sort().str.concat(","))
     )
 
