@@ -75,10 +75,29 @@ class Tests(unittest.TestCase):
         self.assertDataFrameEqual(expected_targets, observed_targets)
         self.assertDataFrameEqual(expected_edges, observed_edges)
 
-    def test_target_elusive_suffix(self):
+    def test_target_elusive_suffix_underscore(self):
         unbinned = pl.DataFrame([
             ["S3.1", "sample_1_1", "AAA", 5, 10, "Root", ""],
             ["S3.1", "sample_2_1", "AAA", 5, 10, "Root", ""],
+        ], schema=APPRAISE_COLUMNS)
+        samples = set(["sample_1", "sample_2"])
+
+        expected_targets = pl.DataFrame([
+            ["S3.1", "sample_1", "AAA", 5, 10, "Root", "0"],
+            ["S3.1", "sample_2", "AAA", 5, 10, "Root", "0"],
+        ], schema=TARGETS_COLUMNS)
+        expected_edges = pl.DataFrame([
+            ["match", 2, "sample_1,sample_2", "0"],
+        ], schema=EDGES_COLUMNS)
+
+        observed_targets, observed_edges = pipeline(unbinned, samples)
+        self.assertDataFrameEqual(expected_targets, observed_targets)
+        self.assertDataFrameEqual(expected_edges, observed_edges)
+
+    def test_target_elusive_suffix_R(self):
+        unbinned = pl.DataFrame([
+            ["S3.1", "sample_1_R1", "AAA", 5, 10, "Root", ""],
+            ["S3.1", "sample_2_R1", "AAA", 5, 10, "Root", ""],
         ], schema=APPRAISE_COLUMNS)
         samples = set(["sample_1", "sample_2"])
 
@@ -98,6 +117,22 @@ class Tests(unittest.TestCase):
         unbinned = pl.DataFrame([
         ], schema=APPRAISE_COLUMNS)
         samples = set(["sample_1", "sample_2"])
+
+        expected_targets = pl.DataFrame([
+        ], schema=TARGETS_COLUMNS)
+        expected_edges = pl.DataFrame([
+        ], schema=EDGES_COLUMNS)
+
+        observed_targets, observed_edges = pipeline(unbinned, samples)
+        self.assertDataFrameEqual(expected_targets, observed_targets)
+        self.assertDataFrameEqual(expected_edges, observed_edges)
+
+    def test_target_elusive_no_matching_samples(self):
+        unbinned = pl.DataFrame([
+            ["S3.1", "sample_1.1", "AAA", 5, 10, "Root", ""],
+            ["S3.1", "sample_2.1", "AAA", 5, 10, "Root", ""],
+        ], schema=APPRAISE_COLUMNS)
+        samples = set(["sample_3", "sample_4"])
 
         expected_targets = pl.DataFrame([
         ], schema=TARGETS_COLUMNS)

@@ -44,7 +44,7 @@ def pipeline(
         .with_columns(
             pl.when(pl.col("sample").is_in(samples))
             .then(pl.col("sample"))
-            .otherwise(pl.col("sample").str.replace(r"(_|\.)1$", ""))
+            .otherwise(pl.col("sample").str.replace(r"(_|\.)R?1$", ""))
             )
         .filter(pl.col("sample").is_in(samples))
         .drop("found_in")
@@ -57,6 +57,10 @@ def pipeline(
             pl.col("target").cast(pl.Utf8)
             )
     )
+
+    if unbinned.height == 0:
+        logging.warning("No SingleM sequences found for the given samples")
+        return unbinned, pl.DataFrame(schema=EDGES_COLUMNS)
 
     def process_groups(df):
         if df.height == 1:

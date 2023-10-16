@@ -235,7 +235,7 @@ def pipeline(
             .with_columns(
                 unique_samples = 
                     pl.col("samples")
-                    .map(accumulate_clusters, return_dtype=pl.Boolean),
+                    .map_batches(accumulate_clusters, return_dtype=pl.Boolean),
                 )
             .filter(pl.col("unique_samples"))
             .drop("unique_samples")
