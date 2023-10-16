@@ -46,6 +46,7 @@ The taxa of the considered sequences can be filtered to target a specific taxon 
 The graph is clustered using the Girvan-Newman algorithm to provide sample groupings.
 Aviary assemble/recover commands are generated based on proposed coassemblies.
 Optionally, reads can be mapped to the matched bins with only unmapped reads being assembled.
+Paired end reads of form reads_1.1.fq, reads_1_1.fq and reads_1_R1.fq are automatically detected and matched to their basename.
 
 ```bash
 # Example: cluster reads into proposed coassemblies

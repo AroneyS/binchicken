@@ -44,7 +44,7 @@ def pipeline(
         .with_columns(
             pl.when(pl.col("sample").is_in(samples))
             .then(pl.col("sample"))
-            .otherwise(pl.col("sample").str.replace(r"(_|\.)1$", ""))
+            .otherwise(pl.col("sample").str.replace(r"(_|\.)R?1$", ""))
             )
         .filter(pl.col("sample").is_in(samples))
         .drop("found_in")
