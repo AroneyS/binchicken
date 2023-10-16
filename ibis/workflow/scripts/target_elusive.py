@@ -78,7 +78,7 @@ def pipeline(
                 pl.col("coverage") + pl.col("coverage_2").alias("coverage"),
                 pl.col("samples").list.concat(pl.col("samples_2")),
                 ])
-            .filter(pl.col("samples").list.lengths() > 1)
+            .filter(pl.col("samples").list.len() > 1)
             .filter(pl.col("coverage") > MIN_COASSEMBLY_COVERAGE)
             .select(
                 pl.lit("match").alias("style"),
@@ -96,7 +96,7 @@ def pipeline(
             .filter(pl.col("coverage") > float(MIN_COASSEMBLY_COVERAGE) / pl.col("cluster_size").cast(float))
             .group_by("target", "cluster_size")
             .agg(pl.concat_list("samples").flatten())
-            .filter(pl.col("samples").list.lengths() >= pl.col("cluster_size"))
+            .filter(pl.col("samples").list.len() >= pl.col("cluster_size"))
             .select(
                 pl.lit("pool").alias("style"),
                 pl.col("cluster_size"),
