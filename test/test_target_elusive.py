@@ -127,6 +127,22 @@ class Tests(unittest.TestCase):
         self.assertDataFrameEqual(expected_targets, observed_targets)
         self.assertDataFrameEqual(expected_edges, observed_edges)
 
+    def test_target_elusive_no_matching_samples(self):
+        unbinned = pl.DataFrame([
+            ["S3.1", "sample_1.1", "AAA", 5, 10, "Root", ""],
+            ["S3.1", "sample_2.1", "AAA", 5, 10, "Root", ""],
+        ], schema=APPRAISE_COLUMNS)
+        samples = set(["sample_3", "sample_4"])
+
+        expected_targets = pl.DataFrame([
+        ], schema=TARGETS_COLUMNS)
+        expected_edges = pl.DataFrame([
+        ], schema=EDGES_COLUMNS)
+
+        observed_targets, observed_edges = pipeline(unbinned, samples)
+        self.assertDataFrameEqual(expected_targets, observed_targets)
+        self.assertDataFrameEqual(expected_edges, observed_edges)
+
     def test_target_elusive_low_coverage(self):
         unbinned = pl.DataFrame([
             ["S3.1", "sample_1", "AAA", 5, 5, "Root", ""],

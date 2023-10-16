@@ -58,6 +58,10 @@ def pipeline(
             )
     )
 
+    if unbinned.height == 0:
+        logging.warning("No SingleM sequences found for the given samples")
+        return unbinned, pl.DataFrame(schema=EDGES_COLUMNS)
+
     def process_groups(df):
         if df.height == 1:
             return pl.DataFrame(schema={"style": str, "cluster_size": pl.Int64, "samples": str, "target": str})
