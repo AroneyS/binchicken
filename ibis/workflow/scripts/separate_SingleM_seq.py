@@ -3,6 +3,8 @@
 ###############################
 # Author: Samuel Aroney
 
+import os
+os.environ['OPENBLAS_NUM_THREADS'] = '1'
 import pandas as pd
 import re
 from Bio.Seq import Seq

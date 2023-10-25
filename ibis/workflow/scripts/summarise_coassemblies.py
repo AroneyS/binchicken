@@ -3,6 +3,8 @@
 #################################
 # Author: Samuel Aroney
 
+import os
+os.environ['OPENBLAS_NUM_THREADS'] = '1'
 import pandas as pd
 
 elusive_clusters = pd.read_csv(snakemake.input.elusive_clusters, sep="\t")

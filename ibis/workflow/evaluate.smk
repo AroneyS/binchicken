@@ -1,8 +1,9 @@
 #############
 ### Setup ###
 #############
-import pandas as pd
 import os
+os.environ['OPENBLAS_NUM_THREADS'] = '1'
+import pandas as pd
 import re
 
 output_dir = os.path.abspath("evaluate")
