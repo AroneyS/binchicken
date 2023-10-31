@@ -744,7 +744,7 @@ def iterate(args):
 
             if comb_cluster.height > 0:
                 _ = comb_cluster.select(
-                    pl.col("coassembly").apply(lambda x: logging.warn(f"{x} has been previously suggested"))
+                    pl.col("coassembly").map_elements(lambda x: logging.warn(f"{x} has been previously suggested"))
                     )
     elif not args.exclude_coassemblies:
         logging.warn("Suggested coassemblies may match those from previous iterations. To check, use `--elusive-clusters`. To exclude manually, use `--exclude-coassembles`")
