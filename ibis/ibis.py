@@ -157,8 +157,13 @@ def download_sra(args):
     expected_reverse = [sra_dir + f + "_2" + SRA_SUFFIX for f in args.forward]
 
     # Fix single file outputs if interleaved or error if unpaired
-    single_ended = {}
-    if not args.dryrun and args.sra != "build":
+    if os.path.isfile(sra_dir + "single_ended.tsv"):
+        with open(sra_dir + "single_ended.tsv") as f:
+            single_ended = {line.split("\t")[0]: line.split("\t")[1].strip() for line in f.readlines()[1:]}
+    else:
+        single_ended = {}
+
+    if not single_ended and not args.dryrun and args.sra != "build":
         for f, r in zip(expected_forward, expected_reverse):
             if os.path.isfile(f) & os.path.isfile(r):
                 continue
