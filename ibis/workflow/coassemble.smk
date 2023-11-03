@@ -430,7 +430,7 @@ rule qc_reads:
     params:
         quality_cutoff = 15,
         unqualified_percent_limit = 40,
-        min_length = 100,
+        min_length = 80,
     threads: 16
     resources:
         mem_mb=125*1000,
