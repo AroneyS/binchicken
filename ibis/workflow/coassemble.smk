@@ -16,6 +16,9 @@ logs_dir = output_dir + "/logs"
 mapped_reads_1 = {read: output_dir + f"/mapping/{read}_unmapped.1.fq.gz" for read in config["reads_1"]}
 mapped_reads_2 = {read: output_dir + f"/mapping/{read}_unmapped.2.fq.gz" for read in config["reads_2"]}
 
+qc_reads_1 = {read: output_dir + f"/qc/{read}_1.fastq.gz" for read in config["reads_1"]}
+qc_reads_2 = {read: output_dir + f"/qc/{read}_2.fastq.gz" for read in config["reads_2"]}
+
 def get_genomes(wildcards, version=None):
     version = version if version else wildcards.version
     if version == "":
@@ -37,6 +40,11 @@ def get_reads(wildcards, forward=True, version=None):
             return mapped_reads_1
         else:
             return mapped_reads_2
+    elif version == "qc_":
+        if forward:
+            return qc_reads_1
+        else:
+            return qc_reads_2
     else:
         raise ValueError("Version should be empty, 'whole' or 'unmapped'")
 
@@ -56,6 +64,8 @@ def get_reads_coassembly(wildcards, forward=True, recover=False):
 
     if config["assemble_unmapped"]:
         version = "unmapped_"
+    elif config["run_qc"]:
+        version = "qc_"
     else:
         version = "whole"
 
@@ -555,20 +565,29 @@ rule finish_mapping:
     shell:
         "touch {output}"
 
+rule finish_qc:
+    input:
+        qc_reads_1.values(),
+        qc_reads_2.values(),
+    output:
+        output_dir + "/qc/done"
+    shell:
+        "touch {output}"
+
 ##############################
 ### Create Aviary commands ###
 ##############################
 rule aviary_commands:
     input:
-        output_dir + "/mapping/done" if config["assemble_unmapped"] else [],
+        output_dir + "/mapping/done" if config["assemble_unmapped"] else output_dir + "/qc/done" if config["run_qc"] else [],
         elusive_clusters = output_dir + "/target/elusive_clusters.tsv",
     output:
         coassemble_commands = output_dir + "/commands/coassemble_commands.sh",
         recover_commands = output_dir + "/commands/recover_commands.sh"
     threads: 8
     params:
-        reads_1 = mapped_reads_1 if config["assemble_unmapped"] else config["reads_1"],
-        reads_2 = mapped_reads_2 if config["assemble_unmapped"] else config["reads_2"],
+        reads_1 = mapped_reads_1 if config["assemble_unmapped"] else qc_reads_1 if config["run_qc"] else config["reads_1"],
+        reads_2 = mapped_reads_2 if config["assemble_unmapped"] else qc_reads_2 if config["run_qc"] else config["reads_2"],
         dir = output_dir,
         memory = config["aviary_memory"],
         threads = config["aviary_threads"],
@@ -583,7 +602,7 @@ rule aviary_commands:
 #########################################
 rule aviary_assemble:
     input:
-        output_dir + "/mapping/done" if config["assemble_unmapped"] else [],
+        output_dir + "/mapping/done" if config["assemble_unmapped"] else output_dir + "/qc/done" if config["run_qc"] else [],
         elusive_clusters = output_dir + "/target/elusive_clusters.tsv",
     output:
         dir = directory(output_dir + "/coassemble/{coassembly}/assemble"),
