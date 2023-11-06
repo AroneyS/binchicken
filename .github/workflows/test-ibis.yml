@@ -36,6 +36,8 @@ jobs:
           python test/test_target_elusive.py -b
           python test/test_cluster_graph.py -b
           python test/test_collect_reference_bins.py -b
+          python test/test_summarise_coassemblies.py -b
+          python test/test_no_genomes.py -b
           python test/test_aviary_commands.py
           python test/test_is_interleaved.py
           python test/test_build.py
@@ -43,3 +45,4 @@ jobs:
           python test/test_evaluate.py
           python test/test_evaluate_script.py -b
           python test/test_coassemble.py
+          python test/test_iterate.py
