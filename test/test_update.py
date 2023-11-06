@@ -341,6 +341,54 @@ class Tests(unittest.TestCase):
             with open(elusive_clusters_path) as f:
                 self.assertEqual(expected, f.read())
 
+    def test_update_sra_download_mock_filter_single_rerun(self):
+        with in_tempdir():
+            os.makedirs("test/coassemble/sra")
+            with open("test/coassemble/sra/single_ended.tsv", "w") as f:
+                f.write("\t".join(["sra", "reason"]) + "\n")
+                f.write("\t".join(["SRR3309137", "Consecutive reads do not match (1/10)"]) + "\n")
+
+            cmd = (
+                f"ibis update "
+                f"--forward SRR3309137 SRR8334323 SRR8334324 SRR3309137_mismatched "
+                f"--sra "
+                f"--genomes {GENOMES} "
+                f"--coassemble-unbinned {MOCK_UNBINNED_SRA} "
+                f"--coassemble-binned {MOCK_BINNED_SRA} "
+                f"--coassemble-targets {MOCK_TARGETS} "
+                f"--coassemble-elusive-edges {MOCK_ELUSIVE_EDGES} "
+                f"--coassemble-elusive-clusters {MOCK_ELUSIVE_CLUSTERS_SRA_MOCK} "
+                f"--coassemble-summary {MOCK_SUMMARY} "
+                f"--output test "
+                f"--conda-prefix {path_to_conda} "
+                f"--snakemake-args \" --config mock_sra=True run_qc=False\" "
+            )
+            extern.run(cmd)
+
+            single_ended_path = os.path.join("test", "coassemble", "sra", "single_ended.tsv")
+            self.assertTrue(os.path.exists(single_ended_path))
+            expected = "\n".join(
+                [
+                    "\t".join(["sra", "reason"]),
+                    "\t".join(["SRR3309137", "Consecutive reads do not match (1/10)"]),
+                    ""
+                ]
+            )
+            with open(single_ended_path) as f:
+                self.assertEqual(expected, f.read())
+
+            elusive_clusters_path = os.path.join("test", "coassemble", "target", "elusive_clusters.tsv")
+            self.assertTrue(os.path.exists(elusive_clusters_path))
+            expected = "\n".join(
+                [
+                    "\t".join(["samples", "length", "total_targets", "total_size", "recover_samples", "coassembly"]),
+                    "\t".join(["SRR8334324,SRR8334323", "2", "2", "0", "SRR8334323,SRR8334324", "coassembly_0"]),
+                    ""
+                ]
+            )
+            with open(elusive_clusters_path) as f:
+                self.assertEqual(expected, f.read())
+
     def test_update_sra_download_mock_fail(self):
         with in_tempdir():
             cmd = (

@@ -157,8 +157,13 @@ def download_sra(args):
     expected_reverse = [sra_dir + f + "_2" + SRA_SUFFIX for f in args.forward]
 
     # Fix single file outputs if interleaved or error if unpaired
-    single_ended = {}
-    if not args.dryrun and args.sra != "build":
+    if os.path.isfile(sra_dir + "single_ended.tsv"):
+        with open(sra_dir + "single_ended.tsv") as f:
+            single_ended = {line.split("\t")[0]: line.split("\t")[1].strip() for line in f.readlines()[1:]}
+    else:
+        single_ended = {}
+
+    if not single_ended and not args.dryrun and args.sra != "build":
         for f, r in zip(expected_forward, expected_reverse):
             if os.path.isfile(f) & os.path.isfile(r):
                 continue
@@ -1108,8 +1113,6 @@ def main():
             raise Exception("Input SingleM query (--sample-query) requires SingleM otu tables (--sample-singlem) for coverage")
         if args.assemble_unmapped and args.single_assembly:
             raise Exception("Assemble unmapped is incompatible with single-sample assembly")
-        if args.run_qc and not args.assemble_unmapped:
-            raise Exception("Run QC requires unmapping (--assemble-unmapped)")
         if args.assemble_unmapped and not args.genomes and not args.genomes_list:
             raise Exception("Reference genomes must be provided to assemble unmapped reads")
         if not args.singlem_metapackage and not os.environ['SINGLEM_METAPACKAGE_PATH'] and not args.sample_query and not args.sample_query_list:

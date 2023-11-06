@@ -235,6 +235,7 @@ class Tests(unittest.TestCase):
                 f"--output test "
                 f"--taxa-of-interest \"p__Actinobacteriota\" "
                 f"--aviary-speed comprehensive "
+                f"--run-qc "
                 f"--conda-prefix {path_to_conda} "
             )
             extern.run(cmd)
@@ -275,6 +276,21 @@ class Tests(unittest.TestCase):
             with open(cluster_path) as f:
                 self.assertEqual(expected, f.read())
 
+            qc_sample_1F_path = os.path.join("test", "coassemble", "qc", "sample_1_1.fastq.gz")
+            self.assertTrue(os.path.exists(qc_sample_1F_path))
+            qc_sample_1R_path = os.path.join("test", "coassemble", "qc", "sample_1_2.fastq.gz")
+            self.assertTrue(os.path.exists(qc_sample_1R_path))
+
+            qc_sample_2F_path = os.path.join("test", "coassemble", "qc", "sample_2_1.fastq.gz")
+            self.assertTrue(os.path.exists(qc_sample_2F_path))
+            qc_sample_2R_path = os.path.join("test", "coassemble", "qc", "sample_2_2.fastq.gz")
+            self.assertTrue(os.path.exists(qc_sample_2R_path))
+
+            qc_sample_3F_path = os.path.join("test", "coassemble", "qc", "sample_3_1.fastq.gz")
+            self.assertTrue(os.path.exists(qc_sample_3F_path))
+            qc_sample_3R_path = os.path.join("test", "coassemble", "qc", "sample_3_2.fastq.gz")
+            self.assertTrue(os.path.exists(qc_sample_3R_path))
+
             coassemble_path = os.path.join("test", "coassemble", "commands", "coassemble_commands.sh")
             self.assertTrue(os.path.exists(coassemble_path))
             test_dir = os.path.abspath("test")
@@ -282,11 +298,11 @@ class Tests(unittest.TestCase):
                 [
                     " ".join([
                         "aviary assemble --coassemble -1",
-                        os.path.join(os.path.abspath(path_to_data), "sample_1.1.fq"),
-                        os.path.join(os.path.abspath(path_to_data), "sample_3.1.fq"),
+                        os.path.join(test_dir, "coassemble", "qc", "sample_1_1.fastq.gz"),
+                        os.path.join(test_dir, "coassemble", "qc", "sample_3_1.fastq.gz"),
                         "-2",
-                        os.path.join(os.path.abspath(path_to_data), "sample_1.2.fq"),
-                        os.path.join(os.path.abspath(path_to_data), "sample_3.2.fq"),
+                        os.path.join(test_dir, "coassemble", "qc", "sample_1_2.fastq.gz"),
+                        os.path.join(test_dir, "coassemble", "qc", "sample_3_2.fastq.gz"),
                         "--output", os.path.join(test_dir, "coassemble", "coassemble", "coassembly_0", "assemble"),
                         "-n 64 -t 64 -m 500 --skip-qc &>",
                         os.path.join(test_dir, "coassemble", "coassemble", "logs", "coassembly_0_assemble.log"),
@@ -305,11 +321,11 @@ class Tests(unittest.TestCase):
                     " ".join([
                         "aviary recover --assembly", os.path.join(test_dir, "coassemble", "coassemble", "coassembly_0", "assemble", "assembly", "final_contigs.fasta"),
                         "-1",
-                        os.path.join(os.path.abspath(path_to_data), "sample_1.1.fq"),
-                        os.path.join(os.path.abspath(path_to_data), "sample_3.1.fq"),
+                        os.path.join(test_dir, "coassemble", "qc", "sample_1_1.fastq.gz"),
+                        os.path.join(test_dir, "coassemble", "qc", "sample_3_1.fastq.gz"),
                         "-2",
-                        os.path.join(os.path.abspath(path_to_data), "sample_1.2.fq"),
-                        os.path.join(os.path.abspath(path_to_data), "sample_3.2.fq"),
+                        os.path.join(test_dir, "coassemble", "qc", "sample_1_2.fastq.gz"),
+                        os.path.join(test_dir, "coassemble", "qc", "sample_3_2.fastq.gz"),
                         "--output", os.path.join(test_dir, "coassemble", "coassemble", "coassembly_0", "recover"),
                         "-n 32 -t 32 -m 250 --skip-qc &>",
                         os.path.join(test_dir, "coassemble", "coassemble", "logs", "coassembly_0_recover.log"),
