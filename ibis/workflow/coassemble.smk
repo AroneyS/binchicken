@@ -6,8 +6,7 @@ ruleorder: mock_download_sra > download_sra
 localrules: all, summary, singlem_summarise_genomes, singlem_appraise_filtered, no_genomes, download_sra, mock_download_sra, collect_genomes, finish_mapping, aviary_commands, aviary_recover, aviary_combine
 
 import os
-os.environ['OPENBLAS_NUM_THREADS'] = '1'
-import pandas as pd
+import polars as pl
 from ibis.ibis import FAST_AVIARY_MODE
 
 output_dir = os.path.abspath("coassemble")
@@ -53,12 +52,12 @@ def get_cat(wildcards):
 
 def get_reads_coassembly(wildcards, forward=True, recover=False):
     checkpoint_output = checkpoints.cluster_graph.get(**wildcards).output[0]
-    elusive_clusters = pd.read_csv(checkpoint_output, sep = "\t")
+    elusive_clusters = pl.read_csv(checkpoint_output, separator="\t")
 
     if recover:
-        sample_names = elusive_clusters[elusive_clusters["coassembly"] == wildcards.coassembly]["recover_samples"].iloc[0]
+        sample_names = elusive_clusters.filter(pl.col("coassembly") == wildcards.coassembly).get_column("recover_samples").to_list()[0]
     else:
-        sample_names = elusive_clusters[elusive_clusters["coassembly"] == wildcards.coassembly]["samples"].iloc[0]
+        sample_names = elusive_clusters.filter(pl.col("coassembly") == wildcards.coassembly).get_column("samples").to_list()[0]
 
     sample_names = sample_names.split(",")
 
@@ -74,8 +73,8 @@ def get_reads_coassembly(wildcards, forward=True, recover=False):
 
 def get_coassemblies(wildcards):
     checkpoint_output = checkpoints.cluster_graph.get().output[0]
-    elusive_clusters = pd.read_csv(checkpoint_output, sep = "\t")
-    coassemblies = elusive_clusters["coassembly"].to_list()
+    elusive_clusters = pl.read_csv(checkpoint_output, separator="\t")
+    coassemblies = elusive_clusters.get_column("coassembly").to_list()
 
     return [output_dir + f"/coassemble/{c}/recover.done" for c in coassemblies]
 
