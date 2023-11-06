@@ -3,11 +3,9 @@
 #############
 ruleorder: no_genomes > query_processing > update_appraise > singlem_appraise
 ruleorder: mock_download_sra > download_sra
-localrules: all, summary, singlem_summarise_genomes, singlem_appraise_filtered, no_genomes, download_sra, mock_download_sra, collect_genomes, finish_mapping, aviary_commands, aviary_recover, aviary_combine
 
 import os
-os.environ['OPENBLAS_NUM_THREADS'] = '1'
-import pandas as pd
+import polars as pl
 from ibis.ibis import FAST_AVIARY_MODE
 
 output_dir = os.path.abspath("coassemble")
@@ -53,12 +51,12 @@ def get_cat(wildcards):
 
 def get_reads_coassembly(wildcards, forward=True, recover=False):
     checkpoint_output = checkpoints.cluster_graph.get(**wildcards).output[0]
-    elusive_clusters = pd.read_csv(checkpoint_output, sep = "\t")
+    elusive_clusters = pl.read_csv(checkpoint_output, separator="\t")
 
     if recover:
-        sample_names = elusive_clusters[elusive_clusters["coassembly"] == wildcards.coassembly]["recover_samples"].iloc[0]
+        sample_names = elusive_clusters.filter(pl.col("coassembly") == wildcards.coassembly).get_column("recover_samples").to_list()[0]
     else:
-        sample_names = elusive_clusters[elusive_clusters["coassembly"] == wildcards.coassembly]["samples"].iloc[0]
+        sample_names = elusive_clusters.filter(pl.col("coassembly") == wildcards.coassembly).get_column("samples").to_list()[0]
 
     sample_names = sample_names.split(",")
 
@@ -74,8 +72,8 @@ def get_reads_coassembly(wildcards, forward=True, recover=False):
 
 def get_coassemblies(wildcards):
     checkpoint_output = checkpoints.cluster_graph.get().output[0]
-    elusive_clusters = pd.read_csv(checkpoint_output, sep = "\t")
-    coassemblies = elusive_clusters["coassembly"].to_list()
+    elusive_clusters = pl.read_csv(checkpoint_output, separator="\t")
+    coassemblies = elusive_clusters.get_column("coassembly").to_list()
 
     return [output_dir + f"/coassemble/{c}/recover.done" for c in coassemblies]
 
@@ -86,6 +84,7 @@ rule all:
         output_dir + "/commands/recover_commands.sh" if not config["run_aviary"] else [],
         output_dir + "/commands/done" if config["run_aviary"] else [],
         output_dir + "/summary.tsv",
+    localrule: True
 
 rule summary:
     input:
@@ -93,6 +92,7 @@ rule summary:
         read_size = output_dir + "/unmapped_read_size.csv" if config["assemble_unmapped"] else [],
     output:
         summary = output_dir + "/summary.tsv",
+    localrule: True
     script:
         "scripts/summarise_coassemblies.py"
 
@@ -179,6 +179,7 @@ rule singlem_summarise_genomes:
         logs_dir + "/summarise/{version,.*}genomes.log"
     params:
         singlem_metapackage = config["singlem_metapackage"]
+    localrule: True
     conda:
         "env/singlem.yml"
     shell:
@@ -231,6 +232,7 @@ rule singlem_appraise_filtered:
         binned = output_dir + "/appraise/binned.otu_table.tsv",
     params:
         bad_package = "S3.18.EIF_2_alpha",
+    localrule: True
     shell:
         "grep -v {params.bad_package} {input.unbinned} > {output.unbinned} && "
         "grep -v {params.bad_package} {input.binned} > {output.binned}"
@@ -303,6 +305,7 @@ rule no_genomes:
     output:
         unbinned = temp(output_dir + "/appraise/unbinned_raw.otu_table.tsv") if config["no_genomes"] else [],
         binned = temp(output_dir + "/appraise/binned_raw.otu_table.tsv") if config["no_genomes"] else [],
+    localrule: True
     log:
         logs_dir + "/appraise/appraise.log"
     script:
@@ -405,6 +408,7 @@ rule download_sra:
         expand(output_dir + "/sra/{read}.done", read=config["sra"]) if config["sra"] else [],
     output:
         output_dir + "/sra/all_done"
+    localrule: True
     shell:
         "touch {output}"
 
@@ -416,6 +420,7 @@ rule mock_download_sra:
         sra_u = workflow.basedir + "/../../test/data/sra/" + config["sra"][0] + ".fastq.gz" if config["sra"] else "",
         sra_f = " ".join([workflow.basedir + "/../../test/data/sra/" + s + "_1.fastq.gz" for s in config["sra"][1:]]) if config["sra"] else "",
         sra_r = " ".join([workflow.basedir + "/../../test/data/sra/" + s + "_2.fastq.gz" for s in config["sra"][1:]]) if config["sra"] else "",
+    localrule: True
     conda:
         "env/kingfisher.yml"
     log:
@@ -473,6 +478,7 @@ rule collect_genomes:
         genomes = config["genomes"],
         sample = "{read}",
         min_appraised = config["unmapping_min_appraised"],
+    localrule: True
     script:
         "scripts/collect_reference_bins.py"
 
@@ -562,6 +568,7 @@ rule finish_mapping:
         mapped_reads_2.values(),
     output:
         output_dir + "/mapping/done"
+    localrule: True
     shell:
         "touch {output}"
 
@@ -571,6 +578,7 @@ rule finish_qc:
         qc_reads_2.values(),
     output:
         output_dir + "/qc/done"
+    localrule: True
     shell:
         "touch {output}"
 
@@ -592,6 +600,7 @@ rule aviary_commands:
         memory = config["aviary_memory"],
         threads = config["aviary_threads"],
         speed = config["aviary_speed"],
+    localrule: True
     log:
         logs_dir + "/aviary_commands.log"
     script:
@@ -662,6 +671,7 @@ rule aviary_recover:
         fast = "--workflow recover_mags_no_singlem --skip-binners maxbin concoct rosella --skip-abundances --refinery-max-iterations 0" if config["aviary_speed"] == FAST_AVIARY_MODE else "",
         snakemake_profile = f"--snakemake-profile {config['snakemake_profile']}" if config["snakemake_profile"] else "",
         cluster_retries = f"--cluster-retries {config['cluster_retries']}" if config["cluster_retries"] else "",
+    localrule: True
     threads:
         int(config["aviary_threads"])//2
     resources:
@@ -700,5 +710,6 @@ rule aviary_combine:
         mapping = output_dir + "/mapping/done" if config["assemble_unmapped"] else [],
     output:
         output_dir + "/commands/done",
+    localrule: True
     shell:
         "touch {output} "
