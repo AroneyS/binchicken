@@ -361,7 +361,7 @@ class Tests(unittest.TestCase):
                 f"--coassemble-summary {MOCK_SUMMARY} "
                 f"--output test "
                 f"--conda-prefix {path_to_conda} "
-                f"--snakemake-args \" --config mock_sra=True\" "
+                f"--snakemake-args \" --config mock_sra=True run_qc=False\" "
             )
             extern.run(cmd)
 
