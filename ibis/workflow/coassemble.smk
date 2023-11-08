@@ -3,7 +3,7 @@
 #############
 ruleorder: no_genomes > query_processing > update_appraise > singlem_appraise
 ruleorder: mock_download_sra > download_sra
-localrules: all, summary, singlem_summarise_genomes, singlem_appraise_filtered, no_genomes, download_sra, mock_download_sra, collect_genomes, finish_mapping, aviary_commands, aviary_recover, aviary_combine
+localrules: all, summary, singlem_summarise_genomes, singlem_appraise_filtered, no_genomes, download_sra, mock_download_sra, collect_genomes, finish_mapping, finish_qc, aviary_commands, aviary_recover, aviary_combine
 
 import os
 os.environ['OPENBLAS_NUM_THREADS'] = '1'
