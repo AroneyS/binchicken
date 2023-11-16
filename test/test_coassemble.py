@@ -802,6 +802,7 @@ class Tests(unittest.TestCase):
             self.assertEqual(config["assemble_unmapped"], False)
             self.assertEqual(config["aviary_threads"], 64)
             self.assertEqual(config["aviary_memory"], 500)
+            self.assertEqual(config["coassembly_samples"], [])
 
     def test_coassemble_singlem_inputs(self):
         with in_tempdir():
@@ -970,6 +971,7 @@ class Tests(unittest.TestCase):
             write_string_to_file(SAMPLE_READS_REVERSE, "sample_reads_reverse")
             write_string_to_file(GENOMES, "genomes")
             write_string_to_file(GENOME_TRANSCRIPTS, "genome_transcripts")
+            write_string_to_file("sample_1\nsample_2", "coassembly_samples")
             write_string_to_file("sample_1,sample_2", "exclude_coassemblies")
 
             cmd = (
@@ -979,6 +981,7 @@ class Tests(unittest.TestCase):
                 f"--genomes-list genomes "
                 f"--genome-transcripts-list genome_transcripts "
                 f"--singlem-metapackage {METAPACKAGE} "
+                f"--coassembly-samples-list coassembly_samples "
                 f"--exclude-coassemblies-list exclude_coassemblies "
                 f"--assemble-unmapped "
                 f"--output test "
@@ -1006,6 +1009,7 @@ class Tests(unittest.TestCase):
 
             config = load_configfile(os.path.join("test", "config.yaml"))
             self.assertEqual(config["genomes"], {os.path.splitext(os.path.basename(g))[0]: g for g in GENOMES.split(" ")})
+            self.assertEqual(config["coassembly_samples"], ["sample_1", "sample_2"])
             self.assertEqual(config["exclude_coassemblies"], ["sample_1,sample_2"])
             self.assertEqual(config["reads_1"], {os.path.splitext(os.path.splitext(os.path.basename(s))[0])[0]: s for s in SAMPLE_READS_FORWARD.split(" ")})
             self.assertEqual(config["reads_2"], {os.path.splitext(os.path.splitext(os.path.basename(s))[0])[0]: s for s in SAMPLE_READS_REVERSE.split(" ")})

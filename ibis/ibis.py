@@ -390,6 +390,9 @@ def coassemble(args):
             os.path.join(args.output, "coassemble", "read_size.csv"),
         )
 
+    if args.coassembly_samples_list:
+        args.coassembly_samples = read_list(args.coassembly_samples_list)
+
     if args.exclude_coassemblies_list:
         args.exclude_coassemblies = read_list(args.exclude_coassemblies_list)
 
@@ -937,6 +940,7 @@ def main():
         argument_group.add_argument("--genomes", nargs='+', help="Reference genomes for read mapping")
         argument_group.add_argument("--genomes-list", help="Reference genomes for read mapping newline separated")
         argument_group.add_argument("--coassembly-samples", nargs='+', help="Restrict coassembly to these samples. Remaining samples will still be used for recovery [default: use all samples]", default=[])
+        argument_group.add_argument("--coassembly-samples-list", help="Restrict coassembly to these samples, newline separated. Remaining samples will still be used for recovery [default: use all samples]", default=[])
 
     def add_evaluation_options(argument_group):
         argument_group.add_argument("--checkm-version", type=int, help="CheckM version to use to quality cutoffs [default: 2]", default=2)
