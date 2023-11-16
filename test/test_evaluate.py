@@ -5,7 +5,6 @@ import os
 from bird_tool_utils import in_tempdir
 import extern
 from snakemake.io import load_configfile
-import re
 
 path_to_data = os.path.join(os.path.dirname(os.path.realpath(__file__)),'data')
 path_to_conda = os.path.join(path_to_data,'.conda')
