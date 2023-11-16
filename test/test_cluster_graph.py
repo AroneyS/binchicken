@@ -530,6 +530,33 @@ class Tests(unittest.TestCase):
             )
         self.assertDataFrameEqual(expected, observed)
 
+    def test_cluster_restrict_coassembly_samples_no_overlap(self):
+        elusive_edges = pl.DataFrame([
+            ["match", 2, "1,2", "1,2"],
+            ["match", 2, "1,3", "3"],
+            ["match", 2, "2,3", "3"],
+            ["match", 2, "4,5", "1"],
+        ], schema = ELUSIVE_EDGES_COLUMNS)
+        read_size = pl.DataFrame([
+            ["1", 1000],
+            ["2", 2000],
+            ["3", 3000],
+            ["4", 4000],
+            ["5", 5000],
+            ["6", 6000],
+        ], schema=READ_SIZE_COLUMNS)
+
+        expected = pl.DataFrame([
+            ["1,2", 2, 2, 3000, "1,2,4,5", "coassembly_0"],
+        ], schema=ELUSIVE_CLUSTERS_COLUMNS)
+        observed = pipeline(
+            elusive_edges,
+            read_size,
+            MAX_RECOVERY_SAMPLES=4,
+            COASSEMBLY_SAMPLES=["1", "2"],
+            )
+        self.assertDataFrameEqual(expected, observed)
+
     def test_join_list_subsets(self):
         with pl.StringCache():
             df1 = (
