@@ -390,6 +390,9 @@ def coassemble(args):
             os.path.join(args.output, "coassemble", "read_size.csv"),
         )
 
+    if args.coassembly_samples_list:
+        args.coassembly_samples = read_list(args.coassembly_samples_list)
+
     if args.exclude_coassemblies_list:
         args.exclude_coassemblies = read_list(args.exclude_coassemblies_list)
 
@@ -438,6 +441,7 @@ def coassemble(args):
         "reads_2": reverse_reads,
         "genomes": genomes if args.genomes else None,
         "singlem_metapackage": metapackage,
+        "coassembly_samples": args.coassembly_samples,
         # Clustering config
         "taxa_of_interest": args.taxa_of_interest if args.taxa_of_interest else None,
         "appraise_sequence_identity": args.appraise_sequence_identity / 100 if args.appraise_sequence_identity > 1 else args.appraise_sequence_identity,
@@ -783,6 +787,7 @@ def build(args):
     args.reverse_list = None
     args.genomes_list = None
     args.new_genomes_list = None
+    args.coassembly_samples_list = None
     args.aviary_gtdbtk_dir = "."
     args.aviary_checkm2_dir = "."
     args.aviary_cores = None
@@ -935,6 +940,8 @@ def main():
         argument_group.add_argument("--reverse-list", help="input reverse nucleotide read sequence(s) newline separated")
         argument_group.add_argument("--genomes", nargs='+', help="Reference genomes for read mapping")
         argument_group.add_argument("--genomes-list", help="Reference genomes for read mapping newline separated")
+        argument_group.add_argument("--coassembly-samples", nargs='+', help="Restrict coassembly to these samples. Remaining samples will still be used for recovery [default: use all samples]", default=[])
+        argument_group.add_argument("--coassembly-samples-list", help="Restrict coassembly to these samples, newline separated. Remaining samples will still be used for recovery [default: use all samples]", default=[])
 
     def add_evaluation_options(argument_group):
         argument_group.add_argument("--checkm-version", type=int, help="CheckM version to use to quality cutoffs [default: 2]", default=2)

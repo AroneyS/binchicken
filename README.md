@@ -41,10 +41,9 @@ pip install ibis-genome
 ## Ibis coassemble
 
 Snakemake pipeline to discover coassembly sample clusters based on co-occurrence of single-copy marker genes, excluding those genes present in reference genomes (e.g. previously recovered genomes).
-Creates graph with samples as nodes and the number of overlapping sequences provided by SingleM.
 The taxa of the considered sequences can be filtered to target a specific taxon (e.g. the phylum Planctomycetota).
-The graph is clustered using the Girvan-Newman algorithm to provide sample groupings.
-Aviary assemble/recover commands are generated based on proposed coassemblies.
+Assembly and recovery can be run directly, or the coassemblies with differential-abudance-binning samples can be run in the tool of your choice.
+Aviary assemble/recover commands are also generated based on proposed coassemblies.
 Optionally, reads can be mapped to the matched bins with only unmapped reads being assembled.
 Paired end reads of form reads_1.1.fq, reads_1_1.fq and reads_1_R1.fq are automatically detected and matched to their basename.
 
@@ -95,7 +94,7 @@ ibis iterate --exclude-coassemblies reads_1,reads_2 --new-genomes new_genome_1.f
 
 ## Ibis update
 
-Applies further processing to a previous Ibis coassemble run: downloading SRA reads, generating unmapped reads files, and/or running Aviary commands.
+Applies further processing to a previous Ibis coassemble run: downloading SRA reads, generating unmapped reads files, and/or running assembly/recovery commands.
 
 ```bash
 # Example: update previous run to download SRA reads

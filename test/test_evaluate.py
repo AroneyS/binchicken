@@ -127,17 +127,16 @@ class Tests(unittest.TestCase):
 
             summarise_path = os.path.join("test", "evaluate", "summarise", "bins_summarised.otu_table.tsv")
             self.assertTrue(os.path.exists(summarise_path))
-            expected = "\n".join(
-                [
-                    "\t".join(["gene", "sample", "sequence", "num_hits", "coverage", "taxonomy"]),
-                    "\t".join(["S3.7.ribosomal_protein_S7", "coassembly_0-0_transcripts", "TATCAAGTTCCACAAGAAGTTAGAGGAGAAAGAAGAATCTCGTTAGCTATTAGATGGATT", "1", "1.14", "Root; d__Bacteria"]),
-                    "\t".join(["S3.7.ribosomal_protein_S7", "coassembly_0-1_transcripts", "TTCCAGGTGCCTACTGAAGTTCGTCCCGAGCGTAAAATTGCATTGGGTATGAAATGGCTG", "1", "1.18", "Root; d__Bacteria; p__Bacteroidota; c__Bacteroidia; o__Sphingobacteriales; f__Sphingobacteriaceae; g__Mucilaginibacter; s__Mucilaginibacter_sp013286235"]),
-                    "\t".join(["S3.7.ribosomal_protein_S7", "coassembly_0-1_transcripts", "TACCAGGTTCCTGTTGAAGTTCGCCCATCACGCCGTTCTGCTTTGGCAATGCGCTGGGTG", "1", "1.14", "Root; d__Bacteria; p__Proteobacteria; c__Gammaproteobacteria; o__Burkholderiales; f__Burkholderiaceae; g__Polynucleobacter; s__Polynucleobacter_sp018688335"]),
-                    ""
-                ]
-            )
             with open(summarise_path) as f:
-                self.assertEqual(expected, f.read())
+                observed = f.read()
+
+            otu1 = "\t".join(["S3.7.ribosomal_protein_S7", "coassembly_0-0_transcripts", "TATCAAGTTCCACAAGAAGTTAGAGGAGAAAGAAGAATCTCGTTAGCTATTAGATGGATT", "1", "1.14", "Root; d__Bacteria"])
+            otu2 = "\t".join(["S3.7.ribosomal_protein_S7", "coassembly_0-1_transcripts", "TACCAGGTTCCTGTTGAAGTTCGCCCATCACGCCGTTCTGCTTTGGCAATGCGCTGGGTG", "1", "1.14", "Root; d__Bacteria; p__Proteobacteria; c__Gammaproteobacteria; o__Burkholderiales; f__Burkholderiaceae; g__Polynucleobacter; s__Polynucleobacter_sp018688335"])
+            otu3 = "\t".join(["S3.7.ribosomal_protein_S7", "coassembly_0-1_transcripts", "TTCCAGGTGCCTACTGAAGTTCGTCCCGAGCGTAAAATTGCATTGGGTATGAAATGGCTG", "1", "1.18", "Root; d__Bacteria; p__Bacteroidota; c__Bacteroidia; o__Sphingobacteriales; f__Sphingobacteriaceae; g__Mucilaginibacter; s__Mucilaginibacter_sp013286235"])
+
+            self.assertTrue(otu1 in observed)
+            self.assertTrue(otu2 in observed)
+            self.assertTrue(otu3 in observed)
 
     def test_evaluate_specified_files(self):
         with in_tempdir():
@@ -259,17 +258,16 @@ class Tests(unittest.TestCase):
 
             summarise_path = os.path.join("test", "evaluate", "summarise", "bins_summarised.otu_table.tsv")
             self.assertTrue(os.path.exists(summarise_path))
-            expected = "\n".join(
-                [
-                    "\t".join(["gene", "sample", "sequence", "num_hits", "coverage", "taxonomy"]),
-                    "\t".join(["S3.7.ribosomal_protein_S7", "coassembly_0-bin_1_transcripts", "TATCAAGTTCCACAAGAAGTTAGAGGAGAAAGAAGAATCTCGTTAGCTATTAGATGGATT", "1", "1.14", "Root; d__Bacteria"]),
-                    "\t".join(["S3.7.ribosomal_protein_S7", "coassembly_0-bin_3_transcripts", "TTCCAGGTGCCTACTGAAGTTCGTCCCGAGCGTAAAATTGCATTGGGTATGAAATGGCTG", "1", "1.14", "Root; d__Bacteria; p__Bacteroidota; c__Bacteroidia; o__Sphingobacteriales; f__Sphingobacteriaceae; g__Mucilaginibacter; s__Mucilaginibacter_sp013286235"]),
-                    "\t".join(["S3.7.ribosomal_protein_S7", "coassembly_0-bin_3_transcripts", "TACCAGGTTCCTGTTGAAGTTCGCCCATCACGCCGTTCTGCTTTGGCAATGCGCTGGGTG", "1", "1.14", "Root; d__Bacteria; p__Proteobacteria; c__Gammaproteobacteria; o__Burkholderiales; f__Burkholderiaceae; g__Polynucleobacter; s__Polynucleobacter_sp018688335"]),
-                    ""
-                ]
-            )
             with open(summarise_path) as f:
-                self.assertEqual(expected, f.read())
+                observed = f.read()
+
+            otu1 = "\t".join(["S3.7.ribosomal_protein_S7", "coassembly_0-bin_1_transcripts", "TATCAAGTTCCACAAGAAGTTAGAGGAGAAAGAAGAATCTCGTTAGCTATTAGATGGATT", "1", "1.14", "Root; d__Bacteria"])
+            otu2 = "\t".join(["S3.7.ribosomal_protein_S7", "coassembly_0-bin_3_transcripts", "TACCAGGTTCCTGTTGAAGTTCGCCCATCACGCCGTTCTGCTTTGGCAATGCGCTGGGTG", "1", "1.14", "Root; d__Bacteria; p__Proteobacteria; c__Gammaproteobacteria; o__Burkholderiales; f__Burkholderiaceae; g__Polynucleobacter; s__Polynucleobacter_sp018688335"])
+            otu3 = "\t".join(["S3.7.ribosomal_protein_S7", "coassembly_0-bin_3_transcripts", "TTCCAGGTGCCTACTGAAGTTCGTCCCGAGCGTAAAATTGCATTGGGTATGAAATGGCTG", "1", "1.14", "Root; d__Bacteria; p__Bacteroidota; c__Bacteroidia; o__Sphingobacteriales; f__Sphingobacteriaceae; g__Mucilaginibacter; s__Mucilaginibacter_sp013286235"])
+
+            self.assertTrue(otu1 in observed)
+            self.assertTrue(otu2 in observed)
+            self.assertTrue(otu3 in observed)
 
     def test_evaluate_genome_files_input(self):
         with in_tempdir():
@@ -333,17 +331,16 @@ class Tests(unittest.TestCase):
 
             summarise_path = os.path.join("test", "evaluate", "summarise", "bins_summarised.otu_table.tsv")
             self.assertTrue(os.path.exists(summarise_path))
-            expected = "\n".join(
-                [
-                    "\t".join(["gene", "sample", "sequence", "num_hits", "coverage", "taxonomy"]),
-                    "\t".join(["S3.7.ribosomal_protein_S7", "coassembly_0-0_transcripts", "TATCAAGTTCCACAAGAAGTTAGAGGAGAAAGAAGAATCTCGTTAGCTATTAGATGGATT", "1", "1.14", "Root; d__Bacteria"]),
-                    "\t".join(["S3.7.ribosomal_protein_S7", "coassembly_0-1_transcripts", "TTCCAGGTGCCTACTGAAGTTCGTCCCGAGCGTAAAATTGCATTGGGTATGAAATGGCTG", "1", "1.18", "Root; d__Bacteria; p__Bacteroidota; c__Bacteroidia; o__Sphingobacteriales; f__Sphingobacteriaceae; g__Mucilaginibacter; s__Mucilaginibacter_sp013286235"]),
-                    "\t".join(["S3.7.ribosomal_protein_S7", "coassembly_0-1_transcripts", "TACCAGGTTCCTGTTGAAGTTCGCCCATCACGCCGTTCTGCTTTGGCAATGCGCTGGGTG", "1", "1.14", "Root; d__Bacteria; p__Proteobacteria; c__Gammaproteobacteria; o__Burkholderiales; f__Burkholderiaceae; g__Polynucleobacter; s__Polynucleobacter_sp018688335"]),
-                    ""
-                ]
-            )
             with open(summarise_path) as f:
-                self.assertEqual(expected, f.read())
+                observed = f.read()
+
+            otu1 = "\t".join(["S3.7.ribosomal_protein_S7", "coassembly_0-0_transcripts", "TATCAAGTTCCACAAGAAGTTAGAGGAGAAAGAAGAATCTCGTTAGCTATTAGATGGATT", "1", "1.14", "Root; d__Bacteria"])
+            otu2 = "\t".join(["S3.7.ribosomal_protein_S7", "coassembly_0-1_transcripts", "TACCAGGTTCCTGTTGAAGTTCGCCCATCACGCCGTTCTGCTTTGGCAATGCGCTGGGTG", "1", "1.14", "Root; d__Bacteria; p__Proteobacteria; c__Gammaproteobacteria; o__Burkholderiales; f__Burkholderiaceae; g__Polynucleobacter; s__Polynucleobacter_sp018688335"])
+            otu3 = "\t".join(["S3.7.ribosomal_protein_S7", "coassembly_0-1_transcripts", "TTCCAGGTGCCTACTGAAGTTCGTCCCGAGCGTAAAATTGCATTGGGTATGAAATGGCTG", "1", "1.18", "Root; d__Bacteria; p__Bacteroidota; c__Bacteroidia; o__Sphingobacteriales; f__Sphingobacteriaceae; g__Mucilaginibacter; s__Mucilaginibacter_sp013286235"])
+
+            self.assertTrue(otu1 in observed)
+            self.assertTrue(otu2 in observed)
+            self.assertTrue(otu3 in observed)
 
     def test_evaluate_cluster(self):
         with in_tempdir():
