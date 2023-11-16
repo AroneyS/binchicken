@@ -497,6 +497,92 @@ class Tests(unittest.TestCase):
         observed = pipeline(elusive_edges, read_size, EXCLUDE_COASSEMBLIES=["2,3", "5,6"])
         self.assertDataFrameEqual(expected, observed)
 
+    def test_cluster_restrict_coassembly_samples(self):
+        elusive_edges = pl.DataFrame([
+            ["match", 2, "1,2", "1,2,3"],
+            ["match", 2, "1,3", "1,3"],
+            ["match", 2, "1,4", "1,4"],
+            ["match", 2, "2,3", "2,3"],
+            ["match", 2, "2,4", "2,4"],
+            ["match", 2, "3,4", "1,3,4"],
+            ["match", 2, "4,5", "5"],
+            ["match", 2, "4,6", "5"],
+            ["match", 2, "5,6", "5,6,7"],
+        ], schema = ELUSIVE_EDGES_COLUMNS)
+        read_size = pl.DataFrame([
+            ["1", 1000],
+            ["2", 2000],
+            ["3", 3000],
+            ["4", 4000],
+            ["5", 5000],
+            ["6", 6000],
+        ], schema=READ_SIZE_COLUMNS)
+
+        expected = pl.DataFrame([
+            ["1,2", 2, 3, 3000, "1,2,3,4", "coassembly_0"],
+            ["4,5", 2, 1, 9000, "4,5,6", "coassembly_1"],
+        ], schema=ELUSIVE_CLUSTERS_COLUMNS)
+        observed = pipeline(
+            elusive_edges,
+            read_size,
+            MAX_RECOVERY_SAMPLES=4,
+            COASSEMBLY_SAMPLES=["1", "2", "4", "5"],
+            )
+        self.assertDataFrameEqual(expected, observed)
+
+    def test_cluster_restrict_coassembly_samples_no_overlap(self):
+        elusive_edges = pl.DataFrame([
+            ["match", 2, "1,2", "1,2"],
+            ["match", 2, "1,3", "3"],
+            ["match", 2, "2,3", "3"],
+            ["match", 2, "4,5", "1"],
+        ], schema = ELUSIVE_EDGES_COLUMNS)
+        read_size = pl.DataFrame([
+            ["1", 1000],
+            ["2", 2000],
+            ["3", 3000],
+            ["4", 4000],
+            ["5", 5000],
+            ["6", 6000],
+        ], schema=READ_SIZE_COLUMNS)
+
+        expected = pl.DataFrame([
+            ["1,2", 2, 2, 3000, "1,2,4,5", "coassembly_0"],
+        ], schema=ELUSIVE_CLUSTERS_COLUMNS)
+        observed = pipeline(
+            elusive_edges,
+            read_size,
+            MAX_RECOVERY_SAMPLES=4,
+            COASSEMBLY_SAMPLES=["1", "2"],
+            )
+        self.assertDataFrameEqual(expected, observed)
+
+    def test_cluster_restrict_coassembly_samples_single_assembly(self):
+        elusive_edges = pl.DataFrame([
+            ["match", 2, "1,2", "1,2,3,4"],
+            ["match", 2, "3,1", "5"],
+            ["match", 2, "3,2", "6,7"],
+        ], schema = ELUSIVE_EDGES_COLUMNS)
+        read_size = pl.DataFrame([
+            ["1", 1000],
+            ["2", 1000],
+            ["3", 1000],
+        ], schema=READ_SIZE_COLUMNS)
+
+        expected = pl.DataFrame([
+            ["2", 1, 6, 1000, "1,2,3", "coassembly_0"],
+            ["1", 1, 5, 1000, "1,2,3", "coassembly_1"],
+        ], schema=ELUSIVE_CLUSTERS_COLUMNS)
+        observed = pipeline(
+            elusive_edges,
+            read_size,
+            MAX_COASSEMBLY_SAMPLES=1,
+            MIN_COASSEMBLY_SAMPLES=1,
+            MAX_RECOVERY_SAMPLES=4,
+            COASSEMBLY_SAMPLES=["1", "2"],
+            )
+        self.assertDataFrameEqual(expected, observed)
+
     def test_join_list_subsets(self):
         with pl.StringCache():
             df1 = (

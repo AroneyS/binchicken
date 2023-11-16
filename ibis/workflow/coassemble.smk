@@ -365,6 +365,7 @@ checkpoint cluster_graph:
         num_coassembly_samples = config["num_coassembly_samples"],
         max_coassembly_samples = config["max_coassembly_samples"],
         max_recovery_samples = config["max_recovery_samples"],
+        coassembly_samples = config["coassembly_samples"],
         exclude_coassemblies = config["exclude_coassemblies"],
     threads: 64
     resources:
