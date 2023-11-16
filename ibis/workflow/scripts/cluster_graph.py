@@ -164,8 +164,9 @@ def pipeline(
         if MAX_COASSEMBLY_SAMPLES == 1:
             logging.info("Skipping clustering, using single-sample clusters")
             clusters = [
-                coassembly_edges
+                elusive_edges
                 .explode("samples")
+                .filter((not COASSEMBLY_SAMPLES) | pl.col("samples").is_in(COASSEMBLY_SAMPLES))
                 .group_by("samples")
                 .agg(pl.col("target_ids").flatten())
                 .with_columns(
