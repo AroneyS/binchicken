@@ -99,6 +99,7 @@ def pipeline(
         MAX_RECOVERY_SAMPLES=20,
         MIN_CLUSTER_TARGETS=1,
         MAX_SAMPLES_COMBINATIONS=100,
+        COASSEMBLY_SAMPLES=[],
         EXCLUDE_COASSEMBLIES=[]):
 
     logging.info(f"Polars using {str(pl.threadpool_size())} threads")
@@ -127,6 +128,17 @@ def pipeline(
                 )
         )
 
+        if COASSEMBLY_SAMPLES:
+            coassembly_edges = (
+                elusive_edges
+                .with_columns(
+                    pl.col("samples").list.eval(pl.element().filter(pl.element().is_in(COASSEMBLY_SAMPLES)))
+                    )
+                .filter(pl.col("samples").list.lengths() >= pl.col("cluster_size"))
+            )
+        else:
+            coassembly_edges = elusive_edges
+
         read_size = (
             read_size
             .lazy()
@@ -152,7 +164,7 @@ def pipeline(
         if MAX_COASSEMBLY_SAMPLES == 1:
             logging.info("Skipping clustering, using single-sample clusters")
             clusters = [
-                elusive_edges
+                coassembly_edges
                 .explode("samples")
                 .group_by("samples")
                 .agg(pl.col("target_ids").flatten())
@@ -165,7 +177,7 @@ def pipeline(
         else:
             logging.info("Forming candidate sample clusters")
             clusters = [
-                elusive_edges
+                coassembly_edges
                 .filter(pl.col("style") == "match")
                 .filter(pl.col("cluster_size") >= MIN_COASSEMBLY_SAMPLES)
                 .filter(pl.col("target_ids").list.lengths() >= MIN_CLUSTER_TARGETS)
@@ -174,7 +186,7 @@ def pipeline(
 
             if is_pooled:
                 clusters.append(
-                    elusive_edges
+                    coassembly_edges
                     .filter(pl.col("style") == "pool")
                     .filter(pl.col("cluster_size") >= MIN_COASSEMBLY_SAMPLES)
                     # Prevent combinatorial explosion (also, large clusters are less useful for distinguishing between clusters)
@@ -242,7 +254,7 @@ def pipeline(
             .collect(streaming=True)
             .pipe(
                 join_list_subsets,
-                df2=elusive_edges
+                df2=coassembly_edges
                     .filter(pl.col("style") == "pool")
                     .filter(pl.col("samples").list.lengths() >= MAX_SAMPLES_COMBINATIONS)
                     .collect(streaming=True),
