@@ -787,6 +787,7 @@ def build(args):
     args.reverse_list = None
     args.genomes_list = None
     args.new_genomes_list = None
+    args.coassembly_samples_list = None
     args.aviary_gtdbtk_dir = "."
     args.aviary_checkm2_dir = "."
     args.aviary_cores = None
