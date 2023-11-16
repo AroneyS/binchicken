@@ -438,6 +438,7 @@ def coassemble(args):
         "reads_2": reverse_reads,
         "genomes": genomes if args.genomes else None,
         "singlem_metapackage": metapackage,
+        "coassembly_samples": args.coassembly_samples,
         # Clustering config
         "taxa_of_interest": args.taxa_of_interest if args.taxa_of_interest else None,
         "appraise_sequence_identity": args.appraise_sequence_identity / 100 if args.appraise_sequence_identity > 1 else args.appraise_sequence_identity,
@@ -935,6 +936,7 @@ def main():
         argument_group.add_argument("--reverse-list", help="input reverse nucleotide read sequence(s) newline separated")
         argument_group.add_argument("--genomes", nargs='+', help="Reference genomes for read mapping")
         argument_group.add_argument("--genomes-list", help="Reference genomes for read mapping newline separated")
+        argument_group.add_argument("--coassembly-samples", nargs='+', help="Restrict coassembly to these samples [default: use all samples]", default=[])
 
     def add_evaluation_options(argument_group):
         argument_group.add_argument("--checkm-version", type=int, help="CheckM version to use to quality cutoffs [default: 2]", default=2)

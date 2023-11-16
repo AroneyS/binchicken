@@ -578,6 +578,7 @@ class Tests(unittest.TestCase):
                 f"--reverse {SAMPLE_READS_REVERSE} "
                 f"--singlem-metapackage {METAPACKAGE} "
                 f"--single-assembly "
+                f"--coassembly-samples sample_1 sample_2 "
                 f"--no-genomes "
                 f"--output test "
                 f"--conda-prefix {path_to_conda} "
@@ -616,14 +617,6 @@ class Tests(unittest.TestCase):
                         "3926",
                         "sample_1,sample_2,sample_3",
                         "coassembly_1"
-                    ]),
-                    "\t".join([
-                        "sample_3",
-                        "1",
-                        "2",
-                        "3624",
-                        "sample_1,sample_2,sample_3",
-                        "coassembly_2"
                     ]),
                     ""
                 ]

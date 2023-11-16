@@ -303,6 +303,7 @@ if __name__ == "__main__":
     MAX_COASSEMBLY_SAMPLES = snakemake.params.max_coassembly_samples
     MIN_COASSEMBLY_SAMPLES = snakemake.params.num_coassembly_samples
     MAX_RECOVERY_SAMPLES = snakemake.params.max_recovery_samples
+    COASSEMBLY_SAMPLES = snakemake.params.coassembly_samples
     EXCLUDE_COASSEMBLIES = snakemake.params.exclude_coassemblies
     elusive_edges_path = snakemake.input.elusive_edges
     read_size_path = snakemake.input.read_size
@@ -323,6 +324,7 @@ if __name__ == "__main__":
         MAX_COASSEMBLY_SAMPLES=MAX_COASSEMBLY_SAMPLES,
         MIN_COASSEMBLY_SAMPLES=MIN_COASSEMBLY_SAMPLES,
         MAX_RECOVERY_SAMPLES=MAX_RECOVERY_SAMPLES,
+        COASSEMBLY_SAMPLES=COASSEMBLY_SAMPLES,
         EXCLUDE_COASSEMBLIES=EXCLUDE_COASSEMBLIES,
         MIN_CLUSTER_TARGETS=min_cluster_targets,
         MAX_SAMPLES_COMBINATIONS=100,
