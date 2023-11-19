@@ -472,10 +472,7 @@ class Tests(unittest.TestCase):
                 f"--conda-prefix {path_to_conda} "
                 f"--snakemake-args \" --config aviary_dryrun=True\" "
             )
-            try:
-                extern.run(cmd)
-            except:
-                import pdb; pdb.set_trace()
+            extern.run(cmd)
 
             config_path = os.path.join("test", "config.yaml")
             self.assertTrue(os.path.exists(config_path))
