@@ -640,6 +640,7 @@ rule aviary_assemble:
         "CHECKM2DB=. "
         "EGGNOG_DATA_DIR=. "
         "CONDA_ENV_PATH={params.conda_prefix} "
+        "SINGLEM_METAPACKAGE_PATH=. "
         "aviary assemble "
         "--coassemble "
         "-1 {params.reads_1} "
@@ -669,6 +670,7 @@ rule aviary_recover:
         gtdbtk = config["aviary_gtdbtk"],
         checkm2 = config["aviary_checkm2"],
         conda_prefix = config["conda_prefix"] if config["conda_prefix"] else ".",
+        singlem_metapackage = config["singlem_metapackage"],
         fast = "--workflow recover_mags_no_singlem --skip-binners maxbin concoct rosella --skip-abundances --refinery-max-iterations 0" if config["aviary_speed"] == FAST_AVIARY_MODE else "",
         snakemake_profile = f"--snakemake-profile {config['snakemake_profile']}" if config["snakemake_profile"] else "",
         cluster_retries = f"--cluster-retries {config['cluster_retries']}" if config["cluster_retries"] else "",
@@ -688,6 +690,7 @@ rule aviary_recover:
         "CHECKM2DB={params.checkm2} "
         "EGGNOG_DATA_DIR=. "
         "CONDA_ENV_PATH={params.conda_prefix} "
+        "SINGLEM_METAPACKAGE_PATH={params.singlem_metapackage} "
         "aviary recover "
         "--assembly {input.assembly} "
         "-1 {params.reads_1} "
