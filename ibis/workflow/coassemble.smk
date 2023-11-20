@@ -631,6 +631,7 @@ rule aviary_assemble:
         mem_gb = int(config["aviary_memory"]),
         runtime = "96h",
         assembler = lambda wildcards, attempt: "" if attempt == 1 else "--use-megahit",
+        queue = "microbiome",
     log:
         logs_dir + "/aviary/{coassembly}_assemble.log"
     conda:
@@ -676,7 +677,7 @@ rule aviary_recover:
         cluster_retries = f"--cluster-retries {config['cluster_retries']}" if config["cluster_retries"] else "",
     localrule: True
     threads:
-        int(config["aviary_threads"])//2
+        1
     resources:
         mem_mb = int(config["aviary_memory"])*1000//2,
         mem_gb = int(config["aviary_memory"])//2,
@@ -697,8 +698,8 @@ rule aviary_recover:
         "-2 {params.reads_2} "
         "--output {params.output} "
         "{params.fast} "
-        "-n {threads} "
-        "-t {threads} "
+        "-n 32 "
+        "-t 32 "
         "-m {resources.mem_gb} "
         "--skip-qc "
         "{params.snakemake_profile} "
