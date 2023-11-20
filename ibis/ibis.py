@@ -1127,7 +1127,10 @@ def main():
         if (args.sample_singlem and args.sample_singlem_list) or (args.sample_singlem_dir and args.sample_singlem_list) or (args.sample_singlem and args.sample_singlem_dir) or \
             (args.sample_query and args.sample_query_list) or (args.sample_query_dir and args.sample_query_list) or (args.sample_query and args.sample_query_dir):
             raise Exception("General, list and directory arguments are mutually exclusive")
-        if args.max_coassembly_samples:
+        if args.single_assembly:
+            if 1 > args.max_recovery_samples:
+                raise Exception("Max recovery samples (--max-recovery-samples) must be at least 1")
+        elif args.max_coassembly_samples:
             if args.max_coassembly_samples > args.max_recovery_samples:
                 raise Exception("Max recovery samples (--max-recovery-samples) must be greater than or equal to max coassembly samples (--max-coassembly-samples)")
         else:
