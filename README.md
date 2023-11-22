@@ -62,6 +62,13 @@ ibis coassemble --forward reads_1.1.fq ... --reverse reads_1.2.fq ... --genomes 
 
 # Example: find relevant samples for differential coverage binning (no coassembly)
 ibis coassemble --forward reads_1.1.fq ... --reverse reads_1.2.fq ... --single-assembly
+
+# Example: run proposed coassemblies through aviary with cluster submission
+# Create snakemake profile at ~/.config/snakemake/qsub with cluster, cluster-status, cluster-cancel, etc.
+# See https://snakemake.readthedocs.io/en/stable/executing/cli.html#profiles
+ibis coassemble --forward reads_1.1.fq ... --reverse reads_1.2.fq ... --no-genomes \
+  --run-aviary --aviary-gtdbtk-dir /path/to/gtdbtk_db  --aviary-checkm2-dir /path/to/checkm2_db \
+  --snakemake-profile qsub --cluster-retries 3 --local-cores 64 --cores 64
 ```
 
 ## Ibis evaluate
