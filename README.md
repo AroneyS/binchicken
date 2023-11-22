@@ -46,6 +46,7 @@ ibis coassemble \
   --forward-list samples_forward.txt --reverse-list samples_reverse.txt \
   --single-assembly --no-genomes \
   --max-recovery-samples 20 \
+  --run-aviary --aviary-gtdbtk-dir /path/to/gtdbtk_db  --aviary-checkm2-dir /path/to/checkm2_db \
   --cores 64 --output ibis_single_assembly
 
 # Assemble and recover from 2-sample coassemblies, prioritising samples with genomes not previously recovered
@@ -55,6 +56,7 @@ ibis coassemble \
   --sample-singlem-dir ibis_single_assembly/coassemble/pipe --sample-read-size ibis_single_assembly/coassemble/read_size.csv
   --assemble-unmapped \
   --max-coassembly-size 50 --max-recovery-samples 20 \
+  --run-aviary --aviary-gtdbtk-dir /path/to/gtdbtk_db  --aviary-checkm2-dir /path/to/checkm2_db \
   --cores 64 --output ibis_2_coassembly
 
 # Perform another iteration of coassembly, with 3-samples this time
@@ -66,6 +68,7 @@ ibis iterate \
   --coassembly-samples 3 \
   --assemble-unmapped \
   --max-coassembly-size 50 --max-recovery-samples 20 \
+  --run-aviary --aviary-gtdbtk-dir /path/to/gtdbtk_db  --aviary-checkm2-dir /path/to/checkm2_db \
   --cores 64 --output ibis_3_coassembly
 ```
 
