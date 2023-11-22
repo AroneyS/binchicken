@@ -38,6 +38,37 @@ Install latest release via pip.
 pip install ibis-genome
 ```
 
+## Example workflow
+
+```bash
+# Assemble and recover from each sample individually with 20 samples used for differential abundance binning
+ibis coassemble \
+  --forward-list samples_forward.txt --reverse-list samples_reverse.txt \
+  --single-assembly --no-genomes \
+  --max-recovery-samples 20 \
+  --cores 64 --output ibis_single_assembly
+
+# Assemble and recover from 2-sample coassemblies, prioritising samples with genomes not previously recovered
+ibis coassemble \
+  --forward-list samples_forward.txt --reverse-list samples_reverse.txt \
+  --genomes-list single_assembly_genomes.txt \
+  --sample-singlem-dir ibis_single_assembly/coassemble/pipe --sample-read-size ibis_single_assembly/coassemble/read_size.csv
+  --assemble-unmapped \
+  --max-coassembly-size 50 --max-recovery-samples 20 \
+  --cores 64 --output ibis_2_coassembly
+
+# Perform another iteration of coassembly, with 3-samples this time
+ibis iterate \
+  --forward-list samples_forward.txt --reverse-list samples_reverse.txt \
+  --genomes-list single_assembly_genomes.txt \
+  --sample-singlem-dir ibis_single_assembly/coassemble/pipe --sample-read-size ibis_single_assembly/coassemble/read_size.csv
+  --coassemble-output ibis_2_coassembly --aviary-outputs ibis_2_coassembly/coassemble/coassemble/coassembly_* \
+  --coassembly-samples 3 \
+  --assemble-unmapped \
+  --max-coassembly-size 50 --max-recovery-samples 20 \
+  --cores 64 --output ibis_3_coassembly
+```
+
 ## Ibis coassemble
 
 Snakemake pipeline to discover coassembly sample clusters based on co-occurrence of single-copy marker genes, excluding those genes present in reference genomes (e.g. previously recovered genomes).
