@@ -463,8 +463,8 @@ def coassemble(args):
         "unmapping_max_alignment": args.unmapping_max_alignment,
         "aviary_speed": args.aviary_speed,
         "run_aviary": args.run_aviary,
-        "aviary_gtdbtk": args.aviary_gtdbtk_dir,
-        "aviary_checkm2": args.aviary_checkm2_dir,
+        "aviary_gtdbtk": args.aviary_gtdbtk_db,
+        "aviary_checkm2": args.aviary_checkm2_db,
         "aviary_threads": args.aviary_cores,
         "aviary_memory": args.aviary_memory,
         "conda_prefix": args.conda_prefix,
@@ -788,8 +788,8 @@ def build(args):
     args.genomes_list = None
     args.new_genomes_list = None
     args.coassembly_samples_list = None
-    args.aviary_gtdbtk_dir = "."
-    args.aviary_checkm2_dir = "."
+    args.aviary_gtdbtk_db = "."
+    args.aviary_checkm2_db = "."
     args.aviary_cores = None
     args.assemble_unmapped = True
     args.run_qc = True
@@ -952,8 +952,8 @@ def main():
         argument_group.add_argument("--aviary-speed", help="Run Aviary recover in 'fast' or 'comprehensive' mode. Fast mode skips slow binners and refinement steps.",
                                     default=FAST_AVIARY_MODE, choices=[FAST_AVIARY_MODE, COMPREHENSIVE_AVIARY_MODE])
         argument_group.add_argument("--run-aviary", action="store_true", help="Run Aviary commands for all identified coassemblies (unless specified)")
-        argument_group.add_argument("--aviary-gtdbtk-dir", help="Path to GTDB-Tk database directory for Aviary")
-        argument_group.add_argument("--aviary-checkm2-dir", help="Path to CheckM2 database directory for Aviary")
+        argument_group.add_argument("--aviary-gtdbtk-db", help="Path to GTDB-Tk database directory for Aviary")
+        argument_group.add_argument("--aviary-checkm2-db", help="Path to CheckM2 database directory for Aviary")
         argument_group.add_argument("--aviary-cores", type=int, help="Maximum number of cores for Aviary to use. Half used for recovery.", default=64)
         argument_group.add_argument("--aviary-memory", type=int, help="Maximum amount of memory for Aviary to use (Gigabytes). Half used for recovery", default=500)
 
@@ -1136,8 +1136,8 @@ def main():
         else:
             if args.num_coassembly_samples > args.max_recovery_samples:
                 raise Exception("Max recovery samples (--max-recovery-samples) must be greater than or equal to number of coassembly samples (--num-coassembly-samples)")
-        if args.run_aviary and not (args.aviary_gtdbtk_dir and args.aviary_checkm2_dir):
-            raise Exception("Run Aviary (--run-aviary) requires paths to GTDB-Tk and CheckM2 databases to be provided (--aviary-gtdbtk-dir and --aviary-checkm2-dir)")
+        if args.run_aviary and not (args.aviary_gtdbtk_db and args.aviary_checkm2_db):
+            raise Exception("Run Aviary (--run-aviary) requires paths to GTDB-Tk and CheckM2 databases to be provided (--aviary-gtdbtk-db and --aviary-checkm2-db)")
         if (args.sample_query or args.sample_query_list or args.sample_query_dir) and args.taxa_of_interest and args.assemble_unmapped:
             raise Exception("Unmapping is incompatible with the combination of sample query and taxa of interest")
 
@@ -1165,8 +1165,8 @@ def main():
     elif args.subparser_name == "update":
         base_argument_verification(args)
         coassemble_output_argument_verification(args)
-        if args.run_aviary and not (args.aviary_gtdbtk_dir and args.aviary_checkm2_dir):
-            raise Exception("Run Aviary (--run-aviary) requires paths to GTDB-Tk and CheckM2 databases to be provided (--aviary-gtdbtk-dir and --aviary-checkm2-dir)")
+        if args.run_aviary and not (args.aviary_gtdbtk_db and args.aviary_checkm2_db):
+            raise Exception("Run Aviary (--run-aviary) requires paths to GTDB-Tk and CheckM2 databases to be provided (--aviary-gtdbtk-db and --aviary-checkm2-db)")
         update(args)
 
     elif args.subparser_name == "iterate":
