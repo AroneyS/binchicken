@@ -958,7 +958,7 @@ def main():
         argument_group.add_argument("--aviary-memory", type=int, help="Maximum amount of memory for Aviary to use (Gigabytes). Half used for recovery", default=500)
 
     def add_main_coassemble_output_arguments(argument_group):
-        argument_group.add_argument("--coassemble-output", help="Output dir from cluster subcommand")
+        argument_group.add_argument("--coassemble-output", help="Output dir from coassemble subcommand")
         argument_group.add_argument("--coassemble-unbinned", help="SingleM appraise unbinned output from Ibis coassemble (alternative to --coassemble-output)")
         argument_group.add_argument("--coassemble-binned", help="SingleM appraise binned output from Ibis coassemble (alternative to --coassemble-output)")
 
