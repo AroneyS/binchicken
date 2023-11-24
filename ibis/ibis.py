@@ -763,6 +763,10 @@ def iterate(args):
     logging.info(f"More details at {os.path.join(args.output, 'coassemble', 'target', 'elusive_clusters.tsv')}")
     logging.info(f"Aviary commands for coassembly and recovery in shell scripts at {os.path.join(args.output, 'coassemble', 'commands')}")
 
+def configure_variable(variable, value):
+    os.environ[variable] = value
+    extern.run(f"conda env config vars set {variable}={value}")
+
 def build(args):
     output_dir = os.path.join(args.output, "build")
     os.makedirs(output_dir, exist_ok=True)
@@ -770,8 +774,18 @@ def build(args):
     args.build = True
 
     # Setup env variables
-    os.environ["SNAKEMAKE_CONDA_PREFIX"] = conda_prefix
-    extern.run(f"conda env config vars set SNAKEMAKE_CONDA_PREFIX={conda_prefix}")
+    configure_variable("SNAKEMAKE_CONDA_PREFIX", conda_prefix)
+    configure_variable("CONDA_ENV_PATH", conda_prefix)
+
+    if args.singlem_metapackage:
+        configure_variable("SINGLEM_METAPACKAGE_PATH", args.singlem_metapackage)
+
+    if args.gtdbtk_db:
+        configure_variable("GTDBTK_DATA_PATH", args.gtdbtk_db)
+
+    if args.checkm2_db:
+        configure_variable("CHECKM2DB", args.checkm2_db)
+
 
     # Set args
     args = set_standard_args(args)
@@ -847,6 +861,7 @@ def build(args):
 
     logging.info(f"Ibis build complete.")
     logging.info(f"Conda envs at {conda_prefix}")
+    logging.info(f"Re-activate conda env to load env variables.")
 
 def main():
     main_parser = btu.BirdArgparser(program="Ibis (bin chicken)", version = __version__, program_invocation="ibis",
@@ -915,6 +930,10 @@ def main():
                 btu.Example(
                     "create dependency conda environments",
                     "ibis build --conda-prefix path_to_conda"
+                ),
+                btu.Example(
+                    "create dependency conda environments and setup environment variables for Aviary",
+                    "ibis build --conda-prefix path_to_conda --singlem-metapackage metapackage --gtdbtk-db GTDBtk --checkm2-db CheckM2"
                 ),
             ],
         }
@@ -1084,6 +1103,9 @@ def main():
 
     build_parser = main_parser.new_subparser("build", "Create dependency conda environments")
     add_general_snakemake_options(build_parser, required_conda_prefix=True)
+    build_parser.add_argument("--singlem-metapackage", help="SingleM metapackage")
+    build_parser.add_argument("--gtdbtk-db", help="GTDBtk release database")
+    build_parser.add_argument("--checkm2-db", help="CheckM2 database")
 
     ###########################################################################
 
