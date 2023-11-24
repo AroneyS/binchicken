@@ -22,7 +22,7 @@ Create subprocess conda environments and setup environment variables.
 
 ```bash
 ibis build \
-  --conda-prefix /path/to/conda/envs \
+  --conda-prefix /path/to/conda/envs/dir \
   --singlem-metapackage /metapackage/dir \
   --gtdbtk-db /gtdb/release/dir \
   --checkm2-db /checkm2/db/dir
