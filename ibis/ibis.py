@@ -15,6 +15,7 @@ import polars.selectors as cs
 from snakemake.io import load_configfile
 from ruamel.yaml import YAML
 import copy
+import shutil
 
 FAST_AVIARY_MODE = "fast"
 COMPREHENSIVE_AVIARY_MODE = "comprehensive"
@@ -772,6 +773,7 @@ def configure_variable(variable, value):
 
 def build(args):
     output_dir = os.path.join(args.output, "build")
+    shutil.rmtree(output_dir, ignore_errors=True)
     os.makedirs(output_dir, exist_ok=True)
     conda_prefix = args.conda_prefix
     args.build = True
