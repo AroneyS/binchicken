@@ -950,7 +950,7 @@ def main():
     ###########################################################################
     def add_general_snakemake_options(argument_group, required_conda_prefix=False):
         argument_group.add_argument("--output", help="Output directory [default: .]", default="./")
-        argument_group.add_argument("--conda-prefix", help="Path to conda environment install location. default: Use path from CONDA_ENV_PATH env variable", default=None, required=required_conda_prefix)
+        argument_group.add_argument("--conda-prefix", help="Path to conda environment install location. [default: Use path from CONDA_ENV_PATH env variable]", default=None, required=required_conda_prefix)
         argument_group.add_argument("--cores", type=int, help="Maximum number of cores to use", default=1)
         argument_group.add_argument("--dryrun", action="store_true", help="dry run workflow")
         argument_group.add_argument("--snakemake-profile", default="",
@@ -980,8 +980,8 @@ def main():
         argument_group.add_argument("--aviary-speed", help="Run Aviary recover in 'fast' or 'comprehensive' mode. Fast mode skips slow binners and refinement steps.",
                                     default=FAST_AVIARY_MODE, choices=[FAST_AVIARY_MODE, COMPREHENSIVE_AVIARY_MODE])
         argument_group.add_argument("--run-aviary", action="store_true", help="Run Aviary commands for all identified coassemblies (unless specified)")
-        argument_group.add_argument("--aviary-gtdbtk-db", help="Path to GTDB-Tk database directory for Aviary")
-        argument_group.add_argument("--aviary-checkm2-db", help="Path to CheckM2 database directory for Aviary")
+        argument_group.add_argument("--aviary-gtdbtk-db", help="Path to GTDB-Tk database directory for Aviary. [default: use path from GTDBTK_DATA_PATH env variable]")
+        argument_group.add_argument("--aviary-checkm2-db", help="Path to CheckM2 database directory for Aviary. [default: use path from CHECKM2DB env variable]")
         argument_group.add_argument("--aviary-cores", type=int, help="Maximum number of cores for Aviary to use. Half used for recovery.", default=64)
         argument_group.add_argument("--aviary-memory", type=int, help="Maximum amount of memory for Aviary to use (Gigabytes). Half used for recovery", default=500)
 
@@ -1005,7 +1005,7 @@ def main():
         # Base arguments
         coassemble_base = parser.add_argument_group("Base input arguments")
         add_base_arguments(coassemble_base)
-        coassemble_base.add_argument("--singlem-metapackage", help="SingleM metapackage for sequence searching")
+        coassemble_base.add_argument("--singlem-metapackage", help="SingleM metapackage for sequence searching. [default: use path from SINGLEM_METAPACKAGE_PATH env variable]")
         # Midpoint arguments
         coassemble_midpoint = parser.add_argument_group("Intermediate results input arguments")
         coassemble_midpoint.add_argument("--sample-singlem", nargs='+', help="SingleM otu tables for each sample, in the form \"[sample name]_read.otu_table.tsv\". If provided, SingleM pipe sample is skipped")
@@ -1130,6 +1130,26 @@ def main():
     if not os.path.exists(args.output):
         os.makedirs(args.output)
 
+    # Load env variables
+    def load_variable(variable):
+        try:
+            return os.environ[variable]
+        except KeyError:
+            return None
+
+    if not args.conda_prefix:
+        args.conda_prefix = load_variable("CONDA_ENV_PATH")
+        if not args.conda_prefix:
+            args.conda_prefix = load_variable("SNAKEMAKE_CONDA_PREFIX")
+    if not hasattr(args, "singlem_metapackage") or not args.singlem_metapackage:
+        args.singlem_metapackage = load_variable("SINGLEM_METAPACKAGE_PATH")
+    if not hasattr(args, "aviary_gtdbtk_db") or not args.aviary_gtdbtk_db:
+        args.aviary_gtdbtk_db = load_variable("GTDBTK_DATA_PATH")
+    if not hasattr(args, "aviary_checkm2_db") or not args.aviary_checkm2_db:
+        args.aviary_checkm2_db = load_variable("CHECKM2DB")
+    if not args.tmp_dir:
+        args.tmp_dir = load_variable("TMPDIR")
+
     def base_argument_verification(args):
         if not args.forward and not args.forward_list:
             raise Exception("Input reads must be provided")
@@ -1169,7 +1189,7 @@ def main():
             if args.num_coassembly_samples > args.max_recovery_samples:
                 raise Exception("Max recovery samples (--max-recovery-samples) must be greater than or equal to number of coassembly samples (--num-coassembly-samples)")
         if args.run_aviary and not (args.aviary_gtdbtk_db and args.aviary_checkm2_db):
-            raise Exception("Run Aviary (--run-aviary) requires paths to GTDB-Tk and CheckM2 databases to be provided (--aviary-gtdbtk-db and --aviary-checkm2-db)")
+            raise Exception("Run Aviary (--run-aviary) requires paths to GTDB-Tk and CheckM2 databases to be provided (--aviary-gtdbtk-db or GTDBTK_DATA_PATH and --aviary-checkm2-db or CHECKM2DB)")
         if (args.sample_query or args.sample_query_list or args.sample_query_dir) and args.taxa_of_interest and args.assemble_unmapped:
             raise Exception("Unmapping is incompatible with the combination of sample query and taxa of interest")
 
