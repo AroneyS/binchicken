@@ -31,8 +31,21 @@ class Tests(unittest.TestCase):
             cmd = (
                 f"ibis build "
                 f"--conda-prefix {path_to_conda} "
+                f"--singlem-metapackage {METAPACKAGE} "
+                f"--gtdbtk-db gtdb_release "
+                f"--checkm2-db CheckM2_database "
             )
             extern.run(cmd)
+
+            # Check ENV variables
+            cmd = "conda env config vars list"
+            output = extern.run(cmd).strip().split("\n")
+
+            self.assertTrue(f"SNAKEMAKE_CONDA_PREFIX = {path_to_conda}" in output)
+            self.assertTrue(f"CONDA_ENV_PATH = {path_to_conda}" in output)
+            self.assertTrue(f"SINGLEM_METAPACKAGE_PATH = {METAPACKAGE}" in output)
+            self.assertTrue(f"GTDBTK_DATA_PATH = gtdb_release" in output)
+            self.assertTrue(f"CHECKM2DB = CheckM2_database" in output)
 
             # Dryrun coassemble
             cmd = (
