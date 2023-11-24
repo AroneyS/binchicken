@@ -125,6 +125,7 @@ def download_sra(args):
         "reads_2": {},
         "snakemake_profile": args.snakemake_profile,
         "cluster_retries": args.cluster_retries,
+        "tmpdir": args.tmp_dir,
     }
 
     config_path = make_config(
@@ -470,6 +471,7 @@ def coassemble(args):
         "conda_prefix": args.conda_prefix,
         "snakemake_profile": args.snakemake_profile,
         "cluster_retries": args.cluster_retries,
+        "tmpdir": args.tmp_dir,
     }
 
     config_path = make_config(
@@ -550,6 +552,7 @@ def evaluate(args):
         "prodigal_meta": args.prodigal_meta,
         "snakemake_profile": args.snakemake_profile,
         "cluster_retries": args.cluster_retries,
+        "tmpdir": args.tmp_dir,
     }
 
     config_path = make_config(
@@ -954,6 +957,7 @@ def main():
         argument_group.add_argument("--local-cores", type=int, help="Maximum number of cores to use on localrules when running in cluster mode", default=1)
         argument_group.add_argument("--cluster-retries", help="Number of times to retry a failed job when using cluster submission (see `--snakemake-profile`).", default=0)
         argument_group.add_argument("--snakemake-args", help="Additional commands to be supplied to snakemake in the form of a space-prefixed single string e.g. \" --quiet\"", default="")
+        argument_group.add_argument("--tmp-dir", help="Path to temporary directory. [default: Use path from TMPDIR env variable]")
 
     def add_base_arguments(argument_group):
         argument_group.add_argument("--forward", "--reads", "--sequences", nargs='+', help="input forward/unpaired nucleotide read sequence(s)")
