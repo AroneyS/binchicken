@@ -34,6 +34,7 @@ class Tests(unittest.TestCase):
                 f"--singlem-metapackage {METAPACKAGE} "
                 f"--gtdbtk-db gtdb_release "
                 f"--checkm2-db CheckM2_database "
+                f"--tmp-dir tmp "
             )
             extern.run(cmd)
 
@@ -46,6 +47,7 @@ class Tests(unittest.TestCase):
             self.assertTrue(f"SINGLEM_METAPACKAGE_PATH = {METAPACKAGE}" in output)
             self.assertTrue(f"GTDBTK_DATA_PATH = gtdb_release" in output)
             self.assertTrue(f"CHECKM2DB = CheckM2_database" in output)
+            self.assertTrue(f"TMPDIR = tmp" in output)
 
             # Dryrun coassemble
             cmd = (
