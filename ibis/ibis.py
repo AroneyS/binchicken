@@ -929,11 +929,11 @@ def main():
             "build": [
                 btu.Example(
                     "create dependency conda environments",
-                    "ibis build --conda-prefix path_to_conda"
+                    "ibis build --conda-prefix path_to_conda_envs"
                 ),
                 btu.Example(
                     "create dependency conda environments and setup environment variables for Aviary",
-                    "ibis build --conda-prefix path_to_conda --singlem-metapackage metapackage --gtdbtk-db GTDBtk --checkm2-db CheckM2"
+                    "ibis build --conda-prefix path_to_conda_envs --singlem-metapackage metapackage --gtdbtk-db GTDBtk --checkm2-db CheckM2"
                 ),
             ],
         }
