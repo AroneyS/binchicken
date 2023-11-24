@@ -18,16 +18,24 @@ conda activate ibis
 pip install -e .
 ```
 
-Create subprocess conda environments
+Create subprocess conda environments and setup environment variables.
 
 ```bash
-ibis build --conda-prefix /path/to/conda/envs
+ibis build \
+  --conda-prefix /path/to/conda/envs \
+  --singlem-metapackage /metapackage/dir \
+  --gtdbtk-db /gtdb/release/dir \
+  --checkm2-db /checkm2/db/dir
 ```
 
-Alternatively, set directory to contain subprocess conda environments
+Alternatively, set directory to contain subprocess conda environments and environment variables manually.
 
 ```bash
 conda env config vars set SNAKEMAKE_CONDA_PREFIX="/path/to/conda/envs"
+conda env config vars set CONDA_ENV_PATH="/path/to/conda/envs"
+conda env config vars set SINGLEM_METAPACKAGE_PATH="/metapackage/dir"
+conda env config vars set GTDBTK_DATA_PATH="/gtdb/release/dir"
+conda env config vars set CHECKM2DB="/checkm2/db/dir"
 ```
 
 ### Install from pip
