@@ -786,6 +786,9 @@ def build(args):
     if args.checkm2_db:
         configure_variable("CHECKM2DB", args.checkm2_db)
 
+    if args.tmp_dir:
+        configure_variable("TMPDIR", args.tmp_dir)
+
 
     # Set args
     args = set_standard_args(args)
@@ -1106,6 +1109,7 @@ def main():
     build_parser.add_argument("--singlem-metapackage", help="SingleM metapackage")
     build_parser.add_argument("--gtdbtk-db", help="GTDBtk release database")
     build_parser.add_argument("--checkm2-db", help="CheckM2 database")
+    build_parser.add_argument("--tmp-dir", help="Set temporary directory", default="/tmp")
 
     ###########################################################################
 
