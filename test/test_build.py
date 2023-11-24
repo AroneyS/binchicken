@@ -34,7 +34,7 @@ class Tests(unittest.TestCase):
                 f"--singlem-metapackage {METAPACKAGE} "
                 f"--gtdbtk-db gtdb_release "
                 f"--checkm2-db CheckM2_database "
-                f"--tmp-dir tmp "
+                f"--set-tmp-dir tmp "
             )
             extern.run(cmd)
 

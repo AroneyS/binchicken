@@ -789,8 +789,8 @@ def build(args):
     if args.checkm2_db:
         configure_variable("CHECKM2DB", args.checkm2_db)
 
-    if args.tmp_dir:
-        configure_variable("TMPDIR", args.tmp_dir)
+    if args.set_tmp_dir:
+        configure_variable("TMPDIR", args.set_tmp_dir)
 
 
     # Set args
@@ -1109,11 +1109,11 @@ def main():
     ###########################################################################
 
     build_parser = main_parser.new_subparser("build", "Create dependency conda environments")
-    add_general_snakemake_options(build_parser, required_conda_prefix=True)
     build_parser.add_argument("--singlem-metapackage", help="SingleM metapackage")
     build_parser.add_argument("--gtdbtk-db", help="GTDBtk release database")
     build_parser.add_argument("--checkm2-db", help="CheckM2 database")
-    build_parser.add_argument("--tmp-dir", help="Set temporary directory", default="/tmp")
+    build_parser.add_argument("--set-tmp-dir", help="Set temporary directory", default="/tmp")
+    add_general_snakemake_options(build_parser, required_conda_prefix=True)
 
     ###########################################################################
 
