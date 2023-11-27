@@ -6,6 +6,15 @@
 import polars as pl
 import os
 
+SINGLEM_OTU_TABLE_SCHEMA = {
+    "gene": str,
+    "sample": str,
+    "sequence": str,
+    "num_hits": int,
+    "coverage": int,
+    "taxonomy": str,
+    }
+
 def processing(reads):
     print(f"Polars using {str(pl.threadpool_size())} threads")
 
@@ -28,7 +37,7 @@ if __name__ == "__main__":
 
     reads = []
     for read in input_reads:
-        reads.append(pl.read_csv(read, separator="\t"))
+        reads.append(pl.read_csv(read, separator="\t", schema=SINGLEM_OTU_TABLE_SCHEMA))
 
     binned, unbinned = processing(pl.concat(reads))
 
