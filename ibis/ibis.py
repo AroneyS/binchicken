@@ -877,7 +877,7 @@ def main():
             "coassemble": [
                 btu.Example(
                     "cluster reads into proposed coassemblies",
-                    "ibis coassemble --forward reads_1.1.fq ... --reverse reads_1.2.fq ... --no-genomes"
+                    "ibis coassemble --forward reads_1.1.fq ... --reverse reads_1.2.fq ..."
                 ),
                 btu.Example(
                     "cluster reads into proposed coassemblies based on unbinned sequences",
@@ -1023,7 +1023,6 @@ def main():
         coassemble_clustering.add_argument("--taxa-of-interest", help="Only consider sequences from this GTDB taxa (e.g. p__Planctomycetota) [default: all]")
         coassemble_clustering.add_argument("--appraise-sequence-identity", type=int, help="Minimum sequence identity for SingleM appraise against reference database [default: 86%, Genus-level]", default=0.86)
         coassemble_clustering.add_argument("--min-sequence-coverage", type=int, help="Minimum combined coverage for sequence inclusion [default: 10]", default=10)
-        coassemble_clustering.add_argument("--no-genomes", action="store_true", help="Run pipeline without genomes")
         coassemble_clustering.add_argument("--single-assembly", action="store_true", help="Skip appraise to discover samples to differential abundance binning. Forces --num-coassembly-samples and --max-coassembly-samples to 1")
         coassemble_clustering.add_argument("--exclude-coassemblies", nargs='+', help="List of coassemblies to exclude, space separated, in the form \"sample_1,sample_2\"")
         coassemble_clustering.add_argument("--exclude-coassemblies-list", help="List of coassemblies to exclude, space separated, in the form \"sample_1,sample_2\", newline separated")
@@ -1150,6 +1149,12 @@ def main():
     if not args.tmp_dir:
         args.tmp_dir = load_variable("TMPDIR")
 
+    if hasattr(args, "genomes"):
+        if not (args.genomes or args.genomes_list):
+            args.no_genomes = True
+        else:
+            args.no_genomes = False
+
     def base_argument_verification(args):
         if not args.forward and not args.forward_list:
             raise Exception("Input reads must be provided")
@@ -1161,8 +1166,6 @@ def main():
                     raise Exception("Interleaved and long-reads not yet implemented")
             except AttributeError:
                 raise Exception("Interleaved and long-reads not yet implemented")
-        if not (args.genomes or args.genomes_list or args.no_genomes):
-            raise Exception("Input genomes must be provided, or argument --no-genomes must be used")
         if (args.forward and args.forward_list) or (args.reverse and args.reverse_list) or (args.genomes and args.genomes_list):
             raise Exception("General and list arguments are mutually exclusive")
 
