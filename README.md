@@ -52,7 +52,7 @@ pip install ibis-genome
 # Assemble and recover from each sample individually with 20 samples used for differential abundance binning
 ibis coassemble \
   --forward-list samples_forward.txt --reverse-list samples_reverse.txt \
-  --single-assembly --no-genomes \
+  --single-assembly \
   --max-recovery-samples 20 \
   --run-aviary --aviary-gtdbtk-db /path/to/gtdbtk_db  --aviary-checkm2-db /path/to/checkm2_db \
   --cores 64 --output ibis_single_assembly
@@ -91,7 +91,7 @@ Paired end reads of form reads_1.1.fq, reads_1_1.fq and reads_1_R1.fq are automa
 
 ```bash
 # Example: cluster reads into proposed coassemblies
-ibis coassemble --forward reads_1.1.fq ... --reverse reads_1.2.fq ... --no-genomes
+ibis coassemble --forward reads_1.1.fq ... --reverse reads_1.2.fq ...
 
 # Example: cluster reads into proposed coassemblies based on unbinned sequences
 ibis coassemble --forward reads_1.1.fq ... --reverse reads_1.2.fq ... --genomes genome_1.fna ...
@@ -108,7 +108,7 @@ ibis coassemble --forward reads_1.1.fq ... --reverse reads_1.2.fq ... --single-a
 # Example: run proposed coassemblies through aviary with cluster submission
 # Create snakemake profile at ~/.config/snakemake/qsub with cluster, cluster-status, cluster-cancel, etc.
 # See https://snakemake.readthedocs.io/en/stable/executing/cli.html#profiles
-ibis coassemble --forward reads_1.1.fq ... --reverse reads_1.2.fq ... --no-genomes \
+ibis coassemble --forward reads_1.1.fq ... --reverse reads_1.2.fq ... \
   --run-aviary --aviary-gtdbtk-db /path/to/gtdbtk_db  --aviary-checkm2-db /path/to/checkm2_db \
   --snakemake-profile qsub --cluster-retries 3 --local-cores 64 --cores 64
 ```
