@@ -11,7 +11,7 @@ SINGLEM_OTU_TABLE_SCHEMA = {
     "sample": str,
     "sequence": str,
     "num_hits": int,
-    "coverage": int,
+    "coverage": float,
     "taxonomy": str,
     }
 
