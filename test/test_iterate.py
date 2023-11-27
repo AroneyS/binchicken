@@ -143,6 +143,72 @@ class Tests(unittest.TestCase):
             with open(cluster_path) as f:
                 self.assertEqual(expected, f.read())
 
+    def test_iterate_minimal(self):
+        with in_tempdir():
+            cmd = (
+                f"ibis iterate "
+                f"--coassemble-output {MOCK_COASSEMBLE} "
+                f"--coassemble-unbinned {MOCK_UNBINNED} "
+                f"--coassemble-binned {MOCK_BINNED} "
+                f"--aviary-outputs {MOCK_COASSEMBLIES} "
+                f"--elusive-clusters {ELUSIVE_CLUSTERS} "
+                f"--singlem-metapackage {METAPACKAGE} "
+                f"--output test "
+                f"--conda-prefix {path_to_conda} "
+            )
+            extern.run(cmd)
+
+            config_path = os.path.join("test", "config.yaml")
+            self.assertTrue(os.path.exists(config_path))
+            config = load_configfile(config_path)
+            NEW_GENOMES = " ".join([
+                os.path.join(MOCK_COASSEMBLE, "coassemble", "coassembly_0", "recover", "bins", "final_bins", "iteration_0-coassembly_0-0.fna"),
+                os.path.join(MOCK_COASSEMBLE, "coassemble", "coassembly_0", "recover", "bins", "final_bins", "iteration_0-coassembly_0-1.fna"),
+            ])
+            genomes = {
+                os.path.splitext(os.path.basename(g))[0]: g.replace(MOCK_COASSEMBLE + "/coassemble/coassembly_0/recover/bins/final_bins/", os.getcwd() + "/test/recovered_bins/")
+                for g in (GENOMES + " " + NEW_GENOMES).split(" ")
+                }
+            self.assertEqual(genomes, config["genomes"])
+
+            reads_1 = {
+                os.path.splitext(os.path.basename(r))[0].removesuffix(".1"): r
+                for r in SAMPLE_READS_FORWARD.split(" ")
+                }
+            self.assertEqual(reads_1, config["reads_1"])
+
+            reads_2 = {
+                os.path.splitext(os.path.basename(r))[0].removesuffix(".2"): r
+                for r in SAMPLE_READS_REVERSE.split(" ")
+                }
+            self.assertEqual(reads_2, config["reads_2"])
+
+            cluster_path = os.path.join("test", "coassemble", "target", "elusive_clusters.tsv")
+            self.assertTrue(os.path.exists(cluster_path))
+            expected = "\n".join(
+                [
+                    "\t".join([
+                        "samples",
+                        "length",
+                        "total_targets",
+                        "total_size",
+                        "recover_samples",
+                        "coassembly",
+                    ]),
+                    "\t".join([
+                        "sample_1,sample_3",
+                        "2",
+                        "1",
+                        "8456",
+                        "sample_1,sample_3",
+                        "coassembly_0"
+                    ]),
+                    ""
+                ]
+            )
+            with open(cluster_path) as f:
+                self.assertEqual(expected, f.read())
+
     def test_iterate_genome_input(self):
         with in_tempdir():
             cmd = (

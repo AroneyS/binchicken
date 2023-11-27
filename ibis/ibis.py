@@ -678,6 +678,18 @@ def combine_genome_singlem(genome_singlem, new_genome_singlem, path):
             f.write(g.read())
 
 def iterate(args):
+    if not (args.genomes or args.forward):
+        logging.info("Loading inputs from old config")
+        config_path = os.path.join(args.coassemble_output, "config.yaml")
+        old_config = load_config(config_path)
+
+        if not args.genomes:
+            args.genomes = [v for _,v in old_config["genomes"].items()]
+            args.no_genomes = False
+        if not args.forward:
+            args.forward = [v for _,v in old_config["reads_1"].items()]
+            args.reverse = [v for _,v in old_config["reads_2"].items()]
+
     logging.info("Evaluating new bins")
     if args.new_genomes_list:
         args.new_genomes = read_list(args.new_genomes_list)
@@ -1169,8 +1181,9 @@ def main():
         if (args.forward and args.forward_list) or (args.reverse and args.reverse_list) or (args.genomes and args.genomes_list):
             raise Exception("General and list arguments are mutually exclusive")
 
-    def coassemble_argument_verification(args):
-        base_argument_verification(args)
+    def coassemble_argument_verification(args, iterate=False):
+        if not iterate:
+            base_argument_verification(args)
         if (args.sample_query or args.sample_query_list or args.sample_query_dir) and not (args.sample_singlem or args.sample_singlem_list or args.sample_singlem_dir):
             raise Exception("Input SingleM query (--sample-query) requires SingleM otu tables (--sample-singlem) for coverage")
         if args.assemble_unmapped and args.single_assembly:
@@ -1233,7 +1246,11 @@ def main():
             raise Exception("Single assembly is incompatible with Ibis iterate")
         if not args.aviary_outputs and not (args.new_genomes or args.new_genomes_list):
             raise Exception("New genomes or aviary outputs must be provided for iteration")
-        coassemble_argument_verification(args)
+        if (args.forward and args.forward_list) or (args.reverse and args.reverse_list) or (args.genomes and args.genomes_list):
+            raise Exception("General and list arguments are mutually exclusive")
+        if not (args.genomes or args.forward) and not args.coassemble_output:
+            raise Exception("Reference genomes or forward reads must be provided if --coassemble-output not given")
+        coassemble_argument_verification(args, iterate=True)
         iterate(args)
 
     elif args.subparser_name == "build":
