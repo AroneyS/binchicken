@@ -680,7 +680,7 @@ def combine_genome_singlem(genome_singlem, new_genome_singlem, path):
 def iterate(args):
     if not (args.genomes or args.forward):
         logging.info("Loading inputs from old config")
-        config_path = os.path.join(args.coassemble_output, "config.yaml")
+        config_path = os.path.join(args.coassemble_output, "..", "config.yaml")
         old_config = load_config(config_path)
 
         if not args.genomes:
