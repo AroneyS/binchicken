@@ -61,7 +61,7 @@ ibis coassemble \
 ibis coassemble \
   --forward-list samples_forward.txt --reverse-list samples_reverse.txt \
   --genomes-list single_assembly_genomes.txt \
-  --sample-singlem-dir ibis_single_assembly/coassemble/pipe --sample-read-size ibis_single_assembly/coassemble/read_size.csv
+  --sample-singlem-dir ibis_single_assembly/coassemble/pipe --sample-read-size ibis_single_assembly/coassemble/read_size.csv \
   --assemble-unmapped \
   --max-coassembly-size 50 --max-recovery-samples 20 \
   --run-aviary --aviary-gtdbtk-db /path/to/gtdbtk_db  --aviary-checkm2-db /path/to/checkm2_db \
@@ -71,7 +71,7 @@ ibis coassemble \
 ibis iterate \
   --forward-list samples_forward.txt --reverse-list samples_reverse.txt \
   --genomes-list single_assembly_genomes.txt \
-  --sample-singlem-dir ibis_single_assembly/coassemble/pipe --sample-read-size ibis_single_assembly/coassemble/read_size.csv
+  --sample-singlem-dir ibis_single_assembly/coassemble/pipe --sample-read-size ibis_single_assembly/coassemble/read_size.csv \
   --coassemble-output ibis_2_coassembly --aviary-outputs ibis_2_coassembly/coassemble/coassemble/coassembly_* \
   --coassembly-samples 3 \
   --assemble-unmapped \
