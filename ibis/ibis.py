@@ -700,7 +700,8 @@ def iterate(args):
             ]
 
     if not args.sample_read_size:
-        args.sample_read_size = os.path.join(args.coassemble_output, "read_size.csv")
+        if args.coassemble_output:
+            args.sample_read_size = os.path.join(args.coassemble_output, "read_size.csv")
 
     logging.info("Evaluating new bins")
     if args.new_genomes_list:
