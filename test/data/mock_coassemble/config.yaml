@@ -3,9 +3,9 @@
 Ibis_version: 0.9.6
 max_threads: 8
 coassembly_samples: []
-singlem_metapackage: /mnt/hpccs01/home/aroneys/src/ibis_dev/test/data/singlem_metapackage.smpkg
+singlem_metapackage: ../singlem_metapackage.smpkg
 genomes:
-  GB_GCA_013286235.1: /mnt/hpccs01/home/aroneys/src/ibis_dev/test/data/GB_GCA_013286235.1.fna
+  GB_GCA_013286235.1: ../GB_GCA_013286235.1.fna
 taxa_of_interest: ''
 max_coassembly_size:
 assemble_unmapped: false
@@ -33,15 +33,15 @@ aviary_threads: 64
 test: false
 mock_sra: false
 aviary_dryrun: false
-conda_prefix: /mnt/hpccs01/home/aroneys/src/ibis_dev/test/data/.conda
+conda_prefix: ../.conda
 tmpdir: /tmp
 reads_1:
-  sample_1: /mnt/hpccs01/home/aroneys/src/ibis_dev/test/data/sample_1.1.fq
-  sample_2: /mnt/hpccs01/home/aroneys/src/ibis_dev/test/data/sample_2.1.fq
-  sample_3: /mnt/hpccs01/home/aroneys/src/ibis_dev/test/data/sample_3.1.fq
+  sample_1: ../sample_1.1.fq
+  sample_2: ../sample_2.1.fq
+  sample_3: ../sample_3.1.fq
 reads_2:
-  sample_1: /mnt/hpccs01/home/aroneys/src/ibis_dev/test/data/sample_1.2.fq
-  sample_2: /mnt/hpccs01/home/aroneys/src/ibis_dev/test/data/sample_2.2.fq
-  sample_3: /mnt/hpccs01/home/aroneys/src/ibis_dev/test/data/sample_3.2.fq
+  sample_1: ../sample_1.2.fq
+  sample_2: ../sample_2.2.fq
+  sample_3: ../sample_3.2.fq
 snakemake_profile: ''
 cluster_retries: 0
