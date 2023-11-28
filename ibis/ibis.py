@@ -690,6 +690,15 @@ def iterate(args):
             args.forward = [os.path.normpath(os.path.join(args.coassemble_output, "..", v)) for _,v in old_config["reads_1"].items()]
             args.reverse = [os.path.normpath(os.path.join(args.coassemble_output, "..", v)) for _,v in old_config["reads_2"].items()]
 
+    if not args.aviary_outputs and not (args.new_genomes or args.new_genomes_list):
+        aviary_output_path = os.path.join(args.coassemble_output, "coassemble")
+        logging.info(f"Iterating on coassemblies from {aviary_output_path}")
+
+        args.aviary_outputs = [
+            os.path.join(aviary_output_path, f) for f in os.listdir(aviary_output_path)
+            if not os.path.isfile(os.path.join(aviary_output_path, f))
+            ]
+
     logging.info("Evaluating new bins")
     if args.new_genomes_list:
         args.new_genomes = read_list(args.new_genomes_list)
@@ -1248,7 +1257,7 @@ def main():
             raise Exception("Directory arguments are incompatible with Ibis iterate")
         if args.single_assembly:
             raise Exception("Single assembly is incompatible with Ibis iterate")
-        if not args.aviary_outputs and not (args.new_genomes or args.new_genomes_list):
+        if not args.aviary_outputs and not (args.new_genomes or args.new_genomes_list) and not args.coassemble_output:
             raise Exception("New genomes or aviary outputs must be provided for iteration")
         if (args.forward and args.forward_list) or (args.reverse and args.reverse_list) or (args.genomes and args.genomes_list):
             raise Exception("General and list arguments are mutually exclusive")
