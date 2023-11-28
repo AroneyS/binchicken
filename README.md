@@ -53,14 +53,12 @@ pip install ibis-genome
 ibis coassemble \
   --forward-list samples_forward.txt --reverse-list samples_reverse.txt \
   --run-aviary --single-assembly \
-  --max-recovery-samples 20 \
   --cores 64 --output ibis_single_assembly
 
 # Assemble and recover from 2-sample coassemblies, prioritising samples with genomes not previously recovered
 ibis iterate \
   --coassemble-output ibis_single_assembly \
   --run-aviary --assemble-unmapped \
-  --max-coassembly-size 50 --max-recovery-samples 20 \
   --cores 64 --output ibis_2_coassembly
 
 # Perform another iteration of coassembly, with 3-samples this time
@@ -68,7 +66,6 @@ ibis iterate \
   --coassembly-samples 3 \
   --coassemble-output ibis_2_coassembly \
   --run-aviary --assemble-unmapped \
-  --max-coassembly-size 50 --max-recovery-samples 20 \
   --cores 64 --output ibis_3_coassembly
 ```
 
