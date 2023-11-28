@@ -11,18 +11,18 @@ path_to_conda = os.path.join(path_to_data,'.conda')
 
 METAPACKAGE = os.path.join(path_to_data, "singlem_metapackage.smpkg")
 MOCK_COASSEMBLE = os.path.join(path_to_data, "mock_coassemble")
-MOCK_UNBINNED = os.path.join(MOCK_COASSEMBLE, "appraise", "unbinned.otu_table.tsv")
-MOCK_BINNED = os.path.join(MOCK_COASSEMBLE, "appraise", "binned.otu_table.tsv")
-MOCK_TARGETS = os.path.join(MOCK_COASSEMBLE, "target", "targets.tsv")
-MOCK_ELUSIVE_EDGES = os.path.join(MOCK_COASSEMBLE, "target", "elusive_edges.tsv")
-MOCK_ELUSIVE_CLUSTERS = os.path.join(MOCK_COASSEMBLE, "target", "elusive_clusters.tsv")
-MOCK_SUMMARY = os.path.join(MOCK_COASSEMBLE, "summary.tsv")
+MOCK_UNBINNED = os.path.join(MOCK_COASSEMBLE, "coassemble", "appraise", "unbinned.otu_table.tsv")
+MOCK_BINNED = os.path.join(MOCK_COASSEMBLE, "coassemble", "appraise", "binned.otu_table.tsv")
+MOCK_TARGETS = os.path.join(MOCK_COASSEMBLE, "coassemble", "target", "targets.tsv")
+MOCK_ELUSIVE_EDGES = os.path.join(MOCK_COASSEMBLE, "coassemble", "target", "elusive_edges.tsv")
+MOCK_ELUSIVE_CLUSTERS = os.path.join(MOCK_COASSEMBLE, "coassemble", "target", "elusive_clusters.tsv")
+MOCK_SUMMARY = os.path.join(MOCK_COASSEMBLE, "coassemble", "summary.tsv")
 
-MOCK_COASSEMBLIES = ' '.join([os.path.join(MOCK_COASSEMBLE, "coassemble", "coassembly_0")])
+MOCK_COASSEMBLIES = ' '.join([os.path.join(MOCK_COASSEMBLE, "coassemble", "coassemble", "coassembly_0")])
 MOCK_GENOMES = " ".join([
-    os.path.join(MOCK_COASSEMBLE, "coassemble", "coassembly_0", "recover", "bins", "final_bins", "bin_1.fna"),
-    os.path.join(MOCK_COASSEMBLE, "coassemble", "coassembly_0", "recover", "bins", "final_bins", "bin_2.fna"),
-    os.path.join(MOCK_COASSEMBLE, "coassemble", "coassembly_0", "recover", "bins", "final_bins", "bin_3.fna"),
+    os.path.join(MOCK_COASSEMBLE, "coassemble", "coassemble", "coassembly_0", "recover", "bins", "final_bins", "bin_1.fna"),
+    os.path.join(MOCK_COASSEMBLE, "coassemble", "coassemble", "coassembly_0", "recover", "bins", "final_bins", "bin_2.fna"),
+    os.path.join(MOCK_COASSEMBLE, "coassemble", "coassemble", "coassembly_0", "recover", "bins", "final_bins", "bin_3.fna"),
 ])
 
 GENOMES = " ".join([os.path.join(path_to_data, "GB_GCA_013286235.1.fna")])
