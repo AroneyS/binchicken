@@ -699,6 +699,9 @@ def iterate(args):
             if not os.path.isfile(os.path.join(aviary_output_path, f))
             ]
 
+    if not args.sample_read_size:
+        args.sample_read_size = os.path.join(args.coassemble_output, "read_size.csv")
+
     logging.info("Evaluating new bins")
     if args.new_genomes_list:
         args.new_genomes = read_list(args.new_genomes_list)
