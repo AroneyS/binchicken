@@ -303,7 +303,7 @@ class Tests(unittest.TestCase):
             )
             output = extern.run(cmd)
 
-            self.assertTrue("count_bp_reads" in output)
+            self.assertTrue("count_bp_reads" not in output)
             self.assertTrue("singlem_pipe_reads" not in output)
             self.assertTrue("genome_transcripts" in output)
             self.assertTrue("singlem_pipe_genomes" in output)
