@@ -153,7 +153,10 @@ class Tests(unittest.TestCase):
                 f"--output test "
                 f"--conda-prefix {path_to_conda} "
             )
-            extern.run(cmd)
+            output_raw = subprocess.run(cmd, shell=True, check=True, capture_output=True)
+            output = output_raw.stderr.decode('ascii')
+
+            self.assertTrue("count_bp_reads" not in output)
 
             config_path = os.path.join("test", "config.yaml")
             self.assertTrue(os.path.exists(config_path))
