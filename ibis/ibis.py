@@ -869,7 +869,9 @@ def build(args):
     clusters_text = "samples\tlength\ttotal_targets\ttotal_size\trecover_samples\tcoassembly\nSRR8334324,SRR8334323\t2\t2\t0\tSRR8334324,SRR8334323\tcoassembly_0\n"
     with open(clusters[0], "w") as f:
         f.write(clusters_text)
-    os.touch(os.path.join(args.coassemble_output, "read_size.tsv"))
+
+    with open(os.path.join(args.coassemble_output, "read_size.tsv"), "w") as f:
+        pass
 
     for item in args.forward + args.reverse + args.genomes + new_bins + otu_tables + clusters:
         subprocess.check_call(f"touch {item}", shell=True)
