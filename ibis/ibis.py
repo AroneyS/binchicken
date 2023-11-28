@@ -684,11 +684,11 @@ def iterate(args):
         old_config = load_config(config_path)
 
         if not args.genomes:
-            args.genomes = [os.path.normpath(os.path.join(args.coassemble_output, v)) for _,v in old_config["genomes"].items()]
+            args.genomes = [os.path.normpath(os.path.join(args.coassemble_output, "..", v)) for _,v in old_config["genomes"].items()]
             args.no_genomes = False
         if not args.forward:
-            args.forward = [os.path.normpath(os.path.join(args.coassemble_output, v)) for _,v in old_config["reads_1"].items()]
-            args.reverse = [os.path.normpath(os.path.join(args.coassemble_output, v)) for _,v in old_config["reads_2"].items()]
+            args.forward = [os.path.normpath(os.path.join(args.coassemble_output, "..", v)) for _,v in old_config["reads_1"].items()]
+            args.reverse = [os.path.normpath(os.path.join(args.coassemble_output, "..", v)) for _,v in old_config["reads_2"].items()]
 
     logging.info("Evaluating new bins")
     if args.new_genomes_list:
