@@ -22,7 +22,7 @@ GENOMES = " ".join([os.path.join(path_to_data, "GB_GCA_013286235.1.fna")])
 METAPACKAGE = os.path.join(path_to_data, "singlem_metapackage.smpkg")
 
 MOCK_COASSEMBLE = os.path.join(path_to_data, "mock_coassemble")
-MOCK_COASSEMBLIES = ' '.join([os.path.join(MOCK_COASSEMBLE, "coassemble", "coassembly_0")])
+MOCK_COASSEMBLIES = ' '.join([os.path.join(MOCK_COASSEMBLE, "coassemble", "coassemble", "coassembly_0")])
 
 class Tests(unittest.TestCase):
     def test_build(self):
@@ -98,12 +98,12 @@ class Tests(unittest.TestCase):
                 f"--aviary-gtdbtk-db gtdb_release "
                 f"--aviary-checkm2-db CheckM2_database "
                 f"--genomes {GENOMES} "
-                f"--coassemble-unbinned {os.path.join(MOCK_COASSEMBLE, 'appraise', 'unbinned_sra.otu_table.tsv')} "
-                f"--coassemble-binned {os.path.join(MOCK_COASSEMBLE, 'appraise', 'binned_sra.otu_table.tsv')} "
-                f"--coassemble-targets {os.path.join(MOCK_COASSEMBLE, 'target', 'targets.tsv')} "
-                f"--coassemble-elusive-edges {os.path.join(MOCK_COASSEMBLE, 'target', 'elusive_edges.tsv')} "
-                f"--coassemble-elusive-clusters {os.path.join(MOCK_COASSEMBLE, 'target', 'elusive_clusters_sra.tsv')} "
-                f"--coassemble-summary {os.path.join(MOCK_COASSEMBLE, 'summary.tsv')} "
+                f"--coassemble-unbinned {os.path.join(MOCK_COASSEMBLE, 'coassemble', 'appraise', 'unbinned_sra.otu_table.tsv')} "
+                f"--coassemble-binned {os.path.join(MOCK_COASSEMBLE, 'coassemble', 'appraise', 'binned_sra.otu_table.tsv')} "
+                f"--coassemble-targets {os.path.join(MOCK_COASSEMBLE, 'coassemble', 'target', 'targets.tsv')} "
+                f"--coassemble-elusive-edges {os.path.join(MOCK_COASSEMBLE, 'coassemble', 'target', 'elusive_edges.tsv')} "
+                f"--coassemble-elusive-clusters {os.path.join(MOCK_COASSEMBLE, 'coassemble', 'target', 'elusive_clusters_sra.tsv')} "
+                f"--coassemble-summary {os.path.join(MOCK_COASSEMBLE, 'coassemble', 'summary.tsv')} "
                 f"--output test_update "
                 f"--conda-prefix {path_to_conda} "
                 f"--dryrun "
