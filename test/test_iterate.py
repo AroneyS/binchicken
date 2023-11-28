@@ -148,7 +148,6 @@ class Tests(unittest.TestCase):
             cmd = (
                 f"ibis iterate "
                 f"--coassemble-output {MOCK_COASSEMBLE} "
-                f"--aviary-outputs {MOCK_COASSEMBLIES} "
                 f"--elusive-clusters {ELUSIVE_CLUSTERS} "
                 f"--singlem-metapackage {METAPACKAGE} "
                 f"--output test "
