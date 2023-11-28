@@ -27,10 +27,10 @@ TWO_GENOMES = " ".join([
     ])
 
 MOCK_COASSEMBLE = os.path.join(path_to_data, "mock_coassemble")
-APPRAISE_BINNED = os.path.join(MOCK_COASSEMBLE, "appraise", "binned.otu_table.tsv")
-APPRAISE_UNBINNED = os.path.join(MOCK_COASSEMBLE, "appraise", "unbinned.otu_table.tsv")
-ELUSIVE_CLUSTERS = os.path.join(MOCK_COASSEMBLE, "target", "elusive_clusters.tsv")
-ELUSIVE_CLUSTERS_TWO = os.path.join(MOCK_COASSEMBLE, 'target', 'elusive_clusters_two.tsv')
+APPRAISE_BINNED = os.path.join(MOCK_COASSEMBLE, "coassemble", "appraise", "binned.otu_table.tsv")
+APPRAISE_UNBINNED = os.path.join(MOCK_COASSEMBLE, "coassemble", "appraise", "unbinned.otu_table.tsv")
+ELUSIVE_CLUSTERS = os.path.join(MOCK_COASSEMBLE, "coassemble", "target", "elusive_clusters.tsv")
+ELUSIVE_CLUSTERS_TWO = os.path.join(MOCK_COASSEMBLE, "coassemble", 'target', 'elusive_clusters_two.tsv')
 
 
 class Tests(unittest.TestCase):

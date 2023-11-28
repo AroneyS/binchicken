@@ -30,21 +30,21 @@ METAPACKAGE_EIF = os.path.join(path_to_data, "singlem_metapackage_EIF.smpkg")
 
 MOCK_COASSEMBLE = os.path.join(path_to_data, "mock_coassemble")
 
-SAMPLE_READ_SIZE = os.path.join(MOCK_COASSEMBLE, "read_size2.csv")
+SAMPLE_READ_SIZE = os.path.join(MOCK_COASSEMBLE, "coassemble", "read_size2.csv")
 SAMPLE_SINGLEM = ' '.join([
-    os.path.join(MOCK_COASSEMBLE, "pipe", "sample_1_read.otu_table.tsv"),
-    os.path.join(MOCK_COASSEMBLE, "pipe", "sample_2_read.otu_table.tsv"),
-    os.path.join(MOCK_COASSEMBLE, "pipe", "sample_3_read.otu_table.tsv"),
+    os.path.join(MOCK_COASSEMBLE, "coassemble", "pipe", "sample_1_read.otu_table.tsv"),
+    os.path.join(MOCK_COASSEMBLE, "coassemble", "pipe", "sample_2_read.otu_table.tsv"),
+    os.path.join(MOCK_COASSEMBLE, "coassemble", "pipe", "sample_3_read.otu_table.tsv"),
     ])
 SAMPLE_SINGLEM_EIF = ' '.join([
-    os.path.join(MOCK_COASSEMBLE, "pipe_EIF", "sample_1_read.otu_table.tsv"),
-    os.path.join(MOCK_COASSEMBLE, "pipe_EIF", "sample_2_read.otu_table.tsv"),
-    os.path.join(MOCK_COASSEMBLE, "pipe_EIF", "sample_3_read.otu_table.tsv"),
+    os.path.join(MOCK_COASSEMBLE, "coassemble", "pipe_EIF", "sample_1_read.otu_table.tsv"),
+    os.path.join(MOCK_COASSEMBLE, "coassemble", "pipe_EIF", "sample_2_read.otu_table.tsv"),
+    os.path.join(MOCK_COASSEMBLE, "coassemble", "pipe_EIF", "sample_3_read.otu_table.tsv"),
     ])
 
 GENOME_TRANSCRIPTS = ' '.join([os.path.join(path_to_data, "GB_GCA_013286235.1_protein.fna")])
-GENOME_SINGLEM = os.path.join(MOCK_COASSEMBLE, "summarise", "bins_summarised.otu_table2.tsv")
-GENOME_SINGLEM_EIF = os.path.join(MOCK_COASSEMBLE, "summarise", "bins_summarised_EIF.otu_table.tsv")
+GENOME_SINGLEM = os.path.join(MOCK_COASSEMBLE, "coassemble", "summarise", "bins_summarised.otu_table2.tsv")
+GENOME_SINGLEM_EIF = os.path.join(MOCK_COASSEMBLE, "coassemble", "summarise", "bins_summarised_EIF.otu_table.tsv")
 
 SAMPLE_QUERY_DIR = os.path.join(path_to_data, "query")
 SAMPLE_QUERY = ' '.join([

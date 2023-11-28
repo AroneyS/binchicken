@@ -1167,6 +1167,10 @@ def main():
         else:
             args.no_genomes = False
 
+    if hasattr(args, "coassemble_output"):
+        if args.coassemble_output:
+            args.coassemble_output = os.path.join(args.coassemble_output, "coassemble")
+
     def base_argument_verification(args):
         if not args.forward and not args.forward_list:
             raise Exception("Input reads must be provided")
