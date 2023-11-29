@@ -436,6 +436,7 @@ def coassemble(args):
     if args.single_assembly:
         args.num_coassembly_samples = 1
         args.max_coassembly_samples = 1
+        args.max_coassembly_size = None
 
     config_items = {
         # General config
@@ -1076,12 +1077,12 @@ def main():
         coassemble_clustering.add_argument("--taxa-of-interest", help="Only consider sequences from this GTDB taxa (e.g. p__Planctomycetota) [default: all]")
         coassemble_clustering.add_argument("--appraise-sequence-identity", type=int, help="Minimum sequence identity for SingleM appraise against reference database [default: 86%, Genus-level]", default=0.86)
         coassemble_clustering.add_argument("--min-sequence-coverage", type=int, help="Minimum combined coverage for sequence inclusion [default: 10]", default=10)
-        coassemble_clustering.add_argument("--single-assembly", action="store_true", help="Skip appraise to discover samples to differential abundance binning. Forces --num-coassembly-samples and --max-coassembly-samples to 1")
+        coassemble_clustering.add_argument("--single-assembly", action="store_true", help="Skip appraise to discover samples to differential abundance binning. Forces --num-coassembly-samples and --max-coassembly-samples to 1 and sets --max-coassembly-size to None")
         coassemble_clustering.add_argument("--exclude-coassemblies", nargs='+', help="List of coassemblies to exclude, space separated, in the form \"sample_1,sample_2\"")
         coassemble_clustering.add_argument("--exclude-coassemblies-list", help="List of coassemblies to exclude, space separated, in the form \"sample_1,sample_2\", newline separated")
         coassemble_clustering.add_argument("--num-coassembly-samples", type=int, help="Number of samples per coassembly cluster [default: 2]", default=2)
         coassemble_clustering.add_argument("--max-coassembly-samples", type=int, help="Upper bound for number of samples per coassembly cluster [default: --num-coassembly-samples]", default=None)
-        coassemble_clustering.add_argument("--max-coassembly-size", type=int, help="Maximum size (Gbp) of coassembly cluster [default: None]", default=None)
+        coassemble_clustering.add_argument("--max-coassembly-size", type=int, help="Maximum size (Gbp) of coassembly cluster [default: 50Gbp]", default=50)
         coassemble_clustering.add_argument("--max-recovery-samples", type=int, help="Upper bound for number of related samples to use for differential abundance binning [default: 20]", default=20)
         coassemble_clustering.add_argument("--prodigal-meta", action="store_true", help="Use prodigal \"-p meta\" argument (for testing)")
         # Coassembly options
