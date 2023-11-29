@@ -148,7 +148,6 @@ class Tests(unittest.TestCase):
             cmd = (
                 f"ibis iterate "
                 f"--coassemble-output {MOCK_COASSEMBLE} "
-                f"--elusive-clusters {ELUSIVE_CLUSTERS} "
                 f"--singlem-metapackage {METAPACKAGE} "
                 f"--output test "
                 f"--conda-prefix {path_to_conda} "
@@ -183,6 +182,9 @@ class Tests(unittest.TestCase):
                 }
             self.assertEqual(reads_2, config["reads_2"])
 
+            exclude_coassemblies = ["sample_0,sample_1"]
+            self.assertEqual(exclude_coassemblies, config["exclude_coassemblies"])
+
             cluster_path = os.path.join("test", "coassemble", "target", "elusive_clusters.tsv")
             self.assertTrue(os.path.exists(cluster_path))
             expected = "\n".join(
@@ -207,6 +209,12 @@ class Tests(unittest.TestCase):
                 ]
             )
             with open(cluster_path) as f:
+                self.assertEqual(expected, f.read())
+
+            cumulative_coassemblies_path = os.path.join("test", "coassemble", "target", "cumulative_coassemblies.tsv")
+            self.assertTrue(os.path.exists(cumulative_coassemblies_path))
+            expected = "\n".join(["sample_0,sample_1", "sample_1,sample_3", ""])
+            with open(cumulative_coassemblies_path) as f:
                 self.assertEqual(expected, f.read())
 
     def test_iterate_genome_input(self):
@@ -336,12 +344,9 @@ class Tests(unittest.TestCase):
         with in_tempdir():
             cmd = (
                 f"ibis iterate "
-                f"--aviary-outputs {MOCK_COASSEMBLIES} "
-                f"--forward {SAMPLE_READS_FORWARD} "
-                f"--reverse {SAMPLE_READS_REVERSE} "
-                f"--genomes {GENOMES} "
-                f"--genome-transcripts {GENOME_TRANSCRIPTS} "
+                f"--coassemble-output {MOCK_COASSEMBLE} "
                 f"--singlem-metapackage {METAPACKAGE} "
+                f"--exclude-coassemblies sample_4,sample_5 "
                 f"--output test "
                 f"--conda-prefix {path_to_conda} "
                 f"--dryrun "
@@ -357,6 +362,7 @@ class Tests(unittest.TestCase):
             self.assertEqual(config["assemble_unmapped"], False)
             self.assertEqual(config["aviary_threads"], 64)
             self.assertEqual(config["aviary_memory"], 500)
+            self.assertEqual(config["exclude_coassemblies"], ["sample_0,sample_1", "sample_4,sample_5"])
 
             self.assertTrue("Evaluating bins using CheckM2 with completeness >= 70 and contamination <= 10" in output)
 
