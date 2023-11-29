@@ -118,16 +118,15 @@ ibis evaluate --coassemble-output coassemble_dir --new-genomes genome_1.fna ... 
 ## Ibis iterate
 
 Run a further iteration of coassemble, including newly recovered bins.
+Defaults to using genomes with at least 70% complete and at most 10% contamination CheckM2.
+Automatically excludes previous coassemblies.
 
 ```bash
 # Example: rerun coassemble, adding new bins to database
-ibis iterate --aviary-outputs coassembly_0_dir ... --forward reads_1.1.fq ... --reverse reads_1.2.fq ... --genomes genome_1.fna ...
+ibis iterate --coassemble-output coassemble_dir
 
 # Example: rerun coassemble, adding new bins to database, providing genomes directly
-ibis iterate --new-genomes new_genome_1.fna ... --forward reads_1.1.fq ... --reverse reads_1.2.fq ... --genomes genome_1.fna ...
-
-# Example: rerun coassemble, adding new bins to database, excluding previous coassembly combinations
-ibis iterate --exclude-coassemblies reads_1,reads_2 --new-genomes new_genome_1.fna ... --forward reads_1.1.fq ... --reverse reads_1.2.fq ... --genomes genome_1.fna ...
+ibis iterate --coassemble-output coassemble_dir --new-genomes new_genome_1.fna
 ```
 
 ## Ibis update
@@ -136,11 +135,11 @@ Applies further processing to a previous Ibis coassemble run: downloading SRA re
 
 ```bash
 # Example: update previous run to download SRA reads
-ibis update --sra --coassemble-output coassemble_dir --forward SRA000001 ... --genomes genome_1.fna ...
+ibis update --coassemble-output coassemble_dir --sra --forward SRA000001 ... --genomes genome_1.fna ...
 
 # Example: update previous run to perform unmapping
-ibis update --assemble-unmapped --coassemble-output coassemble_dir --forward reads_1.1.fq ... --reverse reads_1.2.fq ... --genomes genome_1.fna ...
+ibis update --coassemble-output coassemble_dir --assemble-unmapped --forward reads_1.1.fq ... --reverse reads_1.2.fq ... --genomes genome_1.fna ...
 
 # Example: update previous run to run specific coassemblies
-ibis update --run-aviary --coassemblies coassembly_0 ... --coassemble-output coassemble_dir --forward reads_1.1.fq ... --reverse reads_1.2.fq ... --genomes genome_1.fna ...
+ibis update --coassemble-output coassemble_dir --run-aviary --coassemblies coassembly_0 ... --forward reads_1.1.fq ... --reverse reads_1.2.fq ... --genomes genome_1.fna ...
 ```
