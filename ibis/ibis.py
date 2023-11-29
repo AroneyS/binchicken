@@ -728,9 +728,24 @@ def iterate(args):
             }
 
     if args.coassemble_output:
+        logging.info("Processing previous Ibis coassemble run")
         coassemble_appraise_dir = os.path.join(os.path.abspath(args.coassemble_output), "appraise")
         args.coassemble_unbinned = os.path.join(coassemble_appraise_dir, "unbinned.otu_table.tsv")
         args.coassemble_binned = os.path.join(coassemble_appraise_dir, "binned.otu_table.tsv")
+
+        if args.exclude_coassemblies:
+            new_exclude_coassemblies = args.exclude_coassemblies
+        else:
+            new_exclude_coassemblies = []
+
+        cumulative_path = os.path.join(args.coassemble_output, "target", "cumulative_coassemblies.tsv")
+        if os.path.isfile(cumulative_path):
+            with open(cumulative_path) as f:
+                cumulative_exclude = f.read().splitlines()
+        else:
+            cumulative_exclude = []
+
+        args.exclude_coassemblies = cumulative_exclude + new_exclude_coassemblies
 
     try:
         args.coassemble_unbinned
@@ -774,6 +789,14 @@ def iterate(args):
 
     coassemble(args)
 
+    elusive_clusters_path = os.path.join(args.output, "coassemble", "target", "elusive_clusters.tsv")
+    if os.path.isfile(elusive_clusters_path):
+        elusive_clusters = pl.read_csv(elusive_clusters_path, separator="\t")
+        new_coassemblies = elusive_clusters.get_column("samples").to_list()
+
+        with open(os.path.join(args.output, "coassemble", "target", "cumulative_coassemblies.tsv"), "w") as f:
+            f.write("\n".join(args.exclude_coassemblies + new_coassemblies) + "\n")
+
     if args.elusive_clusters and not args.dryrun:
         new_cluster = pl.read_csv(os.path.join(args.output, "coassemble", "target", "elusive_clusters.tsv"), separator="\t")
         for cluster in args.elusive_clusters:
@@ -785,7 +808,8 @@ def iterate(args):
                     pl.col("coassembly").map_elements(lambda x: logging.warn(f"{x} has been previously suggested"))
                     )
     elif not args.exclude_coassemblies:
-        logging.warn("Suggested coassemblies may match those from previous iterations. To check, use `--elusive-clusters`. To exclude manually, use `--exclude-coassembles`")
+        logging.warn("Suggested coassemblies may match those from previous iterations. To check, use `--elusive-clusters`.")
+        logging.warn("To exclude, provide previous run with `--coassemble-output` or use `--exclude-coassembles`.")
 
     logging.info(f"Ibis iterate complete.")
     logging.info(f"Cluster summary at {os.path.join(args.output, 'coassemble', 'summary.tsv')}")
