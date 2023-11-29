@@ -963,29 +963,25 @@ def main():
             "update": [
                 btu.Example(
                     "update previous run to download SRA reads",
-                    "ibis update --sra --coassemble-output coassemble_dir --forward SRA000001 ... --genomes genome_1.fna ..."
+                    "ibis update --coassemble-output coassemble_dir --sra --forward SRA000001 ... --genomes genome_1.fna ..."
                 ),
                 btu.Example(
                     "update previous run to perform unmapping",
-                    "ibis update --assemble-unmapped --coassemble-output coassemble_dir --forward reads_1.1.fq ... --reverse reads_1.2.fq ... --genomes genome_1.fna ..."
+                    "ibis update --coassemble-output coassemble_dir --assemble-unmapped --forward reads_1.1.fq ... --reverse reads_1.2.fq ... --genomes genome_1.fna ..."
                 ),
                 btu.Example(
                     "update previous run to run specific coassemblies",
-                    "ibis update --run-aviary --coassemblies coassembly_0 ... --coassemble-output coassemble_dir --forward reads_1.1.fq ... --reverse reads_1.2.fq ... --genomes genome_1.fna ..."
+                    "ibis update --coassemble-output coassemble_dir --run-aviary --coassemblies coassembly_0 ... --forward reads_1.1.fq ... --reverse reads_1.2.fq ... --genomes genome_1.fna ..."
                 ),
             ],
             "iterate": [
                 btu.Example(
                     "rerun coassemble, adding new bins to database",
-                    "ibis iterate --aviary-outputs coassembly_0_dir ... --forward reads_1.1.fq ... --reverse reads_1.2.fq ... --genomes genome_1.fna ..."
+                    "ibis iterate --coassemble-output coassemble_dir"
                 ),
                 btu.Example(
                     "rerun coassemble, adding new bins to database, providing genomes directly",
-                    "ibis iterate --new-genomes new_genome_1.fna ... --forward reads_1.1.fq ... --reverse reads_1.2.fq ... --genomes genome_1.fna ..."
-                ),
-                btu.Example(
-                    "rerun coassemble, adding new bins to database, excluding previous coassembly combinations",
-                    "ibis iterate --exclude-coassemblies reads_1,reads_2 --aviary-outputs coassembly_0_dir ... --forward reads_1.1.fq ... --reverse reads_1.2.fq ... --genomes genome_1.fna ..."
+                    "ibis iterate --coassemble-output coassemble_dir --new-genomes new_genome_1.fna"
                 ),
             ],
             "build": [
