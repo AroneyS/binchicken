@@ -795,8 +795,13 @@ def iterate(args):
         elusive_clusters = pl.read_csv(elusive_clusters_path, separator="\t")
         new_coassemblies = elusive_clusters.get_column("samples").to_list()
 
+        if args.exclude_coassemblies:
+            cumulative_coassemblies = args.exclude_coassemblies + new_coassemblies
+        else:
+            cumulative_coassemblies = new_coassemblies
+
         with open(os.path.join(args.output, "coassemble", "target", "cumulative_coassemblies.tsv"), "w") as f:
-            f.write("\n".join(args.exclude_coassemblies + new_coassemblies) + "\n")
+            f.write("\n".join(cumulative_coassemblies) + "\n")
 
     if args.elusive_clusters and not args.dryrun:
         new_cluster = pl.read_csv(os.path.join(args.output, "coassemble", "target", "elusive_clusters.tsv"), separator="\t")
