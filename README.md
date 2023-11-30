@@ -97,8 +97,7 @@ ibis coassemble --forward reads_1.1.fq ... --reverse reads_1.2.fq ... --single-a
 # Example: run proposed coassemblies through aviary with cluster submission
 # Create snakemake profile at ~/.config/snakemake/qsub with cluster, cluster-status, cluster-cancel, etc.
 # See https://snakemake.readthedocs.io/en/stable/executing/cli.html#profiles
-ibis coassemble --forward reads_1.1.fq ... --reverse reads_1.2.fq ... \
-  --run-aviary --aviary-gtdbtk-db /path/to/gtdbtk_db  --aviary-checkm2-db /path/to/checkm2_db \
+ibis coassemble --forward reads_1.1.fq ... --reverse reads_1.2.fq ... --run-aviary \
   --snakemake-profile qsub --cluster-retries 3 --local-cores 64 --cores 64
 ```
 
