@@ -15,6 +15,7 @@ import polars.selectors as cs
 from snakemake.io import load_configfile
 from ruamel.yaml import YAML
 import copy
+import shutil
 
 FAST_AVIARY_MODE = "fast"
 COMPREHENSIVE_AVIARY_MODE = "comprehensive"
@@ -125,6 +126,7 @@ def download_sra(args):
         "reads_2": {},
         "snakemake_profile": args.snakemake_profile,
         "cluster_retries": args.cluster_retries,
+        "tmpdir": args.tmp_dir,
     }
 
     config_path = make_config(
@@ -434,6 +436,7 @@ def coassemble(args):
     if args.single_assembly:
         args.num_coassembly_samples = 1
         args.max_coassembly_samples = 1
+        args.max_coassembly_size = None
 
     config_items = {
         # General config
@@ -463,13 +466,14 @@ def coassemble(args):
         "unmapping_max_alignment": args.unmapping_max_alignment,
         "aviary_speed": args.aviary_speed,
         "run_aviary": args.run_aviary,
-        "aviary_gtdbtk": args.aviary_gtdbtk_dir,
-        "aviary_checkm2": args.aviary_checkm2_dir,
+        "aviary_gtdbtk": args.aviary_gtdbtk_db,
+        "aviary_checkm2": args.aviary_checkm2_db,
         "aviary_threads": args.aviary_cores,
         "aviary_memory": args.aviary_memory,
         "conda_prefix": args.conda_prefix,
         "snakemake_profile": args.snakemake_profile,
         "cluster_retries": args.cluster_retries,
+        "tmpdir": args.tmp_dir,
     }
 
     config_path = make_config(
@@ -550,6 +554,7 @@ def evaluate(args):
         "prodigal_meta": args.prodigal_meta,
         "snakemake_profile": args.snakemake_profile,
         "cluster_retries": args.cluster_retries,
+        "tmpdir": args.tmp_dir,
     }
 
     config_path = make_config(
@@ -674,6 +679,31 @@ def combine_genome_singlem(genome_singlem, new_genome_singlem, path):
             f.write(g.read())
 
 def iterate(args):
+    if not (args.genomes or args.forward):
+        logging.info("Loading inputs from old config")
+        config_path = os.path.join(args.coassemble_output, "..", "config.yaml")
+        old_config = load_config(config_path)
+
+        if not args.genomes:
+            args.genomes = [os.path.normpath(os.path.join(args.coassemble_output, "..", v)) for _,v in old_config["genomes"].items()]
+            args.no_genomes = False
+        if not args.forward:
+            args.forward = [os.path.normpath(os.path.join(args.coassemble_output, "..", v)) for _,v in old_config["reads_1"].items()]
+            args.reverse = [os.path.normpath(os.path.join(args.coassemble_output, "..", v)) for _,v in old_config["reads_2"].items()]
+
+    if not args.aviary_outputs and not (args.new_genomes or args.new_genomes_list):
+        aviary_output_path = os.path.join(args.coassemble_output, "coassemble")
+        logging.info(f"Iterating on coassemblies from {aviary_output_path}")
+
+        args.aviary_outputs = [
+            os.path.join(aviary_output_path, f) for f in os.listdir(aviary_output_path)
+            if not os.path.isfile(os.path.join(aviary_output_path, f))
+            ]
+
+    if not args.sample_read_size:
+        if args.coassemble_output:
+            args.sample_read_size = os.path.join(args.coassemble_output, "read_size.csv")
+
     logging.info("Evaluating new bins")
     if args.new_genomes_list:
         args.new_genomes = read_list(args.new_genomes_list)
@@ -699,9 +729,24 @@ def iterate(args):
             }
 
     if args.coassemble_output:
+        logging.info("Processing previous Ibis coassemble run")
         coassemble_appraise_dir = os.path.join(os.path.abspath(args.coassemble_output), "appraise")
         args.coassemble_unbinned = os.path.join(coassemble_appraise_dir, "unbinned.otu_table.tsv")
         args.coassemble_binned = os.path.join(coassemble_appraise_dir, "binned.otu_table.tsv")
+
+        if args.exclude_coassemblies:
+            new_exclude_coassemblies = args.exclude_coassemblies
+        else:
+            new_exclude_coassemblies = []
+
+        cumulative_path = os.path.join(args.coassemble_output, "target", "cumulative_coassemblies.tsv")
+        if os.path.isfile(cumulative_path):
+            with open(cumulative_path) as f:
+                cumulative_exclude = f.read().splitlines()
+        else:
+            cumulative_exclude = []
+
+        args.exclude_coassemblies = cumulative_exclude + new_exclude_coassemblies
 
     try:
         args.coassemble_unbinned
@@ -745,6 +790,19 @@ def iterate(args):
 
     coassemble(args)
 
+    elusive_clusters_path = os.path.join(args.output, "coassemble", "target", "elusive_clusters.tsv")
+    if os.path.isfile(elusive_clusters_path):
+        elusive_clusters = pl.read_csv(elusive_clusters_path, separator="\t")
+        new_coassemblies = elusive_clusters.get_column("samples").to_list()
+
+        if args.exclude_coassemblies:
+            cumulative_coassemblies = args.exclude_coassemblies + new_coassemblies
+        else:
+            cumulative_coassemblies = new_coassemblies
+
+        with open(os.path.join(args.output, "coassemble", "target", "cumulative_coassemblies.tsv"), "w") as f:
+            f.write("\n".join(cumulative_coassemblies) + "\n")
+
     if args.elusive_clusters and not args.dryrun:
         new_cluster = pl.read_csv(os.path.join(args.output, "coassemble", "target", "elusive_clusters.tsv"), separator="\t")
         for cluster in args.elusive_clusters:
@@ -756,22 +814,41 @@ def iterate(args):
                     pl.col("coassembly").map_elements(lambda x: logging.warn(f"{x} has been previously suggested"))
                     )
     elif not args.exclude_coassemblies:
-        logging.warn("Suggested coassemblies may match those from previous iterations. To check, use `--elusive-clusters`. To exclude manually, use `--exclude-coassembles`")
+        logging.warn("Suggested coassemblies may match those from previous iterations. To check, use `--elusive-clusters`.")
+        logging.warn("To exclude, provide previous run with `--coassemble-output` or use `--exclude-coassembles`.")
 
     logging.info(f"Ibis iterate complete.")
     logging.info(f"Cluster summary at {os.path.join(args.output, 'coassemble', 'summary.tsv')}")
     logging.info(f"More details at {os.path.join(args.output, 'coassemble', 'target', 'elusive_clusters.tsv')}")
     logging.info(f"Aviary commands for coassembly and recovery in shell scripts at {os.path.join(args.output, 'coassemble', 'commands')}")
 
+def configure_variable(variable, value):
+    os.environ[variable] = value
+    extern.run(f"conda env config vars set {variable}={value}")
+
 def build(args):
     output_dir = os.path.join(args.output, "build")
+    shutil.rmtree(output_dir, ignore_errors=True)
     os.makedirs(output_dir, exist_ok=True)
     conda_prefix = args.conda_prefix
     args.build = True
 
     # Setup env variables
-    os.environ["SNAKEMAKE_CONDA_PREFIX"] = conda_prefix
-    extern.run(f"conda env config vars set SNAKEMAKE_CONDA_PREFIX={conda_prefix}")
+    configure_variable("SNAKEMAKE_CONDA_PREFIX", conda_prefix)
+    configure_variable("CONDA_ENV_PATH", conda_prefix)
+
+    if args.singlem_metapackage:
+        configure_variable("SINGLEM_METAPACKAGE_PATH", args.singlem_metapackage)
+
+    if args.gtdbtk_db:
+        configure_variable("GTDBTK_DATA_PATH", args.gtdbtk_db)
+
+    if args.checkm2_db:
+        configure_variable("CHECKM2DB", args.checkm2_db)
+
+    if args.set_tmp_dir:
+        configure_variable("TMPDIR", args.set_tmp_dir)
+
 
     # Set args
     args = set_standard_args(args)
@@ -788,8 +865,9 @@ def build(args):
     args.genomes_list = None
     args.new_genomes_list = None
     args.coassembly_samples_list = None
-    args.aviary_gtdbtk_dir = "."
-    args.aviary_checkm2_dir = "."
+    args.sample_read_size = None
+    args.aviary_gtdbtk_db = "."
+    args.aviary_checkm2_db = "."
     args.aviary_cores = None
     args.assemble_unmapped = True
     args.run_qc = True
@@ -823,6 +901,9 @@ def build(args):
     with open(clusters[0], "w") as f:
         f.write(clusters_text)
 
+    with open(os.path.join(args.coassemble_output, "read_size.tsv"), "w") as f:
+        pass
+
     for item in args.forward + args.reverse + args.genomes + new_bins + otu_tables + clusters:
         subprocess.check_call(f"touch {item}", shell=True)
 
@@ -847,6 +928,7 @@ def build(args):
 
     logging.info(f"Ibis build complete.")
     logging.info(f"Conda envs at {conda_prefix}")
+    logging.info(f"Re-activate conda env to load env variables.")
 
 def main():
     main_parser = btu.BirdArgparser(program="Ibis (bin chicken)", version = __version__, program_invocation="ibis",
@@ -854,7 +936,7 @@ def main():
             "coassemble": [
                 btu.Example(
                     "cluster reads into proposed coassemblies",
-                    "ibis coassemble --forward reads_1.1.fq ... --reverse reads_1.2.fq ... --no-genomes"
+                    "ibis coassemble --forward reads_1.1.fq ... --reverse reads_1.2.fq ..."
                 ),
                 btu.Example(
                     "cluster reads into proposed coassemblies based on unbinned sequences",
@@ -886,35 +968,35 @@ def main():
             "update": [
                 btu.Example(
                     "update previous run to download SRA reads",
-                    "ibis update --sra --coassemble-output coassemble_dir --forward SRA000001 ... --genomes genome_1.fna ..."
+                    "ibis update --coassemble-output coassemble_dir --sra --forward SRA000001 ... --genomes genome_1.fna ..."
                 ),
                 btu.Example(
                     "update previous run to perform unmapping",
-                    "ibis update --assemble-unmapped --coassemble-output coassemble_dir --forward reads_1.1.fq ... --reverse reads_1.2.fq ... --genomes genome_1.fna ..."
+                    "ibis update --coassemble-output coassemble_dir --assemble-unmapped --forward reads_1.1.fq ... --reverse reads_1.2.fq ... --genomes genome_1.fna ..."
                 ),
                 btu.Example(
                     "update previous run to run specific coassemblies",
-                    "ibis update --run-aviary --coassemblies coassembly_0 ... --coassemble-output coassemble_dir --forward reads_1.1.fq ... --reverse reads_1.2.fq ... --genomes genome_1.fna ..."
+                    "ibis update --coassemble-output coassemble_dir --run-aviary --coassemblies coassembly_0 ... --forward reads_1.1.fq ... --reverse reads_1.2.fq ... --genomes genome_1.fna ..."
                 ),
             ],
             "iterate": [
                 btu.Example(
                     "rerun coassemble, adding new bins to database",
-                    "ibis iterate --aviary-outputs coassembly_0_dir ... --forward reads_1.1.fq ... --reverse reads_1.2.fq ... --genomes genome_1.fna ..."
+                    "ibis iterate --coassemble-output coassemble_dir"
                 ),
                 btu.Example(
                     "rerun coassemble, adding new bins to database, providing genomes directly",
-                    "ibis iterate --new-genomes new_genome_1.fna ... --forward reads_1.1.fq ... --reverse reads_1.2.fq ... --genomes genome_1.fna ..."
-                ),
-                btu.Example(
-                    "rerun coassemble, adding new bins to database, excluding previous coassembly combinations",
-                    "ibis iterate --exclude-coassemblies reads_1,reads_2 --aviary-outputs coassembly_0_dir ... --forward reads_1.1.fq ... --reverse reads_1.2.fq ... --genomes genome_1.fna ..."
+                    "ibis iterate --coassemble-output coassemble_dir --new-genomes new_genome_1.fna"
                 ),
             ],
             "build": [
                 btu.Example(
                     "create dependency conda environments",
-                    "ibis build --conda-prefix path_to_conda"
+                    "ibis build --conda-prefix path_to_conda_envs"
+                ),
+                btu.Example(
+                    "create dependency conda environments and setup environment variables for Aviary",
+                    "ibis build --conda-prefix path_to_conda_envs --singlem-metapackage metapackage --gtdbtk-db GTDBtk --checkm2-db CheckM2"
                 ),
             ],
         }
@@ -923,7 +1005,7 @@ def main():
     ###########################################################################
     def add_general_snakemake_options(argument_group, required_conda_prefix=False):
         argument_group.add_argument("--output", help="Output directory [default: .]", default="./")
-        argument_group.add_argument("--conda-prefix", help="Path to conda environment install location. default: Use path from CONDA_ENV_PATH env variable", default=None, required=required_conda_prefix)
+        argument_group.add_argument("--conda-prefix", help="Path to conda environment install location. [default: Use path from CONDA_ENV_PATH env variable]", default=None, required=required_conda_prefix)
         argument_group.add_argument("--cores", type=int, help="Maximum number of cores to use", default=1)
         argument_group.add_argument("--dryrun", action="store_true", help="dry run workflow")
         argument_group.add_argument("--snakemake-profile", default="",
@@ -932,6 +1014,7 @@ def main():
         argument_group.add_argument("--local-cores", type=int, help="Maximum number of cores to use on localrules when running in cluster mode", default=1)
         argument_group.add_argument("--cluster-retries", help="Number of times to retry a failed job when using cluster submission (see `--snakemake-profile`).", default=0)
         argument_group.add_argument("--snakemake-args", help="Additional commands to be supplied to snakemake in the form of a space-prefixed single string e.g. \" --quiet\"", default="")
+        argument_group.add_argument("--tmp-dir", help="Path to temporary directory. [default: Use path from TMPDIR env variable]")
 
     def add_base_arguments(argument_group):
         argument_group.add_argument("--forward", "--reads", "--sequences", nargs='+', help="input forward/unpaired nucleotide read sequence(s)")
@@ -952,13 +1035,13 @@ def main():
         argument_group.add_argument("--aviary-speed", help="Run Aviary recover in 'fast' or 'comprehensive' mode. Fast mode skips slow binners and refinement steps.",
                                     default=FAST_AVIARY_MODE, choices=[FAST_AVIARY_MODE, COMPREHENSIVE_AVIARY_MODE])
         argument_group.add_argument("--run-aviary", action="store_true", help="Run Aviary commands for all identified coassemblies (unless specified)")
-        argument_group.add_argument("--aviary-gtdbtk-dir", help="Path to GTDB-Tk database directory for Aviary")
-        argument_group.add_argument("--aviary-checkm2-dir", help="Path to CheckM2 database directory for Aviary")
+        argument_group.add_argument("--aviary-gtdbtk-db", help="Path to GTDB-Tk database directory for Aviary. [default: use path from GTDBTK_DATA_PATH env variable]")
+        argument_group.add_argument("--aviary-checkm2-db", help="Path to CheckM2 database directory for Aviary. [default: use path from CHECKM2DB env variable]")
         argument_group.add_argument("--aviary-cores", type=int, help="Maximum number of cores for Aviary to use. Half used for recovery.", default=64)
         argument_group.add_argument("--aviary-memory", type=int, help="Maximum amount of memory for Aviary to use (Gigabytes). Half used for recovery", default=500)
 
     def add_main_coassemble_output_arguments(argument_group):
-        argument_group.add_argument("--coassemble-output", help="Output dir from cluster subcommand")
+        argument_group.add_argument("--coassemble-output", help="Output dir from coassemble subcommand")
         argument_group.add_argument("--coassemble-unbinned", help="SingleM appraise unbinned output from Ibis coassemble (alternative to --coassemble-output)")
         argument_group.add_argument("--coassemble-binned", help="SingleM appraise binned output from Ibis coassemble (alternative to --coassemble-output)")
 
@@ -977,7 +1060,7 @@ def main():
         # Base arguments
         coassemble_base = parser.add_argument_group("Base input arguments")
         add_base_arguments(coassemble_base)
-        coassemble_base.add_argument("--singlem-metapackage", help="SingleM metapackage for sequence searching")
+        coassemble_base.add_argument("--singlem-metapackage", help="SingleM metapackage for sequence searching. [default: use path from SINGLEM_METAPACKAGE_PATH env variable]")
         # Midpoint arguments
         coassemble_midpoint = parser.add_argument_group("Intermediate results input arguments")
         coassemble_midpoint.add_argument("--sample-singlem", nargs='+', help="SingleM otu tables for each sample, in the form \"[sample name]_read.otu_table.tsv\". If provided, SingleM pipe sample is skipped")
@@ -995,19 +1078,18 @@ def main():
         coassemble_clustering.add_argument("--taxa-of-interest", help="Only consider sequences from this GTDB taxa (e.g. p__Planctomycetota) [default: all]")
         coassemble_clustering.add_argument("--appraise-sequence-identity", type=int, help="Minimum sequence identity for SingleM appraise against reference database [default: 86%, Genus-level]", default=0.86)
         coassemble_clustering.add_argument("--min-sequence-coverage", type=int, help="Minimum combined coverage for sequence inclusion [default: 10]", default=10)
-        coassemble_clustering.add_argument("--no-genomes", action="store_true", help="Run pipeline without genomes")
-        coassemble_clustering.add_argument("--single-assembly", action="store_true", help="Skip appraise to discover samples to differential abundance binning. Forces --num-coassembly-samples and --max-coassembly-samples to 1")
+        coassemble_clustering.add_argument("--single-assembly", action="store_true", help="Skip appraise to discover samples to differential abundance binning. Forces --num-coassembly-samples and --max-coassembly-samples to 1 and sets --max-coassembly-size to None")
         coassemble_clustering.add_argument("--exclude-coassemblies", nargs='+', help="List of coassemblies to exclude, space separated, in the form \"sample_1,sample_2\"")
         coassemble_clustering.add_argument("--exclude-coassemblies-list", help="List of coassemblies to exclude, space separated, in the form \"sample_1,sample_2\", newline separated")
         coassemble_clustering.add_argument("--num-coassembly-samples", type=int, help="Number of samples per coassembly cluster [default: 2]", default=2)
         coassemble_clustering.add_argument("--max-coassembly-samples", type=int, help="Upper bound for number of samples per coassembly cluster [default: --num-coassembly-samples]", default=None)
-        coassemble_clustering.add_argument("--max-coassembly-size", type=int, help="Maximum size (Gbp) of coassembly cluster [default: None]", default=None)
+        coassemble_clustering.add_argument("--max-coassembly-size", type=int, help="Maximum size (Gbp) of coassembly cluster [default: 50Gbp]", default=50)
         coassemble_clustering.add_argument("--max-recovery-samples", type=int, help="Upper bound for number of related samples to use for differential abundance binning [default: 20]", default=20)
         coassemble_clustering.add_argument("--prodigal-meta", action="store_true", help="Use prodigal \"-p meta\" argument (for testing)")
         # Coassembly options
         coassemble_coassembly = parser.add_argument_group("Coassembly options")
         coassemble_coassembly.add_argument("--assemble-unmapped", action="store_true", help="Only assemble reads that do not map to reference genomes")
-        coassemble_coassembly.add_argument("--run-qc", action="store_true", help="Run Fastp QC on reads. Requires unmapping.")
+        coassemble_coassembly.add_argument("--run-qc", action="store_true", help="Run Fastp QC on reads")
         coassemble_coassembly.add_argument("--unmapping-min-appraised", type=int, help="Minimum fraction of sequences binned to justify unmapping [default: 0.1]", default=0.1)
         coassemble_coassembly.add_argument("--unmapping-max-identity", type=float, help="Maximum sequence identity of mapped sequences kept for coassembly [default: 99%]", default=99)
         coassemble_coassembly.add_argument("--unmapping-max-alignment", type=float, help="Maximum percent alignment of mapped sequences kept for coassembly [default: 99%]", default=99)
@@ -1055,7 +1137,7 @@ def main():
     add_coassemble_output_arguments(update_coassembly)
     update_coassembly.add_argument("--coassemblies", nargs='+', help="Choose specific coassemblies from elusive clusters (e.g. coassembly_0)")
     update_coassembly.add_argument("--assemble-unmapped", action="store_true", help="Only assemble reads that do not map to reference genomes")
-    update_coassembly.add_argument("--run-qc", action="store_true", help="Run Fastp QC on reads. Requires unmapping.")
+    update_coassembly.add_argument("--run-qc", action="store_true", help="Run Fastp QC on reads")
     update_coassembly.add_argument("--unmapping-min-appraised", type=float, help="Minimum fraction of sequences binned to justify unmapping [default: 0.1]", default=0.1)
     update_coassembly.add_argument("--unmapping-max-identity", type=float, help="Maximum sequence identity of mapped sequences kept for coassembly [default: 99%]", default=99)
     update_coassembly.add_argument("--unmapping-max-alignment", type=float, help="Maximum percent alignment of mapped sequences kept for coassembly [default: 99%]", default=99)
@@ -1083,6 +1165,10 @@ def main():
     ###########################################################################
 
     build_parser = main_parser.new_subparser("build", "Create dependency conda environments")
+    build_parser.add_argument("--singlem-metapackage", help="SingleM metapackage")
+    build_parser.add_argument("--gtdbtk-db", help="GTDBtk release database")
+    build_parser.add_argument("--checkm2-db", help="CheckM2 database")
+    build_parser.add_argument("--set-tmp-dir", help="Set temporary directory", default="/tmp")
     add_general_snakemake_options(build_parser, required_conda_prefix=True)
 
     ###########################################################################
@@ -1098,6 +1184,36 @@ def main():
     if not os.path.exists(args.output):
         os.makedirs(args.output)
 
+    # Load env variables
+    def load_variable(variable):
+        try:
+            return os.environ[variable]
+        except KeyError:
+            return None
+
+    if not args.conda_prefix:
+        args.conda_prefix = load_variable("CONDA_ENV_PATH")
+        if not args.conda_prefix:
+            args.conda_prefix = load_variable("SNAKEMAKE_CONDA_PREFIX")
+    if not hasattr(args, "singlem_metapackage") or not args.singlem_metapackage:
+        args.singlem_metapackage = load_variable("SINGLEM_METAPACKAGE_PATH")
+    if not hasattr(args, "aviary_gtdbtk_db") or not args.aviary_gtdbtk_db:
+        args.aviary_gtdbtk_db = load_variable("GTDBTK_DATA_PATH")
+    if not hasattr(args, "aviary_checkm2_db") or not args.aviary_checkm2_db:
+        args.aviary_checkm2_db = load_variable("CHECKM2DB")
+    if not args.tmp_dir:
+        args.tmp_dir = load_variable("TMPDIR")
+
+    if hasattr(args, "genomes"):
+        if not (args.genomes or args.genomes_list):
+            args.no_genomes = True
+        else:
+            args.no_genomes = False
+
+    if hasattr(args, "coassemble_output"):
+        if args.coassemble_output:
+            args.coassemble_output = os.path.join(args.coassemble_output, "coassemble")
+
     def base_argument_verification(args):
         if not args.forward and not args.forward_list:
             raise Exception("Input reads must be provided")
@@ -1109,13 +1225,12 @@ def main():
                     raise Exception("Interleaved and long-reads not yet implemented")
             except AttributeError:
                 raise Exception("Interleaved and long-reads not yet implemented")
-        if not (args.genomes or args.genomes_list or args.no_genomes):
-            raise Exception("Input genomes must be provided, or argument --no-genomes must be used")
         if (args.forward and args.forward_list) or (args.reverse and args.reverse_list) or (args.genomes and args.genomes_list):
             raise Exception("General and list arguments are mutually exclusive")
 
-    def coassemble_argument_verification(args):
-        base_argument_verification(args)
+    def coassemble_argument_verification(args, iterate=False):
+        if not iterate:
+            base_argument_verification(args)
         if (args.sample_query or args.sample_query_list or args.sample_query_dir) and not (args.sample_singlem or args.sample_singlem_list or args.sample_singlem_dir):
             raise Exception("Input SingleM query (--sample-query) requires SingleM otu tables (--sample-singlem) for coverage")
         if args.assemble_unmapped and args.single_assembly:
@@ -1136,8 +1251,8 @@ def main():
         else:
             if args.num_coassembly_samples > args.max_recovery_samples:
                 raise Exception("Max recovery samples (--max-recovery-samples) must be greater than or equal to number of coassembly samples (--num-coassembly-samples)")
-        if args.run_aviary and not (args.aviary_gtdbtk_dir and args.aviary_checkm2_dir):
-            raise Exception("Run Aviary (--run-aviary) requires paths to GTDB-Tk and CheckM2 databases to be provided (--aviary-gtdbtk-dir and --aviary-checkm2-dir)")
+        if args.run_aviary and not (args.aviary_gtdbtk_db and args.aviary_checkm2_db):
+            raise Exception("Run Aviary (--run-aviary) requires paths to GTDB-Tk and CheckM2 databases to be provided (--aviary-gtdbtk-db or GTDBTK_DATA_PATH and --aviary-checkm2-db or CHECKM2DB)")
         if (args.sample_query or args.sample_query_list or args.sample_query_dir) and args.taxa_of_interest and args.assemble_unmapped:
             raise Exception("Unmapping is incompatible with the combination of sample query and taxa of interest")
 
@@ -1165,8 +1280,8 @@ def main():
     elif args.subparser_name == "update":
         base_argument_verification(args)
         coassemble_output_argument_verification(args)
-        if args.run_aviary and not (args.aviary_gtdbtk_dir and args.aviary_checkm2_dir):
-            raise Exception("Run Aviary (--run-aviary) requires paths to GTDB-Tk and CheckM2 databases to be provided (--aviary-gtdbtk-dir and --aviary-checkm2-dir)")
+        if args.run_aviary and not (args.aviary_gtdbtk_db and args.aviary_checkm2_db):
+            raise Exception("Run Aviary (--run-aviary) requires paths to GTDB-Tk and CheckM2 databases to be provided (--aviary-gtdbtk-db and --aviary-checkm2-db)")
         update(args)
 
     elif args.subparser_name == "iterate":
@@ -1176,9 +1291,13 @@ def main():
             raise Exception("Directory arguments are incompatible with Ibis iterate")
         if args.single_assembly:
             raise Exception("Single assembly is incompatible with Ibis iterate")
-        if not args.aviary_outputs and not (args.new_genomes or args.new_genomes_list):
+        if not args.aviary_outputs and not (args.new_genomes or args.new_genomes_list) and not args.coassemble_output:
             raise Exception("New genomes or aviary outputs must be provided for iteration")
-        coassemble_argument_verification(args)
+        if (args.forward and args.forward_list) or (args.reverse and args.reverse_list) or (args.genomes and args.genomes_list):
+            raise Exception("General and list arguments are mutually exclusive")
+        if not (args.genomes or args.forward) and not args.coassemble_output:
+            raise Exception("Reference genomes or forward reads must be provided if --coassemble-output not given")
+        coassemble_argument_verification(args, iterate=True)
         iterate(args)
 
     elif args.subparser_name == "build":

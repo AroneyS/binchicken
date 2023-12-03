@@ -18,16 +18,24 @@ conda activate ibis
 pip install -e .
 ```
 
-Create subprocess conda environments
+Create subprocess conda environments and setup environment variables.
 
 ```bash
-ibis build --conda-prefix /path/to/conda/envs
+ibis build \
+  --conda-prefix /path/to/conda/envs/dir \
+  --singlem-metapackage /metapackage/dir \
+  --gtdbtk-db /gtdb/release/dir \
+  --checkm2-db /checkm2/db/dir
 ```
 
-Alternatively, set directory to contain subprocess conda environments
+Alternatively, set directory to contain subprocess conda environments and environment variables manually.
 
 ```bash
 conda env config vars set SNAKEMAKE_CONDA_PREFIX="/path/to/conda/envs"
+conda env config vars set CONDA_ENV_PATH="/path/to/conda/envs"
+conda env config vars set SINGLEM_METAPACKAGE_PATH="/metapackage/dir"
+conda env config vars set GTDBTK_DATA_PATH="/gtdb/release/dir"
+conda env config vars set CHECKM2DB="/checkm2/db/dir"
 ```
 
 ### Install from pip
@@ -36,6 +44,29 @@ Install latest release via pip.
 
 ```bash
 pip install ibis-genome
+```
+
+## Example workflow
+
+```bash
+# Assemble and recover from each sample individually with 20 samples used for differential abundance binning
+ibis coassemble \
+  --forward-list samples_forward.txt --reverse-list samples_reverse.txt \
+  --run-aviary --single-assembly \
+  --cores 64 --output ibis_single_assembly
+
+# Assemble and recover from 2-sample coassemblies, prioritising samples with genomes not previously recovered
+ibis iterate \
+  --coassemble-output ibis_single_assembly \
+  --run-aviary --assemble-unmapped \
+  --cores 64 --output ibis_2_coassembly
+
+# Perform another iteration of coassembly, with 3-samples this time
+ibis iterate \
+  --coassembly-samples 3 \
+  --coassemble-output ibis_2_coassembly \
+  --run-aviary --assemble-unmapped \
+  --cores 64 --output ibis_3_coassembly
 ```
 
 ## Ibis coassemble
@@ -49,7 +80,7 @@ Paired end reads of form reads_1.1.fq, reads_1_1.fq and reads_1_R1.fq are automa
 
 ```bash
 # Example: cluster reads into proposed coassemblies
-ibis coassemble --forward reads_1.1.fq ... --reverse reads_1.2.fq ... --no-genomes
+ibis coassemble --forward reads_1.1.fq ... --reverse reads_1.2.fq ...
 
 # Example: cluster reads into proposed coassemblies based on unbinned sequences
 ibis coassemble --forward reads_1.1.fq ... --reverse reads_1.2.fq ... --genomes genome_1.fna ...
@@ -62,6 +93,12 @@ ibis coassemble --forward reads_1.1.fq ... --reverse reads_1.2.fq ... --genomes 
 
 # Example: find relevant samples for differential coverage binning (no coassembly)
 ibis coassemble --forward reads_1.1.fq ... --reverse reads_1.2.fq ... --single-assembly
+
+# Example: run proposed coassemblies through aviary with cluster submission
+# Create snakemake profile at ~/.config/snakemake/qsub with cluster, cluster-status, cluster-cancel, etc.
+# See https://snakemake.readthedocs.io/en/stable/executing/cli.html#profiles
+ibis coassemble --forward reads_1.1.fq ... --reverse reads_1.2.fq ... --run-aviary \
+  --snakemake-profile qsub --cluster-retries 3 --local-cores 64 --cores 64
 ```
 
 ## Ibis evaluate
@@ -80,16 +117,15 @@ ibis evaluate --coassemble-output coassemble_dir --new-genomes genome_1.fna ... 
 ## Ibis iterate
 
 Run a further iteration of coassemble, including newly recovered bins.
+Defaults to using genomes with at least 70% complete and at most 10% contamination CheckM2.
+Automatically excludes previous coassemblies.
 
 ```bash
 # Example: rerun coassemble, adding new bins to database
-ibis iterate --aviary-outputs coassembly_0_dir ... --forward reads_1.1.fq ... --reverse reads_1.2.fq ... --genomes genome_1.fna ...
+ibis iterate --coassemble-output coassemble_dir
 
 # Example: rerun coassemble, adding new bins to database, providing genomes directly
-ibis iterate --new-genomes new_genome_1.fna ... --forward reads_1.1.fq ... --reverse reads_1.2.fq ... --genomes genome_1.fna ...
-
-# Example: rerun coassemble, adding new bins to database, excluding previous coassembly combinations
-ibis iterate --exclude-coassemblies reads_1,reads_2 --new-genomes new_genome_1.fna ... --forward reads_1.1.fq ... --reverse reads_1.2.fq ... --genomes genome_1.fna ...
+ibis iterate --coassemble-output coassemble_dir --new-genomes new_genome_1.fna
 ```
 
 ## Ibis update
@@ -98,11 +134,11 @@ Applies further processing to a previous Ibis coassemble run: downloading SRA re
 
 ```bash
 # Example: update previous run to download SRA reads
-ibis update --sra --coassemble-output coassemble_dir --forward SRA000001 ... --genomes genome_1.fna ...
+ibis update --coassemble-output coassemble_dir --sra --forward SRA000001 ... --genomes genome_1.fna ...
 
 # Example: update previous run to perform unmapping
-ibis update --assemble-unmapped --coassemble-output coassemble_dir --forward reads_1.1.fq ... --reverse reads_1.2.fq ... --genomes genome_1.fna ...
+ibis update --coassemble-output coassemble_dir --assemble-unmapped --forward reads_1.1.fq ... --reverse reads_1.2.fq ... --genomes genome_1.fna ...
 
 # Example: update previous run to run specific coassemblies
-ibis update --run-aviary --coassemblies coassembly_0 ... --coassemble-output coassemble_dir --forward reads_1.1.fq ... --reverse reads_1.2.fq ... --genomes genome_1.fna ...
+ibis update --coassemble-output coassemble_dir --run-aviary --coassemblies coassembly_0 ... --forward reads_1.1.fq ... --reverse reads_1.2.fq ... --genomes genome_1.fna ...
 ```

@@ -30,21 +30,21 @@ METAPACKAGE_EIF = os.path.join(path_to_data, "singlem_metapackage_EIF.smpkg")
 
 MOCK_COASSEMBLE = os.path.join(path_to_data, "mock_coassemble")
 
-SAMPLE_READ_SIZE = os.path.join(MOCK_COASSEMBLE, "read_size2.csv")
+SAMPLE_READ_SIZE = os.path.join(MOCK_COASSEMBLE, "coassemble", "read_size2.csv")
 SAMPLE_SINGLEM = ' '.join([
-    os.path.join(MOCK_COASSEMBLE, "pipe", "sample_1_read.otu_table.tsv"),
-    os.path.join(MOCK_COASSEMBLE, "pipe", "sample_2_read.otu_table.tsv"),
-    os.path.join(MOCK_COASSEMBLE, "pipe", "sample_3_read.otu_table.tsv"),
+    os.path.join(MOCK_COASSEMBLE, "coassemble", "pipe", "sample_1_read.otu_table.tsv"),
+    os.path.join(MOCK_COASSEMBLE, "coassemble", "pipe", "sample_2_read.otu_table.tsv"),
+    os.path.join(MOCK_COASSEMBLE, "coassemble", "pipe", "sample_3_read.otu_table.tsv"),
     ])
 SAMPLE_SINGLEM_EIF = ' '.join([
-    os.path.join(MOCK_COASSEMBLE, "pipe_EIF", "sample_1_read.otu_table.tsv"),
-    os.path.join(MOCK_COASSEMBLE, "pipe_EIF", "sample_2_read.otu_table.tsv"),
-    os.path.join(MOCK_COASSEMBLE, "pipe_EIF", "sample_3_read.otu_table.tsv"),
+    os.path.join(MOCK_COASSEMBLE, "coassemble", "pipe_EIF", "sample_1_read.otu_table.tsv"),
+    os.path.join(MOCK_COASSEMBLE, "coassemble", "pipe_EIF", "sample_2_read.otu_table.tsv"),
+    os.path.join(MOCK_COASSEMBLE, "coassemble", "pipe_EIF", "sample_3_read.otu_table.tsv"),
     ])
 
 GENOME_TRANSCRIPTS = ' '.join([os.path.join(path_to_data, "GB_GCA_013286235.1_protein.fna")])
-GENOME_SINGLEM = os.path.join(MOCK_COASSEMBLE, "summarise", "bins_summarised.otu_table2.tsv")
-GENOME_SINGLEM_EIF = os.path.join(MOCK_COASSEMBLE, "summarise", "bins_summarised_EIF.otu_table.tsv")
+GENOME_SINGLEM = os.path.join(MOCK_COASSEMBLE, "coassemble", "summarise", "bins_summarised.otu_table2.tsv")
+GENOME_SINGLEM_EIF = os.path.join(MOCK_COASSEMBLE, "coassemble", "summarise", "bins_summarised_EIF.otu_table.tsv")
 
 SAMPLE_QUERY_DIR = os.path.join(path_to_data, "query")
 SAMPLE_QUERY = ' '.join([
@@ -579,7 +579,6 @@ class Tests(unittest.TestCase):
                 f"--singlem-metapackage {METAPACKAGE} "
                 f"--single-assembly "
                 f"--coassembly-samples sample_1 sample_2 "
-                f"--no-genomes "
                 f"--output test "
                 f"--conda-prefix {path_to_conda} "
                 f"--snakemake-args \"cluster_graph\" "
@@ -631,7 +630,6 @@ class Tests(unittest.TestCase):
                 f"--forward {SAMPLE_READS_FORWARD} "
                 f"--reverse {SAMPLE_READS_REVERSE} "
                 f"--singlem-metapackage {METAPACKAGE} "
-                f"--no-genomes "
                 f"--output test "
                 f"--conda-prefix {path_to_conda} "
                 f"--snakemake-args \"cluster_graph\" "
@@ -844,8 +842,8 @@ class Tests(unittest.TestCase):
             cmd = (
                 f"ibis coassemble "
                 f"--run-aviary "
-                f"--aviary-gtdbtk-dir gtdb_release "
-                f"--aviary-checkm2-dir CheckM2_database "
+                f"--aviary-gtdbtk-db gtdb_release "
+                f"--aviary-checkm2-db CheckM2_database "
                 f"--forward {SAMPLE_READS_FORWARD} "
                 f"--reverse {SAMPLE_READS_REVERSE} "
                 f"--genomes {GENOMES} "
@@ -886,8 +884,8 @@ class Tests(unittest.TestCase):
                 f"ibis coassemble "
                 f"--assemble-unmapped "
                 f"--run-aviary "
-                f"--aviary-gtdbtk-dir gtdb_release "
-                f"--aviary-checkm2-dir CheckM2_database "
+                f"--aviary-gtdbtk-db gtdb_release "
+                f"--aviary-checkm2-db CheckM2_database "
                 f"--forward {SAMPLE_READS_FORWARD} "
                 f"--reverse {SAMPLE_READS_REVERSE} "
                 f"--genomes {GENOMES} "
@@ -929,8 +927,8 @@ class Tests(unittest.TestCase):
                 f"--assemble-unmapped "
                 f"--run-qc "
                 f"--run-aviary "
-                f"--aviary-gtdbtk-dir gtdb_release "
-                f"--aviary-checkm2-dir CheckM2_database "
+                f"--aviary-gtdbtk-db gtdb_release "
+                f"--aviary-checkm2-db CheckM2_database "
                 f"--forward {SAMPLE_READS_FORWARD} "
                 f"--reverse {SAMPLE_READS_REVERSE} "
                 f"--genomes {GENOMES} "

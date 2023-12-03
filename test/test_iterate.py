@@ -38,26 +38,26 @@ TWO_GENOMES = " ".join([
 METAPACKAGE = os.path.join(path_to_data, "singlem_metapackage.smpkg")
 
 MOCK_COASSEMBLE = os.path.join(path_to_data, "mock_coassemble")
-MOCK_UNBINNED = os.path.join(MOCK_COASSEMBLE, "appraise", "unbinned.otu_table.tsv")
-MOCK_UNBINNED_BIASED = os.path.join(MOCK_COASSEMBLE, "appraise", "unbinned_biased.otu_table.tsv")
-MOCK_BINNED = os.path.join(MOCK_COASSEMBLE, "appraise", "binned.otu_table.tsv")
-MOCK_COASSEMBLIES = ' '.join([os.path.join(MOCK_COASSEMBLE, "coassemble", "coassembly_0")])
+MOCK_UNBINNED = os.path.join(MOCK_COASSEMBLE, "coassemble", "appraise", "unbinned.otu_table.tsv")
+MOCK_UNBINNED_BIASED = os.path.join(MOCK_COASSEMBLE, "coassemble", "appraise", "unbinned_biased.otu_table.tsv")
+MOCK_BINNED = os.path.join(MOCK_COASSEMBLE, "coassemble", "appraise", "binned.otu_table.tsv")
+MOCK_COASSEMBLIES = ' '.join([os.path.join(MOCK_COASSEMBLE, "coassemble", "coassemble", "coassembly_0")])
 MOCK_GENOMES = " ".join([
-    os.path.join(MOCK_COASSEMBLE, "coassemble", "coassembly_0", "recover", "bins", "final_bins", "bin_1.fna"),
-    os.path.join(MOCK_COASSEMBLE, "coassemble", "coassembly_0", "recover", "bins", "final_bins", "bin_2.fna"),
-    os.path.join(MOCK_COASSEMBLE, "coassemble", "coassembly_0", "recover", "bins", "final_bins", "bin_3.fna"),
+    os.path.join(MOCK_COASSEMBLE, "coassemble", "coassemble", "coassembly_0", "recover", "bins", "final_bins", "bin_1.fna"),
+    os.path.join(MOCK_COASSEMBLE, "coassemble", "coassemble", "coassembly_0", "recover", "bins", "final_bins", "bin_2.fna"),
+    os.path.join(MOCK_COASSEMBLE, "coassemble", "coassemble", "coassembly_0", "recover", "bins", "final_bins", "bin_3.fna"),
 ])
-MOCK_GENOME_SINGLEM = os.path.join(MOCK_COASSEMBLE, "summarise", "bins_summarised_mock.otu_table.tsv")
-ELUSIVE_CLUSTERS = ' '.join([os.path.join(MOCK_COASSEMBLE, "target", "elusive_clusters_iterate.tsv")])
+MOCK_GENOME_SINGLEM = os.path.join(MOCK_COASSEMBLE, "coassemble", "summarise", "bins_summarised_mock.otu_table.tsv")
+ELUSIVE_CLUSTERS = ' '.join([os.path.join(MOCK_COASSEMBLE, "coassemble", "target", "elusive_clusters_iterate.tsv")])
 
-SAMPLE_READ_SIZE = os.path.join(MOCK_COASSEMBLE, "read_size2.csv")
+SAMPLE_READ_SIZE = os.path.join(MOCK_COASSEMBLE, "coassemble", "read_size2.csv")
 SAMPLE_SINGLEM = ' '.join([
-    os.path.join(MOCK_COASSEMBLE, "pipe", "sample_1_read.otu_table.tsv"),
-    os.path.join(MOCK_COASSEMBLE, "pipe", "sample_2_read.otu_table.tsv"),
-    os.path.join(MOCK_COASSEMBLE, "pipe", "sample_3_read.otu_table.tsv"),
+    os.path.join(MOCK_COASSEMBLE, "coassemble", "pipe", "sample_1_read.otu_table.tsv"),
+    os.path.join(MOCK_COASSEMBLE, "coassemble", "pipe", "sample_2_read.otu_table.tsv"),
+    os.path.join(MOCK_COASSEMBLE, "coassemble", "pipe", "sample_3_read.otu_table.tsv"),
     ])
 GENOME_TRANSCRIPTS = ' '.join([os.path.join(path_to_data, "GB_GCA_013286235.1_protein.fna")])
-GENOME_SINGLEM = os.path.join(MOCK_COASSEMBLE, "summarise", "bins_summarised.otu_table2.tsv")
+GENOME_SINGLEM = os.path.join(MOCK_COASSEMBLE, "coassemble", "summarise", "bins_summarised.otu_table2.tsv")
 
 def write_string_to_file(string, filename):
     with open(filename, "w") as f:
@@ -141,6 +141,80 @@ class Tests(unittest.TestCase):
                 ]
             )
             with open(cluster_path) as f:
+                self.assertEqual(expected, f.read())
+
+    def test_iterate_minimal(self):
+        with in_tempdir():
+            cmd = (
+                f"ibis iterate "
+                f"--coassemble-output {MOCK_COASSEMBLE} "
+                f"--singlem-metapackage {METAPACKAGE} "
+                f"--output test "
+                f"--conda-prefix {path_to_conda} "
+            )
+            output_raw = subprocess.run(cmd, shell=True, check=True, capture_output=True)
+            output = output_raw.stderr.decode('ascii')
+
+            self.assertTrue("count_bp_reads" not in output)
+
+            config_path = os.path.join("test", "config.yaml")
+            self.assertTrue(os.path.exists(config_path))
+            config = load_configfile(config_path)
+            NEW_GENOMES = " ".join([
+                os.path.join(MOCK_COASSEMBLE, "coassemble", "coassembly_0", "recover", "bins", "final_bins", "iteration_0-coassembly_0-0.fna"),
+                os.path.join(MOCK_COASSEMBLE, "coassemble", "coassembly_0", "recover", "bins", "final_bins", "iteration_0-coassembly_0-1.fna"),
+            ])
+            genomes = {
+                os.path.splitext(os.path.basename(g))[0]: g.replace(MOCK_COASSEMBLE + "/coassemble/coassembly_0/recover/bins/final_bins/", os.getcwd() + "/test/recovered_bins/")
+                for g in (GENOMES + " " + NEW_GENOMES).split(" ")
+                }
+            self.assertEqual(genomes, config["genomes"])
+
+            reads_1 = {
+                os.path.splitext(os.path.basename(r))[0].removesuffix(".1"): r
+                for r in SAMPLE_READS_FORWARD.split(" ")
+                }
+            self.assertEqual(reads_1, config["reads_1"])
+
+            reads_2 = {
+                os.path.splitext(os.path.basename(r))[0].removesuffix(".2"): r
+                for r in SAMPLE_READS_REVERSE.split(" ")
+                }
+            self.assertEqual(reads_2, config["reads_2"])
+
+            exclude_coassemblies = ["sample_0,sample_1"]
+            self.assertEqual(exclude_coassemblies, config["exclude_coassemblies"])
+
+            cluster_path = os.path.join("test", "coassemble", "target", "elusive_clusters.tsv")
+            self.assertTrue(os.path.exists(cluster_path))
+            expected = "\n".join(
+                [
+                    "\t".join([
+                        "samples",
+                        "length",
+                        "total_targets",
+                        "total_size",
+                        "recover_samples",
+                        "coassembly",
+                    ]),
+                    "\t".join([
+                        "sample_1,sample_3",
+                        "2",
+                        "1",
+                        "8456",
+                        "sample_1,sample_3",
+                        "coassembly_0"
+                    ]),
+                    ""
+                ]
+            )
+            with open(cluster_path) as f:
+                self.assertEqual(expected, f.read())
+
+            cumulative_coassemblies_path = os.path.join("test", "coassemble", "target", "cumulative_coassemblies.tsv")
+            self.assertTrue(os.path.exists(cumulative_coassemblies_path))
+            expected = "\n".join(["sample_0,sample_1", "sample_1,sample_3", ""])
+            with open(cumulative_coassemblies_path) as f:
                 self.assertEqual(expected, f.read())
 
     def test_iterate_genome_input(self):
@@ -237,7 +311,7 @@ class Tests(unittest.TestCase):
             )
             output = extern.run(cmd)
 
-            self.assertTrue("count_bp_reads" in output)
+            self.assertTrue("count_bp_reads" not in output)
             self.assertTrue("singlem_pipe_reads" not in output)
             self.assertTrue("genome_transcripts" in output)
             self.assertTrue("singlem_pipe_genomes" in output)
@@ -253,7 +327,7 @@ class Tests(unittest.TestCase):
             self.assertTrue(os.path.exists(config_path))
             config = load_configfile(config_path)
             genomes_config = {
-                os.path.splitext(os.path.basename(g))[0]: g.replace(MOCK_COASSEMBLE + "/coassemble/coassembly_0/recover/bins/final_bins/", os.getcwd() + "/test/recovered_bins/")
+                os.path.splitext(os.path.basename(g))[0]: g.replace(MOCK_COASSEMBLE + "/coassemble/coassemble/coassembly_0/recover/bins/final_bins/", os.getcwd() + "/test/recovered_bins/")
                 for g in (GENOMES + " " + MOCK_GENOMES).split(" ")
                 }
             self.assertEqual(genomes_config, config["genomes"])
@@ -270,12 +344,9 @@ class Tests(unittest.TestCase):
         with in_tempdir():
             cmd = (
                 f"ibis iterate "
-                f"--aviary-outputs {MOCK_COASSEMBLIES} "
-                f"--forward {SAMPLE_READS_FORWARD} "
-                f"--reverse {SAMPLE_READS_REVERSE} "
-                f"--genomes {GENOMES} "
-                f"--genome-transcripts {GENOME_TRANSCRIPTS} "
+                f"--coassemble-output {MOCK_COASSEMBLE} "
                 f"--singlem-metapackage {METAPACKAGE} "
+                f"--exclude-coassemblies sample_4,sample_5 "
                 f"--output test "
                 f"--conda-prefix {path_to_conda} "
                 f"--dryrun "
@@ -291,6 +362,7 @@ class Tests(unittest.TestCase):
             self.assertEqual(config["assemble_unmapped"], False)
             self.assertEqual(config["aviary_threads"], 64)
             self.assertEqual(config["aviary_memory"], 500)
+            self.assertEqual(config["exclude_coassemblies"], ["sample_0,sample_1", "sample_4,sample_5"])
 
             self.assertTrue("Evaluating bins using CheckM2 with completeness >= 70 and contamination <= 10" in output)
 

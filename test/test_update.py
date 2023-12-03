@@ -32,21 +32,21 @@ THREE_GENOMES = " ".join([
     ])
 
 MOCK_COASSEMBLE = os.path.join(path_to_data, "mock_coassemble")
-MOCK_UNBINNED = os.path.join(MOCK_COASSEMBLE, "appraise", "unbinned.otu_table.tsv")
-MOCK_BINNED = os.path.join(MOCK_COASSEMBLE, "appraise", "binned.otu_table.tsv")
-MOCK_BINNED_THREE = os.path.join(MOCK_COASSEMBLE, "appraise", "binned_three.otu_table.tsv")
-MOCK_TARGETS = os.path.join(MOCK_COASSEMBLE, "target", "targets.tsv")
-MOCK_ELUSIVE_EDGES = os.path.join(MOCK_COASSEMBLE, "target", "elusive_edges.tsv")
-MOCK_ELUSIVE_CLUSTERS = os.path.join(MOCK_COASSEMBLE, "target", "elusive_clusters.tsv")
-MOCK_ELUSIVE_CLUSTERS_TWO = os.path.join(MOCK_COASSEMBLE, 'target', 'elusive_clusters_two.tsv')
-MOCK_SUMMARY = os.path.join(MOCK_COASSEMBLE, "summary.tsv")
+MOCK_UNBINNED = os.path.join(MOCK_COASSEMBLE, "coassemble", "appraise", "unbinned.otu_table.tsv")
+MOCK_BINNED = os.path.join(MOCK_COASSEMBLE, "coassemble", "appraise", "binned.otu_table.tsv")
+MOCK_BINNED_THREE = os.path.join(MOCK_COASSEMBLE, "coassemble", "appraise", "binned_three.otu_table.tsv")
+MOCK_TARGETS = os.path.join(MOCK_COASSEMBLE, "coassemble", "target", "targets.tsv")
+MOCK_ELUSIVE_EDGES = os.path.join(MOCK_COASSEMBLE, "coassemble", "target", "elusive_edges.tsv")
+MOCK_ELUSIVE_CLUSTERS = os.path.join(MOCK_COASSEMBLE, "coassemble", "target", "elusive_clusters.tsv")
+MOCK_ELUSIVE_CLUSTERS_TWO = os.path.join(MOCK_COASSEMBLE, "coassemble", 'target', 'elusive_clusters_two.tsv')
+MOCK_SUMMARY = os.path.join(MOCK_COASSEMBLE, "coassemble", "summary.tsv")
 
-MOCK_UNBINNED_SRA = os.path.join(MOCK_COASSEMBLE, "appraise", "unbinned_sra.otu_table.tsv")
-MOCK_BINNED_SRA = os.path.join(MOCK_COASSEMBLE, "appraise", "binned_sra.otu_table.tsv")
-MOCK_ELUSIVE_CLUSTERS_SRA = os.path.join(MOCK_COASSEMBLE, "target", "elusive_clusters_sra.tsv")
-MOCK_ELUSIVE_CLUSTERS_SRA_MOCK = os.path.join(MOCK_COASSEMBLE, "target", "elusive_clusters_sra_mock.tsv")
-MOCK_ELUSIVE_CLUSTERS_SRA_MOCK2 = os.path.join(MOCK_COASSEMBLE, "target", "elusive_clusters_sra_mock2.tsv")
-MOCK_ELUSIVE_CLUSTERS_SRA_MOCK3 = os.path.join(MOCK_COASSEMBLE, "target", "elusive_clusters_sra_mock3.tsv")
+MOCK_UNBINNED_SRA = os.path.join(MOCK_COASSEMBLE, "coassemble", "appraise", "unbinned_sra.otu_table.tsv")
+MOCK_BINNED_SRA = os.path.join(MOCK_COASSEMBLE, "coassemble", "appraise", "binned_sra.otu_table.tsv")
+MOCK_ELUSIVE_CLUSTERS_SRA = os.path.join(MOCK_COASSEMBLE, "coassemble", "target", "elusive_clusters_sra.tsv")
+MOCK_ELUSIVE_CLUSTERS_SRA_MOCK = os.path.join(MOCK_COASSEMBLE, "coassemble", "target", "elusive_clusters_sra_mock.tsv")
+MOCK_ELUSIVE_CLUSTERS_SRA_MOCK2 = os.path.join(MOCK_COASSEMBLE, "coassemble", "target", "elusive_clusters_sra_mock2.tsv")
+MOCK_ELUSIVE_CLUSTERS_SRA_MOCK3 = os.path.join(MOCK_COASSEMBLE, "coassemble", "target", "elusive_clusters_sra_mock3.tsv")
 
 class Tests(unittest.TestCase):
     def test_update(self):
@@ -417,8 +417,8 @@ class Tests(unittest.TestCase):
                 f"--forward SRR8334323 SRR8334324 "
                 f"--sra "
                 f"--run-aviary "
-                f"--aviary-gtdbtk-dir gtdb_release "
-                f"--aviary-checkm2-dir CheckM2_database "
+                f"--aviary-gtdbtk-db gtdb_release "
+                f"--aviary-checkm2-db CheckM2_database "
                 f"--genomes {GENOMES} "
                 f"--coassemble-unbinned {MOCK_UNBINNED_SRA} "
                 f"--coassemble-binned {MOCK_BINNED_SRA} "
@@ -462,8 +462,8 @@ class Tests(unittest.TestCase):
             cmd = (
                 f"ibis update "
                 f"--run-aviary "
-                f"--aviary-gtdbtk-dir gtdb_release "
-                f"--aviary-checkm2-dir CheckM2_database "
+                f"--aviary-gtdbtk-db gtdb_release "
+                f"--aviary-checkm2-db CheckM2_database "
                 f"--coassemble-output {MOCK_COASSEMBLE} "
                 f"--forward {SAMPLE_READS_FORWARD} "
                 f"--reverse {SAMPLE_READS_REVERSE} "

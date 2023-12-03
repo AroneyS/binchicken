@@ -27,10 +27,10 @@ TWO_GENOMES = " ".join([
     ])
 
 MOCK_COASSEMBLE = os.path.join(path_to_data, "mock_coassemble")
-APPRAISE_BINNED = os.path.join(MOCK_COASSEMBLE, "appraise", "binned.otu_table.tsv")
-APPRAISE_UNBINNED = os.path.join(MOCK_COASSEMBLE, "appraise", "unbinned.otu_table.tsv")
-ELUSIVE_CLUSTERS = os.path.join(MOCK_COASSEMBLE, "target", "elusive_clusters.tsv")
-ELUSIVE_CLUSTERS_TWO = os.path.join(MOCK_COASSEMBLE, 'target', 'elusive_clusters_two.tsv')
+APPRAISE_BINNED = os.path.join(MOCK_COASSEMBLE, "coassemble", "appraise", "binned.otu_table.tsv")
+APPRAISE_UNBINNED = os.path.join(MOCK_COASSEMBLE, "coassemble", "appraise", "unbinned.otu_table.tsv")
+ELUSIVE_CLUSTERS = os.path.join(MOCK_COASSEMBLE, "coassemble", "target", "elusive_clusters.tsv")
+ELUSIVE_CLUSTERS_TWO = os.path.join(MOCK_COASSEMBLE, "coassemble", 'target', 'elusive_clusters_two.tsv')
 
 
 class Tests(unittest.TestCase):
@@ -88,8 +88,8 @@ class Tests(unittest.TestCase):
             f"--run-aviary "
             f"--aviary-speed fast "
             f"--cores 32 "
-            f"--aviary-gtdbtk-dir /work/microbiome/db/gtdb/gtdb_release207_v2 "
-            f"--aviary-checkm2-dir /work/microbiome/db/CheckM2_database "
+            f"--aviary-gtdbtk-db /work/microbiome/db/gtdb/gtdb_release207_v2 "
+            f"--aviary-checkm2-db /work/microbiome/db/CheckM2_database "
             f"--genomes {GENOMES} "
             f"--coassemble-unbinned {os.path.join(MOCK_COASSEMBLE, 'appraise', 'unbinned_sra.otu_table.tsv')} "
             f"--coassemble-binned {os.path.join(MOCK_COASSEMBLE, 'appraise', 'binned_sra.otu_table.tsv')} "
@@ -129,8 +129,8 @@ class Tests(unittest.TestCase):
             f"--genomes {GENOMES} "
             f"--run-aviary "
             f"--cores 32 "
-            f"--aviary-gtdbtk-dir /work/microbiome/db/gtdb/gtdb_release207_v2 "
-            f"--aviary-checkm2-dir /work/microbiome/db/CheckM2_database "
+            f"--aviary-gtdbtk-db /work/microbiome/db/gtdb/gtdb_release207_v2 "
+            f"--aviary-checkm2-db /work/microbiome/db/CheckM2_database "
             f"--coassemble-unbinned {os.path.join(MOCK_COASSEMBLE, 'appraise', 'unbinned_sra.otu_table.tsv')} "
             f"--coassemble-binned {os.path.join(MOCK_COASSEMBLE, 'appraise', 'binned_sra.otu_table.tsv')} "
             f"--coassemble-targets {os.path.join(MOCK_COASSEMBLE, 'target', 'targets.tsv')} "
