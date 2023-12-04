@@ -685,7 +685,7 @@ def combine_genome_singlem(genome_singlem, new_genome_singlem, path):
             f.write(g.read())
 
 def iterate(args):
-    if not (args.genomes or args.forward):
+    if not ((args.genomes or args.genomes_list) and (args.forward or args.forward_list)):
         logging.info("Loading inputs from old config")
         config_path = os.path.join(args.coassemble_output, "..", "config.yaml")
         old_config = load_config(config_path)
@@ -1331,7 +1331,7 @@ def main():
             raise Exception("New genomes or aviary outputs must be provided for iteration")
         if (args.forward and args.forward_list) or (args.reverse and args.reverse_list) or (args.genomes and args.genomes_list):
             raise Exception("General and list arguments are mutually exclusive")
-        if not (args.genomes or args.forward) and not args.coassemble_output:
+        if not ((args.genomes or args.genomes_list) and (args.forward or args.forward_list)) and not args.coassemble_output:
             raise Exception("Reference genomes or forward reads must be provided if --coassemble-output not given")
         coassemble_argument_verification(args, iterate=True)
         iterate(args)
