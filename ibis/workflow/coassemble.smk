@@ -620,7 +620,7 @@ rule aviary_assemble:
     params:
         reads_1 = lambda wildcards: get_reads_coassembly(wildcards),
         reads_2 = lambda wildcards: get_reads_coassembly(wildcards, forward=False),
-        dryrun = "--dryrun" if config["aviary_dryrun"] else "",
+        dryrun = "--build" if config["build"] else "--dryrun" if config["aviary_dryrun"] else "",
         drymkdir = "&& mkdir -p "+output_dir+"/coassemble/{coassembly}/assemble/assembly" if config["aviary_dryrun"] else "",
         drytouch = "&& touch "+output_dir+"/coassemble/{coassembly}/assemble/assembly/final_contigs.fasta" if config["aviary_dryrun"] else "",
         conda_prefix = config["conda_prefix"] if config["conda_prefix"] else ".",
@@ -668,7 +668,7 @@ rule aviary_recover:
         output = output_dir + "/coassemble/{coassembly}/recover",
         reads_1 = lambda wildcards: get_reads_coassembly(wildcards, recover=True),
         reads_2 = lambda wildcards: get_reads_coassembly(wildcards, forward=False, recover=True),
-        dryrun = "--dryrun" if config["aviary_dryrun"] else "",
+        dryrun = "--build" if config["build"] else "--dryrun" if config["aviary_dryrun"] else "",
         gtdbtk = config["aviary_gtdbtk"],
         checkm2 = config["aviary_checkm2"],
         conda_prefix = config["conda_prefix"] if config["conda_prefix"] else ".",

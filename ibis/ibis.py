@@ -438,6 +438,11 @@ def coassemble(args):
         args.max_coassembly_samples = 1
         args.max_coassembly_size = None
 
+    try:
+        build_status = args.build
+    except AttributeError:
+        build_status = False
+
     config_items = {
         # General config
         "reads_1": forward_reads,
@@ -474,6 +479,7 @@ def coassemble(args):
         "snakemake_profile": args.snakemake_profile,
         "cluster_retries": args.cluster_retries,
         "tmpdir": args.tmp_dir,
+        "build": build_status,
     }
 
     config_path = make_config(
@@ -831,7 +837,6 @@ def build(args):
     shutil.rmtree(output_dir, ignore_errors=True)
     os.makedirs(output_dir, exist_ok=True)
     conda_prefix = args.conda_prefix
-    args.build = True
 
     # Setup env variables
     configure_variable("SNAKEMAKE_CONDA_PREFIX", conda_prefix)
@@ -856,7 +861,9 @@ def build(args):
     vars(args).update(coassemble_config)
     evaluate_config = load_config(importlib.resources.files("ibis.config").joinpath("template_evaluate.yaml"))
     vars(args).update(evaluate_config)
+    args.build = True
 
+    args.snakemake_args_input = args.snakemake_args
     args.snakemake_args = args.snakemake_args + " --conda-create-envs-only" if args.snakemake_args else "--conda-create-envs-only"
     args.conda_prefix = conda_prefix
 
@@ -875,8 +882,10 @@ def build(args):
     args.singlem_metapackage = "."
 
     # Create mock input files
-    args.forward = [os.path.join(args.output, "sample_" + s + ".1.fq") for s in ["1", "2", "3"]]
-    args.reverse = [os.path.join(args.output, "sample_" + s + ".2.fq") for s in ["1", "2", "3"]]
+    forward_reads = [os.path.join(args.output, "sample_" + s + ".1.fq") for s in ["1", "2", "3"]]
+    args.forward = forward_reads
+    reverse_reads = [os.path.join(args.output, "sample_" + s + ".2.fq") for s in ["1", "2", "3"]]
+    args.reverse = reverse_reads
     args.genomes = [os.path.join(args.output, "genome_1.fna")]
 
     # Create mock iterate files
@@ -921,10 +930,35 @@ def build(args):
     args.output = os.path.join(output_dir, "build_sra")
     os.mkdir(args.output)
     args.run_aviary = True
+    args.aviary_speed = COMPREHENSIVE_AVIARY_MODE
     args.sra = "build"
     args.forward = ["SRR8334323", "SRR8334324"]
     args.reverse = args.forward
     update(args)
+
+    logging.info("Building Aviary subworkflow conda environments")
+    args.output = os.path.join(output_dir, "build_aviary")
+    mapping_files = [os.path.join(args.output, "coassemble", "mapping", "sample_" + s + "_unmapped." + n + ".fq.gz") for s in ["1", "2", "3"] for n in ["1", "2"]]
+    mapping_done = os.path.join(args.output, "coassemble", "mapping", "done")
+    elusive_clusters = os.path.join(args.output, "coassemble", "target", "elusive_clusters.tsv")
+    summary_file = os.path.join(args.output, "coassemble", "summary.tsv")
+
+    clusters_text = "samples\tlength\ttotal_targets\ttotal_size\trecover_samples\tcoassembly\nsample_1,sample_2\t2\t2\t0\tsample_1,sample_2\tcoassembly_0\n"
+    clusters_path = os.path.join(args.output, "coassemble", "target", "elusive_clusters.tsv")
+    os.makedirs(os.path.dirname(clusters_path), exist_ok=True)
+    with open(clusters_path, "w") as f:
+        f.write(clusters_text)
+
+    for item in mapping_files + [mapping_done, elusive_clusters, summary_file]:
+        os.makedirs(os.path.dirname(item), exist_ok=True)
+        subprocess.check_call(f"touch {item}", shell=True)
+
+    args.snakemake_args = args.snakemake_args_input + " --config aviary_dryrun=True"
+    args.forward = forward_reads
+    args.reverse = reverse_reads
+    args.sra = False
+    coassemble(args)
+
 
     logging.info(f"Ibis build complete.")
     logging.info(f"Conda envs at {conda_prefix}")
