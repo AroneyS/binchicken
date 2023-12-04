@@ -35,6 +35,7 @@ class Tests(unittest.TestCase):
                 f"--gtdbtk-db gtdb_release "
                 f"--checkm2-db CheckM2_database "
                 f"--set-tmp-dir /tmp "
+                f"--skip-aviary-envs "
             )
             extern.run(cmd)
 

@@ -936,28 +936,29 @@ def build(args):
     args.reverse = args.forward
     update(args)
 
-    logging.info("Building Aviary subworkflow conda environments")
-    args.output = os.path.join(output_dir, "build_aviary")
-    mapping_files = [os.path.join(args.output, "coassemble", "mapping", "sample_" + s + "_unmapped." + n + ".fq.gz") for s in ["1", "2", "3"] for n in ["1", "2"]]
-    mapping_done = os.path.join(args.output, "coassemble", "mapping", "done")
-    elusive_clusters = os.path.join(args.output, "coassemble", "target", "elusive_clusters.tsv")
-    summary_file = os.path.join(args.output, "coassemble", "summary.tsv")
+    if not args.skip_aviary_envs:
+        logging.info("Building Aviary subworkflow conda environments")
+        args.output = os.path.join(output_dir, "build_aviary")
+        mapping_files = [os.path.join(args.output, "coassemble", "mapping", "sample_" + s + "_unmapped." + n + ".fq.gz") for s in ["1", "2", "3"] for n in ["1", "2"]]
+        mapping_done = os.path.join(args.output, "coassemble", "mapping", "done")
+        elusive_clusters = os.path.join(args.output, "coassemble", "target", "elusive_clusters.tsv")
+        summary_file = os.path.join(args.output, "coassemble", "summary.tsv")
 
-    clusters_text = "samples\tlength\ttotal_targets\ttotal_size\trecover_samples\tcoassembly\nsample_1,sample_2\t2\t2\t0\tsample_1,sample_2\tcoassembly_0\n"
-    clusters_path = os.path.join(args.output, "coassemble", "target", "elusive_clusters.tsv")
-    os.makedirs(os.path.dirname(clusters_path), exist_ok=True)
-    with open(clusters_path, "w") as f:
-        f.write(clusters_text)
+        clusters_text = "samples\tlength\ttotal_targets\ttotal_size\trecover_samples\tcoassembly\nsample_1,sample_2\t2\t2\t0\tsample_1,sample_2\tcoassembly_0\n"
+        clusters_path = os.path.join(args.output, "coassemble", "target", "elusive_clusters.tsv")
+        os.makedirs(os.path.dirname(clusters_path), exist_ok=True)
+        with open(clusters_path, "w") as f:
+            f.write(clusters_text)
 
-    for item in mapping_files + [mapping_done, elusive_clusters, summary_file]:
-        os.makedirs(os.path.dirname(item), exist_ok=True)
-        subprocess.check_call(f"touch {item}", shell=True)
+        for item in mapping_files + [mapping_done, elusive_clusters, summary_file]:
+            os.makedirs(os.path.dirname(item), exist_ok=True)
+            subprocess.check_call(f"touch {item}", shell=True)
 
-    args.snakemake_args = args.snakemake_args_input + " --config aviary_dryrun=True"
-    args.forward = forward_reads
-    args.reverse = reverse_reads
-    args.sra = False
-    coassemble(args)
+        args.snakemake_args = args.snakemake_args_input + " --config aviary_dryrun=True"
+        args.forward = forward_reads
+        args.reverse = reverse_reads
+        args.sra = False
+        coassemble(args)
 
 
     logging.info(f"Ibis build complete.")
@@ -1203,6 +1204,7 @@ def main():
     build_parser.add_argument("--gtdbtk-db", help="GTDBtk release database")
     build_parser.add_argument("--checkm2-db", help="CheckM2 database")
     build_parser.add_argument("--set-tmp-dir", help="Set temporary directory", default="/tmp")
+    build.parser.add_argument("--skip-aviary-envs", help="Do not install Aviary subworkflow environments", action="store_true")
     add_general_snakemake_options(build_parser, required_conda_prefix=True)
 
     ###########################################################################
