@@ -3,6 +3,7 @@
 #############
 import os
 import re
+os.umask(0o002)
 
 output_dir = os.path.abspath("evaluate")
 logs_dir = output_dir + "/logs"
