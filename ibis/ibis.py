@@ -1204,7 +1204,7 @@ def main():
     build_parser.add_argument("--gtdbtk-db", help="GTDBtk release database")
     build_parser.add_argument("--checkm2-db", help="CheckM2 database")
     build_parser.add_argument("--set-tmp-dir", help="Set temporary directory", default="/tmp")
-    build.parser.add_argument("--skip-aviary-envs", help="Do not install Aviary subworkflow environments", action="store_true")
+    build_parser.add_argument("--skip-aviary-envs", help="Do not install Aviary subworkflow environments", action="store_true")
     add_general_snakemake_options(build_parser, required_conda_prefix=True)
 
     ###########################################################################
