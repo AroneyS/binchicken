@@ -350,7 +350,7 @@ class Tests(unittest.TestCase):
                 f"--sample-read-size {SAMPLE_READ_SIZE} "
                 f"--output test "
                 f"--conda-prefix {path_to_conda} "
-                f"--snakemake-args \"cluster_graph\" "
+                f"--snakemake-args \"group_clusters\" "
             )
             extern.run(cmd)
 
@@ -404,7 +404,7 @@ class Tests(unittest.TestCase):
                 f"--taxa-of-interest \"p__Actinobacteriota\" "
                 f"--output test "
                 f"--conda-prefix {path_to_conda} "
-                f"--snakemake-args \"cluster_graph\" "
+                f"--snakemake-args \"group_clusters\" "
             )
             extern.run(cmd)
 
@@ -581,7 +581,7 @@ class Tests(unittest.TestCase):
                 f"--coassembly-samples sample_1 sample_2 "
                 f"--output test "
                 f"--conda-prefix {path_to_conda} "
-                f"--snakemake-args \"cluster_graph\" "
+                f"--snakemake-args \"group_clusters\" "
             )
             extern.run(cmd)
 
@@ -632,7 +632,7 @@ class Tests(unittest.TestCase):
                 f"--singlem-metapackage {METAPACKAGE} "
                 f"--output test "
                 f"--conda-prefix {path_to_conda} "
-                f"--snakemake-args \"cluster_graph\" "
+                f"--snakemake-args \"group_clusters\" "
             )
             extern.run(cmd)
 
