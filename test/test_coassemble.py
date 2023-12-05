@@ -1147,7 +1147,7 @@ class Tests(unittest.TestCase):
                 f"--singlem-metapackage {METAPACKAGE_EIF} "
                 f"--output test "
                 f"--conda-prefix {path_to_conda} "
-                f"--snakemake-args \"target_elusive\" "
+                f"--snakemake-args \"group_clusters\" "
             )
             output = extern.run(cmd)
 
