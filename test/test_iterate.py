@@ -318,8 +318,10 @@ class Tests(unittest.TestCase):
             self.assertTrue("singlem_summarise_genomes" in output)
             self.assertTrue("update_appraise" in output)
             self.assertTrue("singlem_appraise_filtered" in output)
-            self.assertTrue("target_elusive" in output)
-            self.assertTrue("cluster_graph" in output)
+            self.assertTrue("precluster_samples" in output)
+            self.assertTrue("target_elusive" not in output)
+            self.assertTrue("cluster_graph" not in output)
+            self.assertTrue("group_clusters" in output)
             self.assertTrue("aviary_commands" in output)
             self.assertTrue("summary" in output)
 
