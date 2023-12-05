@@ -78,11 +78,20 @@ def targets_processing(targets, preclusters):
         .with_columns(pl.col("target").list.join(","))
     )
 
-def cluster_processing(clusters, preclusters):
+def cluster_processing(clusters, _):
     if len(clusters) == 1:
         return clusters[0]
 
-    return pl.concat(clusters)
+    return (
+        pl.concat(clusters)
+        .drop("coassembly")
+        .sort("total_targets", "total_size", descending=[True, False])
+        .with_row_count("coassembly")
+        .select(
+            "samples", "length", "total_targets", "total_size", "recover_samples",
+            coassembly = pl.lit("coassembly_") + pl.col("coassembly").cast(pl.Utf8)
+            )
+    )
 
 if __name__ == "__main__":
     os.environ["POLARS_MAX_THREADS"] = str(snakemake.threads)

@@ -235,6 +235,30 @@ class Tests(unittest.TestCase):
         observed = cluster_processing(clusters, preclusters).collect()
         self.assertDataFrameEqual(expected, observed)
 
+    def test_group_two_clusters(self):
+        cluster1 = pl.DataFrame([
+            ["sample_1,sample_2", 2, 4, 3, "sample_1,sample_2,sample_3", "coassembly_0"],
+            ["sample_2,sample_3", 2, 3, 5, "sample_1,sample_2,sample_3", "coassembly_1"],
+        ], schema=ELUSIVE_CLUSTERS_COLUMNS)
+
+        cluster2 = pl.DataFrame([
+            ["sample_4,sample_5", 2, 4, 3, "sample_4,sample_5,sample_6", "coassembly_0"],
+            ["sample_5,sample_6", 2, 3, 4, "sample_4,sample_5,sample_6", "coassembly_1"],
+        ], schema=ELUSIVE_CLUSTERS_COLUMNS)
+
+        clusters = [cluster1, cluster2]
+        preclusters = ["1", "2"]
+
+        expected = pl.DataFrame([
+            ["sample_1,sample_2", 2, 4, 3, "sample_1,sample_2,sample_3", "coassembly_0"],
+            ["sample_4,sample_5", 2, 4, 3, "sample_4,sample_5,sample_6", "coassembly_1"],
+            ["sample_5,sample_6", 2, 3, 4, "sample_4,sample_5,sample_6", "coassembly_2"],
+            ["sample_2,sample_3", 2, 3, 5, "sample_1,sample_2,sample_3", "coassembly_3"],
+        ], schema=ELUSIVE_CLUSTERS_COLUMNS)
+
+        observed = cluster_processing(clusters, preclusters)
+        self.assertDataFrameEqual(expected, observed)
+
 
 if __name__ == '__main__':
     unittest.main()
