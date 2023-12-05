@@ -941,6 +941,8 @@ def build(args):
         args.output = os.path.join(output_dir, "build_aviary")
         mapping_files = [os.path.join(args.output, "coassemble", "mapping", "sample_" + s + "_unmapped." + n + ".fq.gz") for s in ["1", "2", "3"] for n in ["1", "2"]]
         mapping_done = os.path.join(args.output, "coassemble", "mapping", "done")
+        elusive_edges = os.path.join(args.output, "coassemble", "target", "elusive_edges.tsv")
+        targets = os.path.join(args.output, "coassemble", "target", "targets.tsv")
         elusive_clusters = os.path.join(args.output, "coassemble", "target", "elusive_clusters.tsv")
         summary_file = os.path.join(args.output, "coassemble", "summary.tsv")
 
@@ -950,7 +952,7 @@ def build(args):
         with open(clusters_path, "w") as f:
             f.write(clusters_text)
 
-        for item in mapping_files + [mapping_done, elusive_clusters, summary_file]:
+        for item in mapping_files + [mapping_done, elusive_edges, targets, elusive_clusters, summary_file]:
             os.makedirs(os.path.dirname(item), exist_ok=True)
             subprocess.check_call(f"touch {item}", shell=True)
 
