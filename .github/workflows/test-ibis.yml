@@ -44,6 +44,7 @@ jobs:
           python test/test_collect_reference_bins.py -b
           python test/test_summarise_coassemblies.py -b
           python test/test_no_genomes.py -b
+          python test/test_group_clusters.py -b
           python test/test_aviary_commands.py
           python test/test_is_interleaved.py
           python test/test_build.py
