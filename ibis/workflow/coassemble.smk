@@ -76,7 +76,7 @@ def get_preclusters(wildcards):
                 precluster=glob_wildcards(os.path.join(checkpoint_output, "unbinned_{precluster}.otu_table.tsv")).precluster)
 
 def get_reads_coassembly(wildcards, forward=True, recover=False):
-    checkpoint_output = checkpoints.group_clusters.get(**wildcards).output[0]
+    checkpoint_output = checkpoints.group_clusters.get(**wildcards).output.elusive_clusters
     elusive_clusters = pl.read_csv(checkpoint_output, separator="\t")
 
     if recover:
@@ -97,7 +97,7 @@ def get_reads_coassembly(wildcards, forward=True, recover=False):
     return [reads[n] for n in sample_names]
 
 def get_coassemblies(wildcards):
-    checkpoint_output = checkpoints.group_clusters.get().output[0]
+    checkpoint_output = checkpoints.group_clusters.get().output.elusive_clusters
     elusive_clusters = pl.read_csv(checkpoint_output, separator="\t")
     coassemblies = elusive_clusters.get_column("coassembly").to_list()
 
