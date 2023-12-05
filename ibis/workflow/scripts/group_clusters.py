@@ -92,10 +92,10 @@ if __name__ == "__main__":
     input_edges = snakemake.input.elusive_edges
     input_targets = snakemake.input.targets
     input_clusters = snakemake.input.elusive_clusters
-    preclusters = snakemake.input.preclusters
     output_edges_path = snakemake.output.elusive_edges
     output_targets_path = snakemake.output.targets
     output_clusters_path = snakemake.output.elusive_clusters
+    preclusters = snakemake.params.preclusters
 
     edges = []
     for edge in input_edges:

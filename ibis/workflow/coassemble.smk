@@ -416,11 +416,12 @@ checkpoint group_clusters:
         elusive_edges = get_elusive_edges,
         targets = get_targets,
         elusive_clusters = get_elusive_clusters,
-        preclusters = get_preclusters,
     output:
         elusive_edges = output_dir + "/target/elusive_edges.tsv",
         targets = output_dir + "/target/targets.tsv",
         elusive_clusters = output_dir + "/target/elusive_clusters.tsv",
+    params:
+        preclusters = get_preclusters,
     threads: 64
     localrule: True
     log:
