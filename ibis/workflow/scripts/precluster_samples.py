@@ -20,9 +20,8 @@ SINGLEM_OTU_TABLE_SCHEMA = {
     "taxonomy": str,
     }
 
-def processing(unbinned, working_dir, MAX_CLUSTER_SIZE=1000):
+def processing(unbinned, MAX_CLUSTER_SIZE=1000):
     logging.info(f"Polars using {str(pl.threadpool_size())} threads")
-    os.makedirs(working_dir)
 
     logging.info("Generating sketches")
     parent_mh = MinHash(n=0, ksize=60, scaled=1, track_abundance=False)
@@ -83,7 +82,7 @@ if __name__ == "__main__":
     output_dir = snakemake.output[0]
 
     unbinned = pl.read_csv(unbinned_path, separator="\t", dtypes=SINGLEM_OTU_TABLE_SCHEMA)
-    clusters = processing(unbinned, os.path.join(output_dir, "working_dir"))
+    clusters = processing(unbinned)
 
     for n, cluster in enumerate(clusters):
         (
