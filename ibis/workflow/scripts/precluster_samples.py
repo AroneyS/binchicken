@@ -88,6 +88,6 @@ if __name__ == "__main__":
     for n, cluster in enumerate(clusters):
         (
             unbinned
-            .filter(pl.col("sample").isin(cluster))
+            .filter(pl.col("sample").is_in(cluster))
             .write_csv(os.path.join(output_dir, "unbinned_" + str(n+1) + ".otu_table.tsv"), separator="\t")
         )
