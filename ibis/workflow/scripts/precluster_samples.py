@@ -5,7 +5,11 @@
 
 import polars as pl
 import os
-import subprocess
+import logging
+from sourmash import MinHash
+import numpy as np
+from scipy.cluster.hierarchy import linkage, fcluster
+from scipy.spatial.distance import squareform
 
 SINGLEM_OTU_TABLE_SCHEMA = {
     "gene": str,
@@ -16,59 +20,72 @@ SINGLEM_OTU_TABLE_SCHEMA = {
     "taxonomy": str,
     }
 
-def processing(unbinned, working_dir):
-    print(f"Polars using {str(pl.threadpool_size())} threads")
+def processing(unbinned, working_dir, MAX_CLUSTER_SIZE=1000):
+    logging.info(f"Polars using {str(pl.threadpool_size())} threads")
     os.makedirs(working_dir)
 
-    # Generate fa files
+    logging.info("Generating sketches")
+    parent_mh = MinHash(n=0, ksize=60, scaled=1, track_abundance=False)
+    hashes = []
+    samples = []
     for group in unbinned.select("sample", "sequence").group_by("sample"):
-        sample_name = group[0]
-        with open(os.path.join(working_dir, sample_name + ".fa"), "w") as f:
-            for n, row in enumerate(group[1].iter_rows()):
-                if n == 0:
-                    seq_name = sample_name
-                else:
-                    seq_name = sample_name + str(n)
+        mh = parent_mh.copy_and_clear()
+        for row in group[1].iter_rows():
+            mh.add_sequence(row[1].replace("-", "A"))
 
-                seq = row[1].replace("-", "A")
-                f.write(f">{seq_name}\n{seq}\n")
+        samples.append(group[0])
+        hashes.append(mh)
 
-    with open(os.path.join(working_dir, "samples.txt"), "w") as f:
-        for sample in unbinned.unique("sample").get_column("sample"):
-            filename = os.path.join(working_dir, sample + ".fa")
-            f.write(f"{filename}\n")
+    logging.info("Calculating distances")
+    n_samples = len(hashes)
+    distances = np.zeros([n_samples, n_samples])
 
-    # Generate large kmers
-    cmd = (
-        f"sourmash sketch dna "
-        f"-p k=60,scaled=1,noabund "
-        f"--name-from-first "
-        f"--from-file {working_dir}/samples.txt "
-        f"-o {working_dir}/sketches.sig "
-    )
-    subprocess.run(cmd, shell=True, check=True)
+    total_count = int(n_samples ** 2 / 2)
+    for i, hash1 in enumerate(hashes):
+        for j, hash2 in enumerate(hashes):
+            if i < j:
+                continue
 
-    cmd = (
-        f"sourmash compare {working_dir}/sketches.sig -o {working_dir}/sourmash_compare && "
-        f"sourmash plot --labels {working_dir}/sourmash_compare"
-    )
-    subprocess.run(cmd, shell=True, check=True)
+            similarity = 1 - hash1.similarity(hash2)
+            distances[i][j] = similarity
+            distances[j][i] = similarity
+    logging.info(f"Completed {total_count} comparisons")
 
-    # Cluster into groups of max 1000
+    clust = linkage(squareform(distances), method="single")
 
-    return(clusters)
+    cluster_too_large = True
+    t = 1
+    while cluster_too_large:
+        clusters = fcluster(clust, t=t)
+        cluster_sizes = np.unique(clusters, return_counts=True)[1]
+        cluster_too_large = np.any(cluster_sizes > MAX_CLUSTER_SIZE)
+        t -= 0.1
+
+    sample_clusters = []
+    for cluster in np.unique(clusters):
+        sample_cluster = [samples[s] for s in np.where(clusters == cluster)[0]]
+        sample_clusters.append(sample_cluster)
+
+    return sample_clusters
 
 if __name__ == "__main__":
     os.environ["POLARS_MAX_THREADS"] = str(snakemake.threads)
     import polars as pl
 
+    logging.basicConfig(
+        filename=snakemake.log[0],
+        level=logging.INFO,
+        format='%(asctime)s %(levelname)s: %(message)s',
+        datefmt='%Y/%m/%d %I:%M:%S %p'
+        )
+
     unbinned_path = snakemake.input.unbinned
     output_dir = snakemake.output[0]
 
-    unbinned = pl.scan_csv(unbinned_path, separator="\t", dtypes=SINGLEM_OTU_TABLE_SCHEMA)
+    unbinned = pl.read_csv(unbinned_path, separator="\t", dtypes=SINGLEM_OTU_TABLE_SCHEMA)
     clusters = processing(unbinned, os.path.join(output_dir, "working_dir"))
 
-    for n, cluster in enumerate(clusters.iter_rows()):
+    for n, cluster in enumerate(clusters):
         (
             unbinned
             .filter(pl.col("sample").isin(cluster))
