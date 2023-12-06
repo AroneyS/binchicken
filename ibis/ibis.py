@@ -19,6 +19,9 @@ import shutil
 
 FAST_AVIARY_MODE = "fast"
 COMPREHENSIVE_AVIARY_MODE = "comprehensive"
+PRECLUSTER_NEVER_MODE = "never"
+PRECLUSTER_SIZE_DEP_MODE = "large"
+PRECLUSTER_ALWAYS_MODE = "always"
 
 def build_reads_list(forward, reverse):
     if reverse:
@@ -1122,6 +1125,9 @@ def main():
         coassemble_clustering.add_argument("--max-coassembly-samples", type=int, help="Upper bound for number of samples per coassembly cluster [default: --num-coassembly-samples]", default=None)
         coassemble_clustering.add_argument("--max-coassembly-size", type=int, help="Maximum size (Gbp) of coassembly cluster [default: 50Gbp]", default=50)
         coassemble_clustering.add_argument("--max-recovery-samples", type=int, help="Upper bound for number of related samples to use for differential abundance binning [default: 20]", default=20)
+        coassemble_clustering.add_argument("--kmer-precluster", help="Run kmer preclustering of unbinned window sequences. [default: large (perform preclustering when given >1000 samples)]",
+                                            default=PRECLUSTER_SIZE_DEP_MODE, choices=[PRECLUSTER_NEVER_MODE, PRECLUSTER_SIZE_DEP_MODE, PRECLUSTER_ALWAYS_MODE])
+        coassemble_clustering.add_argument("--max-precluster-size", type=int, help="Largest allowed precluster [default: 1000]", default=1000)
         coassemble_clustering.add_argument("--prodigal-meta", action="store_true", help="Use prodigal \"-p meta\" argument (for testing)")
         # Coassembly options
         coassemble_coassembly = parser.add_argument_group("Coassembly options")
