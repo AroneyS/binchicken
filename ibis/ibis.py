@@ -441,6 +441,18 @@ def coassemble(args):
         args.max_coassembly_samples = 1
         args.max_coassembly_size = None
 
+    if args.kmer_precluster == PRECLUSTER_NEVER_MODE:
+        kmer_precluster = False
+    elif args.kmer_precluster == PRECLUSTER_SIZE_DEP_MODE:
+        if len(forward_reads) > 1000:
+            kmer_precluster = True
+        else:
+            kmer_precluster = False
+    elif args.kmer_precluster == PRECLUSTER_ALWAYS_MODE:
+        kmer_precluster = True
+    else:
+        raise ValueError(f"Invalid kmer precluster mode: {args.kmer_precluster}")
+
     try:
         build_status = args.build
     except AttributeError:
@@ -465,6 +477,8 @@ def coassemble(args):
         "max_coassembly_samples": args.max_coassembly_samples if args.max_coassembly_samples else args.num_coassembly_samples,
         "max_coassembly_size": args.max_coassembly_size,
         "max_recovery_samples": args.max_recovery_samples,
+        "kmer_precluster": kmer_precluster,
+        "max_precluster_size": args.max_precluster_size,
         "prodigal_meta": args.prodigal_meta,
         # Coassembly config
         "assemble_unmapped": args.assemble_unmapped,

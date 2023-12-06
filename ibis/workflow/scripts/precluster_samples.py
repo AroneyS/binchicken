@@ -79,18 +79,24 @@ if __name__ == "__main__":
         )
 
     unbinned_path = snakemake.input.unbinned
+    KMER_PRECLUSTER = snakemake.params.kmer_precluster
+    MAX_CLUSTER_SIZE = snakemake.params.max_precluster_size
     output_dir = snakemake.output[0]
     os.makedirs(output_dir)
 
     unbinned = pl.read_csv(unbinned_path, separator="\t", dtypes=SINGLEM_OTU_TABLE_SCHEMA)
-    clusters = processing(unbinned)
 
-    with open(os.path.join(output_dir, "clusters.txt"), "w") as f:
-        f.write("\n".join(sorted([",".join(sorted(cluster)) for cluster in clusters])) + "\n")
+    if KMER_PRECLUSTER:
+        clusters = processing(unbinned, MAX_CLUSTER_SIZE=MAX_CLUSTER_SIZE)
 
-    for n, cluster in enumerate(clusters):
-        (
-            unbinned
-            .filter(pl.col("sample").is_in(cluster))
-            .write_csv(os.path.join(output_dir, "unbinned_" + str(n+1) + ".otu_table.tsv"), separator="\t")
-        )
+        with open(os.path.join(output_dir, "clusters.txt"), "w") as f:
+            f.write("\n".join(sorted([",".join(sorted(cluster)) for cluster in clusters])) + "\n")
+
+        for n, cluster in enumerate(clusters):
+            (
+                unbinned
+                .filter(pl.col("sample").is_in(cluster))
+                .write_csv(os.path.join(output_dir, "unbinned_" + str(n+1) + ".otu_table.tsv"), separator="\t")
+            )
+    else:
+        unbinned.write_csv(os.path.join(output_dir, "unbinned_1.otu_table.tsv"), separator="\t")

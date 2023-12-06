@@ -365,6 +365,10 @@ checkpoint precluster_samples:
         unbinned = output_dir + "/appraise/unbinned.otu_table.tsv",
     output:
         directory(output_dir + "/precluster"),
+    params:
+        kmer_precluster = config["kmer_precluster"],
+        max_precluster_size = config["max_precluster_size"],
+        taxa_of_interest = config["taxa_of_interest"],
     threads: 32
     resources:
         mem_mb=250*1000,
