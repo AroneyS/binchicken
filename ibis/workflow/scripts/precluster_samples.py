@@ -80,9 +80,13 @@ if __name__ == "__main__":
 
     unbinned_path = snakemake.input.unbinned
     output_dir = snakemake.output[0]
+    os.makedirs(output_dir)
 
     unbinned = pl.read_csv(unbinned_path, separator="\t", dtypes=SINGLEM_OTU_TABLE_SCHEMA)
     clusters = processing(unbinned)
+
+    with open(os.path.join(output_dir, "clusters.txt"), "w") as f:
+        f.write("\n".join(sorted([",".join(sorted(cluster)) for cluster in clusters])) + "\n")
 
     for n, cluster in enumerate(clusters):
         (

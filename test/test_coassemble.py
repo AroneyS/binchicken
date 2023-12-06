@@ -112,6 +112,9 @@ class Tests(unittest.TestCase):
             with open(read_size_path) as f:
                 self.assertEqual(expected, f.read())
 
+            preclusters_path = os.path.join("test", "coassemble", "precluster", "clusters.txt")
+            self.assertFalse(os.path.exists(preclusters_path))
+
             edges_path = os.path.join("test", "coassemble", "target", "targets.tsv")
             self.assertTrue(os.path.exists(edges_path))
 
@@ -1216,6 +1219,18 @@ class Tests(unittest.TestCase):
                 ]
             )
             with open(read_size_path) as f:
+                self.assertEqual(expected, f.read())
+
+            preclusters_path = os.path.join("test", "coassemble", "precluster", "clusters.txt")
+            self.assertTrue(os.path.exists(preclusters_path))
+            expected = "\n".join(
+                [
+                    ",".join(["sample_1", "sample_2"]),
+                    ",".join(["sample_3", "sample_4"]),
+                    ""
+                ]
+            )
+            with open(preclusters_path) as f:
                 self.assertEqual(expected, f.read())
 
             edges_path = os.path.join("test", "coassemble", "target", "targets.tsv")
