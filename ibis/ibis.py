@@ -897,6 +897,7 @@ def build(args):
     args.run_qc = True
     args.coassemblies = None
     args.singlem_metapackage = "."
+    args.kmer_precluster = PRECLUSTER_NEVER_MODE
 
     # Create mock input files
     forward_reads = [os.path.join(args.output, "sample_" + s + ".1.fq") for s in ["1", "2", "3"]]
