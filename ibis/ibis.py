@@ -312,6 +312,8 @@ def set_standard_args(args):
     args.max_coassembly_samples = None
     args.max_coassembly_size = None
     args.max_recovery_samples = 1
+    args.kmer_precluster = PRECLUSTER_NEVER_MODE
+    args.max_precluster_size = 1000
     args.prodigal_meta = False
 
     return(args)
