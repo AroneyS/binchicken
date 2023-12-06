@@ -1274,6 +1274,36 @@ class Tests(unittest.TestCase):
             with open(cluster_path) as f:
                 self.assertEqual(expected, f.read())
 
+    def test_coassemble_preclustered_target_taxa(self):
+        with in_tempdir():
+            cmd = (
+                f"ibis coassemble "
+                f"--forward {SAMPLE_READS_FORWARD_PRE} "
+                f"--reverse {SAMPLE_READS_REVERSE_PRE} "
+                f"--sample-singlem {SAMPLE_SINGLEM_PRE} "
+                f"--taxa-of-interest p__Abyssobacteria "
+                f"--singlem-metapackage {METAPACKAGE} "
+                f"--kmer-precluster always "
+                f"--max-precluster-size 2 "
+                f"--output test "
+                f"--conda-prefix {path_to_conda} "
+            )
+            extern.run(cmd)
+
+            config_path = os.path.join("test", "config.yaml")
+            self.assertTrue(os.path.exists(config_path))
+
+            preclusters_path = os.path.join("test", "coassemble", "precluster", "clusters.txt")
+            self.assertTrue(os.path.exists(preclusters_path))
+            expected = "\n".join(
+                [
+                    ",".join(["sample_2", "sample_4"]),
+                    ""
+                ]
+            )
+            with open(preclusters_path) as f:
+                self.assertEqual(expected, f.read())
+
 
 if __name__ == '__main__':
     unittest.main()

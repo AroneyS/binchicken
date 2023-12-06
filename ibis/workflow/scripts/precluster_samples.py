@@ -81,10 +81,17 @@ if __name__ == "__main__":
     unbinned_path = snakemake.input.unbinned
     KMER_PRECLUSTER = snakemake.params.kmer_precluster
     MAX_CLUSTER_SIZE = snakemake.params.max_precluster_size
+    TAXA_OF_INTEREST = snakemake.params.taxa_of_interest
     output_dir = snakemake.output[0]
     os.makedirs(output_dir)
 
     unbinned = pl.read_csv(unbinned_path, separator="\t", dtypes=SINGLEM_OTU_TABLE_SCHEMA)
+
+    if TAXA_OF_INTEREST:
+        logging.info(f"Filtering for taxa of interest: {TAXA_OF_INTEREST}")
+        unbinned = unbinned.filter(
+            pl.col("taxonomy").str.contains(TAXA_OF_INTEREST, literal=True)
+        )
 
     if KMER_PRECLUSTER:
         clusters = processing(unbinned, MAX_CLUSTER_SIZE=MAX_CLUSTER_SIZE)
