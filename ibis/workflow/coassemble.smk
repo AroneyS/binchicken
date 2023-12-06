@@ -365,9 +365,14 @@ checkpoint precluster_samples:
         unbinned = output_dir + "/appraise/unbinned.otu_table.tsv",
     output:
         directory(output_dir + "/precluster"),
-    shell:
-        "mkdir -p {output} && "
-        "cp {input.unbinned} {output}/unbinned_1.otu_table.tsv "
+    threads: 32
+    resources:
+        mem_mb=250*1000,
+        runtime = "24h",
+    log:
+        logs_dir + "/precluster/precluster_samples.log"
+    script:
+        "scripts/precluster_samples.py"
 
 rule target_elusive:
     input:
