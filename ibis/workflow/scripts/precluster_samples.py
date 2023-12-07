@@ -65,6 +65,12 @@ def processing(unbinned, MAX_CLUSTER_SIZE=1000):
         sample_cluster = [samples[s] for s in np.where(clusters == cluster)[0]]
         sample_clusters.append(sample_cluster)
 
+    largest_cluster = max(sample_clusters, key=len)
+    smallest_cluster = min(sample_clusters, key=len)
+    logging.info(f"Found {len(sample_clusters)} clusters")
+    logging.info(f"Largest cluster has {len(largest_cluster)} samples")
+    logging.info(f"Smallest cluster has {len(smallest_cluster)} samples")
+
     return sample_clusters
 
 if __name__ == "__main__":
