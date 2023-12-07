@@ -50,19 +50,6 @@ def get_reads(wildcards, forward=True, version=None):
 def get_cat(wildcards):
     return "zcat" if [r for r in get_reads(wildcards).values()][0].endswith(".gz") else "cat"
 
-
-def get_elusive_edges(wildcards):
-    checkpoint_output = checkpoints.precluster_samples.get(**wildcards).output[0]
-
-    return expand(output_dir + "/target/elusive_edges_{precluster}.tsv",
-                precluster=glob_wildcards(os.path.join(checkpoint_output, "unbinned_{precluster}.otu_table.tsv")).precluster)
-
-def get_targets(wildcards):
-    checkpoint_output = checkpoints.precluster_samples.get(**wildcards).output[0]
-
-    return expand(output_dir + "/target/targets_{precluster}.tsv",
-                precluster=glob_wildcards(os.path.join(checkpoint_output, "unbinned_{precluster}.otu_table.tsv")).precluster)
-
 def get_elusive_clusters(wildcards):
     checkpoint_output = checkpoints.precluster_samples.get(**wildcards).output[0]
 
@@ -422,12 +409,8 @@ rule cluster_graph:
 
 checkpoint group_clusters:
     input:
-        elusive_edges = get_elusive_edges,
-        targets = get_targets,
         elusive_clusters = get_elusive_clusters,
     output:
-        elusive_edges = output_dir + "/target/elusive_edges.tsv",
-        targets = output_dir + "/target/targets.tsv",
         elusive_clusters = output_dir + "/target/elusive_clusters.tsv",
     params:
         preclusters = get_preclusters,

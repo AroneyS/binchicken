@@ -115,12 +115,6 @@ class Tests(unittest.TestCase):
             preclusters_path = os.path.join("test", "coassemble", "precluster", "clusters.txt")
             self.assertFalse(os.path.exists(preclusters_path))
 
-            edges_path = os.path.join("test", "coassemble", "target", "targets.tsv")
-            self.assertTrue(os.path.exists(edges_path))
-
-            edges_path = os.path.join("test", "coassemble", "target", "elusive_edges.tsv")
-            self.assertTrue(os.path.exists(edges_path))
-
             cluster_path = os.path.join("test", "coassemble", "target", "elusive_clusters.tsv")
             self.assertTrue(os.path.exists(cluster_path))
 
@@ -262,12 +256,6 @@ class Tests(unittest.TestCase):
             config_path = os.path.join("test", "config.yaml")
             self.assertTrue(os.path.exists(config_path))
 
-            edges_path = os.path.join("test", "coassemble", "target", "targets.tsv")
-            self.assertTrue(os.path.exists(edges_path))
-
-            edges_path = os.path.join("test", "coassemble", "target", "elusive_edges.tsv")
-            self.assertTrue(os.path.exists(edges_path))
-
             cluster_path = os.path.join("test", "coassemble", "target", "elusive_clusters.tsv")
             self.assertTrue(os.path.exists(cluster_path))
 
@@ -375,12 +363,6 @@ class Tests(unittest.TestCase):
 
             config_path = os.path.join("test", "config.yaml")
             self.assertTrue(os.path.exists(config_path))
-
-            edges_path = os.path.join("test", "coassemble", "target", "targets.tsv")
-            self.assertTrue(os.path.exists(edges_path))
-
-            edges_path = os.path.join("test", "coassemble", "target", "elusive_edges.tsv")
-            self.assertTrue(os.path.exists(edges_path))
 
             cluster_path = os.path.join("test", "coassemble", "target", "elusive_clusters.tsv")
             self.assertTrue(os.path.exists(cluster_path))
@@ -531,12 +513,6 @@ class Tests(unittest.TestCase):
             )
             with open(unbinned_path) as f:
                 self.assertEqual(expected, f.read())
-
-            edges_path = os.path.join("test", "coassemble", "target", "targets.tsv")
-            self.assertTrue(os.path.exists(edges_path))
-
-            edges_path = os.path.join("test", "coassemble", "target", "elusive_edges.tsv")
-            self.assertTrue(os.path.exists(edges_path))
 
             cluster_path = os.path.join("test", "coassemble", "target", "elusive_clusters.tsv")
             self.assertTrue(os.path.exists(cluster_path))
@@ -1232,12 +1208,6 @@ class Tests(unittest.TestCase):
             )
             with open(preclusters_path) as f:
                 self.assertEqual(expected, f.read())
-
-            edges_path = os.path.join("test", "coassemble", "target", "targets.tsv")
-            self.assertTrue(os.path.exists(edges_path))
-
-            edges_path = os.path.join("test", "coassemble", "target", "elusive_edges.tsv")
-            self.assertTrue(os.path.exists(edges_path))
 
             cluster_path = os.path.join("test", "coassemble", "target", "elusive_clusters.tsv")
             self.assertTrue(os.path.exists(cluster_path))
