@@ -30,7 +30,7 @@ def processing(unbinned, MAX_CLUSTER_SIZE=1000):
     for group in unbinned.select("sample", "sequence").group_by("sample"):
         mh = parent_mh.copy_and_clear()
         for row in group[1].iter_rows():
-            mh.add_sequence(row[1].replace("-", "A"))
+            mh.add_sequence(row[1].replace("-", "A").replace("N", "A"))
 
         samples.append(group[0])
         hashes.append(mh)
