@@ -21,11 +21,14 @@ SINGLEM_OTU_TABLE_SCHEMA = {
     "taxonomy": str,
     }
 
-def calculate_similarity(i, j, ihash, jhash):
-    if i < j:
-        return None
-    similarity = 1 - ihash.similarity(jhash)
-    return i, j, similarity
+def calculate_similarities(chunk):
+    results = []
+    for (i, j, ihash, jhash) in chunk:
+        if i < j:
+            continue
+        similarity = 1 - ihash.similarity(jhash)
+        results.append((i, j, similarity))
+    return results
 
 def processing(unbinned, MAX_CLUSTER_SIZE=1000, threads=1):
     logging.info(f"Polars using {str(pl.threadpool_size())} threads")
@@ -49,12 +52,14 @@ def processing(unbinned, MAX_CLUSTER_SIZE=1000, threads=1):
 
     total_count = int(n_samples ** 2 / 2)
 
+    pairs = [(i, j, ihash, jhash) for i, ihash in enumerate(hashes) for j, jhash in enumerate(hashes)]
+    chunks = np.array_split(pairs, threads)
+
     with concurrent.futures.ProcessPoolExecutor(max_workers=threads) as executor:
-        future_to_similarity = {executor.submit(calculate_similarity, i, j, ihash, jhash): (i, j) for i, ihash in enumerate(hashes) for j, jhash in enumerate(hashes)}
+        future_to_similarity = {executor.submit(calculate_similarities, chunk): chunk for chunk in chunks}
         for future in concurrent.futures.as_completed(future_to_similarity):
-            result = future.result()
-            if result is not None:
-                i, j, similarity = result
+            results = future.result()
+            for i, j, similarity in results:
                 distances[i][j] = similarity
                 distances[j][i] = similarity
 
