@@ -11,6 +11,7 @@ import numpy as np
 from scipy.cluster.hierarchy import linkage, fcluster
 from scipy.spatial.distance import squareform
 import concurrent.futures
+import multiprocessing
 
 SINGLEM_OTU_TABLE_SCHEMA = {
     "gene": str,
@@ -55,7 +56,7 @@ def processing(unbinned, MAX_CLUSTER_SIZE=1000, threads=1):
     pairs = [(i, j, ihash, jhash) for i, ihash in enumerate(hashes) for j, jhash in enumerate(hashes)]
     chunks = np.array_split(pairs, threads)
 
-    with concurrent.futures.ProcessPoolExecutor(max_workers=threads) as executor:
+    with concurrent.futures.ProcessPoolExecutor(max_workers=threads, mp_context=multiprocessing.get_context("spawn")) as executor:
         future_to_similarity = {executor.submit(calculate_similarities, chunk): chunk for chunk in chunks}
         for future in concurrent.futures.as_completed(future_to_similarity):
             results = future.result()
