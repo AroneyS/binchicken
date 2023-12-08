@@ -74,7 +74,9 @@ def processing(unbinned, MAX_CLUSTER_SIZE=1000, threads=1):
         clusters = fcluster(clust, criterion="distance", t=t)
         cluster_sizes = np.unique(clusters, return_counts=True)[1]
         cluster_too_large = np.any(cluster_sizes > MAX_CLUSTER_SIZE)
-        t -= 0.1
+        t -= 0.01
+
+    logging.info(f"Found cutoff t={round(t, ndigits=2)} with no clusters larger than {MAX_CLUSTER_SIZE}")
 
     sample_clusters = []
     for cluster in np.unique(clusters):
