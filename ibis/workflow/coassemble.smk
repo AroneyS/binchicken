@@ -356,9 +356,9 @@ checkpoint precluster_samples:
         kmer_precluster = config["kmer_precluster"],
         max_precluster_size = config["max_precluster_size"],
         taxa_of_interest = config["taxa_of_interest"],
-    threads: 32
+    threads: 64
     resources:
-        mem_mb=250*1000,
+        mem_mb=500*1000,
         runtime = "24h",
     log:
         logs_dir + "/precluster/precluster_samples.log"
@@ -398,9 +398,9 @@ rule cluster_graph:
         max_recovery_samples = config["max_recovery_samples"],
         coassembly_samples = config["coassembly_samples"],
         exclude_coassemblies = config["exclude_coassemblies"],
-    threads: 64
+    threads: 32
     resources:
-        mem_mb=500*1000,
+        mem_mb=250*1000,
         runtime = "168h",
     log:
         logs_dir + "/target/cluster_graph_{precluster}.log"

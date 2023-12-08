@@ -43,10 +43,7 @@ class Tests(unittest.TestCase):
             ["sample_3", "sample_4"]
         ]
 
-        observed = processing(
-            unbinned,
-            MAX_CLUSTER_SIZE=2,
-            )
+        observed = processing(unbinned, MAX_CLUSTER_SIZE=2)
         self.assertListListEqual(expected, observed)
 
 

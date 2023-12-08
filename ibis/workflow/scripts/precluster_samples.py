@@ -10,6 +10,7 @@ from sourmash import MinHash
 import numpy as np
 from scipy.cluster.hierarchy import linkage, fcluster
 from scipy.spatial.distance import squareform
+import concurrent.futures
 
 SINGLEM_OTU_TABLE_SCHEMA = {
     "gene": str,
@@ -20,7 +21,13 @@ SINGLEM_OTU_TABLE_SCHEMA = {
     "taxonomy": str,
     }
 
-def processing(unbinned, MAX_CLUSTER_SIZE=1000):
+def calculate_similarity(i, j, ihash, jhash):
+    if i < j:
+        return None
+    similarity = 1 - ihash.similarity(jhash)
+    return i, j, similarity
+
+def processing(unbinned, MAX_CLUSTER_SIZE=1000, threads=1):
     logging.info(f"Polars using {str(pl.threadpool_size())} threads")
 
     logging.info("Generating sketches")
@@ -36,18 +43,21 @@ def processing(unbinned, MAX_CLUSTER_SIZE=1000):
         hashes.append(mh)
 
     logging.info("Calculating distances")
+    logging.info(f"Distance calculations using {threads} threads")
     n_samples = len(hashes)
     distances = np.zeros([n_samples, n_samples])
 
     total_count = int(n_samples ** 2 / 2)
-    for i, hash1 in enumerate(hashes):
-        for j, hash2 in enumerate(hashes):
-            if i < j:
-                continue
 
-            similarity = 1 - hash1.similarity(hash2)
-            distances[i][j] = similarity
-            distances[j][i] = similarity
+    with concurrent.futures.ProcessPoolExecutor(max_workers=threads) as executor:
+        future_to_similarity = {executor.submit(calculate_similarity, i, j, ihash, jhash): (i, j) for i, ihash in enumerate(hashes) for j, jhash in enumerate(hashes)}
+        for future in concurrent.futures.as_completed(future_to_similarity):
+            result = future.result()
+            if result is not None:
+                i, j, similarity = result
+                distances[i][j] = similarity
+                distances[j][i] = similarity
+
     logging.info(f"Completed {total_count} comparisons")
 
     clust = linkage(squareform(distances), method="single")
@@ -88,6 +98,7 @@ if __name__ == "__main__":
     KMER_PRECLUSTER = snakemake.params.kmer_precluster
     MAX_CLUSTER_SIZE = snakemake.params.max_precluster_size
     TAXA_OF_INTEREST = snakemake.params.taxa_of_interest
+    threads = snakemake.threads
     output_dir = snakemake.output[0]
     os.makedirs(output_dir)
 
@@ -100,7 +111,7 @@ if __name__ == "__main__":
         )
 
     if KMER_PRECLUSTER:
-        clusters = processing(unbinned, MAX_CLUSTER_SIZE=MAX_CLUSTER_SIZE)
+        clusters = processing(unbinned, MAX_CLUSTER_SIZE=MAX_CLUSTER_SIZE, threads=threads)
 
         with open(os.path.join(output_dir, "clusters.txt"), "w") as f:
             f.write("\n".join(sorted([",".join(sorted(cluster)) for cluster in clusters])) + "\n")
