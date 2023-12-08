@@ -65,12 +65,12 @@ def processing(unbinned, MAX_CLUSTER_SIZE=1000, threads=1):
 
     logging.info(f"Completed {total_count} comparisons")
 
-    clust = linkage(squareform(distances), method="single")
+    clust = linkage(squareform(distances), method="complete",  metric="precomputed")
 
     cluster_too_large = True
     t = 1
     while cluster_too_large:
-        clusters = fcluster(clust, t=t)
+        clusters = fcluster(clust, criterion="distance", t=t)
         cluster_sizes = np.unique(clusters, return_counts=True)[1]
         cluster_too_large = np.any(cluster_sizes > MAX_CLUSTER_SIZE)
         t -= 0.1
