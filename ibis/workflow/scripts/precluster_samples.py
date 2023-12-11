@@ -53,8 +53,11 @@ def processing(unbinned, MAX_CLUSTER_SIZE=1000, threads=1):
 
     total_count = int(n_samples ** 2 / 2)
 
-    pairs = [(i, j, ihash, jhash) for i, ihash in enumerate(hashes) for j, jhash in enumerate(hashes)]
-    chunks = np.array_split(pairs, threads)
+    # pairs = [(i, j, ihash, jhash) for i, ihash in enumerate(hashes) for j, jhash in enumerate(hashes)]
+    # chunks = np.array_split(pairs, threads)
+    chunk_size = 10**4
+    chunks = [(i, j, ihash, jhash) for i, ihash in enumerate(hashes) for j, jhash in enumerate(hashes)]
+    chunks = [chunks[i:i + chunk_size] for i in range(0, len(chunks), chunk_size)]
 
     with concurrent.futures.ProcessPoolExecutor(max_workers=threads, mp_context=multiprocessing.get_context("spawn")) as executor:
         future_to_similarity = {executor.submit(calculate_similarities, chunk): chunk for chunk in chunks}
