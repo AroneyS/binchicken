@@ -6,8 +6,8 @@ from ibis.workflow.scripts.precluster_samples import processing
 
 class Tests(unittest.TestCase):
     def assertListListEqual(self, a, b):
-        a_sets = [set(x) for x in a]
-        b_sets = [set(x) for x in b]
+        a_sets = [sorted(x) for x in a]
+        b_sets = [sorted(x) for x in b]
         self.assertEqual(sorted(a_sets), sorted(b_sets))
 
     def test_precluster_samples(self):

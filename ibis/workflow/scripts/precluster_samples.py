@@ -28,17 +28,34 @@ def processing(distances, samples, MAX_CLUSTER_SIZE=1000):
     cluster_too_large = True
     t_increment = 0.01
     t = 1 + t_increment
+    clusters = []
     while cluster_too_large:
         t -= t_increment
-        clusters = fcluster(clust, criterion="inconsistent", t=t)
-        cluster_sizes = np.unique(clusters, return_counts=True)[1]
+        cluster = fcluster(clust, criterion="distance", t=t)
+        cluster_sizes = np.unique(cluster, return_counts=True)[1]
         cluster_too_large = np.any(cluster_sizes > MAX_CLUSTER_SIZE)
 
+        if len(clusters) == 0:
+            clusters = cluster
+        elif any(cluster != clusters[-1]):
+            clusters = np.vstack([clusters, cluster])
+
     logging.info(f"Found cutoff t={round(t, ndigits=2)} with no clusters larger than {MAX_CLUSTER_SIZE}")
+    logging.info(f"Placing each sample in largest cluster <= {MAX_CLUSTER_SIZE}")
+    # Iterate over numpy array, setting the value to the first number that is part of a cluster smaller than MAX_CLUSTER_SIZE
+    def first_under_max(column):
+        for index, value in enumerate(column):
+            count = np.count_nonzero(clusters[index] == value, axis=0)
+            if count <= MAX_CLUSTER_SIZE:
+                # Return the cluster value with adjustment to ensure unique cluster names across rows
+                return index * int(1 / t_increment) + value
+        return None
+
+    best_clusters = np.apply_along_axis(first_under_max, axis=0, arr=clusters)
 
     sample_clusters = []
-    for cluster in np.unique(clusters):
-        sample_cluster = [samples[s] for s in np.where(clusters == cluster)[0]]
+    for cluster in np.unique(best_clusters):
+        sample_cluster = [samples[s] for s in np.where(best_clusters == cluster)[0]]
         sample_clusters.append(sample_cluster)
 
     logging.info(f"Found {len(sample_clusters)} clusters")
