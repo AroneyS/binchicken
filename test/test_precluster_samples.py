@@ -27,7 +27,7 @@ class Tests(unittest.TestCase):
         observed = processing(distances, samples, MAX_CLUSTER_SIZE=2)
         self.assertListListEqual(expected, observed)
 
-    def test_precluster_samples_singletons(self):
+    def test_precluster_samples_link(self):
         # 1+2 cluster tightly
         # 3 clusters with 1+2
         # 4+5 cluster more loose than 3 with 1+2
@@ -43,6 +43,30 @@ class Tests(unittest.TestCase):
         expected = [
             ["sample_1", "sample_2"],
             ["sample_3"],
+            ["sample_4", "sample_5"],
+        ]
+
+        observed = processing(distances, samples, MAX_CLUSTER_SIZE=2)
+        self.assertListListEqual(expected, observed)
+
+    def test_precluster_samples_singletons(self):
+        # 1+2 cluster tightly
+        # 3 clusters with 1+2
+        # 4+5 cluster more loose than 3 with 1+2
+        # 6 is a singleton
+        distances = 1 - np.array([
+            [1.0, 1.0, 0.9, 0.0, 0.0, 0.0],
+            [1.0, 1.0, 0.9, 0.0, 0.0, 0.0],
+            [0.9, 0.9, 1.0, 0.0, 0.0, 0.0],
+            [0.0, 0.0, 0.0, 1.0, 0.7, 0.0],
+            [0.0, 0.0, 0.0, 0.7, 1.0, 0.0],
+            [0.0, 0.0, 0.0, 0.0, 0.0, 1.0],
+        ])
+        samples = ["sample_1", "sample_2", "sample_3", "sample_4", "sample_5", "sample_6"]
+
+        expected = [
+            ["sample_1", "sample_2"],
+            ["sample_3", "sample_6"],
             ["sample_4", "sample_5"],
         ]
 

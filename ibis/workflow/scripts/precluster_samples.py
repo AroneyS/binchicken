@@ -21,48 +21,53 @@ SINGLEM_OTU_TABLE_SCHEMA = {
     "taxonomy": str,
     }
 
-def processing(distances, samples, MAX_CLUSTER_SIZE=1000):
-    logging.info(f"Clustering samples")
+def cluster_samples(distances, MAX_CLUSTER_SIZE):
     clust = linkage(squareform(distances), method="single",  metric="precomputed")
 
     cluster_too_large = True
     t_increment = 0.01
     t = 1 + t_increment
-    clusters = []
     while cluster_too_large:
         t -= t_increment
-        cluster = fcluster(clust, criterion="distance", t=t)
-        cluster_sizes = np.unique(cluster, return_counts=True)[1]
+        clusters = fcluster(clust, criterion="distance", t=t)
+        cluster_sizes = np.unique(clusters, return_counts=True)[1]
         cluster_too_large = np.any(cluster_sizes > MAX_CLUSTER_SIZE)
 
-        if len(clusters) == 0:
-            clusters = cluster
-        elif any(cluster != clusters[-1]):
-            clusters = np.vstack([clusters, cluster])
+    return clusters
 
-    logging.info(f"Found cutoff t={round(t, ndigits=2)} with no clusters larger than {MAX_CLUSTER_SIZE}")
-    logging.info(f"Placing each sample in largest cluster <= {MAX_CLUSTER_SIZE}")
-    # Iterate over numpy array, setting the value to the first number that is part of a cluster smaller than MAX_CLUSTER_SIZE
-    def first_under_max(column):
-        for index, value in enumerate(column):
-            count = np.count_nonzero(clusters[index] == value, axis=0)
-            if count <= MAX_CLUSTER_SIZE:
-                # Return the cluster value with adjustment to ensure unique cluster names across rows
-                return index * int(1 / t_increment) + value
-        return None
 
-    best_clusters = np.apply_along_axis(first_under_max, axis=0, arr=clusters)
+def processing(distances, samples, MAX_CLUSTER_SIZE=1000):
+    logging.info(f"Clustering samples")
 
-    sample_clusters = []
-    for cluster in np.unique(best_clusters):
-        sample_cluster = [samples[s] for s in np.where(best_clusters == cluster)[0]]
-        sample_clusters.append(sample_cluster)
+    meta_clusters = []
+    while len(samples) > MAX_CLUSTER_SIZE:
+        clusters = cluster_samples(distances, MAX_CLUSTER_SIZE)
 
-    logging.info(f"Found {len(sample_clusters)} clusters")
-    logging.info(f"Largest cluster has {max(cluster_sizes)} samples")
-    logging.info(f"Smallest cluster has {min(cluster_sizes)} samples")
+        sample_clusters = []
+        for cluster in np.unique(clusters):
+            sample_cluster = [samples[s] for s in np.where(clusters == cluster)[0]]
+            sample_clusters.append(sample_cluster)
 
-    return sample_clusters
+        largest_cluster = max(sample_clusters, key=len)
+        largest_cluster_indices = [samples.index(sample) for sample in largest_cluster]
+
+        # Remove largest_cluster samples from samples and distances
+        samples = [sample for i, sample in enumerate(samples) if i not in largest_cluster_indices]
+        distances = np.delete(distances, largest_cluster_indices, axis=0)
+        distances = np.delete(distances, largest_cluster_indices, axis=1)
+
+        meta_clusters.append(largest_cluster)
+
+    meta_clusters.append(samples)
+
+
+    largest_cluster = len(max(meta_clusters, key=len))
+    smallest_cluster = len(min(meta_clusters, key=len))
+    logging.info(f"Found {len(meta_clusters)} clusters")
+    logging.info(f"Largest cluster has {largest_cluster} samples")
+    logging.info(f"Smallest cluster has {smallest_cluster} samples")
+
+    return meta_clusters
 
 if __name__ == "__main__":
     os.environ["POLARS_MAX_THREADS"] = str(snakemake.threads)
