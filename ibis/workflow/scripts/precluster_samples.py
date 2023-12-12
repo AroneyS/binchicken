@@ -30,7 +30,7 @@ def processing(distances, samples, MAX_CLUSTER_SIZE=1000):
     t = 1 + t_increment
     while cluster_too_large:
         t -= t_increment
-        clusters = fcluster(clust, criterion="distance", t=t)
+        clusters = fcluster(clust, criterion="inconsistent", t=t)
         cluster_sizes = np.unique(clusters, return_counts=True)[1]
         cluster_too_large = np.any(cluster_sizes > MAX_CLUSTER_SIZE)
 
