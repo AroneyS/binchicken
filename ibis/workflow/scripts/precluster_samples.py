@@ -5,13 +5,12 @@
 
 import polars as pl
 import os
+import shutil
 import logging
-from sourmash import MinHash
+from sourmash import fig
 import numpy as np
 from scipy.cluster.hierarchy import linkage, fcluster
 from scipy.spatial.distance import squareform
-import concurrent.futures
-import multiprocessing
 
 SINGLEM_OTU_TABLE_SCHEMA = {
     "gene": str,
@@ -22,62 +21,18 @@ SINGLEM_OTU_TABLE_SCHEMA = {
     "taxonomy": str,
     }
 
-def calculate_similarities(chunk):
-    results = []
-    for (i, j, ihash, jhash) in chunk:
-        if i < j:
-            continue
-        similarity = 1 - ihash.similarity(jhash)
-        results.append((i, j, similarity))
-    return results
-
-def processing(unbinned, MAX_CLUSTER_SIZE=1000, threads=1):
-    logging.info(f"Polars using {str(pl.threadpool_size())} threads")
-
-    logging.info("Generating sketches")
-    parent_mh = MinHash(n=0, ksize=60, scaled=1, track_abundance=False)
-    hashes = []
-    samples = []
-    for group in unbinned.select("sample", "sequence").group_by("sample"):
-        mh = parent_mh.copy_and_clear()
-        for row in group[1].iter_rows():
-            mh.add_sequence(row[1].replace("-", "A").replace("N", "A"))
-
-        samples.append(group[0])
-        hashes.append(mh)
-
-    logging.info("Calculating distances")
-    logging.info(f"Distance calculations using {threads} threads")
-    n_samples = len(hashes)
-    distances = np.zeros([n_samples, n_samples])
-
-    total_count = int(n_samples ** 2 / 2)
-
-    # pairs = [(i, j, ihash, jhash) for i, ihash in enumerate(hashes) for j, jhash in enumerate(hashes)]
-    # chunks = np.array_split(pairs, threads)
-    chunk_size = 10**4
-    chunks = [(i, j, ihash, jhash) for i, ihash in enumerate(hashes) for j, jhash in enumerate(hashes)]
-    chunks = [chunks[i:i + chunk_size] for i in range(0, len(chunks), chunk_size)]
-
-    with concurrent.futures.ProcessPoolExecutor(max_workers=threads, mp_context=multiprocessing.get_context("spawn")) as executor:
-        future_to_similarity = {executor.submit(calculate_similarities, chunk): chunk for chunk in chunks}
-        for future in concurrent.futures.as_completed(future_to_similarity):
-            results = future.result()
-            for i, j, similarity in results:
-                distances[i][j] = similarity
-                distances[j][i] = similarity
-
-    logging.info(f"Completed {total_count} comparisons")
-
+def processing(distances, samples, MAX_CLUSTER_SIZE=1000):
+    logging.info(f"Clustering samples")
     clust = linkage(squareform(distances), method="complete",  metric="precomputed")
 
     cluster_too_large = True
-    t = 1
+    t_increment = 0.01
+    t = 1 + t_increment
     while cluster_too_large:
+        t -= t_increment
         clusters = fcluster(clust, criterion="distance", t=t)
         cluster_sizes = np.unique(clusters, return_counts=True)[1]
         cluster_too_large = np.any(cluster_sizes > MAX_CLUSTER_SIZE)
-        t -= 0.01
 
     logging.info(f"Found cutoff t={round(t, ndigits=2)} with no clusters larger than {MAX_CLUSTER_SIZE}")
 
@@ -86,11 +41,9 @@ def processing(unbinned, MAX_CLUSTER_SIZE=1000, threads=1):
         sample_cluster = [samples[s] for s in np.where(clusters == cluster)[0]]
         sample_clusters.append(sample_cluster)
 
-    largest_cluster = max(sample_clusters, key=len)
-    smallest_cluster = min(sample_clusters, key=len)
     logging.info(f"Found {len(sample_clusters)} clusters")
-    logging.info(f"Largest cluster has {len(largest_cluster)} samples")
-    logging.info(f"Smallest cluster has {len(smallest_cluster)} samples")
+    logging.info(f"Largest cluster has {max(cluster_sizes)} samples")
+    logging.info(f"Smallest cluster has {min(cluster_sizes)} samples")
 
     return sample_clusters
 
@@ -105,28 +58,21 @@ if __name__ == "__main__":
         datefmt='%Y/%m/%d %I:%M:%S %p'
         )
 
+    distances_path = snakemake.input.distance
     unbinned_path = snakemake.input.unbinned
     KMER_PRECLUSTER = snakemake.params.kmer_precluster
     MAX_CLUSTER_SIZE = snakemake.params.max_precluster_size
-    TAXA_OF_INTEREST = snakemake.params.taxa_of_interest
-    threads = snakemake.threads
     output_dir = snakemake.output[0]
     os.makedirs(output_dir)
 
-    unbinned = pl.read_csv(unbinned_path, separator="\t", dtypes=SINGLEM_OTU_TABLE_SCHEMA)
-
-    if TAXA_OF_INTEREST:
-        logging.info(f"Filtering for taxa of interest: {TAXA_OF_INTEREST}")
-        unbinned = unbinned.filter(
-            pl.col("taxonomy").str.contains(TAXA_OF_INTEREST, literal=True)
-        )
-
     if KMER_PRECLUSTER:
-        clusters = processing(unbinned, MAX_CLUSTER_SIZE=MAX_CLUSTER_SIZE, threads=threads)
+        distances, samples = fig.load_matrix_and_labels(distances_path)
+        clusters = processing(distances, samples, MAX_CLUSTER_SIZE=MAX_CLUSTER_SIZE)
 
         with open(os.path.join(output_dir, "clusters.txt"), "w") as f:
             f.write("\n".join(sorted([",".join(sorted(cluster)) for cluster in clusters])) + "\n")
 
+        unbinned = pl.read_csv(unbinned_path, separator="\t", dtypes=SINGLEM_OTU_TABLE_SCHEMA)
         for n, cluster in enumerate(clusters):
             (
                 unbinned
@@ -134,4 +80,4 @@ if __name__ == "__main__":
                 .write_csv(os.path.join(output_dir, "unbinned_" + str(n+1) + ".otu_table.tsv"), separator="\t")
             )
     else:
-        unbinned.write_csv(os.path.join(output_dir, "unbinned_1.otu_table.tsv"), separator="\t")
+        shutil.copyfile(unbinned_path, os.path.join(output_dir, "unbinned_1.otu_table.tsv"))

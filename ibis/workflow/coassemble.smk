@@ -347,19 +347,55 @@ rule count_bp_reads:
         "::: {params.names} :::+ {input.reads_1} :::+ {input.reads_2} "
         "> {output}"
 
+rule sketch_samples:
+    input:
+        unbinned = output_dir + "/appraise/unbinned.otu_table.tsv",
+    output:
+        sketch = output_dir + "/sketch/samples.sig"
+    params:
+        taxa_of_interest = config["taxa_of_interest"],
+    threads: 16
+    resources:
+        mem_mb=125*1000,
+        runtime = "6h",
+    log:
+        logs_dir + "/precluster/sketching.log"
+    script:
+        "scripts/sketch_samples.py"
+
+rule distance_samples:
+    input:
+        sketch = output_dir + "/sketch/samples.sig",
+    output:
+        distance = output_dir + "/sketch/samples.mat"
+    threads: 64
+    resources:
+        mem_mb=500*1000,
+        runtime = "168h",
+    log:
+        logs_dir + "/precluster/distance.log"
+    shell:
+        "sourmash compare "
+        "{input.sketch} "
+        "-o {output.distance} "
+        "-k 60 "
+        "--distance-matrix "
+        "-p {threads} "
+        "&> {log} "
+
 checkpoint precluster_samples:
     input:
+        distance = output_dir + "/sketch/samples.mat" if config["kmer_precluster"] else [],
         unbinned = output_dir + "/appraise/unbinned.otu_table.tsv",
     output:
         directory(output_dir + "/precluster"),
     params:
         kmer_precluster = config["kmer_precluster"],
         max_precluster_size = config["max_precluster_size"],
-        taxa_of_interest = config["taxa_of_interest"],
-    threads: 64
+    threads: 1
     resources:
-        mem_mb=500*1000,
-        runtime = "24h",
+        mem_mb=8*1000,
+        runtime = "12h",
     log:
         logs_dir + "/precluster/precluster_samples.log"
     script:
