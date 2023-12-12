@@ -23,7 +23,7 @@ SINGLEM_OTU_TABLE_SCHEMA = {
 
 def processing(distances, samples, MAX_CLUSTER_SIZE=1000):
     logging.info(f"Clustering samples")
-    clust = linkage(squareform(distances), method="complete",  metric="precomputed")
+    clust = linkage(squareform(distances), method="single",  metric="precomputed")
 
     cluster_too_large = True
     t_increment = 0.01
