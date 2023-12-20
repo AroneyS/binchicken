@@ -818,7 +818,7 @@ class Tests(unittest.TestCase):
                     MAX_RECOVERY_SAMPLES=6,
                     )
                 .with_columns(pl.col("recover_candidates").list.sort())
-                .collect(streaming=True)
+                .collect()
             )
             self.assertDataFrameEqual(expected, observed)
 

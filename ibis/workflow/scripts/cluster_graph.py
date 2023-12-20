@@ -252,18 +252,18 @@ def pipeline(
                 )
             .filter(pl.col("unique_samples"))
             .drop("unique_samples")
-            .collect(streaming=True)
+            .collect()
             .pipe(
                 join_list_subsets,
                 df2=coassembly_edges
                     .filter(pl.col("style") == "pool")
                     .filter(pl.col("samples").list.lengths() >= MAX_SAMPLES_COMBINATIONS)
-                    .collect(streaming=True),
+                    .collect(),
                 )
             .with_columns(pl.concat_list("target_ids", "extra_targets").list.unique())
             .pipe(
                 find_recover_candidates,
-                sample_targets.collect(streaming=True),
+                sample_targets.collect(),
                 MAX_RECOVERY_SAMPLES=MAX_RECOVERY_SAMPLES,
                 )
             .with_columns(
