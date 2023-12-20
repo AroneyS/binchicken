@@ -31,7 +31,8 @@ rule prodigal_bins:
     input:
         lambda wildcards: bins[wildcards.bin]
     output:
-        output_dir + "/transcripts/{bin}_transcripts.fna"
+        fna = output_dir + "/transcripts/{bin}_transcripts.fna",
+        faa = output_dir + "/transcripts/{bin}_transcripts.faa",
     log:
         logs_dir + "/transcripts/{bin}.log"
     params:
@@ -39,7 +40,7 @@ rule prodigal_bins:
     conda:
         "env/prodigal.yml"
     shell:
-        "prodigal -i {input} -d {output} "
+        "prodigal -i {input} -d {output.fna} -a {output.faa} "
         "{params.prodigal_meta} "
         "&> {log}"
 
