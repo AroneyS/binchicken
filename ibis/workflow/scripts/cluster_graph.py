@@ -261,9 +261,9 @@ def pipeline(
             .pipe(
                 join_list_subsets,
                 df2=coassembly_edges
+                    .collect()
                     .filter(pl.col("style") == "pool")
-                    .filter(pl.col("samples").list.len() >= MAX_SAMPLES_COMBINATIONS)
-                    .collect(),
+                    .filter(pl.col("samples").list.len() >= MAX_SAMPLES_COMBINATIONS),
                 )
             .with_columns(pl.concat_list("target_ids", "extra_targets").list.unique())
             .pipe(
