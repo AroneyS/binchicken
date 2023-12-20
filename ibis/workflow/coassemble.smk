@@ -421,6 +421,7 @@ rule download_read:
         logs_dir + "/sra/kingfisher_{read}.log"
     shell:
         "cd {params.dir} && "
+        "rm -f {params.name}*.fastq.gz && "
         "kingfisher get "
         "-r {params.name} "
         "-f fastq.gz "
