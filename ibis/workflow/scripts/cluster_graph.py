@@ -199,7 +199,7 @@ def pipeline(
                             )
                         )
                     .explode("samples_combinations")
-                    .with_columns(pl.col("samples").list.take(pl.col("samples_combinations")))
+                    .with_columns(pl.col("samples").list.gather(pl.col("samples_combinations")))
                     .with_columns(samples_hash = pl.col("samples").list.sort().hash())
                     .select("samples_hash", "samples", "target_ids", "cluster_size")
                     .group_by("samples_hash")
