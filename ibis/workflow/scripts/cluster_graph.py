@@ -222,6 +222,12 @@ def pipeline(
             .agg("target_ids")
         )
 
+        def filter_max_coassembly_size(df, MAX_COASSEMBLY_SIZE):
+            if MAX_COASSEMBLY_SIZE is None:
+                return df
+            else:
+                return df.filter(pl.col("total_size") <= MAX_COASSEMBLY_SIZE)
+
         logging.info("Filtering clusters (each sample restricted to only once per cluster size)")
         clusters = (
             pl.concat(clusters)
@@ -236,9 +242,9 @@ def pipeline(
                 pl.first("target_ids"),
                 total_size = pl.sum("read_size"),
                 )
-            .filter(
-                MAX_COASSEMBLY_SIZE is None |
-                pl.col("total_size") <= MAX_COASSEMBLY_SIZE
+            .pipe(
+                filter_max_coassembly_size,
+                MAX_COASSEMBLY_SIZE=MAX_COASSEMBLY_SIZE,
                 )
             .with_columns(
                 total_targets = pl.col("target_ids").list.len(),
