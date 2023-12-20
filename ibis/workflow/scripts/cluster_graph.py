@@ -237,9 +237,8 @@ def pipeline(
                 total_size = pl.sum("read_size"),
                 )
             .filter(
-                pl.when(MAX_COASSEMBLY_SIZE is not None)
-                .then(pl.col("total_size") <= MAX_COASSEMBLY_SIZE)
-                .otherwise(True)
+                MAX_COASSEMBLY_SIZE is None |
+                pl.col("total_size") <= MAX_COASSEMBLY_SIZE
                 )
             .with_columns(
                 total_targets = pl.col("target_ids").list.len(),
