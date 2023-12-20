@@ -223,7 +223,7 @@ def download_sra(args):
             elusive_clusters = (
                 pl.read_csv(elusive_clusters_path, separator="\t")
                 .with_columns(
-                    single_ended = pl.lit([list(single_ended)]),
+                    single_ended = pl.lit(list(single_ended)),
                     single_ended_samples =
                         pl.col("samples")
                         .str.split(",")
