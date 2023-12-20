@@ -98,7 +98,7 @@ def run_workflow(config, workflow, output_dir, cores=16, dryrun=False,
 
     cmd = (
         "snakemake --snakefile {snakefile} --configfile '{config}' --directory {output_dir} "
-        "{jobs} --rerun-incomplete --keep-going --nolock "
+        "{jobs} --rerun-incomplete --keep-going --nolock --group-components 10 "
         "{snakemake_args} "
         "{profile} {local} {retries} --use-conda {conda_frontend} {conda_prefix} "
         "{dryrun} "
