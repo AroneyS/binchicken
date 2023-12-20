@@ -41,7 +41,7 @@ def join_list_subsets(df1, df2):
             on=["length"],
             how="left",
         )
-        .filter(pl.col("samples").list.set_intersection("right_samples").list.lengths() >= pl.col("length"))
+        .filter(pl.col("samples").list.set_intersection("right_samples").list.len() >= pl.col("length"))
         .group_by("samples_hash")
         .agg(pl.col("extra_targets").flatten())
         .select(
@@ -124,7 +124,7 @@ def pipeline(
                 )
             .with_columns(
                 samples_hash = pl.col("samples").list.sort().hash(),
-                length = pl.col("samples").list.lengths()
+                length = pl.col("samples").list.len()
                 )
         )
 
@@ -134,7 +134,7 @@ def pipeline(
                 .with_columns(
                     pl.col("samples").list.eval(pl.element().filter(pl.element().is_in(COASSEMBLY_SAMPLES)))
                     )
-                .filter(pl.col("samples").list.lengths() >= pl.col("cluster_size"))
+                .filter(pl.col("samples").list.len() >= pl.col("cluster_size"))
             )
         else:
             coassembly_edges = elusive_edges
@@ -181,7 +181,7 @@ def pipeline(
                 coassembly_edges
                 .filter(pl.col("style") == "match")
                 .filter(pl.col("cluster_size") >= MIN_COASSEMBLY_SAMPLES)
-                .filter(pl.col("target_ids").list.lengths() >= MIN_CLUSTER_TARGETS)
+                .filter(pl.col("target_ids").list.len() >= MIN_CLUSTER_TARGETS)
                 .select("samples", "target_ids", samples_hash = pl.col("samples").list.sort().hash())
             ]
 
@@ -191,7 +191,7 @@ def pipeline(
                     .filter(pl.col("style") == "pool")
                     .filter(pl.col("cluster_size") >= MIN_COASSEMBLY_SAMPLES)
                     # Prevent combinatorial explosion (also, large clusters are less useful for distinguishing between clusters)
-                    .filter(pl.col("samples").list.lengths() < MAX_SAMPLES_COMBINATIONS)
+                    .filter(pl.col("samples").list.len() < MAX_SAMPLES_COMBINATIONS)
                     .with_columns(
                         samples_combinations = pl.struct(["length", "cluster_size"]).map_elements(
                             lambda x: [i for i in itertools.combinations(range(x["length"]), x["cluster_size"])],
@@ -208,7 +208,7 @@ def pipeline(
                         pl.col("target_ids").flatten(),
                         pl.first("cluster_size"),
                         )
-                    .filter(pl.col("target_ids").list.lengths() >= MIN_CLUSTER_TARGETS)
+                    .filter(pl.col("target_ids").list.len() >= MIN_CLUSTER_TARGETS)
                     .select("samples", "target_ids", "samples_hash")
                 )
 
@@ -226,7 +226,7 @@ def pipeline(
         clusters = (
             pl.concat(clusters)
             .join(excluded_coassemblies, on="samples_hash", how="anti")
-            .with_columns(length = pl.col("samples").list.lengths())
+            .with_columns(length = pl.col("samples").list.len())
             .explode("samples")
             .join(read_size, on="samples", how="left")
             .group_by("samples_hash")
@@ -242,7 +242,7 @@ def pipeline(
                 .otherwise(True)
                 )
             .with_columns(
-                total_targets = pl.col("target_ids").list.lengths(),
+                total_targets = pl.col("target_ids").list.len(),
             )
             .sort("total_targets", "total_size", descending=[True, False])
             .with_columns(
@@ -257,7 +257,7 @@ def pipeline(
                 join_list_subsets,
                 df2=coassembly_edges
                     .filter(pl.col("style") == "pool")
-                    .filter(pl.col("samples").list.lengths() >= MAX_SAMPLES_COMBINATIONS)
+                    .filter(pl.col("samples").list.len() >= MAX_SAMPLES_COMBINATIONS)
                     .collect(),
                 )
             .with_columns(pl.concat_list("target_ids", "extra_targets").list.unique())
@@ -274,7 +274,7 @@ def pipeline(
                 .cast(pl.List(pl.Utf8))
                 .list.sort()
                 .list.join(","),
-                total_targets = pl.col("target_ids").list.lengths(),
+                total_targets = pl.col("target_ids").list.len(),
                 )
             .sort("total_targets", "total_size", descending=[True, False])
             .with_row_count("coassembly")
