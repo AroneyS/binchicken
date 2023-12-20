@@ -148,7 +148,7 @@ def evaluate(target_otu_table, binned_otu_table, elusive_clusters, elusive_edges
     combined_otu_table = (
         recovered_otu_table
         .join(
-            haystack_otu_table, on=["coassembly", "gene", "sequence"], how="outer", suffix="old"
+            haystack_otu_table, on=["coassembly", "gene", "sequence"], how="outer_coalesce", suffix="old"
             )
         .select(
             "coassembly", "gene", "sequence", "genome", "target", "found_in", "source_samples",
@@ -218,7 +218,7 @@ def summarise_stats(matches, combined_otu_table, recovered_bins):
                     )
                 .group_by(["coassembly", "status"])
                 .agg(pl.col("sequence").len().alias("nontarget_bin_sequences")),
-            on=["coassembly", "status"], how="outer"
+            on=["coassembly", "status"], how="outer_coalesce"
             )
         .join(
             # Duplicate sequences are counted multiple times to give a proportion at bin level
@@ -230,7 +230,7 @@ def summarise_stats(matches, combined_otu_table, recovered_bins):
                     )
                 .group_by(["coassembly", "status"])
                 .agg(pl.col("sequence").len().alias("nontarget_unbin_sequences")),
-            on=["coassembly", "status"], how="outer"
+            on=["coassembly", "status"], how="outer_coalesce"
             )
         .join(
             # Duplicate sequences are counted multiple times to give a proportion at bin level
@@ -242,7 +242,7 @@ def summarise_stats(matches, combined_otu_table, recovered_bins):
                     )
                 .group_by(["coassembly", "status"])
                 .agg(pl.col("sequence").len().alias("novel_sequences")),
-            on=["coassembly", "status"], how="outer"
+            on=["coassembly", "status"], how="outer_coalesce"
             )
         .melt(id_vars=["coassembly", "status"], variable_name="statistic", value_name="value")
         .fill_null(0)
