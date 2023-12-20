@@ -11,6 +11,7 @@ os.umask(0o002)
 
 output_dir = os.path.abspath("coassemble")
 logs_dir = output_dir + "/logs"
+benchmarks_dir = output_dir + "/benchmarks"
 
 mapped_reads_1 = {read: output_dir + f"/mapping/{read}_unmapped.1.fq.gz" for read in config["reads_1"]}
 mapped_reads_2 = {read: output_dir + f"/mapping/{read}_unmapped.2.fq.gz" for read in config["reads_2"]}
@@ -108,6 +109,8 @@ rule singlem_pipe_reads:
         output_dir + "/pipe/{read}_read.otu_table.tsv"
     log:
         logs_dir + "/pipe/{read}_read.log"
+    benchmark:
+        benchmarks_dir + "/pipe/{read}_read.tsv"
     params:
         singlem_metapackage = config["singlem_metapackage"]
     threads: 1
@@ -134,6 +137,8 @@ rule genome_transcripts:
         output_dir + "/transcripts/{genome}_protein.fna"
     log:
         logs_dir + "/transcripts/{genome}_protein.log"
+    benchmark:
+        benchmarks_dir + "/transcripts/{genome}_protein.tsv"
     params:
         prodigal_meta = "-p meta" if config["prodigal_meta"] else ""
     threads: 1
@@ -156,6 +161,8 @@ rule singlem_pipe_genomes:
         output_dir + "/pipe/{genome}_bin.otu_table.tsv"
     log:
         logs_dir + "/pipe/{genome}_bin.log"
+    benchmark:
+        benchmarks_dir + "/pipe/{genome}_bin.tsv"
     params:
         singlem_metapackage = config["singlem_metapackage"]
     threads: 1
@@ -178,6 +185,8 @@ rule singlem_summarise_genomes:
         output_dir + "/summarise/{version,.*}bins_summarised.otu_table.tsv"
     log:
         logs_dir + "/summarise/{version,.*}genomes.log"
+    benchmark:
+        benchmarks_dir + "/summarise/{version,.*}genomes.tsv"
     params:
         singlem_metapackage = config["singlem_metapackage"]
     localrule: True
@@ -203,6 +212,8 @@ rule singlem_appraise:
         binned = temp(output_dir + "/appraise/binned_raw.otu_table.tsv"),
     log:
         logs_dir + "/appraise/appraise.log"
+    benchmark:
+        benchmarks_dir + "/appraise/appraise.tsv"
     params:
         sequence_identity = config["appraise_sequence_identity"],
         singlem_metapackage = config["singlem_metapackage"],
@@ -251,6 +262,8 @@ rule update_appraise:
         binned = temp(output_dir + "/appraise/binned_raw.otu_table.tsv"),
     log:
         logs_dir + "/appraise/appraise.log"
+    benchmark:
+        benchmarks_dir + "/appraise/appraise.tsv"
     params:
         sequence_identity = config["appraise_sequence_identity"],
         singlem_metapackage = config["singlem_metapackage"],
@@ -286,6 +299,8 @@ rule query_processing:
         binned = temp(output_dir + "/appraise/binned_raw.otu_table.tsv"),
     log:
         logs_dir + "/query/processing.log"
+    benchmark:
+        benchmarks_dir + "/query/processing.tsv"
     params:
         sequence_identity = config["appraise_sequence_identity"],
         window_size = 60,
@@ -352,6 +367,8 @@ rule target_elusive:
         runtime = "24h",
     log:
         logs_dir + "/target/target_elusive.log"
+    benchmark:
+        benchmarks_dir + "/target/target_elusive.tsv"
     script:
         "scripts/target_elusive.py"
 
@@ -374,6 +391,8 @@ checkpoint cluster_graph:
         runtime = "168h",
     log:
         logs_dir + "/target/cluster_graph.log"
+    benchmark:
+        benchmarks_dir + "/target/cluster_graph.tsv"
     script:
         "scripts/cluster_graph.py"
 
@@ -454,6 +473,8 @@ rule qc_reads:
         runtime = "4h",
     log:
         logs_dir + "/mapping/{read}_qc.log"
+    benchmark:
+        benchmarks_dir + "/mapping/{read}_qc.tsv"
     conda:
         "env/fastp.yml"
     shell:
@@ -498,6 +519,8 @@ rule map_reads:
         runtime = "12h",
     log:
         logs_dir + "/mapping/{read}_coverm.log",
+    benchmark:
+        benchmarks_dir + "/mapping/{read}_coverm.tsv"
     conda:
         "env/coverm.yml"
     shell:
@@ -526,6 +549,8 @@ rule filter_bam_files:
         runtime = "4h",
     log:
         logs_dir + "/mapping/{read}_filter.log",
+    benchmark:
+        benchmarks_dir + "/mapping/{read}_filter.tsv"
     conda:
         "env/coverm.yml"
     shell:
