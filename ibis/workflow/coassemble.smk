@@ -147,7 +147,8 @@ rule genome_transcripts:
     threads: 1
     resources:
         mem_mb=get_mem_mb,
-        runtime = "24h",
+        runtime = "1h",
+    group: "singlem_bins"
     conda:
         "env/prodigal.yml"
     shell:
@@ -171,7 +172,8 @@ rule singlem_pipe_genomes:
     threads: 1
     resources:
         mem_mb=get_mem_mb,
-        runtime = "24h",
+        runtime = "1h",
+    group: "singlem_bins"
     conda:
         "env/singlem.yml"
     shell:
