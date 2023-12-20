@@ -19,6 +19,9 @@ mapped_reads_2 = {read: output_dir + f"/mapping/{read}_unmapped.2.fq.gz" for rea
 qc_reads_1 = {read: output_dir + f"/qc/{read}_1.fastq.gz" for read in config["reads_1"]}
 qc_reads_2 = {read: output_dir + f"/qc/{read}_2.fastq.gz" for read in config["reads_2"]}
 
+def get_mem_mb(wildcards, threads):
+    return 8 * 1000 * threads
+
 def get_genomes(wildcards, version=None):
     version = version if version else wildcards.version
     if version == "":
@@ -115,7 +118,7 @@ rule singlem_pipe_reads:
         singlem_metapackage = config["singlem_metapackage"]
     threads: 1
     resources:
-        mem_mb=8000,
+        mem_mb=get_mem_mb,
         runtime = "24h",
     conda:
         "env/singlem.yml"
@@ -143,7 +146,7 @@ rule genome_transcripts:
         prodigal_meta = "-p meta" if config["prodigal_meta"] else ""
     threads: 1
     resources:
-        mem_mb=8000,
+        mem_mb=get_mem_mb,
         runtime = "24h",
     conda:
         "env/prodigal.yml"
@@ -167,7 +170,7 @@ rule singlem_pipe_genomes:
         singlem_metapackage = config["singlem_metapackage"]
     threads: 1
     resources:
-        mem_mb=8000,
+        mem_mb=get_mem_mb,
         runtime = "24h",
     conda:
         "env/singlem.yml"
@@ -219,7 +222,7 @@ rule singlem_appraise:
         singlem_metapackage = config["singlem_metapackage"],
     threads: 1
     resources:
-        mem_mb=8000,
+        mem_mb=get_mem_mb,
         runtime = "24h",
     conda:
         "env/singlem.yml"
@@ -270,7 +273,7 @@ rule update_appraise:
         new_binned = output_dir + "/appraise/binned_new.otu_table.tsv",
     threads: 1
     resources:
-        mem_mb=8000,
+        mem_mb=get_mem_mb,
         runtime = "24h",
     conda:
         "env/singlem.yml"
@@ -307,7 +310,7 @@ rule query_processing:
         taxa_of_interest = config["taxa_of_interest"],
     threads: 1
     resources:
-        mem_mb=8000,
+        mem_mb=get_mem_mb,
         runtime = "24h",
     script:
         "scripts/query_processing.py"
@@ -341,7 +344,7 @@ rule count_bp_reads:
         cat = get_cat,
     threads: 8
     resources:
-        mem_mb=64000,
+        mem_mb=get_mem_mb,
         runtime = "24h",
     shell:
         "parallel -k -j {threads} "
@@ -363,7 +366,7 @@ rule target_elusive:
         samples = config["reads_1"],
     threads: 32
     resources:
-        mem_mb=250*1000,
+        mem_mb=get_mem_mb,
         runtime = "24h",
     log:
         logs_dir + "/target/target_elusive.log"
@@ -387,7 +390,7 @@ checkpoint cluster_graph:
         exclude_coassemblies = config["exclude_coassemblies"],
     threads: 64
     resources:
-        mem_mb=500*1000,
+        mem_mb=get_mem_mb,
         runtime = "168h",
     log:
         logs_dir + "/target/cluster_graph.log"
@@ -407,7 +410,7 @@ rule download_read:
         name = "{read}",
     threads: 4
     resources:
-        mem_mb=32*1000,
+        mem_mb=get_mem_mb,
         runtime = "4h",
         downloading = 1,
     conda:
@@ -469,7 +472,7 @@ rule qc_reads:
         min_length = 80,
     threads: 16
     resources:
-        mem_mb=125*1000,
+        mem_mb=get_mem_mb,
         runtime = "4h",
     log:
         logs_dir + "/mapping/{read}_qc.log"
@@ -515,7 +518,7 @@ rule map_reads:
     group: "unmapping"
     threads: 16
     resources:
-        mem_mb=125*1000,
+        mem_mb=get_mem_mb,
         runtime = "12h",
     log:
         logs_dir + "/mapping/{read}_coverm.log",
@@ -545,7 +548,7 @@ rule filter_bam_files:
         alignment_percent = config["unmapping_max_alignment"],
     threads: 16
     resources:
-        mem_mb=125*1000,
+        mem_mb=get_mem_mb,
         runtime = "4h",
     log:
         logs_dir + "/mapping/{read}_filter.log",
@@ -572,7 +575,7 @@ rule bam_to_fastq:
     group: "unmapping"
     threads: 16
     resources:
-        mem_mb=125*1000,
+        mem_mb=get_mem_mb,
         runtime = "4h",
     log:
         logs_dir + "/mapping/{read}_fastq.log",
