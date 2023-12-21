@@ -4,7 +4,7 @@ import unittest
 import os
 os.environ["POLARS_MAX_THREADS"] = "1"
 import polars as pl
-from ibis.workflow.scripts.collect_reference_bins import pipeline
+from binchicken.workflow.scripts.collect_reference_bins import pipeline
 
 APPRAISE_COLUMNS=["gene", "sample", "sequence", "num_hits", "coverage", "taxonomy", "found_in"]
 

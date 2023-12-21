@@ -6,7 +6,7 @@ ruleorder: mock_download_sra > download_sra
 
 import os
 import polars as pl
-from ibis.ibis import FAST_AVIARY_MODE
+from binchicken.binchicken import FAST_AVIARY_MODE
 os.umask(0o002)
 
 output_dir = os.path.abspath("coassemble")

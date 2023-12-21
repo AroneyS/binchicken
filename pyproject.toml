@@ -3,12 +3,12 @@ requires = ["setuptools"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "ibis-genome"
+name = "binchicken"
 dynamic = ["version"]
 authors = [
   { name="Samuel Aroney", email="samuel.aroney@outlook.com" },
 ]
-description = "Ibis (Australian bin chicken) - targeted recovery of low abundance genomes through intelligent coassembly"
+description = "Bin chicken - targeted recovery of low abundance genomes through intelligent coassembly"
 readme = "README.md"
 license = { file="LICENSE" }
 requires-python = ">=3.10"
@@ -25,11 +25,12 @@ classifiers = [
 ]
 
 [project.urls]
-"Homepage" = "https://github.com/AroneyS/ibis"
-"Bug Tracker" = "https://github.com/AroneyS/ibis/issues"
+"Homepage" = "https://github.com/AroneyS/binchicken"
+"Bug Tracker" = "https://github.com/AroneyS/binchicken/issues"
 
 [project.scripts]
-ibis = "ibis.ibis:main"
+binchicken = "binchicken.binchicken:main"
+ibis = "binchicken.binchicken:main"
 
 [tool.setuptools.dynamic]
-version = {attr = "ibis.__version__"}
+version = {attr = "binchicken.__version__"}

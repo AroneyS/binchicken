@@ -5,7 +5,7 @@ import os
 os.environ["POLARS_MAX_THREADS"] = "1"
 import polars as pl
 from polars.testing import assert_frame_equal
-from ibis.workflow.scripts.aviary_commands import pipeline
+from binchicken.workflow.scripts.aviary_commands import pipeline
 
 ELUSIVE_CLUSTERS_COLUMNS={
     "samples": str,

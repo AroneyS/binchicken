@@ -5,7 +5,7 @@ import os
 os.environ["POLARS_MAX_THREADS"] = "8"
 import polars as pl
 from polars.testing import assert_frame_equal
-from ibis.workflow.scripts.target_elusive import pipeline
+from binchicken.workflow.scripts.target_elusive import pipeline
 
 APPRAISE_COLUMNS={
     "gene": str,

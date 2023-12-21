@@ -52,7 +52,7 @@ class Tests(unittest.TestCase):
     def test_update(self):
         with in_tempdir():
             cmd = (
-                f"ibis update "
+                f"binchicken update "
                 f"--assemble-unmapped "
                 f"--coassemble-output {MOCK_COASSEMBLE} "
                 f"--forward {SAMPLE_READS_FORWARD} "
@@ -134,7 +134,7 @@ class Tests(unittest.TestCase):
     def test_update_specified_files(self):
         with in_tempdir():
             cmd = (
-                f"ibis update "
+                f"binchicken update "
                 f"--assemble-unmapped "
                 f"--run-qc "
                 f"--forward {SAMPLE_READS_FORWARD} "
@@ -172,7 +172,7 @@ class Tests(unittest.TestCase):
     def test_update_read_identity(self):
         with in_tempdir():
             cmd = (
-                f"ibis update "
+                f"binchicken update "
                 f"--assemble-unmapped "
                 f"--unmapping-max-identity 99 "
                 f"--unmapping-max-alignment 90 "
@@ -207,7 +207,7 @@ class Tests(unittest.TestCase):
     def test_update_sra_download(self):
         with in_tempdir():
             cmd = (
-                f"ibis update "
+                f"binchicken update "
                 f"--assemble-unmapped "
                 f"--forward SRR8334323 SRR8334324 "
                 f"--sra "
@@ -244,7 +244,7 @@ class Tests(unittest.TestCase):
     def test_update_sra_download_mock(self):
         with in_tempdir():
             cmd = (
-                f"ibis update "
+                f"binchicken update "
                 f"--forward SRR3309137 SRR8334323 SRR8334324 "
                 f"--sra "
                 f"--assemble-unmapped "
@@ -301,7 +301,7 @@ class Tests(unittest.TestCase):
     def test_update_sra_download_mock_filter_single(self):
         with in_tempdir():
             cmd = (
-                f"ibis update "
+                f"binchicken update "
                 f"--forward SRR3309137_mismatched SRR8334323 SRR8334324 "
                 f"--sra "
                 f"--genomes {GENOMES} "
@@ -349,7 +349,7 @@ class Tests(unittest.TestCase):
                 f.write("\t".join(["SRR3309137", "Consecutive reads do not match (1/10)"]) + "\n")
 
             cmd = (
-                f"ibis update "
+                f"binchicken update "
                 f"--forward SRR3309137 SRR8334323 SRR8334324 SRR3309137_mismatched "
                 f"--sra "
                 f"--genomes {GENOMES} "
@@ -392,7 +392,7 @@ class Tests(unittest.TestCase):
     def test_update_sra_download_mock_fail(self):
         with in_tempdir():
             cmd = (
-                f"ibis update "
+                f"binchicken update "
                 f"--forward SRR3309137_mismatched SRR8334323 SRR8334324 "
                 f"--sra "
                 f"--genomes {GENOMES} "
@@ -412,7 +412,7 @@ class Tests(unittest.TestCase):
     def test_update_aviary_run(self):
         with in_tempdir():
             cmd = (
-                f"ibis update "
+                f"binchicken update "
                 f"--assemble-unmapped "
                 f"--forward SRR8334323 SRR8334324 "
                 f"--sra "
@@ -460,7 +460,7 @@ class Tests(unittest.TestCase):
     def test_update_aviary_dryrun(self):
         with in_tempdir():
             cmd = (
-                f"ibis update "
+                f"binchicken update "
                 f"--run-aviary "
                 f"--aviary-gtdbtk-db gtdb_release "
                 f"--aviary-checkm2-db CheckM2_database "
@@ -504,7 +504,7 @@ class Tests(unittest.TestCase):
     def test_update_specific_coassembly(self):
         with in_tempdir():
             cmd = (
-                f"ibis update "
+                f"binchicken update "
                 f"--assemble-unmapped "
                 f"--forward {SAMPLE_READS_FORWARD} "
                 f"--reverse {SAMPLE_READS_REVERSE} "
@@ -536,7 +536,7 @@ class Tests(unittest.TestCase):
     def test_update_duplicate_contig_names(self):
         with in_tempdir():
             cmd = (
-                f"ibis update "
+                f"binchicken update "
                 f"--assemble-unmapped "
                 f"--forward {SAMPLE_READS_FORWARD} "
                 f"--reverse {SAMPLE_READS_REVERSE} "

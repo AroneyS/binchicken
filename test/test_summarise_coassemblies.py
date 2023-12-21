@@ -5,7 +5,7 @@ import os
 os.environ["POLARS_MAX_THREADS"] = "1"
 import polars as pl
 from polars.testing import assert_frame_equal
-from ibis.workflow.scripts.summarise_coassemblies import processing
+from binchicken.workflow.scripts.summarise_coassemblies import processing
 
 ELUSIVE_CLUSTERS_COLUMNS={
     "coassembly": str,

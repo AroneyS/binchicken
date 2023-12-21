@@ -5,7 +5,7 @@
 
 import os
 import polars as pl
-from ibis.ibis import FAST_AVIARY_MODE
+from binchicken.binchicken import FAST_AVIARY_MODE
 
 def pipeline(coassemblies, reads_1, reads_2, output_dir, threads, memory, fast=False):
     output = (

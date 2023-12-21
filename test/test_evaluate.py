@@ -39,7 +39,7 @@ class Tests(unittest.TestCase):
     def test_evaluate(self):
         with in_tempdir():
             cmd = (
-                f"ibis evaluate "
+                f"binchicken evaluate "
                 f"--coassemble-output {MOCK_COASSEMBLE} "
                 f"--aviary-outputs {MOCK_COASSEMBLIES} "
                 f"--checkm-version 2 "
@@ -141,7 +141,7 @@ class Tests(unittest.TestCase):
     def test_evaluate_specified_files(self):
         with in_tempdir():
             cmd = (
-                f"ibis evaluate "
+                f"binchicken evaluate "
                 f"--coassemble-unbinned {MOCK_UNBINNED} "
                 f"--coassemble-binned {MOCK_BINNED} "
                 f"--coassemble-targets {MOCK_TARGETS} "
@@ -169,7 +169,7 @@ class Tests(unittest.TestCase):
     def test_evaluate_genome_input(self):
         with in_tempdir():
             cmd = (
-                f"ibis evaluate "
+                f"binchicken evaluate "
                 f"--coassemble-output {MOCK_COASSEMBLE} "
                 f"--new-genomes {MOCK_GENOMES} "
                 f"--prodigal-meta "
@@ -274,7 +274,7 @@ class Tests(unittest.TestCase):
             write_string_to_file(MOCK_GENOMES, "genomes")
 
             cmd = (
-                f"ibis evaluate "
+                f"binchicken evaluate "
                 f"--coassemble-output {MOCK_COASSEMBLE} "
                 f"--new-genomes-list genomes "
                 f"--prodigal-meta "
@@ -299,7 +299,7 @@ class Tests(unittest.TestCase):
     def test_evaluate_default_config(self):
         with in_tempdir():
             cmd = (
-                f"ibis evaluate "
+                f"binchicken evaluate "
                 f"--coassemble-output {MOCK_COASSEMBLE} "
                 f"--aviary-outputs {MOCK_COASSEMBLIES} "
                 f"--singlem-metapackage {METAPACKAGE} "
@@ -319,7 +319,7 @@ class Tests(unittest.TestCase):
         with in_tempdir():
             os.environ['SINGLEM_METAPACKAGE_PATH'] = METAPACKAGE
             cmd = (
-                f"ibis evaluate "
+                f"binchicken evaluate "
                 f"--coassemble-output {MOCK_COASSEMBLE} "
                 f"--aviary-outputs {MOCK_COASSEMBLIES} "
                 f"--output test "
@@ -345,7 +345,7 @@ class Tests(unittest.TestCase):
     def test_evaluate_cluster(self):
         with in_tempdir():
             cmd = (
-                f"ibis evaluate "
+                f"binchicken evaluate "
                 f"--coassemble-output {MOCK_COASSEMBLE} "
                 f"--aviary-outputs {MOCK_COASSEMBLIES} "
                 f"--cluster "

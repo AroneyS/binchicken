@@ -5,7 +5,7 @@ import os
 os.environ["POLARS_MAX_THREADS"] = "1"
 import polars as pl
 from polars.testing import assert_frame_equal
-from ibis.workflow.scripts.evaluate import evaluate
+from binchicken.workflow.scripts.evaluate import evaluate
 
 SINGLEM_COLUMNS=["gene", "sample", "sequence", "num_hits", "coverage", "taxonomy"]
 TARGET_COLUMNS=SINGLEM_COLUMNS+["target"]

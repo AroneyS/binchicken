@@ -5,7 +5,7 @@ import os
 os.environ["POLARS_MAX_THREADS"] = "1"
 import polars as pl
 from polars.testing import assert_frame_equal, assert_series_equal
-from ibis.workflow.scripts.cluster_graph import pipeline, join_list_subsets, accumulate_clusters, find_recover_candidates
+from binchicken.workflow.scripts.cluster_graph import pipeline, join_list_subsets, accumulate_clusters, find_recover_candidates
 
 ELUSIVE_EDGES_COLUMNS={
     "style": str,

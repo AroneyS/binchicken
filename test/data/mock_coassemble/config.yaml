@@ -1,6 +1,6 @@
 %YAML 1.1
 ---
-Ibis_version: 0.9.6
+Bin_chicken_version: 0.9.6
 max_threads: 8
 coassembly_samples: []
 singlem_metapackage: ../singlem_metapackage.smpkg

@@ -46,7 +46,7 @@ class Tests(unittest.TestCase):
         self.setup_output_dir(output_dir)
 
         cmd = (
-            f"ibis update "
+            f"binchicken update "
             f"--assemble-unmapped "
             f"--forward SRR8334323 SRR8334324 SRR7039260 "
             f"--sra "
@@ -81,7 +81,7 @@ class Tests(unittest.TestCase):
         self.setup_output_dir(output_dir)
 
         cmd = (
-            f"ibis update "
+            f"binchicken update "
             f"--assemble-unmapped "
             f"--forward SRR8334323 SRR8334324 "
             f"--sra "
@@ -122,7 +122,7 @@ class Tests(unittest.TestCase):
         self.setup_output_dir(output_dir)
 
         cmd = (
-            f"ibis update "
+            f"binchicken update "
             f"--assemble-unmapped "
             f"--forward SRR5753868 SRR5753874 "
             f"--sra "
@@ -167,7 +167,7 @@ class Tests(unittest.TestCase):
         self.setup_output_dir(output_dir)
 
         cmd = (
-            f"ibis update "
+            f"binchicken update "
             f"--forward SRR8334323 SRR8334324 "
             f"--sra "
             f"--genomes {GENOMES} "
