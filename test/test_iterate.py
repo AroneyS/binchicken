@@ -317,7 +317,7 @@ class Tests(unittest.TestCase):
             self.assertTrue(os.path.exists(config_path))
             config = load_configfile(config_path)
             genomes_config = {
-                os.path.splitext(os.path.basename(g))[0]: g.replace(MOCK_COASSEMBLE + "/coassemble/coassemble/coassembly_0/recover/bins/final_bins/", os.getcwd() + "/test/recovered_bins/")
+                os.path.splitext(os.path.basename(g))[0]: g
                 for g in (GENOMES + " " + MOCK_GENOMES).split(" ")
                 }
             self.assertEqual(genomes_config, config["genomes"])
