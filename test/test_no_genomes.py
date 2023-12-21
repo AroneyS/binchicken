@@ -5,7 +5,7 @@ import os
 os.environ["POLARS_MAX_THREADS"] = "1"
 import polars as pl
 from polars.testing import assert_frame_equal
-from ibis.workflow.scripts.no_genomes import processing
+from binchicken.workflow.scripts.no_genomes import processing
 
 READ_COLUMNS={
     "gene": str,

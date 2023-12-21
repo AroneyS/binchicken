@@ -1,4 +1,4 @@
-name: ibis
+name: binchicken
 channels:
   - conda-forge
   - bioconda

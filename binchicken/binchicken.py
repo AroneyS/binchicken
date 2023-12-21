@@ -57,7 +57,7 @@ def make_config(template, output_dir, config_items):
         if value is not None:
             config[key] = value
 
-    config = {"Ibis_version": __version__, **config}
+    config = {"Bin_chicken_version": __version__, **config}
 
     with open(config_path, 'w') as f:
         yaml.dump(config, f)
@@ -130,7 +130,7 @@ def download_sra(args):
     }
 
     config_path = make_config(
-        importlib.resources.files("ibis.config").joinpath("template_coassemble.yaml"),
+        importlib.resources.files("binchicken.config").joinpath("template_coassemble.yaml"),
         args.output,
         config_items
         )
@@ -184,7 +184,7 @@ def download_sra(args):
                 "--start-check-pairs {start_check_pairs} "
                 "--end-check-pairs {end_check_pairs} "
             ).format(
-                script = importlib.resources.files("ibis.workflow.scripts").joinpath("is_interleaved.py"),
+                script = importlib.resources.files("binchicken.workflow.scripts").joinpath("is_interleaved.py"),
                 input = u,
                 start_check_pairs = 5,
                 end_check_pairs = 5,
@@ -333,7 +333,7 @@ def evaluate_bins(aviary_outputs, checkm_version, min_completeness, max_contamin
         completeness_col = "Completeness (CheckM2)"
         contamination_col = "Contamination (CheckM2)"
     elif checkm_version == "build":
-        logging.info("Mock bins for Ibis build")
+        logging.info("Mock bins for Bin chicken build")
         return {"iteration_0-coassembly_0-0": os.path.join(aviary_outputs[0], "iteration_0-coassembly_0-0.fna")}
     else:
         raise ValueError("Invalid CheckM version")
@@ -483,7 +483,7 @@ def coassemble(args):
     }
 
     config_path = make_config(
-        importlib.resources.files("ibis.config").joinpath("template_coassemble.yaml"),
+        importlib.resources.files("binchicken.config").joinpath("template_coassemble.yaml"),
         args.output,
         config_items
         )
@@ -501,14 +501,14 @@ def coassemble(args):
         snakemake_args = args.snakemake_args,
     )
 
-    logging.info(f"Ibis coassemble complete.")
+    logging.info(f"Bin chicken coassemble complete.")
     logging.info(f"Cluster summary at {os.path.join(args.output, 'coassemble', 'summary.tsv')}")
     logging.info(f"More details at {os.path.join(args.output, 'coassemble', 'target', 'elusive_clusters.tsv')}")
     if not args.run_aviary:
         logging.info(f"Aviary commands for coassembly and recovery in shell scripts at {os.path.join(args.output, 'coassemble', 'commands')}")
 
 def evaluate(args):
-    logging.info("Loading Ibis coassemble info")
+    logging.info("Loading Bin chicken coassemble info")
     if args.coassemble_output:
         coassemble_dir = os.path.abspath(args.coassemble_output)
         coassemble_target_dir = os.path.join(coassemble_dir, "target")
@@ -564,7 +564,7 @@ def evaluate(args):
     }
 
     config_path = make_config(
-        importlib.resources.files("ibis.config").joinpath("template_evaluate.yaml"),
+        importlib.resources.files("binchicken.config").joinpath("template_evaluate.yaml"),
         args.output,
         config_items
         )
@@ -582,12 +582,12 @@ def evaluate(args):
         snakemake_args = args.snakemake_args,
     )
 
-    logging.info(f"Ibis evaluate complete.")
+    logging.info(f"Bin chicken evaluate complete.")
     logging.info(f"Coassembly evaluation summary at {os.path.join(args.output, 'evaluate', 'evaluate', 'summary_stats.tsv')}")
     logging.info(f"Genome recovery breakdown by phyla at {os.path.join(args.output, 'evaluate', 'evaluate', 'plots', 'combined', 'phylum_recovered.png')}")
 
 def update(args):
-    logging.info("Loading Ibis coassemble info")
+    logging.info("Loading Bin chicken coassemble info")
     if args.coassemble_output:
         coassemble_dir = os.path.abspath(args.coassemble_output)
         coassemble_target_dir = os.path.join(coassemble_dir, "target")
@@ -645,7 +645,7 @@ def update(args):
     args = set_standard_args(args)
     coassemble(args)
 
-    logging.info(f"Ibis update complete.")
+    logging.info(f"Bin chicken update complete.")
     if not args.run_aviary:
         logging.info(f"Aviary commands for coassembly and recovery in shell scripts at {os.path.join(args.output, 'coassemble', 'commands')}")
 
@@ -735,7 +735,7 @@ def iterate(args):
         f.writelines("\n".join(["\t".join([os.path.abspath(bins[bin]), bin + ".fna"]) for bin in bins]))
 
     if args.coassemble_output:
-        logging.info("Processing previous Ibis coassemble run")
+        logging.info("Processing previous Bin chicken coassemble run")
         coassemble_appraise_dir = os.path.join(os.path.abspath(args.coassemble_output), "appraise")
         args.coassemble_unbinned = os.path.join(coassemble_appraise_dir, "unbinned.otu_table.tsv")
         args.coassemble_binned = os.path.join(coassemble_appraise_dir, "binned.otu_table.tsv")
@@ -823,7 +823,7 @@ def iterate(args):
         logging.warn("Suggested coassemblies may match those from previous iterations. To check, use `--elusive-clusters`.")
         logging.warn("To exclude, provide previous run with `--coassemble-output` or use `--exclude-coassembles`.")
 
-    logging.info(f"Ibis iterate complete.")
+    logging.info(f"Bin chicken iterate complete.")
     logging.info(f"Cluster summary at {os.path.join(args.output, 'coassemble', 'summary.tsv')}")
     logging.info(f"More details at {os.path.join(args.output, 'coassemble', 'target', 'elusive_clusters.tsv')}")
     logging.info(f"Aviary commands for coassembly and recovery in shell scripts at {os.path.join(args.output, 'coassemble', 'commands')}")
@@ -857,9 +857,9 @@ def build(args):
 
     # Set args
     args = set_standard_args(args)
-    coassemble_config = load_config(importlib.resources.files("ibis.config").joinpath("template_coassemble.yaml"))
+    coassemble_config = load_config(importlib.resources.files("binchicken.config").joinpath("template_coassemble.yaml"))
     vars(args).update(coassemble_config)
-    evaluate_config = load_config(importlib.resources.files("ibis.config").joinpath("template_evaluate.yaml"))
+    evaluate_config = load_config(importlib.resources.files("binchicken.config").joinpath("template_evaluate.yaml"))
     vars(args).update(evaluate_config)
     args.build = True
 
@@ -961,77 +961,77 @@ def build(args):
         coassemble(args)
 
 
-    logging.info(f"Ibis build complete.")
+    logging.info(f"Bin chicken build complete.")
     logging.info(f"Conda envs at {conda_prefix}")
     logging.info(f"Re-activate conda env to load env variables.")
 
 def main():
-    main_parser = btu.BirdArgparser(program="Ibis (bin chicken)", version = __version__, program_invocation="ibis",
+    main_parser = btu.BirdArgparser(program="Bin chicken", version = __version__, program_invocation="binchicken",
         examples = {
             "coassemble": [
                 btu.Example(
                     "cluster reads into proposed coassemblies",
-                    "ibis coassemble --forward reads_1.1.fq ... --reverse reads_1.2.fq ..."
+                    "binchicken coassemble --forward reads_1.1.fq ... --reverse reads_1.2.fq ..."
                 ),
                 btu.Example(
                     "cluster reads into proposed coassemblies based on unbinned sequences",
-                    "ibis coassemble --forward reads_1.1.fq ... --reverse reads_1.2.fq ... --genomes genome_1.fna ..."
+                    "binchicken coassemble --forward reads_1.1.fq ... --reverse reads_1.2.fq ... --genomes genome_1.fna ..."
                 ),
                 btu.Example(
                     "cluster reads into proposed coassemblies based on unbinned sequences and coassemble only unbinned reads",
-                    "ibis coassemble --forward reads_1.1.fq ... --reverse reads_1.2.fq ... --genomes genome_1.fna ... --assemble-unmapped"
+                    "binchicken coassemble --forward reads_1.1.fq ... --reverse reads_1.2.fq ... --genomes genome_1.fna ... --assemble-unmapped"
                 ),
                 btu.Example(
                     "cluster reads into proposed coassemblies based on unbinned sequences from a specific taxa",
-                    "ibis coassemble --forward reads_1.1.fq ... --reverse reads_1.2.fq ... --genomes genome_1.fna ... --taxa-of-interest \"p__Planctomycetota\""
+                    "binchicken coassemble --forward reads_1.1.fq ... --reverse reads_1.2.fq ... --genomes genome_1.fna ... --taxa-of-interest \"p__Planctomycetota\""
                 ),
                 btu.Example(
                     "find relevant samples for differential coverage binning (no coassembly)",
-                    "ibis coassemble --forward reads_1.1.fq ... --reverse reads_1.2.fq ... --single-assembly"
+                    "binchicken coassemble --forward reads_1.1.fq ... --reverse reads_1.2.fq ... --single-assembly"
                 ),
             ],
             "evaluate": [
                 btu.Example(
                     "evaluate a completed coassembly",
-                    "ibis evaluate --coassemble-output coassemble_dir --aviary-outputs coassembly_0_dir ..."
+                    "binchicken evaluate --coassemble-output coassemble_dir --aviary-outputs coassembly_0_dir ..."
                 ),
                 btu.Example(
                     "evaluate a completed coassembly by providing genomes directly",
-                    "ibis evaluate --coassemble-output coassemble_dir --new-genomes genome_1.fna ... --coassembly-run coassembly_0"
+                    "binchicken evaluate --coassemble-output coassemble_dir --new-genomes genome_1.fna ... --coassembly-run coassembly_0"
                 ),
             ],
             "update": [
                 btu.Example(
                     "update previous run to download SRA reads",
-                    "ibis update --coassemble-output coassemble_dir --sra --forward SRA000001 ... --genomes genome_1.fna ..."
+                    "binchicken update --coassemble-output coassemble_dir --sra --forward SRA000001 ... --genomes genome_1.fna ..."
                 ),
                 btu.Example(
                     "update previous run to perform unmapping",
-                    "ibis update --coassemble-output coassemble_dir --assemble-unmapped --forward reads_1.1.fq ... --reverse reads_1.2.fq ... --genomes genome_1.fna ..."
+                    "binchicken update --coassemble-output coassemble_dir --assemble-unmapped --forward reads_1.1.fq ... --reverse reads_1.2.fq ... --genomes genome_1.fna ..."
                 ),
                 btu.Example(
                     "update previous run to run specific coassemblies",
-                    "ibis update --coassemble-output coassemble_dir --run-aviary --coassemblies coassembly_0 ... --forward reads_1.1.fq ... --reverse reads_1.2.fq ... --genomes genome_1.fna ..."
+                    "binchicken update --coassemble-output coassemble_dir --run-aviary --coassemblies coassembly_0 ... --forward reads_1.1.fq ... --reverse reads_1.2.fq ... --genomes genome_1.fna ..."
                 ),
             ],
             "iterate": [
                 btu.Example(
                     "rerun coassemble, adding new bins to database",
-                    "ibis iterate --coassemble-output coassemble_dir"
+                    "binchicken iterate --coassemble-output coassemble_dir"
                 ),
                 btu.Example(
                     "rerun coassemble, adding new bins to database, providing genomes directly",
-                    "ibis iterate --coassemble-output coassemble_dir --new-genomes new_genome_1.fna"
+                    "binchicken iterate --coassemble-output coassemble_dir --new-genomes new_genome_1.fna"
                 ),
             ],
             "build": [
                 btu.Example(
                     "create dependency conda environments",
-                    "ibis build --conda-prefix path_to_conda_envs"
+                    "binchicken build --conda-prefix path_to_conda_envs"
                 ),
                 btu.Example(
                     "create dependency conda environments and setup environment variables for Aviary",
-                    "ibis build --conda-prefix path_to_conda_envs --singlem-metapackage metapackage --gtdbtk-db GTDBtk --checkm2-db CheckM2"
+                    "binchicken build --conda-prefix path_to_conda_envs --singlem-metapackage metapackage --gtdbtk-db GTDBtk --checkm2-db CheckM2"
                 ),
             ],
         }
@@ -1077,15 +1077,15 @@ def main():
 
     def add_main_coassemble_output_arguments(argument_group):
         argument_group.add_argument("--coassemble-output", help="Output dir from coassemble subcommand")
-        argument_group.add_argument("--coassemble-unbinned", help="SingleM appraise unbinned output from Ibis coassemble (alternative to --coassemble-output)")
-        argument_group.add_argument("--coassemble-binned", help="SingleM appraise binned output from Ibis coassemble (alternative to --coassemble-output)")
+        argument_group.add_argument("--coassemble-unbinned", help="SingleM appraise unbinned output from Bin chicken coassemble (alternative to --coassemble-output)")
+        argument_group.add_argument("--coassemble-binned", help="SingleM appraise binned output from Bin chicken coassemble (alternative to --coassemble-output)")
 
     def add_coassemble_output_arguments(argument_group):
         add_main_coassemble_output_arguments(argument_group)
-        argument_group.add_argument("--coassemble-targets", help="Target sequences output from Ibis coassemble (alternative to --coassemble-output)")
-        argument_group.add_argument("--coassemble-elusive-edges", help="Elusive edges output from Ibis coassemble (alternative to --coassemble-output)")
-        argument_group.add_argument("--coassemble-elusive-clusters", help="Elusive clusters output from Ibis coassemble (alternative to --coassemble-output)")
-        argument_group.add_argument("--coassemble-summary", help="Summary output from Ibis coassemble (alternative to --coassemble-output)")
+        argument_group.add_argument("--coassemble-targets", help="Target sequences output from Bin chicken coassemble (alternative to --coassemble-output)")
+        argument_group.add_argument("--coassemble-elusive-edges", help="Elusive edges output from Bin chicken coassemble (alternative to --coassemble-output)")
+        argument_group.add_argument("--coassemble-elusive-clusters", help="Elusive clusters output from Bin chicken coassemble (alternative to --coassemble-output)")
+        argument_group.add_argument("--coassemble-summary", help="Summary output from Bin chicken coassemble (alternative to --coassemble-output)")
 
     ###########################################################################
 
@@ -1210,8 +1210,8 @@ def main():
     ###########################################################################
 
     args = main_parser.parse_the_args()
-    logging.info(f"Ibis v{__version__}")
-    logging.info(f"Command: {' '.join(['ibis'] + sys.argv[1:])}")
+    logging.info(f"Bin chicken v{__version__}")
+    logging.info(f"Command: {' '.join(['binchicken'] + sys.argv[1:])}")
 
     os.environ["POLARS_MAX_THREADS"] = str(args.local_cores)
     import polars as pl
@@ -1295,7 +1295,7 @@ def main():
     def coassemble_output_argument_verification(args):
         if not args.coassemble_output and not (args.coassemble_unbinned and args.coassemble_binned and args.coassemble_targets and \
                                                args.coassemble_elusive_edges and args.coassemble_elusive_clusters and args.coassemble_summary):
-            raise Exception("Either Ibis coassemble output (--coassemble-output) or specific input files must be provided")
+            raise Exception("Either Bin chicken coassemble output (--coassemble-output) or specific input files must be provided")
 
     if args.subparser_name == "coassemble":
         coassemble_argument_verification(args)
@@ -1322,11 +1322,11 @@ def main():
 
     elif args.subparser_name == "iterate":
         if args.sample_query or args.sample_query_list or args.sample_query_dir:
-            raise Exception("Query arguments are incompatible with Ibis iterate")
+            raise Exception("Query arguments are incompatible with Bin chicken iterate")
         if args.sample_singlem_dir or args.sample_query_dir:
-            raise Exception("Directory arguments are incompatible with Ibis iterate")
+            raise Exception("Directory arguments are incompatible with Bin chicken iterate")
         if args.single_assembly:
-            raise Exception("Single assembly is incompatible with Ibis iterate")
+            raise Exception("Single assembly is incompatible with Bin chicken iterate")
         if not args.aviary_outputs and not (args.new_genomes or args.new_genomes_list) and not args.coassemble_output:
             raise Exception("New genomes or aviary outputs must be provided for iteration")
         if (args.forward and args.forward_list) or (args.reverse and args.reverse_list) or (args.genomes and args.genomes_list):

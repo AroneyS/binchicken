@@ -67,7 +67,7 @@ class Tests(unittest.TestCase):
     def test_iterate(self):
         with in_tempdir():
             cmd = (
-                f"ibis iterate "
+                f"binchicken iterate "
                 f"--iteration 0 "
                 f"--coassemble-unbinned {MOCK_UNBINNED} "
                 f"--coassemble-binned {MOCK_BINNED} "
@@ -146,7 +146,7 @@ class Tests(unittest.TestCase):
     def test_iterate_minimal(self):
         with in_tempdir():
             cmd = (
-                f"ibis iterate "
+                f"binchicken iterate "
                 f"--coassemble-output {MOCK_COASSEMBLE} "
                 f"--singlem-metapackage {METAPACKAGE} "
                 f"--output test "
@@ -220,7 +220,7 @@ class Tests(unittest.TestCase):
     def test_iterate_genome_input(self):
         with in_tempdir():
             cmd = (
-                f"ibis iterate "
+                f"binchicken iterate "
                 f"--new-genomes {MOCK_GENOMES} "
                 f"--elusive-clusters {ELUSIVE_CLUSTERS} "
                 f"--forward {SAMPLE_READS_FORWARD} "
@@ -285,7 +285,7 @@ class Tests(unittest.TestCase):
         with in_tempdir():
             write_string_to_file(MOCK_GENOMES, "genomes")
             cmd = (
-                f"ibis iterate "
+                f"binchicken iterate "
                 f"--new-genomes-list genomes "
                 f"--coassemble-output {MOCK_COASSEMBLE} "
                 f"--elusive-clusters {ELUSIVE_CLUSTERS} "
@@ -333,7 +333,7 @@ class Tests(unittest.TestCase):
     def test_iterate_default_config(self):
         with in_tempdir():
             cmd = (
-                f"ibis iterate "
+                f"binchicken iterate "
                 f"--coassemble-output {MOCK_COASSEMBLE} "
                 f"--singlem-metapackage {METAPACKAGE} "
                 f"--exclude-coassemblies sample_4,sample_5 "
@@ -359,7 +359,7 @@ class Tests(unittest.TestCase):
     def test_iterate_genome_singlem(self):
         with in_tempdir():
             cmd = (
-                f"ibis iterate "
+                f"binchicken iterate "
                 f"--iteration 0 "
                 f"--aviary-outputs {MOCK_COASSEMBLIES} "
                 f"--elusive-clusters {ELUSIVE_CLUSTERS} "
@@ -412,7 +412,7 @@ class Tests(unittest.TestCase):
     def test_iterate_new_genome_singlem(self):
         with in_tempdir():
             cmd = (
-                f"ibis iterate "
+                f"binchicken iterate "
                 f"--new-genomes {MOCK_GENOMES} "
                 f"--new-genome-singlem {MOCK_GENOME_SINGLEM} "
                 f"--coassemble-unbinned {MOCK_UNBINNED} "
@@ -454,7 +454,7 @@ class Tests(unittest.TestCase):
     def test_iterate_genome_singlem_and_new(self):
         with in_tempdir():
             cmd = (
-                f"ibis iterate "
+                f"binchicken iterate "
                 f"--new-genomes {MOCK_GENOMES} "
                 f"--new-genome-singlem {MOCK_GENOME_SINGLEM} "
                 f"--elusive-clusters {ELUSIVE_CLUSTERS} "
@@ -489,7 +489,7 @@ class Tests(unittest.TestCase):
     def test_iterate_missing_samples(self):
         with in_tempdir():
             cmd = (
-                f"ibis iterate "
+                f"binchicken iterate "
                 f"--forward {SAMPLE_READS_FORWARD_NO_TWO} "
                 f"--reverse {SAMPLE_READS_REVERSE_NO_TWO} "
                 f"--aviary-outputs {MOCK_COASSEMBLIES} "
