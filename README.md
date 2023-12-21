@@ -67,13 +67,15 @@ conda env config vars set CHECKM2DB="/checkm2/db/dir"
 ## Example workflow
 
 ```bash
-# Assemble and recover from each sample individually with 20 samples used for differential abundance binning
+# Assemble and recover from each sample individually
+# 20 samples used for differential abundance binning
 binchicken coassemble \
   --forward-list samples_forward.txt --reverse-list samples_reverse.txt \
   --run-aviary --single-assembly \
   --cores 64 --output binchicken_single_assembly
 
-# Assemble and recover from 2-sample coassemblies, prioritising samples with genomes not previously recovered
+# Assemble and recover from 2-sample coassemblies
+# Prioritising samples with genomes not previously recovered
 binchicken iterate \
   --coassemble-output binchicken_single_assembly \
   --run-aviary --assemble-unmapped \
