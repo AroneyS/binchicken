@@ -2,7 +2,7 @@
 
 [<img src="binchicken_logo.png" width="50%" />](binchicken_logo.png)
 
-Bin chicken - targeted recovery of low abundance genomes through intelligent coassembly.
+Bin chicken - targeted recovery of low abundance metagenome assembled genomes through intelligent coassembly.
 
 ## Installation options
 
