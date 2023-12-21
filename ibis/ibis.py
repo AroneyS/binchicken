@@ -716,23 +716,23 @@ def iterate(args):
 
     if args.aviary_outputs:
         bins = evaluate_bins(args.aviary_outputs, args.checkm_version, args.min_completeness, args.max_contamination, args.iteration)
+        for bin in bins:
+            copy_input(
+                os.path.abspath(bins[bin]),
+                os.path.join(args.output, "recovered_bins", bin + ".fna")
+            )
+        new_genomes = [os.path.join(args.output, "recovered_bins", bin + ".fna") for bin in bins]
+        args.new_genomes = {os.path.splitext(os.path.basename(g))[0]: os.path.abspath(g) for g in new_genomes}
     elif args.new_genomes:
         bins = {os.path.splitext(os.path.basename(g))[0]: os.path.abspath(g) for g in args.new_genomes}
+        new_genomes = list(bins.values())
+        args.new_genomes = bins
     else:
         raise Exception("Programming error: no bins to evaluate")
 
-    for bin in bins:
-        copy_input(
-            os.path.abspath(bins[bin]),
-            os.path.join(args.output, "recovered_bins", bin + ".fna")
-        )
+    os.makedirs(os.path.join(args.output, "recovered_bins"), exist_ok=True)
     with open(os.path.join(args.output, "recovered_bins", "bin_provenance.tsv"), "w") as f:
         f.writelines("\n".join(["\t".join([os.path.abspath(bins[bin]), bin + ".fna"]) for bin in bins]))
-
-    new_genomes = [os.path.join(args.output, "recovered_bins", bin + ".fna") for bin in bins]
-    args.new_genomes = {
-            os.path.splitext(os.path.basename(genome))[0]: os.path.abspath(genome) for genome in new_genomes
-            }
 
     if args.coassemble_output:
         logging.info("Processing previous Ibis coassemble run")

@@ -234,21 +234,11 @@ class Tests(unittest.TestCase):
             )
             extern.run(cmd)
 
-            new_bin_0_path = os.path.join("test", "recovered_bins", "bin_1.fna")
-            self.assertTrue(os.path.exists(new_bin_0_path))
-            with open(new_bin_0_path) as f:
-                file = f.read()
-                self.assertTrue(">k141_1363016" in file)
-                self.assertTrue(">k141_177318" not in file)
-
-            new_bin_1_path = os.path.join("test", "recovered_bins", "bin_2.fna")
-            self.assertTrue(os.path.exists(new_bin_1_path))
-
-            new_bin_2_path = os.path.join("test", "recovered_bins", "bin_3.fna")
-            self.assertTrue(os.path.exists(new_bin_2_path))
-
             bin_provenance_path = os.path.join("test", "recovered_bins", "bin_provenance.tsv")
             self.assertTrue(os.path.exists(bin_provenance_path))
+            expected = "\n".join(["\t".join([g, os.path.basename(g)]) for g in MOCK_GENOMES.split(" ")])
+            with open(bin_provenance_path) as f:
+                self.assertEqual(expected, f.read())
 
             original_bin_singlem_path = os.path.join("test", "coassemble", "pipe", os.path.splitext(os.path.basename(GENOMES.split(" ")[0]))[0]+"_bin.otu_table.tsv")
             self.assertTrue(os.path.exists(original_bin_singlem_path))
