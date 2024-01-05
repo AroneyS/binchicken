@@ -1,2 +1,3 @@
 include LICENSE
-recursive-include ibis *.yaml *.yml *.smk ibis_logo.png
+include binchicken_logo.png
+recursive-include binchicken *.yaml *.yml *.smk

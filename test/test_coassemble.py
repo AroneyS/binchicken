@@ -82,7 +82,7 @@ class Tests(unittest.TestCase):
     def test_coassemble(self):
         with in_tempdir():
             cmd = (
-                f"ibis coassemble "
+                f"binchicken coassemble "
                 f"--forward {SAMPLE_READS_FORWARD} "
                 f"--reverse {SAMPLE_READS_REVERSE} "
                 f"--genomes {GENOMES} "
@@ -236,7 +236,7 @@ class Tests(unittest.TestCase):
     def test_coassemble_taxa_of_interest(self):
         with in_tempdir():
             cmd = (
-                f"ibis coassemble "
+                f"binchicken coassemble "
                 f"--forward {SAMPLE_READS_FORWARD} "
                 f"--reverse {SAMPLE_READS_REVERSE} "
                 f"--genomes {GENOMES} "
@@ -347,7 +347,7 @@ class Tests(unittest.TestCase):
     def test_coassemble_query_input(self):
         with in_tempdir():
             cmd = (
-                f"ibis coassemble "
+                f"binchicken coassemble "
                 f"--forward {SAMPLE_READS_FORWARD} "
                 f"--reverse {SAMPLE_READS_REVERSE} "
                 f"--genomes {GENOMES} "
@@ -394,7 +394,7 @@ class Tests(unittest.TestCase):
     def test_coassemble_query_input_taxa_of_interest(self):
         with in_tempdir():
             cmd = (
-                f"ibis coassemble "
+                f"binchicken coassemble "
                 f"--forward {SAMPLE_READS_FORWARD} "
                 f"--reverse {SAMPLE_READS_REVERSE} "
                 f"--genomes {GENOMES} "
@@ -520,7 +520,7 @@ class Tests(unittest.TestCase):
     def test_coassemble_exclude_coassemblies(self):
         with in_tempdir():
             cmd = (
-                f"ibis coassemble "
+                f"binchicken coassemble "
                 f"--forward {SAMPLE_READS_FORWARD} "
                 f"--reverse {SAMPLE_READS_REVERSE} "
                 f"--genomes {GENOMES} "
@@ -568,7 +568,7 @@ class Tests(unittest.TestCase):
     def test_coassemble_single_assembly(self):
         with in_tempdir():
             cmd = (
-                f"ibis coassemble "
+                f"binchicken coassemble "
                 f"--forward {SAMPLE_READS_FORWARD} "
                 f"--reverse {SAMPLE_READS_REVERSE} "
                 f"--singlem-metapackage {METAPACKAGE} "
@@ -621,7 +621,7 @@ class Tests(unittest.TestCase):
     def test_coassemble_no_genomes(self):
         with in_tempdir():
             cmd = (
-                f"ibis coassemble "
+                f"binchicken coassemble "
                 f"--forward {SAMPLE_READS_FORWARD} "
                 f"--reverse {SAMPLE_READS_REVERSE} "
                 f"--singlem-metapackage {METAPACKAGE} "
@@ -684,7 +684,7 @@ class Tests(unittest.TestCase):
     def test_coassemble_no_mapping(self):
         with in_tempdir():
             cmd = (
-                f"ibis coassemble "
+                f"binchicken coassemble "
                 f"--forward {SAMPLE_READS_FORWARD} "
                 f"--reverse {SAMPLE_READS_REVERSE} "
                 f"--genomes {GENOMES} "
@@ -751,7 +751,7 @@ class Tests(unittest.TestCase):
     def test_coassemble_genome_trim(self):
         with in_tempdir():
             cmd = (
-                f"ibis coassemble "
+                f"binchicken coassemble "
                 f"--forward {SAMPLE_READS_FORWARD} "
                 f"--reverse {SAMPLE_READS_REVERSE} "
                 f"--genomes {TWO_GENOMES} "
@@ -777,7 +777,7 @@ class Tests(unittest.TestCase):
     def test_coassemble_default_config(self):
         with in_tempdir():
             cmd = (
-                f"ibis coassemble "
+                f"binchicken coassemble "
                 f"--forward {SAMPLE_READS_FORWARD} "
                 f"--reverse {SAMPLE_READS_REVERSE} "
                 f"--genomes {GENOMES} "
@@ -800,7 +800,7 @@ class Tests(unittest.TestCase):
     def test_coassemble_singlem_inputs(self):
         with in_tempdir():
             cmd = (
-                f"ibis coassemble "
+                f"binchicken coassemble "
                 f"--forward {SAMPLE_READS_FORWARD} "
                 f"--reverse {SAMPLE_READS_REVERSE} "
                 f"--genomes {GENOMES} "
@@ -839,7 +839,7 @@ class Tests(unittest.TestCase):
     def test_coassemble_run_aviary(self):
         with in_tempdir():
             cmd = (
-                f"ibis coassemble "
+                f"binchicken coassemble "
                 f"--run-aviary "
                 f"--aviary-gtdbtk-db gtdb_release "
                 f"--aviary-checkm2-db CheckM2_database "
@@ -884,7 +884,7 @@ class Tests(unittest.TestCase):
     def test_coassemble_run_aviary_unmapped(self):
         with in_tempdir():
             cmd = (
-                f"ibis coassemble "
+                f"binchicken coassemble "
                 f"--assemble-unmapped "
                 f"--run-aviary "
                 f"--aviary-gtdbtk-db gtdb_release "
@@ -930,7 +930,7 @@ class Tests(unittest.TestCase):
     def test_coassemble_run_aviary_unmapped_qc(self):
         with in_tempdir():
             cmd = (
-                f"ibis coassemble "
+                f"binchicken coassemble "
                 f"--assemble-unmapped "
                 f"--run-qc "
                 f"--run-aviary "
@@ -984,7 +984,7 @@ class Tests(unittest.TestCase):
             write_string_to_file("sample_1,sample_2", "exclude_coassemblies")
 
             cmd = (
-                f"ibis coassemble "
+                f"binchicken coassemble "
                 f"--forward-list sample_reads_forward "
                 f"--reverse-list sample_reads_reverse "
                 f"--genomes-list genomes "
@@ -1036,7 +1036,7 @@ class Tests(unittest.TestCase):
             write_string_to_file(SAMPLE_SINGLEM, "sample_singlem")
 
             cmd = (
-                f"ibis coassemble "
+                f"binchicken coassemble "
                 f"--forward-list sample_reads_forward "
                 f"--reverse-list sample_reads_reverse "
                 f"--genomes-list genomes "
@@ -1078,7 +1078,7 @@ class Tests(unittest.TestCase):
                 extern.run(f"touch -t 200001011200 {sample}")
 
             cmd = (
-                f"ibis coassemble "
+                f"binchicken coassemble "
                 f"--forward {SAMPLE_READS_FORWARD} "
                 f"--reverse {SAMPLE_READS_REVERSE} "
                 f"--genomes {GENOMES} "
@@ -1116,7 +1116,7 @@ class Tests(unittest.TestCase):
         with in_tempdir():
             os.environ['SINGLEM_METAPACKAGE_PATH'] = METAPACKAGE
             cmd = (
-                f"ibis coassemble "
+                f"binchicken coassemble "
                 f"--forward {SAMPLE_READS_FORWARD} "
                 f"--reverse {SAMPLE_READS_REVERSE} "
                 f"--genomes {GENOMES} "
@@ -1145,7 +1145,7 @@ class Tests(unittest.TestCase):
     def test_coassemble_remove_EIF(self):
         with in_tempdir():
             cmd = (
-                f"ibis coassemble "
+                f"binchicken coassemble "
                 f"--forward {SAMPLE_READS_FORWARD} "
                 f"--reverse {SAMPLE_READS_REVERSE} "
                 f"--genomes {GENOMES} "

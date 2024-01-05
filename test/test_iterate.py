@@ -67,7 +67,7 @@ class Tests(unittest.TestCase):
     def test_iterate(self):
         with in_tempdir():
             cmd = (
-                f"ibis iterate "
+                f"binchicken iterate "
                 f"--iteration 0 "
                 f"--coassemble-unbinned {MOCK_UNBINNED} "
                 f"--coassemble-binned {MOCK_BINNED} "
@@ -146,7 +146,7 @@ class Tests(unittest.TestCase):
     def test_iterate_minimal(self):
         with in_tempdir():
             cmd = (
-                f"ibis iterate "
+                f"binchicken iterate "
                 f"--coassemble-output {MOCK_COASSEMBLE} "
                 f"--singlem-metapackage {METAPACKAGE} "
                 f"--output test "
@@ -220,7 +220,7 @@ class Tests(unittest.TestCase):
     def test_iterate_genome_input(self):
         with in_tempdir():
             cmd = (
-                f"ibis iterate "
+                f"binchicken iterate "
                 f"--new-genomes {MOCK_GENOMES} "
                 f"--elusive-clusters {ELUSIVE_CLUSTERS} "
                 f"--forward {SAMPLE_READS_FORWARD} "
@@ -234,21 +234,11 @@ class Tests(unittest.TestCase):
             )
             extern.run(cmd)
 
-            new_bin_0_path = os.path.join("test", "recovered_bins", "bin_1.fna")
-            self.assertTrue(os.path.exists(new_bin_0_path))
-            with open(new_bin_0_path) as f:
-                file = f.read()
-                self.assertTrue(">k141_1363016" in file)
-                self.assertTrue(">k141_177318" not in file)
-
-            new_bin_1_path = os.path.join("test", "recovered_bins", "bin_2.fna")
-            self.assertTrue(os.path.exists(new_bin_1_path))
-
-            new_bin_2_path = os.path.join("test", "recovered_bins", "bin_3.fna")
-            self.assertTrue(os.path.exists(new_bin_2_path))
-
             bin_provenance_path = os.path.join("test", "recovered_bins", "bin_provenance.tsv")
             self.assertTrue(os.path.exists(bin_provenance_path))
+            expected = "\n".join(["\t".join([g, os.path.basename(g)]) for g in MOCK_GENOMES.split(" ")])
+            with open(bin_provenance_path) as f:
+                self.assertEqual(expected, f.read())
 
             original_bin_singlem_path = os.path.join("test", "coassemble", "pipe", os.path.splitext(os.path.basename(GENOMES.split(" ")[0]))[0]+"_bin.otu_table.tsv")
             self.assertTrue(os.path.exists(original_bin_singlem_path))
@@ -295,7 +285,7 @@ class Tests(unittest.TestCase):
         with in_tempdir():
             write_string_to_file(MOCK_GENOMES, "genomes")
             cmd = (
-                f"ibis iterate "
+                f"binchicken iterate "
                 f"--new-genomes-list genomes "
                 f"--coassemble-output {MOCK_COASSEMBLE} "
                 f"--elusive-clusters {ELUSIVE_CLUSTERS} "
@@ -329,7 +319,7 @@ class Tests(unittest.TestCase):
             self.assertTrue(os.path.exists(config_path))
             config = load_configfile(config_path)
             genomes_config = {
-                os.path.splitext(os.path.basename(g))[0]: g.replace(MOCK_COASSEMBLE + "/coassemble/coassemble/coassembly_0/recover/bins/final_bins/", os.getcwd() + "/test/recovered_bins/")
+                os.path.splitext(os.path.basename(g))[0]: g
                 for g in (GENOMES + " " + MOCK_GENOMES).split(" ")
                 }
             self.assertEqual(genomes_config, config["genomes"])
@@ -345,7 +335,7 @@ class Tests(unittest.TestCase):
     def test_iterate_default_config(self):
         with in_tempdir():
             cmd = (
-                f"ibis iterate "
+                f"binchicken iterate "
                 f"--coassemble-output {MOCK_COASSEMBLE} "
                 f"--singlem-metapackage {METAPACKAGE} "
                 f"--exclude-coassemblies sample_4,sample_5 "
@@ -371,7 +361,7 @@ class Tests(unittest.TestCase):
     def test_iterate_genome_singlem(self):
         with in_tempdir():
             cmd = (
-                f"ibis iterate "
+                f"binchicken iterate "
                 f"--iteration 0 "
                 f"--aviary-outputs {MOCK_COASSEMBLIES} "
                 f"--elusive-clusters {ELUSIVE_CLUSTERS} "
@@ -424,7 +414,7 @@ class Tests(unittest.TestCase):
     def test_iterate_new_genome_singlem(self):
         with in_tempdir():
             cmd = (
-                f"ibis iterate "
+                f"binchicken iterate "
                 f"--new-genomes {MOCK_GENOMES} "
                 f"--new-genome-singlem {MOCK_GENOME_SINGLEM} "
                 f"--coassemble-unbinned {MOCK_UNBINNED} "
@@ -466,7 +456,7 @@ class Tests(unittest.TestCase):
     def test_iterate_genome_singlem_and_new(self):
         with in_tempdir():
             cmd = (
-                f"ibis iterate "
+                f"binchicken iterate "
                 f"--new-genomes {MOCK_GENOMES} "
                 f"--new-genome-singlem {MOCK_GENOME_SINGLEM} "
                 f"--elusive-clusters {ELUSIVE_CLUSTERS} "
@@ -501,7 +491,7 @@ class Tests(unittest.TestCase):
     def test_iterate_missing_samples(self):
         with in_tempdir():
             cmd = (
-                f"ibis iterate "
+                f"binchicken iterate "
                 f"--forward {SAMPLE_READS_FORWARD_NO_TWO} "
                 f"--reverse {SAMPLE_READS_REVERSE_NO_TWO} "
                 f"--aviary-outputs {MOCK_COASSEMBLIES} "

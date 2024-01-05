@@ -1,4 +1,4 @@
-name: ibis
+name: binchicken
 channels:
   - conda-forge
   - bioconda
@@ -11,7 +11,7 @@ dependencies:
   - bird_tool_utils_python=0.4.*
   - extern=0.4.*
   - ruamel.yaml=0.17.*
-  - polars=0.19.7
+  - polars=0.20.*
   - pigz=2.3.*
   - pyarrow=12.0.*
   - parallel=20230522

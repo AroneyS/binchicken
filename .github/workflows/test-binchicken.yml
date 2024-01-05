@@ -1,4 +1,4 @@
-name: Test Ibis with Setup-Miniconda From Marketplace
+name: Test Bin chicken with Setup-Miniconda From Marketplace
 on: [push]
 
 jobs:
@@ -17,7 +17,7 @@ jobs:
         uses: conda-incubator/setup-miniconda@v2
         with:
           activate-environment: test
-          environment-file: ibis.yml
+          environment-file: binchicken.yml
           python-version: ${{ matrix.python-version }}
           miniforge-variant: Mambaforge
           auto-activate-base: false
@@ -33,7 +33,7 @@ jobs:
           sudo rm -rf /opt/ghc
           sudo rm -rf "/usr/local/share/boost"
           sudo rm -rf "$AGENT_TOOLSDIRECTORY"
-      - name: Install Ibis
+      - name: Install Bin chicken
         run: |
           pip install -e .
       - name: Run unit tests

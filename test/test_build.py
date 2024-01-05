@@ -29,7 +29,7 @@ class Tests(unittest.TestCase):
         with in_tempdir():
             #path_to_conda = os.path.abspath(".conda")
             cmd = (
-                f"ibis build "
+                f"binchicken build "
                 f"--conda-prefix {path_to_conda} "
                 f"--singlem-metapackage {METAPACKAGE} "
                 f"--gtdbtk-db gtdb_release "
@@ -52,7 +52,7 @@ class Tests(unittest.TestCase):
 
             # Dryrun coassemble
             cmd = (
-                f"ibis coassemble "
+                f"binchicken coassemble "
                 f"--forward {SAMPLE_READS_FORWARD} "
                 f"--reverse {SAMPLE_READS_REVERSE} "
                 f"--genomes {GENOMES} "
@@ -62,17 +62,17 @@ class Tests(unittest.TestCase):
                 f"--dryrun "
             )
             output = extern.run(cmd)
-            self.assertFalse("ibis/workflow/env/singlem.yml will be created." in output)
-            self.assertFalse("ibis/workflow/env/coverm.yml will be created." in output)
-            self.assertFalse("ibis/workflow/env/r.yml will be created." in output)
-            self.assertFalse("ibis/workflow/env/kingfisher.yml will be created." in output)
-            self.assertFalse("ibis/workflow/env/prodigal.yml will be created." in output)
-            self.assertFalse("ibis/workflow/env/aviary.yml will be created." in output)
-            self.assertFalse("ibis/workflow/env/fastp.yml will be created." in output)
+            self.assertFalse("binchicken/workflow/env/singlem.yml will be created." in output)
+            self.assertFalse("binchicken/workflow/env/coverm.yml will be created." in output)
+            self.assertFalse("binchicken/workflow/env/r.yml will be created." in output)
+            self.assertFalse("binchicken/workflow/env/kingfisher.yml will be created." in output)
+            self.assertFalse("binchicken/workflow/env/prodigal.yml will be created." in output)
+            self.assertFalse("binchicken/workflow/env/aviary.yml will be created." in output)
+            self.assertFalse("binchicken/workflow/env/fastp.yml will be created." in output)
 
             # Dryrun evaluate
             cmd = (
-                f"ibis evaluate "
+                f"binchicken evaluate "
                 f"--coassemble-output {MOCK_COASSEMBLE} "
                 f"--aviary-outputs {MOCK_COASSEMBLIES} "
                 f"--singlem-metapackage {METAPACKAGE} "
@@ -81,17 +81,17 @@ class Tests(unittest.TestCase):
                 f"--dryrun "
             )
             output = extern.run(cmd)
-            self.assertFalse("ibis/workflow/env/singlem.yml will be created." in output)
-            self.assertFalse("ibis/workflow/env/coverm.yml will be created." in output)
-            self.assertFalse("ibis/workflow/env/r.yml will be created." in output)
-            self.assertFalse("ibis/workflow/env/kingfisher.yml will be created." in output)
-            self.assertFalse("ibis/workflow/env/prodigal.yml will be created." in output)
-            self.assertFalse("ibis/workflow/env/aviary.yml will be created." in output)
-            self.assertFalse("ibis/workflow/env/fastp.yml will be created." in output)
+            self.assertFalse("binchicken/workflow/env/singlem.yml will be created." in output)
+            self.assertFalse("binchicken/workflow/env/coverm.yml will be created." in output)
+            self.assertFalse("binchicken/workflow/env/r.yml will be created." in output)
+            self.assertFalse("binchicken/workflow/env/kingfisher.yml will be created." in output)
+            self.assertFalse("binchicken/workflow/env/prodigal.yml will be created." in output)
+            self.assertFalse("binchicken/workflow/env/aviary.yml will be created." in output)
+            self.assertFalse("binchicken/workflow/env/fastp.yml will be created." in output)
 
             # Dryrun update
             cmd = (
-                f"ibis update "
+                f"binchicken update "
                 f"--assemble-unmapped "
                 f"--forward SRR8334323 SRR8334324 "
                 f"--sra "
@@ -110,17 +110,17 @@ class Tests(unittest.TestCase):
                 f"--dryrun "
             )
             output = extern.run(cmd)
-            self.assertFalse("ibis/workflow/env/singlem.yml will be created." in output)
-            self.assertFalse("ibis/workflow/env/coverm.yml will be created." in output)
-            self.assertFalse("ibis/workflow/env/r.yml will be created." in output)
-            self.assertFalse("ibis/workflow/env/kingfisher.yml will be created." in output)
-            self.assertFalse("ibis/workflow/env/prodigal.yml will be created." in output)
-            self.assertFalse("ibis/workflow/env/aviary.yml will be created." in output)
-            self.assertFalse("ibis/workflow/env/fastp.yml will be created." in output)
+            self.assertFalse("binchicken/workflow/env/singlem.yml will be created." in output)
+            self.assertFalse("binchicken/workflow/env/coverm.yml will be created." in output)
+            self.assertFalse("binchicken/workflow/env/r.yml will be created." in output)
+            self.assertFalse("binchicken/workflow/env/kingfisher.yml will be created." in output)
+            self.assertFalse("binchicken/workflow/env/prodigal.yml will be created." in output)
+            self.assertFalse("binchicken/workflow/env/aviary.yml will be created." in output)
+            self.assertFalse("binchicken/workflow/env/fastp.yml will be created." in output)
 
             # Dryrun iterate
             cmd = (
-                f"ibis iterate "
+                f"binchicken iterate "
                 f"--aviary-outputs {MOCK_COASSEMBLIES} "
                 f"--forward {SAMPLE_READS_FORWARD} "
                 f"--reverse {SAMPLE_READS_REVERSE} "
@@ -131,13 +131,13 @@ class Tests(unittest.TestCase):
                 f"--dryrun "
             )
             output = extern.run(cmd)
-            self.assertFalse("ibis/workflow/env/singlem.yml will be created." in output)
-            self.assertFalse("ibis/workflow/env/coverm.yml will be created." in output)
-            self.assertFalse("ibis/workflow/env/r.yml will be created." in output)
-            self.assertFalse("ibis/workflow/env/kingfisher.yml will be created." in output)
-            self.assertFalse("ibis/workflow/env/prodigal.yml will be created." in output)
-            self.assertFalse("ibis/workflow/env/aviary.yml will be created." in output)
-            self.assertFalse("ibis/workflow/env/fastp.yml will be created." in output)
+            self.assertFalse("binchicken/workflow/env/singlem.yml will be created." in output)
+            self.assertFalse("binchicken/workflow/env/coverm.yml will be created." in output)
+            self.assertFalse("binchicken/workflow/env/r.yml will be created." in output)
+            self.assertFalse("binchicken/workflow/env/kingfisher.yml will be created." in output)
+            self.assertFalse("binchicken/workflow/env/prodigal.yml will be created." in output)
+            self.assertFalse("binchicken/workflow/env/aviary.yml will be created." in output)
+            self.assertFalse("binchicken/workflow/env/fastp.yml will be created." in output)
 
 
 if __name__ == '__main__':

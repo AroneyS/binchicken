@@ -5,7 +5,7 @@
 
 import os
 import polars as pl
-from ibis.ibis import FAST_AVIARY_MODE
+from binchicken.binchicken import FAST_AVIARY_MODE
 
 def pipeline(coassemblies, reads_1, reads_2, output_dir, threads, memory, fast=False):
     output = (
@@ -15,10 +15,10 @@ def pipeline(coassemblies, reads_1, reads_2, output_dir, threads, memory, fast=F
             pl.col("recover_samples").str.split(","),
             )
         .with_columns(
-            coassembly_samples_1 = pl.col("samples").list.eval(pl.element().map_dict(reads_1)),
-            coassembly_samples_2 = pl.col("samples").list.eval(pl.element().map_dict(reads_2)),
-            recover_samples_1 = pl.col("recover_samples").list.eval(pl.element().map_dict(reads_1)),
-            recover_samples_2 = pl.col("recover_samples").list.eval(pl.element().map_dict(reads_2)),
+            coassembly_samples_1 = pl.col("samples").list.eval(pl.element().replace(reads_1)),
+            coassembly_samples_2 = pl.col("samples").list.eval(pl.element().replace(reads_2)),
+            recover_samples_1 = pl.col("recover_samples").list.eval(pl.element().replace(reads_1)),
+            recover_samples_2 = pl.col("recover_samples").list.eval(pl.element().replace(reads_2)),
             )
         .with_columns(
             assemble = pl.concat_str(
@@ -99,5 +99,5 @@ if __name__ == "__main__":
         fast=fast,
     )
 
-    coassemblies.select("assemble").write_csv(snakemake.output.coassemble_commands, separator="\t", has_header=False)
-    coassemblies.select("recover").write_csv(snakemake.output.recover_commands, separator="\t", has_header=False)
+    coassemblies.select("assemble").write_csv(snakemake.output.coassemble_commands, separator="\t", include_header=False)
+    coassemblies.select("recover").write_csv(snakemake.output.recover_commands, separator="\t", include_header=False)

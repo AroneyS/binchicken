@@ -7,10 +7,10 @@ import extern
 os.environ["POLARS_MAX_THREADS"] = "1"
 import polars as pl
 from polars.testing import assert_frame_equal
-from ibis.workflow.scripts.is_interleaved import pipeline, is_interleaved
+from binchicken.workflow.scripts.is_interleaved import pipeline, is_interleaved
 
 path_to_data = os.path.join(os.path.dirname(os.path.realpath(__file__)),'data')
-path_to_script = os.path.join(os.path.dirname(os.path.realpath(__file__)),'..','ibis','workflow','scripts','is_interleaved.py')
+path_to_script = os.path.join(os.path.dirname(os.path.realpath(__file__)),'..','binchicken','workflow','scripts','is_interleaved.py')
 
 path_to_sra = os.path.join(path_to_data, "sra")
 SRA_INTERLEAVED = os.path.join(path_to_sra, "SRR3309137.fastq")
