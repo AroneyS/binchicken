@@ -4,7 +4,7 @@ import unittest
 import os
 os.environ["POLARS_MAX_THREADS"] = "1"
 import polars as pl
-from ibis.workflow.scripts.sketch_samples import processing
+from binchicken.workflow.scripts.sketch_samples import processing
 
 OTU_TABLE_COLUMNS = {
     "gene": str,

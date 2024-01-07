@@ -1182,7 +1182,7 @@ class Tests(unittest.TestCase):
     def test_coassemble_preclustered(self):
         with in_tempdir():
             cmd = (
-                f"ibis coassemble "
+                f"binchicken coassemble "
                 f"--forward {SAMPLE_READS_FORWARD_PRE} "
                 f"--reverse {SAMPLE_READS_REVERSE_PRE} "
                 f"--sample-singlem {SAMPLE_SINGLEM_PRE} "
@@ -1261,7 +1261,7 @@ class Tests(unittest.TestCase):
     def test_coassemble_preclustered_target_taxa(self):
         with in_tempdir():
             cmd = (
-                f"ibis coassemble "
+                f"binchicken coassemble "
                 f"--forward {SAMPLE_READS_FORWARD_PRE} "
                 f"--reverse {SAMPLE_READS_REVERSE_PRE} "
                 f"--sample-singlem {SAMPLE_SINGLEM_PRE} "

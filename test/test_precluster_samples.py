@@ -2,7 +2,7 @@
 
 import unittest
 import numpy as np
-from ibis.workflow.scripts.precluster_samples import processing
+from binchicken.workflow.scripts.precluster_samples import processing
 
 class Tests(unittest.TestCase):
     def assertListListEqual(self, a, b):
