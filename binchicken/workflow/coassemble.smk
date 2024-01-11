@@ -19,8 +19,8 @@ mapped_reads_2 = {read: output_dir + f"/mapping/{read}_unmapped.2.fq.gz" for rea
 qc_reads_1 = {read: output_dir + f"/qc/{read}_1.fastq.gz" for read in config["reads_1"]}
 qc_reads_2 = {read: output_dir + f"/qc/{read}_2.fastq.gz" for read in config["reads_2"]}
 
-def get_mem_mb(wildcards, threads):
-    return 8 * 1000 * threads
+def get_mem_mb(wildcards, threads, attempt):
+    return 8 * 1000 * threads * attempt
 
 def get_genomes(wildcards, version=None):
     version = version if version else wildcards.version
