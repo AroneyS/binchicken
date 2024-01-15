@@ -3,8 +3,7 @@ name: Build manual pages and deploy documentation
 on:
   push:
     branches:
-      - main
-      - add-docs
+      - master
     paths:
       - 'docs/**'
       - 'doctave.yml'
