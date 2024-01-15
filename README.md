@@ -1,9 +1,9 @@
 [![install with bioconda](https://img.shields.io/badge/install%20with-bioconda-brightgreen.svg?style=flat)](http://bioconda.github.io/recipes/binchicken/README.html)
-![](https://anaconda.org/bioconda/binchicken/badges/license.svg)
+[![DOI](https://zenodo.org/badge/531785064.svg)](https://zenodo.org/doi/10.5281/zenodo.10511708)
 ![](https://anaconda.org/bioconda/binchicken/badges/version.svg)
 ![](https://anaconda.org/bioconda/binchicken/badges/latest_release_relative_date.svg)
+![](https://anaconda.org/bioconda/binchicken/badges/license.svg)
 ![](https://anaconda.org/bioconda/binchicken/badges/platforms.svg)
-[![DOI](https://zenodo.org/badge/531785064.svg)](https://zenodo.org/doi/10.5281/zenodo.10511708)
 
 # Bin chicken
 
