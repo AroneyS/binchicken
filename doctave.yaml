@@ -1,5 +1,6 @@
 ---
 title: "Bin chicken"
+base_path: /binchicken
 logo: binchicken_logo.png
 colors:
   main: "#555555"
