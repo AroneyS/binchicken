@@ -12,7 +12,7 @@ There are several ways to install Bin chicken
 Install latest release via bioconda.
 
 ```bash
-conda create -n binchicken -c bioconda binchicken
+conda create -n binchicken -c bioconda -c conda-forge binchicken
 ```
 
 ## Install from pip
