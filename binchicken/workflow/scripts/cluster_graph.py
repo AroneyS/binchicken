@@ -319,6 +319,7 @@ if __name__ == "__main__":
 
     if elusive_edges.height > 10**4:
         min_cluster_targets = 10
+        elusive_edges = elusive_edges.filter(pl.col("target_ids").str.count_matches(",") > min_cluster_targets - 1)
     else:
         min_cluster_targets = 1
 
