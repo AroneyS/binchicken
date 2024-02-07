@@ -503,6 +503,7 @@ rule collect_genomes:
         appraise_unbinned = output_dir + "/appraise/unbinned.otu_table.tsv",
     output:
         temp(output_dir + "/mapping/{read}_reference.fna"),
+    threads: 1
     params:
         genomes = config["genomes"],
         sample = "{read}",
