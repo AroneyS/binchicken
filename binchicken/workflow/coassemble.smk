@@ -119,7 +119,7 @@ rule singlem_pipe_reads:
     threads: 1
     resources:
         mem_mb=get_mem_mb,
-        runtime = "24h",
+        runtime = lambda wildcards, attempt: 24*60*attempt,
     conda:
         "env/singlem.yml"
     shell:
@@ -147,7 +147,7 @@ rule genome_transcripts:
     threads: 1
     resources:
         mem_mb=get_mem_mb,
-        runtime = "1h",
+        runtime = lambda wildcards, attempt: 1*60*attempt,
     group: "singlem_bins"
     conda:
         "env/prodigal.yml"
@@ -172,7 +172,7 @@ rule singlem_pipe_genomes:
     threads: 1
     resources:
         mem_mb=get_mem_mb,
-        runtime = "1h",
+        runtime = lambda wildcards, attempt: 1*60*attempt,
     group: "singlem_bins"
     conda:
         "env/singlem.yml"
@@ -225,7 +225,7 @@ rule singlem_appraise:
     threads: 1
     resources:
         mem_mb=get_mem_mb,
-        runtime = "24h",
+        runtime = lambda wildcards, attempt: 24*60*attempt,
     conda:
         "env/singlem.yml"
     shell:
@@ -276,7 +276,7 @@ rule update_appraise:
     threads: 1
     resources:
         mem_mb=get_mem_mb,
-        runtime = "24h",
+        runtime = lambda wildcards, attempt: 24*60*attempt,
     conda:
         "env/singlem.yml"
     shell:
@@ -313,7 +313,7 @@ rule query_processing:
     threads: 1
     resources:
         mem_mb=get_mem_mb,
-        runtime = "24h",
+        runtime = lambda wildcards, attempt: 24*60*attempt,
     script:
         "scripts/query_processing.py"
 
@@ -347,7 +347,7 @@ rule count_bp_reads:
     threads: 8
     resources:
         mem_mb=get_mem_mb,
-        runtime = "24h",
+        runtime = lambda wildcards, attempt: 24*60*attempt,
     shell:
         "parallel -k -j {threads} "
         "echo -n {{1}}, '&&' "
@@ -369,7 +369,7 @@ rule target_elusive:
     threads: 32
     resources:
         mem_mb=get_mem_mb,
-        runtime = "24h",
+        runtime = lambda wildcards, attempt: 24*60*attempt,
     log:
         logs_dir + "/target/target_elusive.log"
     benchmark:
@@ -393,7 +393,7 @@ checkpoint cluster_graph:
     threads: 64
     resources:
         mem_mb=get_mem_mb,
-        runtime = "168h",
+        runtime = lambda wildcards, attempt: 48*60*attempt,
     log:
         logs_dir + "/target/cluster_graph.log"
     benchmark:
@@ -413,7 +413,7 @@ rule download_read:
     threads: 4
     resources:
         mem_mb=get_mem_mb,
-        runtime = "4h",
+        runtime = lambda wildcards, attempt: 4*60*attempt,
         downloading = 1,
     conda:
         "env/kingfisher.yml"
@@ -476,7 +476,7 @@ rule qc_reads:
     threads: 16
     resources:
         mem_mb=get_mem_mb,
-        runtime = "4h",
+        runtime = lambda wildcards, attempt: 4*60*attempt,
     log:
         logs_dir + "/mapping/{read}_qc.log"
     benchmark:
@@ -522,7 +522,7 @@ rule map_reads:
     threads: 16
     resources:
         mem_mb=get_mem_mb,
-        runtime = "12h",
+        runtime = lambda wildcards, attempt: 12*60*attempt,
     log:
         logs_dir + "/mapping/{read}_coverm.log",
     benchmark:
@@ -552,7 +552,7 @@ rule filter_bam_files:
     threads: 16
     resources:
         mem_mb=get_mem_mb,
-        runtime = "4h",
+        runtime = lambda wildcards, attempt: 4*60*attempt,
     log:
         logs_dir + "/mapping/{read}_filter.log",
     benchmark:
@@ -579,7 +579,7 @@ rule bam_to_fastq:
     threads: 16
     resources:
         mem_mb=get_mem_mb,
-        runtime = "4h",
+        runtime = lambda wildcards, attempt: 4*60*attempt,
     log:
         logs_dir + "/mapping/{read}_fastq.log",
     conda:
@@ -680,7 +680,7 @@ rule aviary_assemble:
     resources:
         mem_mb = lambda wildcards, attempt: get_assemble_memory(wildcards, attempt, unit="MB"),
         mem_gb = get_assemble_memory,
-        runtime = "96h",
+        runtime = lambda wildcards, attempt: 96*60*attempt,
         assembler = get_assemble_assembler,
     log:
         logs_dir + "/aviary/{coassembly}_assemble.log"
