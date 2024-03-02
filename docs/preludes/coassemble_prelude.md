@@ -21,7 +21,7 @@ binchicken coassemble --forward reads_1.1.fq ... --reverse reads_1.2.fq ... --si
 # Create snakemake profile at ~/.config/snakemake/qsub with cluster, cluster-status, cluster-cancel, etc.
 # See https://snakemake.readthedocs.io/en/stable/executing/cli.html#profiles
 binchicken coassemble --forward reads_1.1.fq ... --reverse reads_1.2.fq ... --run-aviary \
-  --snakemake-profile qsub --cluster-retries 3 --local-cores 64 --cores 64
+  --snakemake-profile qsub --local-cores 64 --cores 64
 ```
 
 Important options:
