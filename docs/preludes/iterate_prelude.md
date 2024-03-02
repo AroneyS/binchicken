@@ -7,7 +7,8 @@ All [coassemble](/tools/coassemble) options are available and can be altered for
 binchicken iterate --coassemble-output coassemble_dir
 
 # Example: rerun coassemble, adding new bins to database, providing genomes directly
-binchicken iterate --coassemble-output coassemble_dir --new-genomes new_genome_1.fna
+binchicken iterate --coassemble-output coassemble_dir \
+    --new-genomes new_genome_1.fna
 ```
 
 Defaults to using genomes (from the provided coassemble outputs) with at least 70% complete and at most 10% contamination as estimated by CheckM2.
