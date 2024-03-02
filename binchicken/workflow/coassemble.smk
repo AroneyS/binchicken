@@ -642,6 +642,25 @@ rule aviary_commands:
 #########################################
 ### Run Aviary commands (alternative) ###
 #########################################
+def get_assemble_threads(wildcards, attempt):
+    # Attempt 1 with 32, 2 with 64, then 32 with Megahit
+    current_threads = 64 if attempt == 2 else 32
+    threads = min(int(config["aviary_threads"]), current_threads)
+
+    return threads
+
+def get_assemble_memory(wildcards, attempt, unit="GB"):
+    # Attempt 1 with 250GB, 2 with 500GB, then 250GB with Megahit
+    current_mem = 500 if attempt == 2 else 250
+    mem = min(int(config["aviary_memory"]), current_mem)
+    mult = 1000 if unit == "MB" else 1
+
+    return mem * mult
+
+def get_assemble_assembler(wildcards, attempt):
+    # Attempt 1/2 with Metaspades, then Megahit
+    return "" if attempt < 3 else "--use-megahit"
+
 rule aviary_assemble:
     input:
         output_dir + "/mapping/done" if config["assemble_unmapped"] else output_dir + "/qc/done" if config["run_qc"] else [],
@@ -657,13 +676,13 @@ rule aviary_assemble:
         drytouch = "&& touch "+output_dir+"/coassemble/{coassembly}/assemble/assembly/final_contigs.fasta" if config["aviary_dryrun"] else "",
         conda_prefix = config["conda_prefix"] if config["conda_prefix"] else ".",
         tmpdir = config["tmpdir"],
-    threads:
-        threads = config["aviary_threads"]
+    threads: lambda wildcards, attempt: get_assemble_threads(wildcards, attempt)
     resources:
-        mem_mb = int(config["aviary_memory"])*1000,
-        mem_gb = int(config["aviary_memory"]),
+        mem_mb = lambda wildcards, attempt: get_assemble_memory(wildcards, attempt, unit="MB"),
+        mem_gb = get_assemble_memory,
         runtime = "96h",
-        assembler = lambda wildcards, attempt: "" if attempt == 1 else "--use-megahit",
+        assembler = get_assemble_assembler,
+        queue = "microbiome",
     log:
         logs_dir + "/aviary/{coassembly}_assemble.log"
     conda:
@@ -705,13 +724,13 @@ rule aviary_recover:
         checkm2 = config["aviary_checkm2"],
         conda_prefix = config["conda_prefix"] if config["conda_prefix"] else ".",
         singlem_metapackage = config["singlem_metapackage"],
-        fast = "--workflow recover_mags_no_singlem --skip-binners maxbin concoct rosella --skip-abundances --refinery-max-iterations 0" if config["aviary_speed"] == FAST_AVIARY_MODE else "",
+        fast = "--workflow recover_mags_no_singlem --skip-binners maxbin concoct --skip-abundances --refinery-max-iterations 0" if config["aviary_speed"] == FAST_AVIARY_MODE else "",
         snakemake_profile = f"--snakemake-profile {config['snakemake_profile']}" if config["snakemake_profile"] else "",
         cluster_retries = f"--cluster-retries {config['cluster_retries']}" if config["cluster_retries"] else "",
         tmpdir = config["tmpdir"],
     localrule: True
     threads:
-        int(config["aviary_threads"])//2
+        1
     resources:
         mem_mb = int(config["aviary_memory"])*1000//2,
         mem_gb = int(config["aviary_memory"])//2,
@@ -733,8 +752,8 @@ rule aviary_recover:
         "-2 {params.reads_2} "
         "--output {params.output} "
         "{params.fast} "
-        "-n {threads} "
-        "-t {threads} "
+        "-n 32 "
+        "-t 32 "
         "-m {resources.mem_gb} "
         "--skip-qc "
         "{params.snakemake_profile} "
