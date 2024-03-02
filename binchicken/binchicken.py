@@ -1070,7 +1070,7 @@ def main():
         default_aviary_speed = FAST_AVIARY_MODE
         argument_group.add_argument("--aviary-speed", help="Run Aviary recover in 'fast' or 'comprehensive' mode. Fast mode skips slow binners and refinement steps. [default: %s]" % default_aviary_speed,
                                     default=default_aviary_speed, choices=[FAST_AVIARY_MODE, COMPREHENSIVE_AVIARY_MODE])
-        argument_group.add_argument("--run-aviary", action="store_true", help="Run Aviary commands for all identified coassemblies (unless specified) [default: do not]")
+        argument_group.add_argument("--run-aviary", action="store_true", help="Run Aviary commands for all identified coassemblies (unless specific coassemblies are chosen with --coassemblies) [default: do not]")
         argument_group.add_argument("--aviary-gtdbtk-db", help="Path to GTDB-Tk database directory for Aviary. [default: use path from GTDBTK_DATA_PATH env variable]")
         argument_group.add_argument("--aviary-checkm2-db", help="Path to CheckM2 database directory for Aviary. [default: use path from CHECKM2DB env variable]")
         aviary_default_cores = 64
