@@ -587,6 +587,18 @@ def evaluate(args):
     logging.info(f"Genome recovery breakdown by phyla at {os.path.join(args.output, 'evaluate', 'evaluate', 'plots', 'combined', 'phylum_recovered.png')}")
 
 def update(args):
+    if not ((args.genomes or args.genomes_list) and (args.forward or args.forward_list)):
+        logging.info("Loading inputs from old config")
+        config_path = os.path.join(args.coassemble_output, "..", "config.yaml")
+        old_config = load_config(config_path)
+
+        if not (args.genomes or args.genomes_list):
+            args.genomes = [os.path.normpath(os.path.join(args.coassemble_output, "..", v)) for _,v in old_config["genomes"].items()]
+            args.no_genomes = False
+        if not (args.forward or args.forward_list):
+            args.forward = [os.path.normpath(os.path.join(args.coassemble_output, "..", v)) for _,v in old_config["reads_1"].items()]
+            args.reverse = [os.path.normpath(os.path.join(args.coassemble_output, "..", v)) for _,v in old_config["reads_2"].items()]
+
     logging.info("Loading Bin chicken coassemble info")
     if args.coassemble_output:
         coassemble_dir = os.path.abspath(args.coassemble_output)
@@ -1002,16 +1014,20 @@ def main():
             ],
             "update": [
                 btu.Example(
-                    "update previous run to perform unmapping",
-                    "binchicken update --coassemble-output coassemble_dir --assemble-unmapped --forward reads_1.1.fq ... --reverse reads_1.2.fq ... --genomes genome_1.fna ..."
+                    "update previous run to run specific coassemblies",
+                    "binchicken update --coassemble-output coassemble_dir --run-aviary --coassemblies coassembly_0 ..."
                 ),
                 btu.Example(
-                    "update previous run to run specific coassemblies",
-                    "binchicken update --coassemble-output coassemble_dir --run-aviary --coassemblies coassembly_0 ... --forward reads_1.1.fq ... --reverse reads_1.2.fq ... --genomes genome_1.fna ..."
+                    "update previous run to perform unmapping",
+                    "binchicken update --coassemble-output coassemble_dir --assemble-unmapped"
                 ),
                 btu.Example(
                     "update previous run to download SRA reads",
-                    "binchicken update --coassemble-output coassemble_dir --sra --forward SRA000001 ... --genomes genome_1.fna ..."
+                    "binchicken update --coassemble-output coassemble_dir --sra"
+                ),
+                btu.Example(
+                    "update previous run to download SRA reads, perform unmapping and run specific coassemblies",
+                    "binchicken update --coassemble-output coassemble_dir --sra --assemble-unmapped --run-aviary --coassemblies coassembly_0 ..."
                 ),
             ],
             "iterate": [
@@ -1317,7 +1333,6 @@ def main():
         evaluate(args)
 
     elif args.subparser_name == "update":
-        base_argument_verification(args)
         coassemble_output_argument_verification(args)
         if args.run_aviary and not (args.aviary_gtdbtk_db and args.aviary_checkm2_db):
             raise Exception("Run Aviary (--run-aviary) requires paths to GTDB-Tk and CheckM2 databases to be provided (--aviary-gtdbtk-db and --aviary-checkm2-db)")
