@@ -587,6 +587,18 @@ def evaluate(args):
     logging.info(f"Genome recovery breakdown by phyla at {os.path.join(args.output, 'evaluate', 'evaluate', 'plots', 'combined', 'phylum_recovered.png')}")
 
 def update(args):
+    if not ((args.genomes or args.genomes_list) and (args.forward or args.forward_list)):
+        logging.info("Loading inputs from old config")
+        config_path = os.path.join(args.coassemble_output, "..", "config.yaml")
+        old_config = load_config(config_path)
+
+        if not (args.genomes or args.genomes_list):
+            args.genomes = [os.path.normpath(os.path.join(args.coassemble_output, "..", v)) for _,v in old_config["genomes"].items()]
+            args.no_genomes = False
+        if not (args.forward or args.forward_list):
+            args.forward = [os.path.normpath(os.path.join(args.coassemble_output, "..", v)) for _,v in old_config["reads_1"].items()]
+            args.reverse = [os.path.normpath(os.path.join(args.coassemble_output, "..", v)) for _,v in old_config["reads_2"].items()]
+
     logging.info("Loading Bin chicken coassemble info")
     if args.coassemble_output:
         coassemble_dir = os.path.abspath(args.coassemble_output)
@@ -1002,16 +1014,20 @@ def main():
             ],
             "update": [
                 btu.Example(
-                    "update previous run to perform unmapping",
-                    "binchicken update --coassemble-output coassemble_dir --assemble-unmapped --forward reads_1.1.fq ... --reverse reads_1.2.fq ... --genomes genome_1.fna ..."
+                    "update previous run to run specific coassemblies",
+                    "binchicken update --coassemble-output coassemble_dir --run-aviary --coassemblies coassembly_0 ..."
                 ),
                 btu.Example(
-                    "update previous run to run specific coassemblies",
-                    "binchicken update --coassemble-output coassemble_dir --run-aviary --coassemblies coassembly_0 ... --forward reads_1.1.fq ... --reverse reads_1.2.fq ... --genomes genome_1.fna ..."
+                    "update previous run to perform unmapping",
+                    "binchicken update --coassemble-output coassemble_dir --assemble-unmapped"
                 ),
                 btu.Example(
                     "update previous run to download SRA reads",
-                    "binchicken update --coassemble-output coassemble_dir --sra --forward SRA000001 ... --genomes genome_1.fna ..."
+                    "binchicken update --coassemble-output coassemble_dir --sra"
+                ),
+                btu.Example(
+                    "update previous run to download SRA reads, perform unmapping and run specific coassemblies",
+                    "binchicken update --coassemble-output coassemble_dir --sra --assemble-unmapped --run-aviary --coassemblies coassembly_0 ..."
                 ),
             ],
             "iterate": [
@@ -1044,8 +1060,8 @@ def main():
         argument_group.add_argument("--cores", type=int, help="Maximum number of cores to use", default=1)
         argument_group.add_argument("--dryrun", action="store_true", help="dry run workflow")
         argument_group.add_argument("--snakemake-profile", default="",
-                                    help="Snakemake profile (see https://snakemake.readthedocs.io/en/stable/executing/cli.html#profiles).\n"
-                                         "Can be used to submit rules as jobs to cluster engine (see https://snakemake.readthedocs.io/en/stable/executing/cluster.html).")
+                                    help="Snakemake profile (see https://snakemake.readthedocs.io/en/v7.32.3/executing/cli.html#profiles).\n"
+                                         "Can be used to submit rules as jobs to cluster engine (see https://snakemake.readthedocs.io/en/v7.32.3/executing/cluster.html).")
         argument_group.add_argument("--local-cores", type=int, help="Maximum number of cores to use on localrules when running in cluster mode", default=1)
         argument_group.add_argument("--cluster-retries", help="Number of times to retry a failed job when using cluster submission (see `--snakemake-profile`).", default=3)
         argument_group.add_argument("--snakemake-args", help="Additional commands to be supplied to snakemake in the form of a space-prefixed single string e.g. \" --quiet\"", default="")
@@ -1317,7 +1333,6 @@ def main():
         evaluate(args)
 
     elif args.subparser_name == "update":
-        base_argument_verification(args)
         coassemble_output_argument_verification(args)
         if args.run_aviary and not (args.aviary_gtdbtk_db and args.aviary_checkm2_db):
             raise Exception("Run Aviary (--run-aviary) requires paths to GTDB-Tk and CheckM2 databases to be provided (--aviary-gtdbtk-db and --aviary-checkm2-db)")

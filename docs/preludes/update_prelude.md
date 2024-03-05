@@ -8,12 +8,19 @@ Any combinations of the following:
 - Downloading SRA reads (`--sra`)
 
 ```bash
-# Example: update previous run to perform unmapping
-binchicken update --coassemble-output coassemble_dir --assemble-unmapped --forward reads_1.1.fq ... --reverse reads_1.2.fq ... --genomes genome_1.fna ...
-
 # Example: update previous run to run specific coassemblies
-binchicken update --coassemble-output coassemble_dir --run-aviary --coassemblies coassembly_0 ... --forward reads_1.1.fq ... --reverse reads_1.2.fq ... --genomes genome_1.fna ...
+binchicken update --coassemble-output coassemble_dir --run-aviary \
+    --coassemblies coassembly_0 ...
+
+# Example: update previous run to perform unmapping
+binchicken update --coassemble-output coassemble_dir --assemble-unmapped
 
 # Example: update previous run to download SRA reads
-binchicken update --coassemble-output coassemble_dir --sra --forward SRA000001 ... --genomes genome_1.fna ...
+# Note: requires sample names to be SRA IDs (e.g. SRA123456)
+binchicken update --coassemble-output coassemble_dir --sra
+
+# Example: update previous run to download SRA reads, perform unmapping and run specific coassemblies
+binchicken update --coassemble-output coassemble_dir --sra \
+    --assemble-unmapped \
+    --run-aviary --coassemblies coassembly_0 ...
 ```
