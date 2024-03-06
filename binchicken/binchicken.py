@@ -507,6 +507,19 @@ def coassemble(args):
         snakemake_args = args.snakemake_args,
     )
 
+    edge_samples = (
+        pl.read_csv(os.path.join(args.output, "coassemble", "target", "elusive_edges.tsv"), separator="\t")
+        .select(pl.col("samples").str.split(","))
+        .explode("samples")
+        .unique()
+        .get_column("samples")
+        .to_list()
+    )
+    empty_samples = [s for s in forward_reads.keys() if s not in edge_samples]
+    if empty_samples:
+        logging.warning(f"Some samples had no targets with sufficient combined coverage for coassembly prediction")
+        logging.warning(f"These were: {' '.join(empty_samples)}")
+
     logging.info(f"Bin chicken coassemble complete.")
     logging.info(f"Cluster summary at {os.path.join(args.output, 'coassemble', 'summary.tsv')}")
     logging.info(f"More details at {os.path.join(args.output, 'coassemble', 'target', 'elusive_clusters.tsv')}")
