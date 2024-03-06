@@ -22,6 +22,7 @@ unmapping_min_appraised: 1
 unmapping_max_identity: 1
 unmapping_max_alignment: 1
 aviary_speed: "fast"
+assembly_strategy: "dynamic"
 run_aviary: false
 aviary_gtdbtk: ""
 aviary_checkm2: ""

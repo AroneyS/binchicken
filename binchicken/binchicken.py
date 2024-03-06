@@ -19,6 +19,9 @@ import shutil
 
 FAST_AVIARY_MODE = "fast"
 COMPREHENSIVE_AVIARY_MODE = "comprehensive"
+DYNAMIC_ASSEMBLY_STRATEGY = "dynamic"
+METASPADES_ASSEMBLY = "metaspades"
+MEGAHIT_ASSEMBLY = "megahit"
 
 def build_reads_list(forward, reverse):
     if reverse:
@@ -470,6 +473,7 @@ def coassemble(args):
         "unmapping_max_identity": args.unmapping_max_identity,
         "unmapping_max_alignment": args.unmapping_max_alignment,
         "aviary_speed": args.aviary_speed,
+        "assembly_strategy": args.assembly_strategy,
         "run_aviary": args.run_aviary,
         "aviary_gtdbtk": args.aviary_gtdbtk_db,
         "aviary_checkm2": args.aviary_checkm2_db,
@@ -1083,10 +1087,13 @@ def main():
         argument_group.add_argument("--max-contamination", type=int, help="Include bins with at most this maximum contamination [default: 10]", default=10)
 
     def add_aviary_options(argument_group):
-        default_aviary_speed = FAST_AVIARY_MODE
-        argument_group.add_argument("--aviary-speed", help="Run Aviary recover in 'fast' or 'comprehensive' mode. Fast mode skips slow binners and refinement steps. [default: %s]" % default_aviary_speed,
-                                    default=default_aviary_speed, choices=[FAST_AVIARY_MODE, COMPREHENSIVE_AVIARY_MODE])
         argument_group.add_argument("--run-aviary", action="store_true", help="Run Aviary commands for all identified coassemblies (unless specific coassemblies are chosen with --coassemblies) [default: do not]")
+        default_aviary_speed = FAST_AVIARY_MODE
+        argument_group.add_argument("--aviary-speed", help=f"Run Aviary recover in 'fast' or 'comprehensive' mode. Fast mode skips slow binners and refinement steps. [default: {default_aviary_speed}]",
+                                    default=default_aviary_speed, choices=[FAST_AVIARY_MODE, COMPREHENSIVE_AVIARY_MODE])
+        default_assembly_strategy = DYNAMIC_ASSEMBLY_STRATEGY
+        argument_group.add_argument("--assembly-strategy", help=f"Assembly strategy to use with Aviary. [default: {default_assembly_strategy}; attempts metaspades and if fails, switches to megahit]",
+                                    default=default_assembly_strategy, choices=[DYNAMIC_ASSEMBLY_STRATEGY, METASPADES_ASSEMBLY, MEGAHIT_ASSEMBLY])
         argument_group.add_argument("--aviary-gtdbtk-db", help="Path to GTDB-Tk database directory for Aviary. [default: use path from GTDBTK_DATA_PATH env variable]")
         argument_group.add_argument("--aviary-checkm2-db", help="Path to CheckM2 database directory for Aviary. [default: use path from CHECKM2DB env variable]")
         aviary_default_cores = 64
