@@ -48,7 +48,7 @@ def pipeline(
             )
         .filter(pl.col("sample").is_in(samples))
         .drop("found_in")
-        .with_row_count("target")
+        .with_row_index("target")
         .select(
             "gene", "sample", "sequence", "num_hits", "coverage", "taxonomy",
             pl.first("target").over(["gene", "sequence"]).rank("dense") - 1,

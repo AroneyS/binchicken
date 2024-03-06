@@ -283,7 +283,7 @@ def pipeline(
                 total_targets = pl.col("target_ids").list.len(),
                 )
             .sort("total_targets", "total_size", descending=[True, False])
-            .with_row_count("coassembly")
+            .with_row_index("coassembly")
             .select(
                 "samples", "length", "total_targets", "total_size", "recover_samples",
                 coassembly = pl.lit("coassembly_") + pl.col("coassembly").cast(pl.Utf8)
