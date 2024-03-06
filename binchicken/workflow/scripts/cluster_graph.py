@@ -134,6 +134,7 @@ def pipeline(
                 .with_columns(
                     pl.col("samples").list.eval(pl.element().filter(pl.element().is_in(COASSEMBLY_SAMPLES)))
                     )
+                .with_columns(length = pl.col("samples").list.len())
                 .filter(pl.col("samples").list.len() >= pl.col("cluster_size"))
             )
         else:
