@@ -5,6 +5,7 @@ import os
 import gzip
 from bird_tool_utils import in_tempdir
 import extern
+import subprocess
 from snakemake.io import load_configfile
 
 path_to_data = os.path.join(os.path.dirname(os.path.realpath(__file__)),'data')
@@ -80,7 +81,11 @@ class Tests(unittest.TestCase):
                 f"--output test "
                 f"--conda-prefix {path_to_conda} "
             )
-            extern.run(cmd)
+            output_raw = subprocess.run(cmd, shell=True, check=True, capture_output=True)
+            output = output_raw.stderr.decode('ascii')
+
+            self.assertTrue("Some samples had no targets with sufficient combined coverage for coassembly prediction" in output)
+            self.assertTrue("These were: sample_4" in output)
 
             config_path = os.path.join("test", "config.yaml")
             self.assertTrue(os.path.exists(config_path))
@@ -1110,7 +1115,6 @@ class Tests(unittest.TestCase):
                 f"--conda-prefix {path_to_conda} "
                 f"--snakemake-args \"singlem_appraise_filtered\" "
             )
-            import subprocess
             _ = subprocess.run(cmd, shell=True, check=True, capture_output=True, env=os.environ)
 
             appraise_path = os.path.join("test", "coassemble", "appraise", "binned.otu_table.tsv")
