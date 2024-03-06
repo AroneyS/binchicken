@@ -20,6 +20,8 @@ SAMPLE_READS_REVERSE = " ".join([
     os.path.join(path_to_data, "sample_2.2.fq"),
     os.path.join(path_to_data, "sample_3.2.fq"),
 ])
+SAMPLE_READS_FORWARD_EMPTY = " ".join([SAMPLE_READS_FORWARD, os.path.join(path_to_data, "sample_4.1.fq")])
+SAMPLE_READS_REVERSE_EMPTY = " ".join([SAMPLE_READS_REVERSE, os.path.join(path_to_data, "sample_4.2.fq")])
 GENOMES = " ".join([os.path.join(path_to_data, "GB_GCA_013286235.1.fna")])
 TWO_GENOMES = " ".join([
     os.path.join(path_to_data, "GB_GCA_013286235.1.fna"),
@@ -67,8 +69,8 @@ class Tests(unittest.TestCase):
         with in_tempdir():
             cmd = (
                 f"binchicken coassemble "
-                f"--forward {SAMPLE_READS_FORWARD} "
-                f"--reverse {SAMPLE_READS_REVERSE} "
+                f"--forward {SAMPLE_READS_FORWARD_EMPTY} "
+                f"--reverse {SAMPLE_READS_REVERSE_EMPTY} "
                 f"--genomes {GENOMES} "
                 f"--singlem-metapackage {METAPACKAGE} "
                 f"--assemble-unmapped "
@@ -90,6 +92,7 @@ class Tests(unittest.TestCase):
                     ",".join(["sample_1", "4832"]),
                     ",".join(["sample_2", "3926"]),
                     ",".join(["sample_3", "3624"]),
+                    ",".join(["sample_4", "604"]),
                     ""
                 ]
             )
