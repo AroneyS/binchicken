@@ -54,8 +54,20 @@ def get_reads(wildcards, forward=True, version=None):
 def get_cat(wildcards):
     return "zcat" if [r for r in get_reads(wildcards).values()][0].endswith(".gz") else "cat"
 
+def get_elusive_clusters(wildcards):
+    checkpoint_output = checkpoints.precluster_samples.get(**wildcards).output[0]
+
+    return expand(output_dir + "/target/elusive_clusters_{precluster}.tsv",
+                precluster=glob_wildcards(os.path.join(checkpoint_output, "unbinned_{precluster}.otu_table.tsv")).precluster)
+
+def get_preclusters(wildcards):
+    checkpoint_output = checkpoints.precluster_samples.get(**wildcards).output[0]
+
+    return expand("{precluster}",
+                precluster=glob_wildcards(os.path.join(checkpoint_output, "unbinned_{precluster}.otu_table.tsv")).precluster)
+
 def get_reads_coassembly(wildcards, forward=True, recover=False):
-    checkpoint_output = checkpoints.cluster_graph.get(**wildcards).output[0]
+    checkpoint_output = checkpoints.group_clusters.get(**wildcards).output.elusive_clusters
     elusive_clusters = pl.read_csv(checkpoint_output, separator="\t")
 
     if recover:
@@ -76,7 +88,7 @@ def get_reads_coassembly(wildcards, forward=True, recover=False):
     return [reads[n] for n in sample_names]
 
 def get_coassemblies(wildcards):
-    checkpoint_output = checkpoints.cluster_graph.get().output[0]
+    checkpoint_output = checkpoints.group_clusters.get().output.elusive_clusters
     elusive_clusters = pl.read_csv(checkpoint_output, separator="\t")
     coassemblies = elusive_clusters.get_column("coassembly").to_list()
 
@@ -355,12 +367,66 @@ rule count_bp_reads:
         "::: {params.names} :::+ {input.reads_1} :::+ {input.reads_2} "
         "> {output}"
 
+rule sketch_samples:
+    input:
+        unbinned = output_dir + "/appraise/unbinned.otu_table.tsv",
+    output:
+        sketch = output_dir + "/sketch/samples.sig"
+    params:
+        taxa_of_interest = config["taxa_of_interest"],
+    threads: 16
+    resources:
+        mem_mb=125*1000,
+        runtime = "6h",
+    log:
+        logs_dir + "/precluster/sketching.log"
+    script:
+        "scripts/sketch_samples.py"
+
+rule distance_samples:
+    input:
+        sketch = output_dir + "/sketch/samples.sig",
+    output:
+        distance = output_dir + "/sketch/samples.mat"
+    threads: 64
+    resources:
+        mem_mb=500*1000,
+        runtime = "168h",
+    log:
+        logs_dir + "/precluster/distance.log"
+    shell:
+        "sourmash compare "
+        "{input.sketch} "
+        "-o {output.distance} "
+        "-k 60 "
+        "--distance-matrix "
+        "-p {threads} "
+        "&> {log} "
+
+checkpoint precluster_samples:
+    input:
+        distance = output_dir + "/sketch/samples.mat" if config["kmer_precluster"] else [],
+        unbinned = output_dir + "/appraise/unbinned.otu_table.tsv",
+    output:
+        directory(output_dir + "/precluster"),
+    params:
+        kmer_precluster = config["kmer_precluster"],
+        max_precluster_size = config["max_precluster_size"],
+    threads: 1
+    resources:
+        mem_mb=8*1000,
+        runtime = "12h",
+    log:
+        logs_dir + "/precluster/precluster_samples.log"
+    script:
+        "scripts/precluster_samples.py"
+
 rule target_elusive:
     input:
-        unbinned = output_dir + "/appraise/unbinned.otu_table.tsv"
+        unbinned = output_dir + "/precluster/unbinned_{precluster}.otu_table.tsv"
     output:
-        output_edges = output_dir + "/target/elusive_edges.tsv",
-        output_targets = output_dir + "/target/targets.tsv",
+        output_edges = output_dir + "/target/elusive_edges_{precluster}.tsv",
+        output_targets = output_dir + "/target/targets_{precluster}.tsv",
     params:
         min_coassembly_coverage = config["min_coassembly_coverage"],
         max_coassembly_samples = config["max_coassembly_samples"],
@@ -371,18 +437,18 @@ rule target_elusive:
         mem_mb=get_mem_mb,
         runtime = lambda wildcards, attempt: 24*60*attempt,
     log:
-        logs_dir + "/target/target_elusive.log"
+        logs_dir + "/target/target_elusive_{precluster}.log"
     benchmark:
-        benchmarks_dir + "/target/target_elusive.tsv"
+        benchmarks_dir + "/target/target_elusive_{precluster}.tsv"
     script:
         "scripts/target_elusive.py"
 
-checkpoint cluster_graph:
+rule cluster_graph:
     input:
-        elusive_edges = output_dir + "/target/elusive_edges.tsv",
+        elusive_edges = output_dir + "/target/elusive_edges_{precluster}.tsv",
         read_size = output_dir + "/read_size.csv",
     output:
-        elusive_clusters = output_dir + "/target/elusive_clusters.tsv"
+        elusive_clusters = output_dir + "/target/elusive_clusters_{precluster}.tsv"
     params:
         max_coassembly_size = config["max_coassembly_size"],
         num_coassembly_samples = config["num_coassembly_samples"],
@@ -390,16 +456,30 @@ checkpoint cluster_graph:
         max_recovery_samples = config["max_recovery_samples"],
         coassembly_samples = config["coassembly_samples"],
         exclude_coassemblies = config["exclude_coassemblies"],
-    threads: 64
+    threads: 32
     resources:
         mem_mb=get_mem_mb,
         runtime = lambda wildcards, attempt: 48*60*attempt,
     log:
-        logs_dir + "/target/cluster_graph.log"
+        logs_dir + "/target/cluster_graph_{precluster}.log"
     benchmark:
-        benchmarks_dir + "/target/cluster_graph.tsv"
+        benchmarks_dir + "/target/cluster_graph_{precluster}.tsv"
     script:
         "scripts/cluster_graph.py"
+
+checkpoint group_clusters:
+    input:
+        elusive_clusters = get_elusive_clusters,
+    output:
+        elusive_clusters = output_dir + "/target/elusive_clusters.tsv",
+    params:
+        preclusters = get_preclusters,
+    threads: 64
+    localrule: True
+    log:
+        logs_dir + "/target/group_clusters.log"
+    script:
+        "scripts/group_clusters.py"
 
 #######################
 ### SRA downloading ###

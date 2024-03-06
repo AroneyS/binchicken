@@ -1,0 +1,3 @@
+gene	sample	sequence	num_hits	coverage	taxonomy
+S3.1	sample_2	ATGACTAGTCATAGCTAGATTTGAGGCAGCAGGAGTTAGGAAAGCCCCCGGAGTTAGCTA	5	10	Root;d__Bacteria;p__Abyssobacteria
+S3.1	sample_2	TGACTAGCTGGGCTAGCTATATTCTTTTTACGAGCGCGAGGAAAGCGACAGCGGCCAGGC	5	10	Root;d__Bacteria;p__Abyssobacteria
