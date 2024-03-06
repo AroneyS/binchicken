@@ -1100,16 +1100,16 @@ def main():
         argument_group.add_argument("--aviary-gtdbtk-db", help="Path to GTDB-Tk database directory for Aviary. [default: use path from GTDBTK_DATA_PATH env variable]")
         argument_group.add_argument("--aviary-checkm2-db", help="Path to CheckM2 database directory for Aviary. [default: use path from CHECKM2DB env variable]")
         aviary_assemble_default_cores = 64
-        argument_group.add_argument("--aviary-assemble-cores", type=int, help=f"Maximum number of cores for Aviary to use. [default: {aviary_assemble_default_cores}]",
+        argument_group.add_argument("--aviary-assemble-cores", type=int, help=f"Maximum number of cores for Aviary assemble to use. [default: {aviary_assemble_default_cores}]",
                                     default=aviary_assemble_default_cores)
         aviary_assemble_default_memory = 500
-        argument_group.add_argument("--aviary-assemble-memory", type=int, help=f"Maximum amount of memory for Aviary to use (Gigabytes). [default: {aviary_assemble_default_memory}]",
+        argument_group.add_argument("--aviary-assemble-memory", type=int, help=f"Maximum amount of memory for Aviary assemble to use (Gigabytes). [default: {aviary_assemble_default_memory}]",
                                     default=aviary_assemble_default_memory)
         aviary_recover_default_cores = 32
-        argument_group.add_argument("--aviary-recover-cores", type=int, help=f"Maximum number of cores for Aviary to use. [default: {aviary_recover_default_cores}]",
+        argument_group.add_argument("--aviary-recover-cores", type=int, help=f"Maximum number of cores for Aviary recover to use. [default: {aviary_recover_default_cores}]",
                                     default=aviary_recover_default_cores)
         aviary_recover_default_memory = 250
-        argument_group.add_argument("--aviary-recover-memory", type=int, help=f"Maximum amount of memory for Aviary to use (Gigabytes). [default: {aviary_recover_default_memory}]",
+        argument_group.add_argument("--aviary-recover-memory", type=int, help=f"Maximum amount of memory for Aviary recover to use (Gigabytes). [default: {aviary_recover_default_memory}]",
                                     default=aviary_recover_default_memory)
 
     def add_main_coassemble_output_arguments(argument_group):
