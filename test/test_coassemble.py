@@ -798,8 +798,10 @@ class Tests(unittest.TestCase):
             self.assertEqual(config["max_threads"], 8)
             self.assertEqual(config["taxa_of_interest"], "")
             self.assertEqual(config["assemble_unmapped"], False)
-            self.assertEqual(config["aviary_threads"], 64)
-            self.assertEqual(config["aviary_memory"], 500)
+            self.assertEqual(config["aviary_assemble_threads"], 64)
+            self.assertEqual(config["aviary_assemble_memory"], 500)
+            self.assertEqual(config["aviary_recover_threads"], 64)
+            self.assertEqual(config["aviary_recover_memory"], 500)
             self.assertEqual(config["coassembly_samples"], [])
             self.assertEqual(config["assembly_strategy"], "dynamic")
 

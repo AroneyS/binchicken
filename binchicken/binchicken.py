@@ -477,8 +477,10 @@ def coassemble(args):
         "run_aviary": args.run_aviary,
         "aviary_gtdbtk": args.aviary_gtdbtk_db,
         "aviary_checkm2": args.aviary_checkm2_db,
-        "aviary_threads": args.aviary_cores,
-        "aviary_memory": args.aviary_memory,
+        "aviary_assemble_threads": args.aviary_assemble_cores,
+        "aviary_assemble_memory": args.aviary_assemble_memory,
+        "aviary_recover_threads": args.aviary_recover_cores,
+        "aviary_recover_memory": args.aviary_recover_memory,
         "conda_prefix": args.conda_prefix,
         "snakemake_profile": args.snakemake_profile,
         "cluster_retries": args.cluster_retries,
@@ -891,7 +893,8 @@ def build(args):
     args.sample_read_size = None
     args.aviary_gtdbtk_db = "."
     args.aviary_checkm2_db = "."
-    args.aviary_cores = None
+    args.aviary_assemble_cores = None
+    args.aviary_recover_cores = None
     args.assemble_unmapped = True
     args.run_qc = True
     args.coassemblies = None
@@ -1096,10 +1099,18 @@ def main():
                                     default=default_assembly_strategy, choices=[DYNAMIC_ASSEMBLY_STRATEGY, METASPADES_ASSEMBLY, MEGAHIT_ASSEMBLY])
         argument_group.add_argument("--aviary-gtdbtk-db", help="Path to GTDB-Tk database directory for Aviary. [default: use path from GTDBTK_DATA_PATH env variable]")
         argument_group.add_argument("--aviary-checkm2-db", help="Path to CheckM2 database directory for Aviary. [default: use path from CHECKM2DB env variable]")
-        aviary_default_cores = 64
-        argument_group.add_argument("--aviary-cores", type=int, help="Maximum number of cores for Aviary to use. Half used for recovery. [default: %s]" % aviary_default_cores, default=aviary_default_cores)
-        aviary_default_memory = 500
-        argument_group.add_argument("--aviary-memory", type=int, help="Maximum amount of memory for Aviary to use (Gigabytes). Half used for recovery. [default: %s]" % aviary_default_memory, default=aviary_default_memory)
+        aviary_assemble_default_cores = 64
+        argument_group.add_argument("--aviary-assemble-cores", type=int, help=f"Maximum number of cores for Aviary to use. [default: {aviary_assemble_default_cores}]",
+                                    default=aviary_assemble_default_cores)
+        aviary_assemble_default_memory = 500
+        argument_group.add_argument("--aviary-assemble-memory", type=int, help=f"Maximum amount of memory for Aviary to use (Gigabytes). [default: {aviary_assemble_default_memory}]",
+                                    default=aviary_assemble_default_memory)
+        aviary_recover_default_cores = 32
+        argument_group.add_argument("--aviary-recover-cores", type=int, help=f"Maximum number of cores for Aviary to use. [default: {aviary_recover_default_cores}]",
+                                    default=aviary_recover_default_cores)
+        aviary_recover_default_memory = 250
+        argument_group.add_argument("--aviary-recover-memory", type=int, help=f"Maximum amount of memory for Aviary to use (Gigabytes). [default: {aviary_recover_default_memory}]",
+                                    default=aviary_recover_default_memory)
 
     def add_main_coassemble_output_arguments(argument_group):
         argument_group.add_argument("--coassemble-output", help="Output dir from coassemble subcommand")

@@ -26,8 +26,10 @@ assembly_strategy: "dynamic"
 run_aviary: false
 aviary_gtdbtk: ""
 aviary_checkm2: ""
-aviary_memory: 1
-aviary_threads: 1
+aviary_assemble_memory: 1
+aviary_assemble_threads: 1
+aviary_recover_memory: 1
+aviary_recover_threads: 1
 test: false
 mock_sra: false
 aviary_dryrun: false

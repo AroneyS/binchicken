@@ -28,8 +28,10 @@ aviary_speed: fast
 run_aviary: false
 aviary_gtdbtk: gtdb_release
 aviary_checkm2: CheckM2_database
-aviary_memory: 500
-aviary_threads: 64
+aviary_assemble_memory: 500
+aviary_assemble_threads: 64
+aviary_recover_memory: 500
+aviary_recover_threads: 64
 test: false
 mock_sra: false
 aviary_dryrun: false
