@@ -801,6 +801,7 @@ class Tests(unittest.TestCase):
             self.assertEqual(config["aviary_threads"], 64)
             self.assertEqual(config["aviary_memory"], 500)
             self.assertEqual(config["coassembly_samples"], [])
+            self.assertEqual(config["assembly_strategy"], "dynamic")
 
     def test_coassemble_singlem_inputs(self):
         with in_tempdir():
@@ -982,6 +983,7 @@ class Tests(unittest.TestCase):
                 f"--coassembly-samples-list coassembly_samples "
                 f"--exclude-coassemblies-list exclude_coassemblies "
                 f"--assemble-unmapped "
+                f"--assembly-strategy megahit "
                 f"--output test "
                 f"--conda-prefix {path_to_conda} "
                 f"--dryrun "
@@ -1011,6 +1013,7 @@ class Tests(unittest.TestCase):
             self.assertEqual(config["exclude_coassemblies"], ["sample_1,sample_2"])
             self.assertEqual(config["reads_1"], {os.path.splitext(os.path.splitext(os.path.basename(s))[0])[0]: s for s in SAMPLE_READS_FORWARD.split(" ")})
             self.assertEqual(config["reads_2"], {os.path.splitext(os.path.splitext(os.path.basename(s))[0])[0]: s for s in SAMPLE_READS_REVERSE.split(" ")})
+            self.assertEqual(config["assembly_strategy"], "megahit")
 
     def test_coassemble_singlem_inputs_files_of_paths(self):
         with in_tempdir():

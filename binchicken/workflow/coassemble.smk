@@ -6,7 +6,7 @@ ruleorder: mock_download_sra > download_sra
 
 import os
 import polars as pl
-from binchicken.binchicken import FAST_AVIARY_MODE
+from binchicken.binchicken import FAST_AVIARY_MODE, DYNAMIC_ASSEMBLY_STRATEGY, METASPADES_ASSEMBLY, MEGAHIT_ASSEMBLY
 os.umask(0o002)
 
 output_dir = os.path.abspath("coassemble")
@@ -644,23 +644,40 @@ rule aviary_commands:
 ### Run Aviary commands (alternative) ###
 #########################################
 def get_assemble_threads(wildcards, attempt):
-    # Attempt 1 with 32, 2 with 64, then 32 with Megahit
-    current_threads = 64 if attempt == 2 else 32
+    if config["assembly_strategy"] == DYNAMIC_ASSEMBLY_STRATEGY:
+        # Attempt 1 with 32, 2 with 64, then 32 with Megahit
+        current_threads = 64 if attempt == 2 else 32
+    elif config["assembly_strategy"] == METASPADES_ASSEMBLY:
+        current_threads = 32 * attempt
+    elif config["assembly_strategy"] == MEGAHIT_ASSEMBLY:
+        current_threads = 32 * attempt
+
     threads = min(int(config["aviary_threads"]), current_threads)
 
     return threads
 
 def get_assemble_memory(wildcards, attempt, unit="GB"):
-    # Attempt 1 with 250GB, 2 with 500GB, then 250GB with Megahit
-    current_mem = 500 if attempt == 2 else 250
+    if config["assembly_strategy"] == DYNAMIC_ASSEMBLY_STRATEGY:
+        # Attempt 1 with 250GB, 2 with 500GB, then 250GB with Megahit
+        current_mem = 500 if attempt == 2 else 250
+    elif config["assembly_strategy"] == METASPADES_ASSEMBLY:
+        current_mem = 250 * attempt
+    elif config["assembly_strategy"] == MEGAHIT_ASSEMBLY:
+        current_mem = 250 * attempt
+
     mem = min(int(config["aviary_memory"]), current_mem)
     mult = 1000 if unit == "MB" else 1
 
     return mem * mult
 
 def get_assemble_assembler(wildcards, attempt):
-    # Attempt 1/2 with Metaspades, then Megahit
-    return "" if attempt < 3 else "--use-megahit"
+    if config["assembly_strategy"] == DYNAMIC_ASSEMBLY_STRATEGY:
+        # Attempt 1/2 with Metaspades, then Megahit
+        return "" if attempt < 3 else "--use-megahit"
+    elif config["assembly_strategy"] == METASPADES_ASSEMBLY:
+        return ""
+    elif config["assembly_strategy"] == MEGAHIT_ASSEMBLY:
+        return "--use-megahit"
 
 rule aviary_assemble:
     input:
