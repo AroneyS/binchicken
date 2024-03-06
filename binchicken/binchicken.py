@@ -510,7 +510,9 @@ def coassemble(args):
     logging.info(f"Bin chicken coassemble complete.")
     logging.info(f"Cluster summary at {os.path.join(args.output, 'coassemble', 'summary.tsv')}")
     logging.info(f"More details at {os.path.join(args.output, 'coassemble', 'target', 'elusive_clusters.tsv')}")
-    if not args.run_aviary:
+    if args.run_aviary:
+        logging.info(f"Aviary outputs at {os.path.join(args.output, 'coassemble', 'coassemble')}")
+    else:
         logging.info(f"Aviary commands for coassembly and recovery in shell scripts at {os.path.join(args.output, 'coassemble', 'commands')}")
 
 def evaluate(args):
