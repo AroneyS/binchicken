@@ -631,8 +631,10 @@ rule aviary_commands:
         reads_1 = mapped_reads_1 if config["assemble_unmapped"] else qc_reads_1 if config["run_qc"] else config["reads_1"],
         reads_2 = mapped_reads_2 if config["assemble_unmapped"] else qc_reads_2 if config["run_qc"] else config["reads_2"],
         dir = output_dir,
-        memory = config["aviary_memory"],
-        threads = config["aviary_threads"],
+        assemble_memory = config["aviary_assemble_memory"],
+        assemble_threads = config["aviary_assemble_threads"],
+        recover_memory = config["aviary_recover_memory"],
+        recover_threads = config["aviary_recover_threads"],
         speed = config["aviary_speed"],
     localrule: True
     log:
@@ -652,7 +654,7 @@ def get_assemble_threads(wildcards, attempt):
     elif config["assembly_strategy"] == MEGAHIT_ASSEMBLY:
         current_threads = 32 * attempt
 
-    threads = min(int(config["aviary_threads"]), current_threads)
+    threads = min(int(config["aviary_assemble_threads"]), current_threads)
 
     return threads
 
@@ -665,7 +667,7 @@ def get_assemble_memory(wildcards, attempt, unit="GB"):
     elif config["assembly_strategy"] == MEGAHIT_ASSEMBLY:
         current_mem = 250 * attempt
 
-    mem = min(int(config["aviary_memory"]), current_mem)
+    mem = min(int(config["aviary_assemble_memory"]), current_mem)
     mult = 1000 if unit == "MB" else 1
 
     return mem * mult
@@ -747,10 +749,10 @@ rule aviary_recover:
         tmpdir = config["tmpdir"],
     localrule: True
     threads:
-        int(config["aviary_threads"])//2
+        int(config["aviary_recover_threads"])
     resources:
-        mem_mb = int(config["aviary_memory"])*1000//2,
-        mem_gb = int(config["aviary_memory"])//2,
+        mem_mb = int(config["aviary_recover_memory"])*1000,
+        mem_gb = int(config["aviary_recover_memory"]),
         runtime = "168h",
     log:
         logs_dir + "/aviary/{coassembly}_recover.log"

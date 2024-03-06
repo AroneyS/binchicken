@@ -7,7 +7,7 @@ import os
 import polars as pl
 from binchicken.binchicken import FAST_AVIARY_MODE
 
-def pipeline(coassemblies, reads_1, reads_2, output_dir, threads, memory, fast=False):
+def pipeline(coassemblies, reads_1, reads_2, output_dir, assemble_threads, assemble_memory, recover_threads, recover_memory, fast=False):
     output = (
         coassemblies
         .with_columns(
@@ -31,11 +31,11 @@ def pipeline(coassemblies, reads_1, reads_2, output_dir, threads, memory, fast=F
                 pl.lit("/coassemble/"),
                 pl.col("coassembly"),
                 pl.lit("/assemble -n "),
-                pl.lit(threads),
+                pl.lit(assemble_threads),
                 pl.lit(" -t "),
-                pl.lit(threads),
+                pl.lit(assemble_threads),
                 pl.lit(" -m "),
-                pl.lit(memory),
+                pl.lit(assemble_memory),
                 pl.lit(" --skip-qc &> "),
                 pl.lit(output_dir),
                 pl.lit("/coassemble/logs/"),
@@ -58,11 +58,11 @@ def pipeline(coassemblies, reads_1, reads_2, output_dir, threads, memory, fast=F
                 pl.lit("/recover"),
                 pl.when(pl.lit(fast)).then(pl.lit(" --workflow recover_mags_no_singlem --skip-binners maxbin concoct rosella --skip-abundances --refinery-max-iterations 0")).otherwise(pl.lit("")),
                 pl.lit(" -n "),
-                pl.lit(threads//2),
+                pl.lit(recover_threads),
                 pl.lit(" -t "),
-                pl.lit(threads//2),
+                pl.lit(recover_threads),
                 pl.lit(" -m "),
-                pl.lit(memory//2),
+                pl.lit(recover_memory),
                 pl.lit(" --skip-qc &> "),
                 pl.lit(output_dir),
                 pl.lit("/coassemble/logs/"),
@@ -94,8 +94,10 @@ if __name__ == "__main__":
         reads_1=snakemake.params.reads_1,
         reads_2=snakemake.params.reads_2,
         output_dir=snakemake.params.dir,
-        threads=snakemake.params.threads,
-        memory=snakemake.params.memory,
+        assemble_threads=snakemake.params.assemble_threads,
+        assemble_memory=snakemake.params.assemble_memory,
+        recover_threads=snakemake.params.recover_threads,
+        recover_memory=snakemake.params.recover_memory,
         fast=fast,
     )
 
