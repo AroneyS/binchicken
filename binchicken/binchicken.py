@@ -744,10 +744,13 @@ def iterate(args):
         aviary_output_path = os.path.join(args.coassemble_output, "coassemble")
         logging.info(f"Iterating on coassemblies from {aviary_output_path}")
 
+        coassemblies_run = os.listdir(aviary_output_path)
         args.aviary_outputs = [
-            os.path.join(aviary_output_path, f) for f in os.listdir(aviary_output_path)
+            os.path.join(aviary_output_path, f) for f in coassemblies_run
             if not os.path.isfile(os.path.join(aviary_output_path, f))
             ]
+    else:
+        coassemblies_run = []
 
     if not args.sample_read_size:
         try:
@@ -787,9 +790,17 @@ def iterate(args):
         args.coassemble_binned = os.path.join(coassemble_appraise_dir, "binned.otu_table.tsv")
 
         if args.exclude_coassemblies:
-            new_exclude_coassemblies = args.exclude_coassemblies
+            additional_exclude_coassemblies = args.exclude_coassemblies
         else:
-            new_exclude_coassemblies = []
+            additional_exclude_coassemblies = []
+
+        elusive_clusters_path = os.path.join(args.coassemble_output, "target", "elusive_clusters.tsv")
+        new_exclude_coassemblies = (
+            pl.read_csv(elusive_clusters_path, separator="\t")
+            .filter(pl.col("coassembly").is_in(coassemblies_run))
+            .get_column("samples")
+            .to_list()
+        )
 
         cumulative_path = os.path.join(args.coassemble_output, "target", "cumulative_coassemblies.tsv")
         if os.path.isfile(cumulative_path):
@@ -798,7 +809,7 @@ def iterate(args):
         else:
             cumulative_exclude = []
 
-        args.exclude_coassemblies = cumulative_exclude + new_exclude_coassemblies
+        args.exclude_coassemblies = cumulative_exclude + new_exclude_coassemblies + additional_exclude_coassemblies
 
     try:
         args.coassemble_unbinned
@@ -842,18 +853,13 @@ def iterate(args):
 
     coassemble(args)
 
-    elusive_clusters_path = os.path.join(args.output, "coassemble", "target", "elusive_clusters.tsv")
-    if os.path.isfile(elusive_clusters_path):
-        elusive_clusters = pl.read_csv(elusive_clusters_path, separator="\t")
-        new_coassemblies = elusive_clusters.get_column("samples").to_list()
+    if args.exclude_coassemblies:
+        cumulative_coassemblies = args.exclude_coassemblies
+    else:
+        cumulative_coassemblies = []
 
-        if args.exclude_coassemblies:
-            cumulative_coassemblies = args.exclude_coassemblies + new_coassemblies
-        else:
-            cumulative_coassemblies = new_coassemblies
-
-        with open(os.path.join(args.output, "coassemble", "target", "cumulative_coassemblies.tsv"), "w") as f:
-            f.write("\n".join(cumulative_coassemblies) + "\n")
+    with open(os.path.join(args.output, "coassemble", "target", "cumulative_coassemblies.tsv"), "w") as f:
+        f.write("\n".join(cumulative_coassemblies) + "\n")
 
     if args.elusive_clusters and not args.dryrun:
         new_cluster = pl.read_csv(os.path.join(args.output, "coassemble", "target", "elusive_clusters.tsv"), separator="\t")

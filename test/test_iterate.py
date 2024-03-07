@@ -183,7 +183,7 @@ class Tests(unittest.TestCase):
                 }
             self.assertEqual(reads_2, config["reads_2"])
 
-            exclude_coassemblies = ["sample_0,sample_1"]
+            exclude_coassemblies = ["sample_0,sample_1", "sample_1,sample_2"]
             self.assertEqual(exclude_coassemblies, config["exclude_coassemblies"])
 
             cluster_path = os.path.join("test", "coassemble", "target", "elusive_clusters.tsv")
@@ -214,7 +214,7 @@ class Tests(unittest.TestCase):
 
             cumulative_coassemblies_path = os.path.join("test", "coassemble", "target", "cumulative_coassemblies.tsv")
             self.assertTrue(os.path.exists(cumulative_coassemblies_path))
-            expected = "\n".join(["sample_0,sample_1", "sample_1,sample_3", ""])
+            expected = "\n".join(["sample_0,sample_1", "sample_1,sample_2", ""])
             with open(cumulative_coassemblies_path) as f:
                 self.assertEqual(expected, f.read())
 
@@ -257,7 +257,7 @@ class Tests(unittest.TestCase):
                 }
             self.assertEqual(reads_2, config["reads_2"])
 
-            exclude_coassemblies = []
+            exclude_coassemblies = ["sample_1,sample_2"]
             self.assertEqual(exclude_coassemblies, config["exclude_coassemblies"])
 
             cluster_path = os.path.join("test", "coassemble", "target", "elusive_clusters.tsv")
@@ -288,7 +288,7 @@ class Tests(unittest.TestCase):
 
             cumulative_coassemblies_path = os.path.join("test", "coassemble", "target", "cumulative_coassemblies.tsv")
             self.assertTrue(os.path.exists(cumulative_coassemblies_path))
-            expected = "\n".join(["sample_1,sample_3", ""])
+            expected = "\n".join(["sample_1,sample_2", ""])
             with open(cumulative_coassemblies_path) as f:
                 self.assertEqual(expected, f.read())
 
@@ -429,7 +429,7 @@ class Tests(unittest.TestCase):
             self.assertEqual(config["aviary_assemble_memory"], 500)
             self.assertEqual(config["aviary_recover_threads"], 32)
             self.assertEqual(config["aviary_recover_memory"], 250)
-            self.assertEqual(config["exclude_coassemblies"], ["sample_0,sample_1", "sample_4,sample_5"])
+            self.assertEqual(config["exclude_coassemblies"], ["sample_0,sample_1", "sample_1,sample_2", "sample_4,sample_5"])
 
             self.assertTrue("Evaluating bins using CheckM2 with completeness >= 70 and contamination <= 10" in output)
 
