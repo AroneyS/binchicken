@@ -131,6 +131,18 @@ class Tests(unittest.TestCase):
             with open(recover_path) as f:
                 self.assertEqual(expected, f.read())
 
+            summary_path = os.path.join("test", "coassemble", "summary.tsv")
+            self.assertTrue(os.path.exists(summary_path))
+            expected = "\n".join(
+                [
+                    "\t".join(["coassembly", "samples", "length", "total_targets", "total_size", "unmapped_size"]),
+                    "\t".join(["coassembly_0", "sample_1,sample_2", "2", "2", "0", "8456"]),
+                    ""
+                ]
+            )
+            with open(summary_path) as f:
+                self.assertEqual(expected, f.read())
+
     def test_update_minimal(self):
         with in_tempdir():
             cmd = (
@@ -217,7 +229,6 @@ class Tests(unittest.TestCase):
                 f"--coassemble-targets {MOCK_TARGETS} "
                 f"--coassemble-elusive-edges {MOCK_ELUSIVE_EDGES} "
                 f"--coassemble-elusive-clusters {MOCK_ELUSIVE_CLUSTERS} "
-                f"--coassemble-summary {MOCK_SUMMARY} "
                 f"--output test "
                 f"--conda-prefix {path_to_conda} "
                 f"--dryrun "
@@ -232,7 +243,7 @@ class Tests(unittest.TestCase):
             self.assertTrue("singlem_appraise" not in output)
             self.assertTrue("query_processing" not in output)
             self.assertTrue("single_assembly" not in output)
-            self.assertTrue("count_bp_reads" not in output)
+            self.assertTrue("count_bp_reads" in output)
             self.assertTrue("target_elusive" not in output)
             self.assertTrue("cluster_graph" not in output)
             self.assertTrue("qc_reads" in output)
@@ -240,6 +251,7 @@ class Tests(unittest.TestCase):
             self.assertTrue("map_reads" in output)
             self.assertTrue("finish_mapping" in output)
             self.assertTrue("aviary_commands" in output)
+            self.assertTrue("summary" in output)
 
     def test_update_read_identity(self):
         with in_tempdir():
@@ -304,7 +316,7 @@ class Tests(unittest.TestCase):
             self.assertTrue("singlem_appraise" not in output)
             self.assertTrue("query_processing" not in output)
             self.assertTrue("single_assembly" not in output)
-            self.assertTrue("count_bp_reads" not in output)
+            self.assertTrue("count_bp_reads" in output)
             self.assertTrue("target_elusive" not in output)
             self.assertTrue("cluster_graph" not in output)
             self.assertTrue("qc_reads" in output)
@@ -326,7 +338,6 @@ class Tests(unittest.TestCase):
                 f"--coassemble-targets {MOCK_TARGETS} "
                 f"--coassemble-elusive-edges {MOCK_ELUSIVE_EDGES} "
                 f"--coassemble-elusive-clusters {MOCK_ELUSIVE_CLUSTERS_SRA_MOCK} "
-                f"--coassemble-summary {MOCK_SUMMARY} "
                 f"--output test "
                 f"--conda-prefix {path_to_conda} "
                 f"--snakemake-args \" --config mock_sra=True\" "
@@ -382,7 +393,6 @@ class Tests(unittest.TestCase):
                 f"--coassemble-targets {MOCK_TARGETS} "
                 f"--coassemble-elusive-edges {MOCK_ELUSIVE_EDGES} "
                 f"--coassemble-elusive-clusters {MOCK_ELUSIVE_CLUSTERS_SRA_MOCK2} "
-                f"--coassemble-summary {MOCK_SUMMARY} "
                 f"--output test "
                 f"--conda-prefix {path_to_conda} "
                 f"--snakemake-args \" --config mock_sra=True\" "
@@ -430,7 +440,6 @@ class Tests(unittest.TestCase):
                 f"--coassemble-targets {MOCK_TARGETS} "
                 f"--coassemble-elusive-edges {MOCK_ELUSIVE_EDGES} "
                 f"--coassemble-elusive-clusters {MOCK_ELUSIVE_CLUSTERS_SRA_MOCK} "
-                f"--coassemble-summary {MOCK_SUMMARY} "
                 f"--output test "
                 f"--conda-prefix {path_to_conda} "
                 f"--snakemake-args \" --config mock_sra=True run_qc=False\" "
@@ -473,7 +482,6 @@ class Tests(unittest.TestCase):
                 f"--coassemble-targets {MOCK_TARGETS} "
                 f"--coassemble-elusive-edges {MOCK_ELUSIVE_EDGES} "
                 f"--coassemble-elusive-clusters {MOCK_ELUSIVE_CLUSTERS_SRA_MOCK3} "
-                f"--coassemble-summary {MOCK_SUMMARY} "
                 f"--output test "
                 f"--conda-prefix {path_to_conda} "
                 f"--snakemake-args \" --config mock_sra=True\" "
@@ -497,7 +505,6 @@ class Tests(unittest.TestCase):
                 f"--coassemble-targets {MOCK_TARGETS} "
                 f"--coassemble-elusive-edges {MOCK_ELUSIVE_EDGES} "
                 f"--coassemble-elusive-clusters {MOCK_ELUSIVE_CLUSTERS_SRA} "
-                f"--coassemble-summary {MOCK_SUMMARY} "
                 f"--output test "
                 f"--conda-prefix {path_to_conda} "
                 f"--dryrun "
@@ -517,7 +524,7 @@ class Tests(unittest.TestCase):
             self.assertTrue("singlem_appraise" not in output)
             self.assertTrue("query_processing" not in output)
             self.assertTrue("single_assembly" not in output)
-            self.assertTrue("count_bp_reads" not in output)
+            self.assertTrue("count_bp_reads" in output)
             self.assertTrue("target_elusive" not in output)
             self.assertTrue("cluster_graph" not in output)
             self.assertTrue("qc_reads" in output)
@@ -586,7 +593,6 @@ class Tests(unittest.TestCase):
                 f"--coassemble-targets {MOCK_TARGETS} "
                 f"--coassemble-elusive-edges {MOCK_ELUSIVE_EDGES} "
                 f"--coassemble-elusive-clusters {MOCK_ELUSIVE_CLUSTERS_TWO} "
-                f"--coassemble-summary {MOCK_SUMMARY} "
                 f"--coassemblies coassembly_0 "
                 f"--output test "
                 f"--conda-prefix {path_to_conda} "
@@ -618,7 +624,6 @@ class Tests(unittest.TestCase):
                 f"--coassemble-targets {MOCK_TARGETS} "
                 f"--coassemble-elusive-edges {MOCK_ELUSIVE_EDGES} "
                 f"--coassemble-elusive-clusters {MOCK_ELUSIVE_CLUSTERS} "
-                f"--coassemble-summary {MOCK_SUMMARY} "
                 f"--output test "
                 f"--conda-prefix {path_to_conda} "
                 f"--snakemake-args \" --notemp\" "
