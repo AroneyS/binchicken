@@ -667,7 +667,7 @@ def update(args):
         os.path.join(args.output, "coassemble", "target", "targets.tsv")
     )
 
-    if args.sample_read_size:
+    if hasattr(args, "sample_read_size") and args.sample_read_size:
         sample_read_size = args.sample_read_size
     else:
         sample_read_size = None
