@@ -131,6 +131,9 @@ class Tests(unittest.TestCase):
             with open(recover_path) as f:
                 self.assertEqual(expected, f.read())
 
+            read_size_path = os.path.join("test", "coassemble", "read_size.csv")
+            self.assertTrue(os.path.exists(read_size_path))
+
             summary_path = os.path.join("test", "coassemble", "summary.tsv")
             self.assertTrue(os.path.exists(summary_path))
             expected = "\n".join(
