@@ -1,0 +1,3 @@
+style	cluster_size	samples	target_ids
+match	2	sample_1.1,sample_2.1	0,1
+match	2	sample_1.1,sample_3.1	2

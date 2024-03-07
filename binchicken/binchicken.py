@@ -731,7 +731,10 @@ def iterate(args):
         old_config = load_config(config_path)
 
         if not (args.genomes or args.genomes_list):
-            args.genomes = [os.path.normpath(os.path.join(args.coassemble_output, "..", v)) for _,v in old_config["genomes"].items()]
+            if old_config["no_genomes"]:
+                args.genomes = []
+            else:
+                args.genomes = [os.path.normpath(os.path.join(args.coassemble_output, "..", v)) for _,v in old_config["genomes"].items()]
             args.no_genomes = False
         if not (args.forward or args.forward_list):
             args.forward = [os.path.normpath(os.path.join(args.coassemble_output, "..", v)) for _,v in old_config["reads_1"].items()]

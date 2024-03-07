@@ -38,6 +38,7 @@ TWO_GENOMES = " ".join([
 METAPACKAGE = os.path.join(path_to_data, "singlem_metapackage.smpkg")
 
 MOCK_COASSEMBLE = os.path.join(path_to_data, "mock_coassemble")
+MOCK_COASSEMBLE_MINIMAL = os.path.join(path_to_data, "mock_coassemble_minimal")
 MOCK_UNBINNED = os.path.join(MOCK_COASSEMBLE, "coassemble", "appraise", "unbinned.otu_table.tsv")
 MOCK_UNBINNED_BIASED = os.path.join(MOCK_COASSEMBLE, "coassemble", "appraise", "unbinned_biased.otu_table.tsv")
 MOCK_BINNED = os.path.join(MOCK_COASSEMBLE, "coassemble", "appraise", "binned.otu_table.tsv")
@@ -214,6 +215,80 @@ class Tests(unittest.TestCase):
             cumulative_coassemblies_path = os.path.join("test", "coassemble", "target", "cumulative_coassemblies.tsv")
             self.assertTrue(os.path.exists(cumulative_coassemblies_path))
             expected = "\n".join(["sample_0,sample_1", "sample_1,sample_3", ""])
+            with open(cumulative_coassemblies_path) as f:
+                self.assertEqual(expected, f.read())
+
+    def test_iterate_minimal_input(self):
+        with in_tempdir():
+            cmd = (
+                f"binchicken iterate "
+                f"--coassemble-output {MOCK_COASSEMBLE_MINIMAL} "
+                f"--singlem-metapackage {METAPACKAGE} "
+                f"--output test "
+                f"--conda-prefix {path_to_conda} "
+            )
+            output_raw = subprocess.run(cmd, shell=True, check=True, capture_output=True)
+            output = output_raw.stderr.decode('ascii')
+
+            self.assertTrue("count_bp_reads" not in output)
+
+            config_path = os.path.join("test", "config.yaml")
+            self.assertTrue(os.path.exists(config_path))
+            config = load_configfile(config_path)
+            NEW_GENOMES = [
+                os.path.join(MOCK_COASSEMBLE, "coassemble", "coassembly_0", "recover", "bins", "final_bins", "iteration_0-coassembly_0-0.fna"),
+                os.path.join(MOCK_COASSEMBLE, "coassemble", "coassembly_0", "recover", "bins", "final_bins", "iteration_0-coassembly_0-1.fna"),
+            ]
+            genomes = {
+                os.path.splitext(os.path.basename(g))[0]: g.replace(MOCK_COASSEMBLE + "/coassemble/coassembly_0/recover/bins/final_bins/", os.getcwd() + "/test/recovered_bins/")
+                for g in NEW_GENOMES
+                }
+            self.assertEqual(genomes, config["genomes"])
+
+            reads_1 = {
+                os.path.splitext(os.path.basename(r))[0].removesuffix(".1"): r
+                for r in SAMPLE_READS_FORWARD.split(" ")
+                }
+            self.assertEqual(reads_1, config["reads_1"])
+
+            reads_2 = {
+                os.path.splitext(os.path.basename(r))[0].removesuffix(".2"): r
+                for r in SAMPLE_READS_REVERSE.split(" ")
+                }
+            self.assertEqual(reads_2, config["reads_2"])
+
+            exclude_coassemblies = []
+            self.assertEqual(exclude_coassemblies, config["exclude_coassemblies"])
+
+            cluster_path = os.path.join("test", "coassemble", "target", "elusive_clusters.tsv")
+            self.assertTrue(os.path.exists(cluster_path))
+            expected = "\n".join(
+                [
+                    "\t".join([
+                        "samples",
+                        "length",
+                        "total_targets",
+                        "total_size",
+                        "recover_samples",
+                        "coassembly",
+                    ]),
+                    "\t".join([
+                        "sample_1,sample_3",
+                        "2",
+                        "1",
+                        "8456",
+                        "sample_1,sample_3",
+                        "coassembly_0"
+                    ]),
+                    ""
+                ]
+            )
+            with open(cluster_path) as f:
+                self.assertEqual(expected, f.read())
+
+            cumulative_coassemblies_path = os.path.join("test", "coassemble", "target", "cumulative_coassemblies.tsv")
+            self.assertTrue(os.path.exists(cumulative_coassemblies_path))
+            expected = "\n".join(["sample_1,sample_3", ""])
             with open(cumulative_coassemblies_path) as f:
                 self.assertEqual(expected, f.read())
 
