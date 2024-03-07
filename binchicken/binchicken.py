@@ -636,6 +636,7 @@ def update(args):
         args.coassemble_targets = os.path.join(coassemble_target_dir, "targets.tsv")
         args.coassemble_elusive_edges = os.path.join(coassemble_target_dir, "elusive_edges.tsv")
         args.coassemble_elusive_clusters = os.path.join(coassemble_target_dir, "elusive_clusters.tsv")
+        args.sample_read_size = os.path.join(coassemble_dir, "read_size.csv")
 
     if args.coassemble_elusive_clusters and not args.coassemblies:
         copy_input(
@@ -666,6 +667,11 @@ def update(args):
         os.path.join(args.output, "coassemble", "target", "targets.tsv")
     )
 
+    if args.sample_read_size:
+        sample_read_size = args.sample_read_size
+    else:
+        sample_read_size = None
+
     if args.sra:
         args.forward, args.reverse = download_sra(args)
         args.run_qc = True
@@ -676,6 +682,7 @@ def update(args):
         args.snakemake_args = "aviary_commands summary --rerun-triggers mtime " + args.snakemake_args if args.snakemake_args else "aviary_commands summary --rerun-triggers mtime"
 
     args = set_standard_args(args)
+    args.sample_read_size = sample_read_size
     coassemble(args)
 
     logging.info(f"Bin chicken update complete.")
