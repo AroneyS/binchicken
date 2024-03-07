@@ -858,11 +858,13 @@ def iterate(args):
     else:
         cumulative_coassemblies = []
 
-    with open(os.path.join(args.output, "coassemble", "target", "cumulative_coassemblies.tsv"), "w") as f:
+    target_path = os.path.join(args.output, "coassemble", "target")
+    os.makedirs(target_path, exist_ok=True)
+    with open(os.path.join(target_path, "cumulative_coassemblies.tsv"), "w") as f:
         f.write("\n".join(cumulative_coassemblies) + "\n")
 
     if args.elusive_clusters and not args.dryrun:
-        new_cluster = pl.read_csv(os.path.join(args.output, "coassemble", "target", "elusive_clusters.tsv"), separator="\t")
+        new_cluster = pl.read_csv(os.path.join(target_path, "elusive_clusters.tsv"), separator="\t")
         for cluster in args.elusive_clusters:
             old_cluster = pl.read_csv(cluster, separator="\t")
             comb_cluster = new_cluster.join(old_cluster, on="samples", how="inner")
