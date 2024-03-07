@@ -740,8 +740,11 @@ def iterate(args):
             ]
 
     if not args.sample_read_size:
-        if args.coassemble_output:
-            args.sample_read_size = os.path.join(args.coassemble_output, "read_size.csv")
+        try:
+            if args.coassemble_output:
+                args.sample_read_size = os.path.join(args.coassemble_output, "read_size.csv")
+        except (FileNotFoundError, NoDataError):
+            pass
 
     logging.info("Evaluating new bins")
     if args.new_genomes_list:
