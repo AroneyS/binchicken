@@ -957,8 +957,8 @@ def build(args):
     with open(clusters[0], "w") as f:
         f.write(clusters_text)
 
-    with open(os.path.join(args.coassemble_output, "read_size.tsv"), "w") as f:
-        f.write("SRR8334324,1000")
+    with open(os.path.join(args.coassemble_output, "read_size.csv"), "w") as f:
+        f.write("SRR8334324,1000\n")
 
     for item in args.forward + args.reverse + args.genomes + new_bins + otu_tables + clusters:
         subprocess.check_call(f"touch {item}", shell=True)
