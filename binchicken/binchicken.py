@@ -636,7 +636,6 @@ def update(args):
         args.coassemble_targets = os.path.join(coassemble_target_dir, "targets.tsv")
         args.coassemble_elusive_edges = os.path.join(coassemble_target_dir, "elusive_edges.tsv")
         args.coassemble_elusive_clusters = os.path.join(coassemble_target_dir, "elusive_clusters.tsv")
-        args.coassemble_summary = os.path.join(coassemble_dir, "summary.tsv")
 
     if args.coassemble_elusive_clusters and not args.coassemblies:
         copy_input(
@@ -666,19 +665,15 @@ def update(args):
         os.path.abspath(args.coassemble_targets),
         os.path.join(args.output, "coassemble", "target", "targets.tsv")
     )
-    copy_input(
-        os.path.abspath(args.coassemble_summary),
-        os.path.join(args.output, "coassemble", "summary.tsv")
-    )
 
     if args.sra:
         args.forward, args.reverse = download_sra(args)
         args.run_qc = True
 
     if args.run_aviary:
-        args.snakemake_args = "aviary_combine --rerun-triggers mtime " + args.snakemake_args if args.snakemake_args else "aviary_combine --rerun-triggers mtime"
+        args.snakemake_args = "aviary_combine summary --rerun-triggers mtime " + args.snakemake_args if args.snakemake_args else "aviary_combine summary --rerun-triggers mtime"
     else:
-        args.snakemake_args = "aviary_commands --rerun-triggers mtime " + args.snakemake_args if args.snakemake_args else "aviary_commands --rerun-triggers mtime"
+        args.snakemake_args = "aviary_commands summary --rerun-triggers mtime " + args.snakemake_args if args.snakemake_args else "aviary_commands summary --rerun-triggers mtime"
 
     args = set_standard_args(args)
     coassemble(args)
@@ -1349,9 +1344,10 @@ def main():
         if (args.sample_query or args.sample_query_list or args.sample_query_dir) and args.taxa_of_interest and args.assemble_unmapped:
             raise Exception("Unmapping is incompatible with the combination of sample query and taxa of interest")
 
-    def coassemble_output_argument_verification(args):
+    def coassemble_output_argument_verification(args, evaluate=False):
+        summary_flag = args.coassemble_summary if evaluate else True
         if not args.coassemble_output and not (args.coassemble_unbinned and args.coassemble_binned and args.coassemble_targets and \
-                                               args.coassemble_elusive_edges and args.coassemble_elusive_clusters and args.coassemble_summary):
+                                               args.coassemble_elusive_edges and args.coassemble_elusive_clusters and summary_flag):
             raise Exception("Either Bin chicken coassemble output (--coassemble-output) or specific input files must be provided")
 
     if args.subparser_name == "coassemble":
@@ -1359,7 +1355,7 @@ def main():
         coassemble(args)
 
     elif args.subparser_name == "evaluate":
-        coassemble_output_argument_verification(args)
+        coassemble_output_argument_verification(args, evaluate=True)
         if not args.singlem_metapackage and not os.environ['SINGLEM_METAPACKAGE_PATH']:
             raise Exception("SingleM metapackage (--singlem-metapackage or SINGLEM_METAPACKAGE_PATH environment variable, see SingleM data) must be provided")
         if args.cluster and not (args.genomes or args.genomes_list):
