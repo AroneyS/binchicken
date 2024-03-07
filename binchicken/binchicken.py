@@ -12,6 +12,7 @@ import importlib.resources
 import bird_tool_utils as btu
 import polars as pl
 import polars.selectors as cs
+from polars.exceptions import NoDataError
 from snakemake.io import load_configfile
 from ruamel.yaml import YAML
 import copy
@@ -508,7 +509,7 @@ def coassemble(args):
     )
 
     elusive_edges_path = os.path.join(args.output, "coassemble", "target", "elusive_edges.tsv")
-    if os.path.isfile(elusive_edges_path):
+    try:
         edge_samples = (
             pl.read_csv(elusive_edges_path, separator="\t")
             .select(pl.col("samples").str.split(","))
@@ -521,6 +522,8 @@ def coassemble(args):
         if unused_samples:
             logging.warning(f"Some samples had no targets with sufficient combined coverage for coassembly prediction")
             logging.warning(f"These were: {' '.join(unused_samples)}")
+    except (FileNotFoundError, NoDataError):
+        pass
 
     logging.info(f"Bin chicken coassemble complete.")
     logging.info(f"Cluster summary at {os.path.join(args.output, 'coassemble', 'summary.tsv')}")
