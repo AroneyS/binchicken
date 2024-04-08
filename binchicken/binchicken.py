@@ -1100,13 +1100,16 @@ def main():
     def add_general_snakemake_options(argument_group, required_conda_prefix=False):
         argument_group.add_argument("--output", help="Output directory [default: .]", default="./")
         argument_group.add_argument("--conda-prefix", help="Path to conda environment install location. [default: Use path from CONDA_ENV_PATH env variable]", default=None, required=required_conda_prefix)
-        argument_group.add_argument("--cores", type=int, help="Maximum number of cores to use", default=1)
+        cores_default = 1
+        argument_group.add_argument("--cores", type=int, help=f"Maximum number of cores to use [default: {cores_default}]", default=cores_default)
         argument_group.add_argument("--dryrun", action="store_true", help="dry run workflow")
         argument_group.add_argument("--snakemake-profile", default="",
                                     help="Snakemake profile (see https://snakemake.readthedocs.io/en/v7.32.3/executing/cli.html#profiles).\n"
                                          "Can be used to submit rules as jobs to cluster engine (see https://snakemake.readthedocs.io/en/v7.32.3/executing/cluster.html).")
-        argument_group.add_argument("--local-cores", type=int, help="Maximum number of cores to use on localrules when running in cluster mode", default=1)
-        argument_group.add_argument("--cluster-retries", help="Number of times to retry a failed job when using cluster submission (see `--snakemake-profile`).", default=3)
+        local_cores_default = 1
+        argument_group.add_argument("--local-cores", type=int, help=f"Maximum number of cores to use on localrules when running in cluster mode [default: {local_cores_default}]", default=local_cores_default)
+        retries_default = 3
+        argument_group.add_argument("--cluster-retries", help=f"Number of times to retry a failed job when using cluster submission (see `--snakemake-profile`) [default: {retries_default}].", default=retries_default)
         argument_group.add_argument("--snakemake-args", help="Additional commands to be supplied to snakemake in the form of a space-prefixed single string e.g. \" --quiet\"", default="")
         argument_group.add_argument("--tmp-dir", help="Path to temporary directory. [default: Use path from TMPDIR env variable]")
 
@@ -1121,9 +1124,12 @@ def main():
         argument_group.add_argument("--coassembly-samples-list", help="Restrict coassembly to these samples, newline separated. Remaining samples will still be used for recovery [default: use all samples]", default=[])
 
     def add_evaluation_options(argument_group):
-        argument_group.add_argument("--checkm-version", type=int, help="CheckM version to use to quality cutoffs [default: 2]", default=2)
-        argument_group.add_argument("--min-completeness", type=int, help="Include bins with at least this minimum completeness [default: 70]", default=70)
-        argument_group.add_argument("--max-contamination", type=int, help="Include bins with at most this maximum contamination [default: 10]", default=10)
+        checkm_version_default = 2
+        argument_group.add_argument("--checkm-version", type=int, help=f"CheckM version to use to quality cutoffs [default: {checkm_version_default}]", default=checkm_version_default)
+        min_completeness_default = 70
+        argument_group.add_argument("--min-completeness", type=int, help=f"Include bins with at least this minimum completeness [default: {min_completeness_default}]", default=min_completeness_default)
+        max_contamination_default = 10
+        argument_group.add_argument("--max-contamination", type=int, help=f"Include bins with at most this maximum contamination [default: {max_contamination_default}]", default=max_contamination_default)
 
     def add_aviary_options(argument_group):
         argument_group.add_argument("--run-aviary", action="store_true", help="Run Aviary commands for all identified coassemblies (unless specific coassemblies are chosen with --coassemblies) [default: do not]")
@@ -1185,22 +1191,29 @@ def main():
         coassemble_clustering = parser.add_argument_group("Clustering options")
         coassemble_clustering.add_argument("--taxa-of-interest", help="Only consider sequences from this GTDB taxa (e.g. p__Planctomycetota) [default: all]")
         coassemble_clustering.add_argument("--appraise-sequence-identity", type=int, help="Minimum sequence identity for SingleM appraise against reference database [default: 86%, Genus-level]", default=0.86)
-        coassemble_clustering.add_argument("--min-sequence-coverage", type=int, help="Minimum combined coverage for sequence inclusion [default: 10]", default=10)
+        min_sequence_coverage_default = 10
+        coassemble_clustering.add_argument("--min-sequence-coverage", type=int, help=f"Minimum combined coverage for sequence inclusion [default: {min_sequence_coverage_default}]", default=min_sequence_coverage_default)
         coassemble_clustering.add_argument("--single-assembly", action="store_true", help="Skip appraise to discover samples to differential abundance binning. Forces --num-coassembly-samples and --max-coassembly-samples to 1 and sets --max-coassembly-size to None")
         coassemble_clustering.add_argument("--exclude-coassemblies", nargs='+', help="List of coassemblies to exclude, space separated, in the form \"sample_1,sample_2\"")
         coassemble_clustering.add_argument("--exclude-coassemblies-list", help="List of coassemblies to exclude, space separated, in the form \"sample_1,sample_2\", newline separated")
-        coassemble_clustering.add_argument("--num-coassembly-samples", type=int, help="Number of samples per coassembly cluster [default: 2]", default=2)
-        coassemble_clustering.add_argument("--max-coassembly-samples", type=int, help="Upper bound for number of samples per coassembly cluster [default: --num-coassembly-samples]", default=None)
-        coassemble_clustering.add_argument("--max-coassembly-size", type=int, help="Maximum size (Gbp) of coassembly cluster [default: 50Gbp]", default=50)
+        num_coassembly_samples_default = 2
+        coassemble_clustering.add_argument("--num-coassembly-samples", type=int, help=f"Number of samples per coassembly cluster [default: {num_coassembly_samples_default}]", default=num_coassembly_samples_default)
+        max_coassembly_samples_default = None
+        coassemble_clustering.add_argument("--max-coassembly-samples", type=int, help="Upper bound for number of samples per coassembly cluster [default: --num-coassembly-samples]", default=max_coassembly_samples_default)
+        max_coassembly_size_default = 50
+        coassemble_clustering.add_argument("--max-coassembly-size", type=int, help=f"Maximum size (Gbp) of coassembly cluster [default: {max_coassembly_size_default}Gbp]", default=max_coassembly_size_default)
         coassemble_clustering.add_argument("--max-recovery-samples", type=int, help="Upper bound for number of related samples to use for differential abundance binning [default: 20]", default=20)
         coassemble_clustering.add_argument("--prodigal-meta", action="store_true", help="Use prodigal \"-p meta\" argument (for testing)")
         # Coassembly options
         coassemble_coassembly = parser.add_argument_group("Coassembly options")
         coassemble_coassembly.add_argument("--assemble-unmapped", action="store_true", help="Only assemble reads that do not map to reference genomes")
         coassemble_coassembly.add_argument("--run-qc", action="store_true", help="Run Fastp QC on reads")
-        coassemble_coassembly.add_argument("--unmapping-min-appraised", type=int, help="Minimum fraction of sequences binned to justify unmapping [default: 0.1]", default=0.1)
-        coassemble_coassembly.add_argument("--unmapping-max-identity", type=float, help="Maximum sequence identity of mapped sequences kept for coassembly [default: 99%]", default=99)
-        coassemble_coassembly.add_argument("--unmapping-max-alignment", type=float, help="Maximum percent alignment of mapped sequences kept for coassembly [default: 99%]", default=99)
+        unmapping_min_appraised_default = 0.1
+        coassemble_coassembly.add_argument("--unmapping-min-appraised", type=float, help=f"Minimum fraction of sequences binned to justify unmapping [default: {unmapping_min_appraised_default}]", default=unmapping_min_appraised_default)
+        unmapping_max_identity_default = 99
+        coassemble_coassembly.add_argument("--unmapping-max-identity", type=float, help=f"Maximum sequence identity of mapped sequences kept for coassembly [default: {unmapping_max_identity_default}%]", default=unmapping_max_identity_default)
+        unmapping_max_alignment_default = 99
+        coassemble_coassembly.add_argument("--unmapping-max-alignment", type=float, help=f"Maximum percent alignment of mapped sequences kept for coassembly [default: {unmapping_max_alignment_default}%]", default=unmapping_max_alignment_default)
         add_aviary_options(coassemble_coassembly)
         # General options
         coassemble_general = parser.add_argument_group("General options")
@@ -1246,9 +1259,12 @@ def main():
     update_coassembly.add_argument("--coassemblies", nargs='+', help="Choose specific coassemblies from elusive clusters (e.g. coassembly_0)")
     update_coassembly.add_argument("--assemble-unmapped", action="store_true", help="Only assemble reads that do not map to reference genomes")
     update_coassembly.add_argument("--run-qc", action="store_true", help="Run Fastp QC on reads")
-    update_coassembly.add_argument("--unmapping-min-appraised", type=float, help="Minimum fraction of sequences binned to justify unmapping [default: 0.1]", default=0.1)
-    update_coassembly.add_argument("--unmapping-max-identity", type=float, help="Maximum sequence identity of mapped sequences kept for coassembly [default: 99%]", default=99)
-    update_coassembly.add_argument("--unmapping-max-alignment", type=float, help="Maximum percent alignment of mapped sequences kept for coassembly [default: 99%]", default=99)
+    unmapping_min_appraised_default = 0.1
+    update_coassembly.add_argument("--unmapping-min-appraised", type=float, help=f"Minimum fraction of sequences binned to justify unmapping [default: {unmapping_min_appraised_default}]", default=unmapping_min_appraised_default)
+    unmapping_max_identity_default = 99
+    update_coassembly.add_argument("--unmapping-max-identity", type=float, help=f"Maximum sequence identity of mapped sequences kept for coassembly [default: {unmapping_max_identity_default}%]", default=unmapping_max_identity_default)
+    unmapping_max_alignment_default = 99
+    update_coassembly.add_argument("--unmapping-max-alignment", type=float, help=f"Maximum percent alignment of mapped sequences kept for coassembly [default: {unmapping_max_alignment_default}%]", default=unmapping_max_alignment_default)
     add_aviary_options(update_coassembly)
     # General options
     update_general = update_parser.add_argument_group("General options")
@@ -1259,7 +1275,8 @@ def main():
     iterate_parser = main_parser.new_subparser("iterate", "Iterate coassemble using new bins")
     # Iterate options
     iterate_iteration = iterate_parser.add_argument_group("Iteration options")
-    iterate_iteration.add_argument("--iteration", help="Iteration number used for unique bin naming", default="0")
+    iteration_default = "0"
+    iterate_iteration.add_argument("--iteration", help=f"Iteration number used for unique bin naming [default: {iteration_default}]", default=iteration_default)
     iterate_iteration.add_argument("--aviary-outputs", nargs='+', help="Output dir from Aviary coassembly and recover commands produced by coassemble subcommand")
     iterate_iteration.add_argument("--new-genomes", nargs='+', help="New genomes to iterate (alternative to --aviary-outputs)")
     iterate_iteration.add_argument("--new-genomes-list", help="New genomes to iterate (alternative to --aviary-outputs) newline separated")
@@ -1276,7 +1293,8 @@ def main():
     build_parser.add_argument("--singlem-metapackage", help="SingleM metapackage")
     build_parser.add_argument("--gtdbtk-db", help="GTDBtk release database")
     build_parser.add_argument("--checkm2-db", help="CheckM2 database")
-    build_parser.add_argument("--set-tmp-dir", help="Set temporary directory", default="/tmp")
+    tmp_default = "/tmp"
+    build_parser.add_argument("--set-tmp-dir", help=f"Set temporary directory [default: {tmp_default}]", default=tmp_default)
     build_parser.add_argument("--skip-aviary-envs", help="Do not install Aviary subworkflow environments", action="store_true")
     add_general_snakemake_options(build_parser, required_conda_prefix=True)
 
