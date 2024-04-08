@@ -12,14 +12,21 @@ Any combinations of the following:
 - Downloading SRA reads (`--sra`)
 
 ```bash
-# Example: update previous run to perform unmapping
-binchicken update --coassemble-output coassemble_dir --assemble-unmapped --forward reads_1.1.fq ... --reverse reads_1.2.fq ... --genomes genome_1.fna ...
-
 # Example: update previous run to run specific coassemblies
-binchicken update --coassemble-output coassemble_dir --run-aviary --coassemblies coassembly_0 ... --forward reads_1.1.fq ... --reverse reads_1.2.fq ... --genomes genome_1.fna ...
+binchicken update --coassemble-output coassemble_dir --run-aviary \
+    --coassemblies coassembly_0 ...
+
+# Example: update previous run to perform unmapping
+binchicken update --coassemble-output coassemble_dir --assemble-unmapped
 
 # Example: update previous run to download SRA reads
-binchicken update --coassemble-output coassemble_dir --sra --forward SRA000001 ... --genomes genome_1.fna ...
+# Note: requires sample names to be SRA IDs (e.g. SRA123456)
+binchicken update --coassemble-output coassemble_dir --sra
+
+# Example: update previous run to download SRA reads, perform unmapping and run specific coassemblies
+binchicken update --coassemble-output coassemble_dir --sra \
+    --assemble-unmapped \
+    --run-aviary --coassemblies coassembly_0 ...
 ```
 
 # OPTIONS
@@ -89,7 +96,7 @@ binchicken update --coassemble-output coassemble_dir --sra --forward SRA000001 .
 **\--coassemble-elusive-edges** *COASSEMBLE_ELUSIVE_EDGES*
 
   Elusive edges output from Bin chicken coassemble (alternative to
-    \--coassemble-output)
+    \--coassemble- output)
 
 **\--coassemble-elusive-clusters** *COASSEMBLE_ELUSIVE_CLUSTERS*
 
@@ -99,7 +106,7 @@ binchicken update --coassemble-output coassemble_dir --sra --forward SRA000001 .
 **\--coassemble-summary** *COASSEMBLE_SUMMARY*
 
   Summary output from Bin chicken coassemble (alternative to
-    \--coassemble-output)
+    \--coassemble- output)
 
 **\--coassemblies** *COASSEMBLIES* [*COASSEMBLIES* \...]
 
@@ -129,15 +136,20 @@ binchicken update --coassemble-output coassemble_dir --sra --forward SRA000001 .
   Maximum percent alignment of mapped sequences kept for coassembly
     [default: 99%]
 
+**\--run-aviary**
+
+  Run Aviary commands for all identified coassemblies (unless specific
+    coassemblies are chosen with \--coassemblies) [default: do not]
+
 **\--aviary-speed** {fast,comprehensive}
 
   Run Aviary recover in \'fast\' or \'comprehensive\' mode. Fast mode
-    skips slow binners and refinement steps.
+    skips slow binners and refinement steps. [default: fast]
 
-**\--run-aviary**
+**\--assembly-strategy** {dynamic,metaspades,megahit}
 
-  Run Aviary commands for all identified coassemblies (unless
-    specified)
+  Assembly strategy to use with Aviary. [default: dynamic; attempts
+    metaspades and if fails, switches to megahit]
 
 **\--aviary-gtdbtk-db** *AVIARY_GTDBTK_DB*
 
@@ -149,14 +161,23 @@ binchicken update --coassemble-output coassemble_dir --sra --forward SRA000001 .
   Path to CheckM2 database directory for Aviary. [default: use path
     from CHECKM2DB env variable]
 
-**\--aviary-cores** *AVIARY_CORES*
+**\--aviary-assemble-cores** *AVIARY_ASSEMBLE_CORES*
 
-  Maximum number of cores for Aviary to use. Half used for recovery.
+  Maximum number of cores for Aviary assemble to use. [default: 64]
 
-**\--aviary-memory** *AVIARY_MEMORY*
+**\--aviary-assemble-memory** *AVIARY_ASSEMBLE_MEMORY*
 
-  Maximum amount of memory for Aviary to use (Gigabytes). Half used
-    for recovery
+  Maximum amount of memory for Aviary assemble to use (Gigabytes).
+    [default: 500]
+
+**\--aviary-recover-cores** *AVIARY_RECOVER_CORES*
+
+  Maximum number of cores for Aviary recover to use. [default: 32]
+
+**\--aviary-recover-memory** *AVIARY_RECOVER_MEMORY*
+
+  Maximum amount of memory for Aviary recover to use (Gigabytes).
+    [default: 250]
 
 # GENERAL OPTIONS
 
@@ -171,7 +192,7 @@ binchicken update --coassemble-output coassemble_dir --sra --forward SRA000001 .
 
 **\--cores** *CORES*
 
-  Maximum number of cores to use
+  Maximum number of cores to use [default: 1]
 
 **\--dryrun**
 
@@ -180,24 +201,24 @@ binchicken update --coassemble-output coassemble_dir --sra --forward SRA000001 .
 **\--snakemake-profile** *SNAKEMAKE_PROFILE*
 
   Snakemake profile (see
-    https://snakemake.readthedocs.io/en/stable/executing/cli.html#profiles).
+    https://snakemake.readthedocs.io/en/v7.32.3/executing/cli.html#profiles).
     Can be used to submit rules as jobs to cluster engine (see
-    https://snakemake.readthedocs.io/en/stable/executing/cluster.html).
+    https://snakemake.readthedocs.io/en/v7.32.3/executing/cluster.html).
 
 **\--local-cores** *LOCAL_CORES*
 
   Maximum number of cores to use on localrules when running in cluster
-    mode
+    mode [default: 1]
 
 **\--cluster-retries** *CLUSTER_RETRIES*
 
   Number of times to retry a failed job when using cluster submission
-    (see \`\--snakemake-profile\`).
+    (see \`\--snakemake-profile\`) [default: 3].
 
 **\--snakemake-args** *SNAKEMAKE_ARGS*
 
   Additional commands to be supplied to snakemake in the form of a
-    space-prefixed single string e.g. \" \--quiet\"
+    space- prefixed single string e.g. \" \--quiet\"
 
 **\--tmp-dir** *TMP_DIR*
 
@@ -228,20 +249,22 @@ binchicken update --coassemble-output coassemble_dir --sra --forward SRA000001 .
 
 # EXAMPLES
 
-update previous run to perform unmapping
-
-  **\$ binchicken update \--coassemble-output coassemble_dir
-    \--assemble-unmapped \--forward reads_1.1.fq \... \--reverse
-    reads_1.2.fq \... \--genomes genome_1.fna \...**
-
 update previous run to run specific coassemblies
 
   **\$ binchicken update \--coassemble-output coassemble_dir
-    \--run-aviary \--coassemblies coassembly_0 \... \--forward
-    reads_1.1.fq \... \--reverse reads_1.2.fq \... \--genomes
-    genome_1.fna \...**
+    \--run-aviary \--coassemblies coassembly_0 \...**
+
+update previous run to perform unmapping
+
+  **\$ binchicken update \--coassemble-output coassemble_dir
+    \--assemble-unmapped**
 
 update previous run to download SRA reads
 
+  **\$ binchicken update \--coassemble-output coassemble_dir \--sra**
+
+update previous run to download SRA reads, perform unmapping and run specific coassemblies
+
   **\$ binchicken update \--coassemble-output coassemble_dir \--sra
-    \--forward SRA000001 \... \--genomes genome_1.fna \...**
+    \--assemble-unmapped \--run-aviary \--coassemblies coassembly_0
+    \...**

@@ -25,7 +25,7 @@ binchicken coassemble --forward reads_1.1.fq ... --reverse reads_1.2.fq ... --si
 # Create snakemake profile at ~/.config/snakemake/qsub with cluster, cluster-status, cluster-cancel, etc.
 # See https://snakemake.readthedocs.io/en/stable/executing/cli.html#profiles
 binchicken coassemble --forward reads_1.1.fq ... --reverse reads_1.2.fq ... --run-aviary \
-  --snakemake-profile qsub --cluster-retries 3 --local-cores 64 --cores 64
+  --snakemake-profile qsub --local-cores 64 --cores 64
 ```
 
 Important options:
@@ -42,8 +42,8 @@ Important options:
 - Differential-abundance binning samples for single-assembly can also be found (`--single-assembly`)
 - Snakemake profiles can be used to automatically submit jobs to HPC clusters (`--snakemake-profile`)
 
-Paired end reads of form reads_1.1.fq, reads_1_1.fq and reads_1_R1.fq are automatically detected and matched to their basename.
-Most intermediate files can be provided to skip those steps (see `binchicken coassemble --full-help`).
+Paired end reads of form reads_1.1.fq, reads_1_1.fq and reads_1_R1.fq, where reads_1 is the sample name are automatically detected and matched to their basename.
+Most intermediate files can be provided to skip intermediate steps (e.g. SingleM otu tables, read sizes or genome transcripts; see `binchicken coassemble --full-help`).
 
 # OPTIONS
 
@@ -226,15 +226,20 @@ Most intermediate files can be provided to skip those steps (see `binchicken coa
   Maximum percent alignment of mapped sequences kept for coassembly
     [default: 99%]
 
+**\--run-aviary**
+
+  Run Aviary commands for all identified coassemblies (unless specific
+    coassemblies are chosen with \--coassemblies) [default: do not]
+
 **\--aviary-speed** {fast,comprehensive}
 
   Run Aviary recover in \'fast\' or \'comprehensive\' mode. Fast mode
-    skips slow binners and refinement steps.
+    skips slow binners and refinement steps. [default: fast]
 
-**\--run-aviary**
+**\--assembly-strategy** {dynamic,metaspades,megahit}
 
-  Run Aviary commands for all identified coassemblies (unless
-    specified)
+  Assembly strategy to use with Aviary. [default: dynamic; attempts
+    metaspades and if fails, switches to megahit]
 
 **\--aviary-gtdbtk-db** *AVIARY_GTDBTK_DB*
 
@@ -246,14 +251,23 @@ Most intermediate files can be provided to skip those steps (see `binchicken coa
   Path to CheckM2 database directory for Aviary. [default: use path
     from CHECKM2DB env variable]
 
-**\--aviary-cores** *AVIARY_CORES*
+**\--aviary-assemble-cores** *AVIARY_ASSEMBLE_CORES*
 
-  Maximum number of cores for Aviary to use. Half used for recovery.
+  Maximum number of cores for Aviary assemble to use. [default: 64]
 
-**\--aviary-memory** *AVIARY_MEMORY*
+**\--aviary-assemble-memory** *AVIARY_ASSEMBLE_MEMORY*
 
-  Maximum amount of memory for Aviary to use (Gigabytes). Half used
-    for recovery
+  Maximum amount of memory for Aviary assemble to use (Gigabytes).
+    [default: 500]
+
+**\--aviary-recover-cores** *AVIARY_RECOVER_CORES*
+
+  Maximum number of cores for Aviary recover to use. [default: 32]
+
+**\--aviary-recover-memory** *AVIARY_RECOVER_MEMORY*
+
+  Maximum amount of memory for Aviary recover to use (Gigabytes).
+    [default: 250]
 
 # GENERAL OPTIONS
 
@@ -268,7 +282,7 @@ Most intermediate files can be provided to skip those steps (see `binchicken coa
 
 **\--cores** *CORES*
 
-  Maximum number of cores to use
+  Maximum number of cores to use [default: 1]
 
 **\--dryrun**
 
@@ -277,19 +291,19 @@ Most intermediate files can be provided to skip those steps (see `binchicken coa
 **\--snakemake-profile** *SNAKEMAKE_PROFILE*
 
   Snakemake profile (see
-    https://snakemake.readthedocs.io/en/stable/executing/cli.html#profiles).
+    https://snakemake.readthedocs.io/en/v7.32.3/executing/cli.html#profiles).
     Can be used to submit rules as jobs to cluster engine (see
-    https://snakemake.readthedocs.io/en/stable/executing/cluster.html).
+    https://snakemake.readthedocs.io/en/v7.32.3/executing/cluster.html).
 
 **\--local-cores** *LOCAL_CORES*
 
   Maximum number of cores to use on localrules when running in cluster
-    mode
+    mode [default: 1]
 
 **\--cluster-retries** *CLUSTER_RETRIES*
 
   Number of times to retry a failed job when using cluster submission
-    (see \`\--snakemake-profile\`).
+    (see \`\--snakemake-profile\`) [default: 3].
 
 **\--snakemake-args** *SNAKEMAKE_ARGS*
 

@@ -8,10 +8,12 @@ Compares the recovery by phyla and by single-copy marker gene.
 
 ```bash
 # Example: evaluate a completed coassembly
-binchicken evaluate --coassemble-output coassemble_dir --aviary-outputs coassembly_0_dir ...
+binchicken evaluate --coassemble-output coassemble_dir \
+    --aviary-outputs coassembly_0_dir ...
 
 # Example: evaluate a completed coassembly by providing genomes directly
-binchicken evaluate --coassemble-output coassemble_dir --new-genomes genome_1.fna ... --coassembly-run coassembly_0
+binchicken evaluate --coassemble-output coassemble_dir \
+    --new-genomes genome_1.fna ... --coassembly-run coassembly_0
 ```
 
 Defaults to using genomes (from the provided coassemble outputs) with at least 70% complete and at most 10% contamination as estimated by CheckM2.
@@ -42,7 +44,7 @@ Defaults to using genomes (from the provided coassemble outputs) with at least 7
 **\--coassemble-elusive-edges** *COASSEMBLE_ELUSIVE_EDGES*
 
   Elusive edges output from Bin chicken coassemble (alternative to
-    \--coassemble-output)
+    \--coassemble- output)
 
 **\--coassemble-elusive-clusters** *COASSEMBLE_ELUSIVE_CLUSTERS*
 
@@ -52,7 +54,7 @@ Defaults to using genomes (from the provided coassemble outputs) with at least 7
 **\--coassemble-summary** *COASSEMBLE_SUMMARY*
 
   Summary output from Bin chicken coassemble (alternative to
-    \--coassemble-output)
+    \--coassemble- output)
 
 **\--aviary-outputs** *AVIARY_OUTPUTS* [*AVIARY_OUTPUTS* \...]
 
@@ -72,7 +74,7 @@ Defaults to using genomes (from the provided coassemble outputs) with at least 7
 **\--coassembly-run** *COASSEMBLY_RUN*
 
   Name of coassembly run to produce new genomes (alternative to
-    \--aviary-outputs, also requires \--new-genomes)
+    \--aviary- outputs, also requires \--new-genomes)
 
 **\--singlem-metapackage** *SINGLEM_METAPACKAGE*
 
@@ -128,7 +130,7 @@ Defaults to using genomes (from the provided coassemble outputs) with at least 7
 
 **\--cores** *CORES*
 
-  Maximum number of cores to use
+  Maximum number of cores to use [default: 1]
 
 **\--dryrun**
 
@@ -137,24 +139,24 @@ Defaults to using genomes (from the provided coassemble outputs) with at least 7
 **\--snakemake-profile** *SNAKEMAKE_PROFILE*
 
   Snakemake profile (see
-    https://snakemake.readthedocs.io/en/stable/executing/cli.html#profiles).
+    https://snakemake.readthedocs.io/en/v7.32.3/executing/cli.html#profiles).
     Can be used to submit rules as jobs to cluster engine (see
-    https://snakemake.readthedocs.io/en/stable/executing/cluster.html).
+    https://snakemake.readthedocs.io/en/v7.32.3/executing/cluster.html).
 
 **\--local-cores** *LOCAL_CORES*
 
   Maximum number of cores to use on localrules when running in cluster
-    mode
+    mode [default: 1]
 
 **\--cluster-retries** *CLUSTER_RETRIES*
 
   Number of times to retry a failed job when using cluster submission
-    (see \`\--snakemake-profile\`).
+    (see \`\--snakemake-profile\`) [default: 3].
 
 **\--snakemake-args** *SNAKEMAKE_ARGS*
 
   Additional commands to be supplied to snakemake in the form of a
-    space-prefixed single string e.g. \" \--quiet\"
+    space- prefixed single string e.g. \" \--quiet\"
 
 **\--tmp-dir** *TMP_DIR*
 
