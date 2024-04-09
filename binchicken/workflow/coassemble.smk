@@ -355,9 +355,46 @@ rule count_bp_reads:
         "::: {params.names} :::+ {input.reads_1} :::+ {input.reads_2} "
         "> {output}"
 
+rule sketch_samples:
+    input:
+        unbinned = output_dir + "/appraise/unbinned.otu_table.tsv",
+    output:
+        sketch = output_dir + "/sketch/samples.sig"
+    params:
+        taxa_of_interest = config["taxa_of_interest"],
+    threads: 16
+    resources:
+        mem_mb=get_mem_mb,
+        runtime = lambda wildcards, attempt: 6*60*attempt,
+    log:
+        logs_dir + "/precluster/sketching.log"
+    script:
+        "scripts/sketch_samples.py"
+
+rule distance_samples:
+    input:
+        sketch = output_dir + "/sketch/samples.sig",
+    output:
+        distance = output_dir + "/sketch/samples.mat"
+    threads: 64
+    resources:
+        mem_mb=get_mem_mb,
+        runtime = lambda wildcards, attempt: 48*60*attempt,
+    log:
+        logs_dir + "/precluster/distance.log"
+    shell:
+        "sourmash compare "
+        "{input.sketch} "
+        "-o {output.distance} "
+        "-k 60 "
+        "--distance-matrix "
+        "-p {threads} "
+        "&> {log} "
+
 rule target_elusive:
     input:
-        unbinned = output_dir + "/appraise/unbinned.otu_table.tsv"
+        unbinned = output_dir + "/appraise/unbinned.otu_table.tsv",
+        distances = output_dir + "/sketch/samples.mat" if config["kmer_precluster"] else [],
     output:
         output_edges = output_dir + "/target/elusive_edges.tsv",
         output_targets = output_dir + "/target/targets.tsv",
@@ -366,6 +403,7 @@ rule target_elusive:
         max_coassembly_samples = config["max_coassembly_samples"],
         taxa_of_interest = config["taxa_of_interest"],
         samples = config["reads_1"],
+        precluster_size = config["precluster_size"],
     threads: 32
     resources:
         mem_mb=get_mem_mb,

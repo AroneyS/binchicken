@@ -23,6 +23,9 @@ COMPREHENSIVE_AVIARY_MODE = "comprehensive"
 DYNAMIC_ASSEMBLY_STRATEGY = "dynamic"
 METASPADES_ASSEMBLY = "metaspades"
 MEGAHIT_ASSEMBLY = "megahit"
+PRECLUSTER_NEVER_MODE = "never"
+PRECLUSTER_SIZE_DEP_MODE = "large"
+PRECLUSTER_ALWAYS_MODE = "always"
 
 def build_reads_list(forward, reverse):
     if reverse:
@@ -313,6 +316,8 @@ def set_standard_args(args):
     args.max_coassembly_samples = None
     args.max_coassembly_size = None
     args.max_recovery_samples = 1
+    args.kmer_precluster = PRECLUSTER_NEVER_MODE
+    args.precluster_size = 100
     args.prodigal_meta = False
 
     return(args)
@@ -442,6 +447,21 @@ def coassemble(args):
         args.max_coassembly_samples = 1
         args.max_coassembly_size = None
 
+    if args.kmer_precluster == PRECLUSTER_NEVER_MODE:
+        kmer_precluster = False
+    elif args.kmer_precluster == PRECLUSTER_SIZE_DEP_MODE:
+        if len(forward_reads) > 1000:
+            kmer_precluster = True
+        else:
+            kmer_precluster = False
+    elif args.kmer_precluster == PRECLUSTER_ALWAYS_MODE:
+        kmer_precluster = True
+    else:
+        raise ValueError(f"Invalid kmer precluster mode: {args.kmer_precluster}")
+
+    if not args.precluster_size:
+        args.precluster_size = args.max_recovery_samples * 5
+
     try:
         build_status = args.build
     except AttributeError:
@@ -466,6 +486,8 @@ def coassemble(args):
         "max_coassembly_samples": args.max_coassembly_samples if args.max_coassembly_samples else args.num_coassembly_samples,
         "max_coassembly_size": args.max_coassembly_size,
         "max_recovery_samples": args.max_recovery_samples,
+        "kmer_precluster": kmer_precluster,
+        "precluster_size": args.precluster_size,
         "prodigal_meta": args.prodigal_meta,
         # Coassembly config
         "assemble_unmapped": args.assemble_unmapped,
@@ -935,6 +957,7 @@ def build(args):
     args.run_qc = True
     args.coassemblies = None
     args.singlem_metapackage = "."
+    args.kmer_precluster = PRECLUSTER_NEVER_MODE
 
     # Create mock input files
     forward_reads = [os.path.join(args.output, "sample_" + s + ".1.fq") for s in ["1", "2", "3"]]
@@ -996,6 +1019,8 @@ def build(args):
         args.output = os.path.join(output_dir, "build_aviary")
         mapping_files = [os.path.join(args.output, "coassemble", "mapping", "sample_" + s + "_unmapped." + n + ".fq.gz") for s in ["1", "2", "3"] for n in ["1", "2"]]
         mapping_done = os.path.join(args.output, "coassemble", "mapping", "done")
+        elusive_edges = os.path.join(args.output, "coassemble", "target", "elusive_edges.tsv")
+        targets = os.path.join(args.output, "coassemble", "target", "targets.tsv")
         elusive_clusters = os.path.join(args.output, "coassemble", "target", "elusive_clusters.tsv")
         summary_file = os.path.join(args.output, "coassemble", "summary.tsv")
 
@@ -1005,7 +1030,7 @@ def build(args):
         with open(clusters_path, "w") as f:
             f.write(clusters_text)
 
-        for item in mapping_files + [mapping_done, elusive_clusters, summary_file]:
+        for item in mapping_files + [mapping_done, elusive_edges, targets, elusive_clusters, summary_file]:
             os.makedirs(os.path.dirname(item), exist_ok=True)
             subprocess.check_call(f"touch {item}", shell=True)
 
@@ -1203,6 +1228,9 @@ def main():
         max_coassembly_size_default = 50
         coassemble_clustering.add_argument("--max-coassembly-size", type=int, help=f"Maximum size (Gbp) of coassembly cluster [default: {max_coassembly_size_default}Gbp]", default=max_coassembly_size_default)
         coassemble_clustering.add_argument("--max-recovery-samples", type=int, help="Upper bound for number of related samples to use for differential abundance binning [default: 20]", default=20)
+        coassemble_clustering.add_argument("--kmer-precluster", help="Run kmer preclustering of unbinned window sequences. [default: large; perform preclustering when given >1000 samples]",
+                                    default=PRECLUSTER_SIZE_DEP_MODE, choices=[PRECLUSTER_NEVER_MODE, PRECLUSTER_SIZE_DEP_MODE, PRECLUSTER_ALWAYS_MODE])
+        coassemble_clustering.add_argument("--precluster-size", type=int, help="# of samples within each sample's precluster [default: 5 * max-recovery-samples]")
         coassemble_clustering.add_argument("--prodigal-meta", action="store_true", help="Use prodigal \"-p meta\" argument (for testing)")
         # Coassembly options
         coassemble_coassembly = parser.add_argument_group("Coassembly options")
