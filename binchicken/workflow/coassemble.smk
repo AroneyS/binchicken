@@ -473,7 +473,7 @@ rule qc_reads:
         quality_cutoff = 15,
         unqualified_percent_limit = 40,
         min_length = 80,
-    threads: 16
+    threads: 32
     resources:
         mem_mb=get_mem_mb,
         runtime = lambda wildcards, attempt: 4*60*attempt,
@@ -520,7 +520,7 @@ rule map_reads:
     output:
         dir = temp(directory(output_dir + "/mapping/{read}_coverm")),
     group: "unmapping"
-    threads: 16
+    threads: 32
     resources:
         mem_mb=get_mem_mb,
         runtime = lambda wildcards, attempt: 12*60*attempt,
@@ -550,7 +550,7 @@ rule filter_bam_files:
         reads_1 = lambda wildcards: os.path.basename(config["reads_1"][wildcards.read]) if not config["run_qc"] else wildcards.read + "_1.fastq.gz",
         sequence_identity = config["unmapping_max_identity"],
         alignment_percent = config["unmapping_max_alignment"],
-    threads: 16
+    threads: 32
     resources:
         mem_mb=get_mem_mb,
         runtime = lambda wildcards, attempt: 4*60*attempt,
@@ -577,7 +577,7 @@ rule bam_to_fastq:
         reads_1 = output_dir + "/mapping/{read}_unmapped.1.fq.gz",
         reads_2 = output_dir + "/mapping/{read}_unmapped.2.fq.gz",
     group: "unmapping"
-    threads: 16
+    threads: 32
     resources:
         mem_mb=get_mem_mb,
         runtime = lambda wildcards, attempt: 4*60*attempt,
