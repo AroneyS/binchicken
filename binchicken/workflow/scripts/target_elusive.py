@@ -6,6 +6,8 @@
 import polars as pl
 import os
 import logging
+import numpy as np
+import itertools
 
 EDGES_COLUMNS={
     "style": str,
@@ -14,9 +16,36 @@ EDGES_COLUMNS={
     "target_ids": str,
     }
 
+def get_clusters(
+        distances,
+        samples,
+        PRECLUSTER_SIZE=2,
+        MAX_COASSEMBLY_SAMPLES=2):
+    if len(distances) == 0:
+        return pl.DataFrame(schema={"samples": str})
+
+    best_distances = np.argsort(distances, axis=1)[:, :PRECLUSTER_SIZE]
+    best_samples = np.array(samples)[best_distances]
+
+    if MAX_COASSEMBLY_SAMPLES < 2:
+        # Set to 2 to produce paired edges
+        MAX_COASSEMBLY_SAMPLES = 2
+
+    preclusters = set()
+    for i, sample in enumerate(samples):
+        chosen_samples = best_samples[i][best_samples[i] != sample]
+
+        for n_samples in range(1, MAX_COASSEMBLY_SAMPLES):
+            for combination in itertools.combinations(chosen_samples, n_samples):
+                preclusters.add(frozenset([sample, *combination]))
+
+    return pl.DataFrame([",".join(sorted(s)) for s in preclusters], schema={"samples": str})
+
+
 def pipeline(
     unbinned,
     samples,
+    sample_preclusters=None,
     MIN_COASSEMBLY_COVERAGE=10,
     TAXA_OF_INTEREST="",
     MAX_COASSEMBLY_SAMPLES=2):
@@ -137,16 +166,26 @@ if __name__ == "__main__":
     MIN_COASSEMBLY_COVERAGE = snakemake.params.min_coassembly_coverage
     MAX_COASSEMBLY_SAMPLES = snakemake.params.max_coassembly_samples
     TAXA_OF_INTEREST = snakemake.params.taxa_of_interest
+    PRECLUSTER_SIZE = snakemake.params.precluster_size
     unbinned_path = snakemake.input.unbinned
+    distances_path = snakemake.input.distances
     targets_path = snakemake.output.output_targets
     edges_path = snakemake.output.output_edges
     samples = set(snakemake.params.samples)
 
     unbinned = pl.read_csv(unbinned_path, separator="\t")
 
+    if distances_path:
+        from sourmash import fig
+        distances, samples = fig.load_matrix_and_labels(distances_path)
+        sample_preclusters = get_preclusters(distances, samples, PRECLUSTER_SIZE=PRECLUSTER_SIZE, MAX_COASSEMBLY_SAMPLES=MAX_COASSEMBLY_SAMPLES)
+    else:
+        sample_preclusters = None
+
     targets, edges = pipeline(
         unbinned,
         samples,
+        sample_preclusters=sample_preclusters,
         MIN_COASSEMBLY_COVERAGE=MIN_COASSEMBLY_COVERAGE,
         TAXA_OF_INTEREST=TAXA_OF_INTEREST,
         MAX_COASSEMBLY_SAMPLES=MAX_COASSEMBLY_SAMPLES,

@@ -3,11 +3,16 @@
 import unittest
 import os
 os.environ["POLARS_MAX_THREADS"] = "8"
+import numpy as np
 import polars as pl
 from polars.testing import assert_frame_equal
-from binchicken.workflow.scripts.target_elusive import pipeline
+from binchicken.workflow.scripts.target_elusive import get_clusters, pipeline
 
-APPRAISE_COLUMNS={
+CLUSTERS_COLUMNS = {
+    "samples": str,
+}
+
+APPRAISE_COLUMNS = {
     "gene": str,
     "sample": str,
     "sequence": str,
@@ -17,7 +22,7 @@ APPRAISE_COLUMNS={
     "found_in": str,
 }
 
-TARGETS_COLUMNS={
+TARGETS_COLUMNS = {
     "gene": str,
     "sample": str,
     "sequence": str,
@@ -26,16 +31,168 @@ TARGETS_COLUMNS={
     "taxonomy": str,
     "target": str,
 }
-EDGES_COLUMNS={
+
+EDGES_COLUMNS = {
     "style": str,
     "cluster_size": int,
     "samples": str,
     "target_ids": str,
-    }
+}
 
 class Tests(unittest.TestCase):
     def assertDataFrameEqual(self, a, b):
         assert_frame_equal(a, b, check_dtype=False, check_row_order=False)
+
+    def test_get_clusters(self):
+        distances = np.array([
+            [0,   0.5, 1  ],
+            [0.5, 0,   0.9],
+            [1,   0.9, 0  ],
+        ])
+        samples = ["sample_1", "sample_2", "samples_3"]
+
+        expected_clusters = pl.DataFrame([
+            ["sample_1,sample_2"],
+            ["sample_2,samples_3"],
+        ], schema=CLUSTERS_COLUMNS)
+
+        observed_clusters = get_clusters(distances, samples)
+        self.assertDataFrameEqual(expected_clusters, observed_clusters)
+
+    def test_get_clusters_size_three(self):
+        distances = np.array([
+            [0,   0.5, 1  ],
+            [0.5, 0,   0.9],
+            [1,   0.9, 0  ],
+        ])
+        samples = ["1", "2", "3"]
+
+        expected_clusters = pl.DataFrame([
+            ["1,2"],
+            ["1,3"],
+            ["2,3"],
+            ["1,2,3"],
+        ], schema=CLUSTERS_COLUMNS)
+
+        observed_clusters = get_clusters(
+            distances,
+            samples,
+            PRECLUSTER_SIZE=3,
+            MAX_COASSEMBLY_SAMPLES=3
+            )
+        self.assertDataFrameEqual(expected_clusters, observed_clusters)
+
+    def test_get_clusters_size_three_of_four(self):
+        distances = np.array([
+            [0,   0.1, 0.2, 0.4],
+            [0.1, 0,   0.2, 0.4],
+            [0.2, 0.2, 0,   1  ],
+            [0.4, 0.4, 1,   0  ],
+        ])
+        samples = ["1", "2", "3", "4"]
+
+        expected_clusters = pl.DataFrame([
+            ["1,2"],
+            ["1,3"],
+            ["1,4"],
+            ["2,3"],
+            ["2,4"],
+            # ["3,4"],
+            ["1,2,3"],
+            ["1,2,4"],
+            # ["1,3,4"],
+            # ["2,3,4"],
+        ], schema=CLUSTERS_COLUMNS)
+
+        observed_clusters = get_clusters(
+            distances,
+            samples,
+            PRECLUSTER_SIZE=3,
+            MAX_COASSEMBLY_SAMPLES=3
+            )
+        self.assertDataFrameEqual(expected_clusters, observed_clusters)
+
+    def test_get_clusters_size_three_of_four_balanced(self):
+        distances = np.array([
+            [0,   0.2, 0.3, 0.4],
+            [0.2, 0,   1,   0.2],
+            [0.3, 1,   0,   0.1],
+            [0.4, 0.2, 0.1, 0  ],
+        ])
+        samples = ["1", "2", "3", "4"]
+
+        expected_clusters = pl.DataFrame([
+            ["1,2"],
+            ["1,3"],
+            # ["1,4"],
+            # ["2,3"],
+            ["2,4"],
+            ["3,4"],
+            ["1,2,3"],
+            ["1,2,4"],
+            ["1,3,4"],
+            ["2,3,4"],
+        ], schema=CLUSTERS_COLUMNS)
+
+        observed_clusters = get_clusters(
+            distances,
+            samples,
+            PRECLUSTER_SIZE=3,
+            MAX_COASSEMBLY_SAMPLES=3
+            )
+        self.assertDataFrameEqual(expected_clusters, observed_clusters)
+
+    def test_get_clusters_size_four_of_five(self):
+        distances = np.array([
+            [0,   0.2, 0.3, 0.4, 0.5],
+            [0.2, 0,   0.2, 0.3, 0.4],
+            [0.3, 0.2, 0,   0.3, 0.3],
+            [0.4, 0.3, 0.3, 0,   0.1],
+            [0.5, 0.4, 0.3, 0.1, 0  ],
+        ])
+        samples = ["1", "2", "3", "4", "5"]
+
+        expected_clusters = pl.DataFrame([
+            ["1,2"],
+            ["1,3"],
+            ["1,4"],
+            # ["1,5"],
+            ["2,3"],
+            ["2,4"],
+            ["2,5"],
+            ["3,4"],
+            ["3,5"],
+            ["4,5"],
+            ["1,2,3"],
+            ["1,2,4"],
+            ["1,3,4"],
+            ["2,3,4"],
+            # ["1,2,5"],
+            # ["1,3,5"],
+            ["2,3,5"],
+            # ["1,4,5"],
+            ["2,4,5"],
+            ["3,4,5"],
+        ], schema=CLUSTERS_COLUMNS)
+
+        observed_clusters = get_clusters(
+            distances,
+            samples,
+            PRECLUSTER_SIZE=4,
+            MAX_COASSEMBLY_SAMPLES=3
+            )
+        self.assertDataFrameEqual(expected_clusters, observed_clusters)
+
+    def test_get_clusters_empty_inputs(self):
+        distances = np.array([
+        ])
+        samples = []
+
+        expected_clusters = pl.DataFrame([
+        ], schema=CLUSTERS_COLUMNS)
+
+        observed_clusters = get_clusters(distances, samples)
+        self.assertDataFrameEqual(expected_clusters, observed_clusters)
 
     def test_target_elusive(self):
         unbinned = pl.DataFrame([
