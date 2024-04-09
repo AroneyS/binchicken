@@ -28,7 +28,7 @@ SUMMARY_COLUMNS = {
 
 def evaluate(target_otu_table, binned_otu_table, elusive_clusters, elusive_edges, recovered_otu_table, recovered_bins):
 
-    print(f"Polars using {str(pl.threadpool_size())} threads")
+    print(f"Polars using {str(pl.thread_pool_size())} threads")
 
     if len(recovered_otu_table) == 0:
         empty_output = pl.DataFrame(schema=OUTPUT_COLUMNS)

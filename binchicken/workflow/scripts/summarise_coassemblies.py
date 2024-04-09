@@ -7,7 +7,7 @@ import os
 import polars as pl
 
 def processing(elusive_clusters, read_size):
-    print(f"Polars using {str(pl.threadpool_size())} threads")
+    print(f"Polars using {str(pl.thread_pool_size())} threads")
 
     summary = (
         elusive_clusters
