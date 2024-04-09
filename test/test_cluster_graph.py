@@ -402,24 +402,24 @@ class Tests(unittest.TestCase):
         self.assertDataFrameEqual(expected, observed)
 
     def test_cluster_four_samples(self):
-        # 1:   2 3 4
-        # 2: 1   3 4
-        # 3: 1 2   4
-        # 4: 1 2 3 4
+        # 1: 0   2 3 4
+        # 2: 0 1   3 4
+        # 3: 0 1 2   4
+        # 4: 0 1 2 3 4
 
-        # 5: 1         6 7 8 9 10
-        # 6:         5   7 8
-        # 7:         5 6   8
-        # 8:               8 9 10
+        # 5:   1         6 7 8 9 10
+        # 6:           5   7 8
+        # 7:           5 6   8
+        # 8:                 8 9 10
 
         elusive_edges = pl.DataFrame([
             # pairs of 1,2,3,4
-            ["match", 2, "1,2", "3,4"],
-            ["match", 2, "1,3", "2,4"],
-            ["match", 2, "1,4", "2,3,4"],
-            ["match", 2, "2,3", "1,4"],
-            ["match", 2, "2,4", "1,3,4"],
-            ["match", 2, "3,4", "1,2,4"],
+            ["match", 2, "1,2", "0,3,4"],
+            ["match", 2, "1,3", "0,2,4"],
+            ["match", 2, "1,4", "0,2,3,4"],
+            ["match", 2, "2,3", "0,1,4"],
+            ["match", 2, "2,4", "0,1,3,4"],
+            ["match", 2, "3,4", "0,1,2,4"],
             # pairs of 5,6,7,8
             ["match", 2, "5,6", "7,8"],
             ["match", 2, "5,7", "6,8"],
@@ -433,13 +433,13 @@ class Tests(unittest.TestCase):
             ["match", 2, "4,5", "1"],
             # triplets
             ["pool", 3, "2,3,4,5", "1"],
-            ["pool", 3, "1,3,4", "2"],
-            ["pool", 3, "1,2,4", "3"],
-            ["pool", 3, "1,2,3,4", "4"],
+            ["pool", 3, "1,3,4", "0,2"],
+            ["pool", 3, "1,2,4", "0,3"],
+            ["pool", 3, "1,2,3,4", "0,4"],
             ["pool", 3, "5,6,7,8", "8"],
             # quads
             ["pool", 4, "2,3,4,5", "1"],
-            ["pool", 4, "1,2,3,4", "4"],
+            ["pool", 4, "1,2,3,4", "0,4"],
             ["pool", 4, "5,6,7,8", "8"],
         ], schema = ELUSIVE_EDGES_COLUMNS)
         read_size = pl.DataFrame([
@@ -454,12 +454,12 @@ class Tests(unittest.TestCase):
         ], schema=READ_SIZE_COLUMNS)
 
         expected = pl.DataFrame([
-            ["1,4", 2, 3, 5000, "1,2,3,4", "coassembly_0"],
-            ["5,8", 2, 3, 13000, "5,6,7,8", "coassembly_1"],
-            ["2,3", 2, 2, 5000, "2,3,4,5", "coassembly_2"],
-            ["1,2,4", 3, 2, 7000, "1,2,3,4", "coassembly_3"],
-            ["6,7", 2, 2, 13000, "5,6,7,8", "coassembly_4"],
-            ["1,2,3,4", 4, 1, 10000, "1,2,3,4", "coassembly_5"],
+            ["1,4", 2, 4, 5000, "1,2,3,4", "coassembly_0"],
+            ["2,3", 2, 3, 5000, "1,2,3,4", "coassembly_1"],
+            ["1,2,4", 3, 3, 7000, "1,2,3,4", "coassembly_2"],
+            ["5,8", 2, 3, 13000, "5,6,7,8", "coassembly_3"],
+            ["1,2,3,4", 4, 2, 10000, "1,2,3,4", "coassembly_4"],
+            ["6,7", 2, 2, 13000, "5,6,7,8", "coassembly_5"],
             ["5,6,7", 3, 1, 18000, "5,6,7,8", "coassembly_6"],
             ["5,6,7,8", 4, 1, 26000, "5,6,7,8", "coassembly_7"],
         ], schema=ELUSIVE_CLUSTERS_COLUMNS)
