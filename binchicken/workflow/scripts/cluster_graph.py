@@ -80,7 +80,7 @@ def find_recover_candidates(df, samples_df, MAX_RECOVERY_SAMPLES=20):
         .explode("target_ids")
         .join(samples_df, on="target_ids", how="left")
         .group_by("samples_hash", "recover_candidates")
-        .agg(pl.count())
+        .agg(pl.len().alias("count"))
         .sort("count", descending=True)
         .group_by("samples_hash")
         .head(MAX_RECOVERY_SAMPLES)
