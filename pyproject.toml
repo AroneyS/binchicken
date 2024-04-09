@@ -32,5 +32,8 @@ classifiers = [
 binchicken = "binchicken.binchicken:main"
 ibis = "binchicken.binchicken:main"
 
+[tool.setuptools]
+packages = ["binchicken"]
+
 [tool.setuptools.dynamic]
 version = {attr = "binchicken.__version__"}
