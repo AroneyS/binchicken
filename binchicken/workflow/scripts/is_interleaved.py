@@ -100,7 +100,7 @@ def main(arguments):
 
     os.environ["POLARS_MAX_THREADS"] = str(args.threads)
     import polars as pl
-    logging.info(f"Polars using {str(pl.threadpool_size())} threads")
+    logging.info(f"Polars using {str(pl.thread_pool_size())} threads")
 
     output_outcome, output_reason = pipeline(args.input, args.start_check_pairs, args.end_check_pairs)
 

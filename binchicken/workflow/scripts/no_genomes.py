@@ -16,7 +16,7 @@ SINGLEM_OTU_TABLE_SCHEMA = {
     }
 
 def processing(reads):
-    print(f"Polars using {str(pl.threadpool_size())} threads")
+    print(f"Polars using {str(pl.thread_pool_size())} threads")
 
     unbinned = (
         reads

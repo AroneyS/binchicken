@@ -21,7 +21,7 @@ def pipeline(
     TAXA_OF_INTEREST="",
     MAX_COASSEMBLY_SAMPLES=2):
 
-    logging.info(f"Polars using {str(pl.threadpool_size())} threads")
+    logging.info(f"Polars using {str(pl.thread_pool_size())} threads")
 
     if len(unbinned) == 0:
         logging.warning("No unbinned sequences found")

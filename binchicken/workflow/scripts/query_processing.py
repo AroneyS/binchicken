@@ -74,7 +74,7 @@ def pipeline(
     WINDOW_SIZE=60,
     TAXA_OF_INTEREST=None):
 
-    print(f"Polars using {str(pl.threadpool_size())} threads")
+    print(f"Polars using {str(pl.thread_pool_size())} threads")
 
     for query, pipe in zip(query_reads, pipe_reads):
         binned, unbinned = processing(

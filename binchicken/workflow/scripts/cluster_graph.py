@@ -102,7 +102,7 @@ def pipeline(
         COASSEMBLY_SAMPLES=[],
         EXCLUDE_COASSEMBLIES=[]):
 
-    logging.info(f"Polars using {str(pl.threadpool_size())} threads")
+    logging.info(f"Polars using {str(pl.thread_pool_size())} threads")
 
     if len(elusive_edges) == 0:
         logging.warning("No elusive edges found")

@@ -17,7 +17,7 @@ def trimmed_mean(data, trim=0.1):
         return np.mean(a[cut:-cut])
 
 def pipeline(appraise_binned, appraise_unbinned, sample, MIN_APPRAISED=0.1, TRIM_FRACTION=0.1):
-    print(f"Polars using {str(pl.threadpool_size())} threads")
+    print(f"Polars using {str(pl.thread_pool_size())} threads")
 
     appraise_binned = appraise_binned.with_columns(
         pl.col("sample").cast(str),
