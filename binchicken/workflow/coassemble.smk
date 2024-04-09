@@ -547,7 +547,7 @@ rule filter_bam_files:
     group: "unmapping"
     params:
         genomes = "{read}_reference.fna",
-        reads_1 = lambda wildcards: os.path.basename(config["reads_1"][wildcards.read]),
+        reads_1 = lambda wildcards: os.path.basename(config["reads_1"][wildcards.read]) if not config["run_qc"] else wildcards.read + "_1.fastq.gz",
         sequence_identity = config["unmapping_max_identity"],
         alignment_percent = config["unmapping_max_alignment"],
     threads: 16

@@ -345,6 +345,67 @@ class Tests(unittest.TestCase):
             with open(recover_path) as f:
                 self.assertEqual(expected, f.read())
 
+    def test_coassemble_unmap_runqc(self):
+        with in_tempdir():
+            cmd = (
+                f"binchicken coassemble "
+                f"--assemble-unmapped "
+                f"--run-qc "
+                f"--forward {SAMPLE_READS_FORWARD} "
+                f"--reverse {SAMPLE_READS_REVERSE} "
+                f"--genomes {GENOMES} "
+                f"--genome-transcripts {GENOME_TRANSCRIPTS} "
+                f"--sample-singlem {SAMPLE_SINGLEM} "
+                f"--sample-read-size {SAMPLE_READ_SIZE} "
+                f"--genome-singlem {GENOME_SINGLEM} "
+                f"--singlem-metapackage {METAPACKAGE} "
+                f"--output test "
+                f"--conda-prefix {path_to_conda} "
+            )
+            extern.run(cmd)
+
+            config_path = os.path.join("test", "config.yaml")
+            self.assertTrue(os.path.exists(config_path))
+
+            edges_path = os.path.join("test", "coassemble", "target", "targets.tsv")
+            self.assertTrue(os.path.exists(edges_path))
+
+            edges_path = os.path.join("test", "coassemble", "target", "elusive_edges.tsv")
+            self.assertTrue(os.path.exists(edges_path))
+
+            cluster_path = os.path.join("test", "coassemble", "target", "elusive_clusters.tsv")
+            self.assertTrue(os.path.exists(cluster_path))
+
+            qc_sample_1F_path = os.path.join("test", "coassemble", "qc", "sample_1_1.fastq.gz")
+            self.assertTrue(os.path.exists(qc_sample_1F_path))
+            qc_sample_1R_path = os.path.join("test", "coassemble", "qc", "sample_1_2.fastq.gz")
+            self.assertTrue(os.path.exists(qc_sample_1R_path))
+
+            qc_sample_2F_path = os.path.join("test", "coassemble", "qc", "sample_2_1.fastq.gz")
+            self.assertTrue(os.path.exists(qc_sample_2F_path))
+            qc_sample_2R_path = os.path.join("test", "coassemble", "qc", "sample_2_2.fastq.gz")
+            self.assertTrue(os.path.exists(qc_sample_2R_path))
+
+            qc_sample_3F_path = os.path.join("test", "coassemble", "qc", "sample_3_1.fastq.gz")
+            self.assertTrue(os.path.exists(qc_sample_3F_path))
+            qc_sample_3R_path = os.path.join("test", "coassemble", "qc", "sample_3_2.fastq.gz")
+            self.assertTrue(os.path.exists(qc_sample_3R_path))
+
+            map_sample_1F_path = os.path.join("test", "coassemble", "mapping", "sample_1_unmapped.1.fq.gz")
+            self.assertTrue(os.path.exists(map_sample_1F_path))
+            map_sample_1R_path = os.path.join("test", "coassemble", "mapping", "sample_1_unmapped.2.fq.gz")
+            self.assertTrue(os.path.exists(map_sample_1R_path))
+
+            map_sample_2F_path = os.path.join("test", "coassemble", "mapping", "sample_2_unmapped.1.fq.gz")
+            self.assertTrue(os.path.exists(map_sample_2F_path))
+            map_sample_2R_path = os.path.join("test", "coassemble", "mapping", "sample_2_unmapped.2.fq.gz")
+            self.assertTrue(os.path.exists(map_sample_2R_path))
+
+            map_sample_3F_path = os.path.join("test", "coassemble", "mapping", "sample_3_unmapped.1.fq.gz")
+            self.assertTrue(os.path.exists(map_sample_3F_path))
+            map_sample_3R_path = os.path.join("test", "coassemble", "mapping", "sample_3_unmapped.2.fq.gz")
+            self.assertTrue(os.path.exists(map_sample_3R_path))
+
     def test_coassemble_query_input(self):
         with in_tempdir():
             cmd = (
