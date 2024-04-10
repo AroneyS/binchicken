@@ -35,7 +35,7 @@ def get_clusters(
     chosen_samples = [(samples[i], list(np.array(samples)[b[b != i]])) for i, b in enumerate(best_samples)]
 
     sample_combinations = (
-        pl.DataFrame({"cluster_size": range(1, MAX_COASSEMBLY_SAMPLES)})
+        pl.LazyFrame({"cluster_size": range(1, MAX_COASSEMBLY_SAMPLES)})
         .with_columns(
             sample_combinations = pl.col("cluster_size").map_elements(
                 lambda x: [i for i in itertools.combinations(range(PRECLUSTER_SIZE-1), x)],
@@ -49,7 +49,7 @@ def get_clusters(
     logging.info("Choosing preclusters based on distances")
     with pl.StringCache():
         preclusters = (
-            pl.DataFrame(chosen_samples, schema={"sample": pl.Categorical, "samples": pl.List(pl.Categorical)})
+            pl.LazyFrame(chosen_samples, schema={"sample": pl.Categorical, "samples": pl.List(pl.Categorical)})
             .with_columns(length = pl.col("samples").list.len())
             .join(sample_combinations, how="cross")
             .with_columns(pl.col("samples").list.gather(pl.col("sample_combinations")))
@@ -60,6 +60,7 @@ def get_clusters(
                     .list.join(",")
                 )
             .unique()
+            .collect(streaming=True)
         )
 
     logging.info(f"Found {preclusters.height} preclusters")
