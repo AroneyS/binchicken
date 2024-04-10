@@ -902,7 +902,10 @@ def iterate(args):
     logging.info(f"Bin chicken iterate complete.")
     logging.info(f"Cluster summary at {os.path.join(args.output, 'coassemble', 'summary.tsv')}")
     logging.info(f"More details at {os.path.join(args.output, 'coassemble', 'target', 'elusive_clusters.tsv')}")
-    logging.info(f"Aviary commands for coassembly and recovery in shell scripts at {os.path.join(args.output, 'coassemble', 'commands')}")
+    if args.run_aviary:
+        logging.info(f"Aviary outputs at {os.path.join(args.output, 'coassemble', 'coassemble')}")
+    else:
+        logging.info(f"Aviary commands for coassembly and recovery in shell scripts at {os.path.join(args.output, 'coassemble', 'commands')}")
 
 def configure_variable(variable, value):
     os.environ[variable] = value
