@@ -24,23 +24,38 @@ def get_clusters(
     if len(distances) == 0:
         return pl.DataFrame(schema={"samples": str})
 
-    best_distances = np.argsort(distances, axis=1)[:, :PRECLUSTER_SIZE]
-    best_samples = np.array(samples)[best_distances]
-
     if MAX_COASSEMBLY_SAMPLES < 2:
         # Set to 2 to produce paired edges
         MAX_COASSEMBLY_SAMPLES = 2
 
     logging.info("Choosing preclusters based on distances")
-    preclusters = set()
-    for i, sample in enumerate(samples):
-        chosen_samples = best_samples[i][best_samples[i] != sample]
+    best_samples = np.argsort(distances, axis=1)[:, :PRECLUSTER_SIZE]
+    chosen_samples = [(samples[i], list(np.array(samples)[b[b != i]])) for i, b in enumerate(best_samples)]
+    with pl.StringCache():
+        preclusters = (
+            pl.DataFrame(chosen_samples, schema={"sample": pl.Categorical, "samples": pl.List(pl.Categorical)})
+            .with_columns(length = pl.col("samples").list.len())
+            .join(pl.DataFrame({"cluster_size": range(1, MAX_COASSEMBLY_SAMPLES)}), how="cross")
+            .with_columns(
+                samples_combinations = pl.struct(["length", "cluster_size"]).map_elements(
+                    lambda x: [i for i in itertools.combinations(range(x["length"]), x["cluster_size"])],
+                    return_dtype=pl.List(pl.List(pl.Int64)),
+                    )
+                )
+            .select("sample", "samples", "samples_combinations")
+            .explode("samples_combinations")
+            .with_columns(pl.col("samples").list.gather(pl.col("samples_combinations")))
+            .select(
+                samples = pl.concat_list("sample", "samples")
+                    .cast(pl.List(str))
+                    .list.sort()
+                    .list.join(",")
+                )
+            .unique()
+        )
 
-        for n_samples in range(1, MAX_COASSEMBLY_SAMPLES):
-            for combination in itertools.combinations(chosen_samples, n_samples):
-                preclusters.add(frozenset([sample, *combination]))
-
-    return pl.DataFrame([",".join(sorted(s)) for s in preclusters], schema={"samples": str})
+    logging.info(f"Found {preclusters.height} preclusters")
+    return preclusters
 
 
 def pipeline(
@@ -200,7 +215,13 @@ if __name__ == "__main__":
     if distances_path:
         from sourmash import fig
         distances, samples = fig.load_matrix_and_labels(distances_path)
-        sample_preclusters = get_clusters(distances, samples, PRECLUSTER_SIZE=PRECLUSTER_SIZE, MAX_COASSEMBLY_SAMPLES=MAX_COASSEMBLY_SAMPLES)
+        sample_preclusters = get_clusters(
+            distances,
+            samples,
+            PRECLUSTER_SIZE=PRECLUSTER_SIZE,
+            MAX_COASSEMBLY_SAMPLES=MAX_COASSEMBLY_SAMPLES,
+            threads=snakemake.threads
+            )
     else:
         sample_preclusters = None
 

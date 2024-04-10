@@ -49,11 +49,11 @@ class Tests(unittest.TestCase):
             [0.5, 0,   0.9],
             [1,   0.9, 0  ],
         ])
-        samples = ["sample_1", "sample_2", "samples_3"]
+        samples = ["sample_1", "sample_2", "sample_3"]
 
         expected_clusters = pl.DataFrame([
             ["sample_1,sample_2"],
-            ["sample_2,samples_3"],
+            ["sample_2,sample_3"],
         ], schema=CLUSTERS_COLUMNS)
 
         observed_clusters = get_clusters(distances, samples)
