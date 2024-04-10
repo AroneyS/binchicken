@@ -31,6 +31,7 @@ def get_clusters(
         # Set to 2 to produce paired edges
         MAX_COASSEMBLY_SAMPLES = 2
 
+    logging.info("Choosing preclusters based on distances")
     preclusters = set()
     for i, sample in enumerate(samples):
         chosen_samples = best_samples[i][best_samples[i] != sample]
@@ -136,19 +137,40 @@ def pipeline(
 
         return pl.concat(dfs)
 
-    logging.info("Grouping targets into paired matches and pooled samples for clusters of size 3+")
-    sparse_edges = (
-        unbinned
-        .select(
-            "target",
-            "coverage",
-            samples = pl.col("sample").map_elements(lambda x: [x], return_dtype=pl.List(pl.Utf8)),
-            )
-        .group_by("target")
-        .map_groups(process_groups)
-        .group_by(["style", "cluster_size", "samples"])
-        .agg(target_ids = pl.col("target").sort().str.concat(","))
-    )
+    if sample_preclusters is not None:
+        logging.info("Using chosen clusters to find appropriate targets")
+        sparse_edges = (
+            sample_preclusters
+            .with_columns(
+                style = pl.lit("match"),
+                sample_ids = pl.col("samples").str.split(","),
+                )
+            .with_columns(
+                cluster_size = pl.col("sample_ids").list.len(),
+                )
+            .explode("sample_ids")
+            .join(unbinned.select("target", "coverage", sample_ids="sample"), on="sample_ids")
+            .group_by("samples", "style", "cluster_size", "target")
+            .agg(pl.sum("coverage"), count = pl.len())
+            .filter(pl.col("count") == pl.col("cluster_size"))
+            .filter(pl.col("coverage") > MIN_COASSEMBLY_COVERAGE)
+            .group_by("style", "cluster_size", "samples")
+            .agg(target_ids = pl.col("target").sort().str.concat(","))
+        )
+    else:
+        logging.info("Grouping targets into paired matches and pooled samples for clusters of size 3+")
+        sparse_edges = (
+            unbinned
+            .select(
+                "target",
+                "coverage",
+                samples = pl.col("sample").map_elements(lambda x: [x], return_dtype=pl.List(pl.Utf8)),
+                )
+            .group_by("target")
+            .map_groups(process_groups)
+            .group_by(["style", "cluster_size", "samples"])
+            .agg(target_ids = pl.col("target").sort().str.concat(","))
+        )
 
     return unbinned, sparse_edges
 
