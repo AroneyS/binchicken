@@ -404,7 +404,7 @@ rule target_elusive:
         taxa_of_interest = config["taxa_of_interest"],
         samples = config["reads_1"],
         precluster_size = config["precluster_size"],
-    threads: 32
+    threads: 64
     resources:
         mem_mb=get_mem_mb,
         runtime = lambda wildcards, attempt: 24*60*attempt,
