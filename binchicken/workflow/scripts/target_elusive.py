@@ -21,6 +21,8 @@ def get_clusters(
         samples,
         PRECLUSTER_SIZE=2,
         MAX_COASSEMBLY_SAMPLES=2):
+    logging.info(f"Polars using {str(pl.thread_pool_size())} threads")
+
     if len(distances) == 0:
         return pl.DataFrame(schema={"samples": str})
 
@@ -220,7 +222,6 @@ if __name__ == "__main__":
             samples,
             PRECLUSTER_SIZE=PRECLUSTER_SIZE,
             MAX_COASSEMBLY_SAMPLES=MAX_COASSEMBLY_SAMPLES,
-            threads=snakemake.threads
             )
     else:
         sample_preclusters = None
