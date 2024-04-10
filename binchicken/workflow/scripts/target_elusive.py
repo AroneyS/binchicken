@@ -200,7 +200,7 @@ if __name__ == "__main__":
     if distances_path:
         from sourmash import fig
         distances, samples = fig.load_matrix_and_labels(distances_path)
-        sample_preclusters = get_preclusters(distances, samples, PRECLUSTER_SIZE=PRECLUSTER_SIZE, MAX_COASSEMBLY_SAMPLES=MAX_COASSEMBLY_SAMPLES)
+        sample_preclusters = get_clusters(distances, samples, PRECLUSTER_SIZE=PRECLUSTER_SIZE, MAX_COASSEMBLY_SAMPLES=MAX_COASSEMBLY_SAMPLES)
     else:
         sample_preclusters = None
 
@@ -213,4 +213,4 @@ if __name__ == "__main__":
         MAX_COASSEMBLY_SAMPLES=MAX_COASSEMBLY_SAMPLES,
         )
     targets.write_csv(targets_path, separator="\t")
-    edges.write_csv(edges_path, separator="\t")
+    edges.sort("style", "cluster_size", "samples").write_csv(edges_path, separator="\t")
