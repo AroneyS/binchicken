@@ -165,21 +165,18 @@ def pipeline(
         logging.info("Using chosen clusters to find appropriate targets")
         sparse_edges = (
             sample_preclusters
-            .with_columns(
-                style = pl.lit("match"),
-                sample_ids = pl.col("samples").str.split(","),
-                )
-            .with_columns(
-                cluster_size = pl.col("sample_ids").list.len(),
-                )
+            .with_columns(sample_ids = pl.col("samples").str.split(","))
+            .with_columns(cluster_size = pl.col("sample_ids").list.len())
             .explode("sample_ids")
             .join(unbinned.select("target", "coverage", sample_ids="sample"), on="sample_ids")
-            .group_by("samples", "style", "cluster_size", "target")
+            .group_by("samples", "cluster_size", "target")
             .agg(pl.sum("coverage"), count = pl.len())
             .filter(pl.col("count") == pl.col("cluster_size"))
             .filter(pl.col("coverage") > MIN_COASSEMBLY_COVERAGE)
-            .group_by("style", "cluster_size", "samples")
+            .group_by("samples", "cluster_size")
             .agg(target_ids = pl.col("target").sort().str.concat(","))
+            .with_columns(style = pl.lit("match"))
+            .select("style", "cluster_size", "samples", "target_ids")
         )
     else:
         logging.info("Grouping targets into paired matches and pooled samples for clusters of size 3+")
