@@ -36,9 +36,10 @@ def get_clusters(
 
     sample_combinations = (
         pl.LazyFrame({"cluster_size": range(1, MAX_COASSEMBLY_SAMPLES)})
+        # Choose top N clusters for each cluster size where N is PRECLUSTER_SIZE
         .with_columns(
             sample_combinations = pl.col("cluster_size").map_elements(
-                lambda x: [[0] + list(i) for i in itertools.combinations(range(1, PRECLUSTER_SIZE), x)],
+                lambda x: [[0] + list(i) for i in itertools.combinations(range(1, PRECLUSTER_SIZE), x)][:PRECLUSTER_SIZE],
                 return_dtype=pl.List(pl.List(pl.Int64)),
                 )
             )
