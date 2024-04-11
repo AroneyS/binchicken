@@ -32,13 +32,13 @@ def get_clusters(
 
     logging.info("Processing distances...")
     best_samples = np.argsort(distances, axis=1)[:, :PRECLUSTER_SIZE]
-    chosen_samples = [(samples[i], list(np.array(samples)[b[b != i]])) for i, b in enumerate(best_samples)]
+    chosen_samples = [[[samples[i]] + list(np.array(samples)[b[b != i]])] for i, b in enumerate(best_samples)]
 
     sample_combinations = (
         pl.LazyFrame({"cluster_size": range(1, MAX_COASSEMBLY_SAMPLES)})
         .with_columns(
             sample_combinations = pl.col("cluster_size").map_elements(
-                lambda x: [i for i in itertools.combinations(range(PRECLUSTER_SIZE-1), x)],
+                lambda x: [[0] + list(i) for i in itertools.combinations(range(1, PRECLUSTER_SIZE), x)],
                 return_dtype=pl.List(pl.List(pl.Int64)),
                 )
             )
@@ -49,12 +49,11 @@ def get_clusters(
     logging.info("Choosing preclusters based on distances")
     with pl.StringCache():
         preclusters = (
-            pl.LazyFrame(chosen_samples, schema={"sample": pl.Categorical, "samples": pl.List(pl.Categorical)})
-            .with_columns(length = pl.col("samples").list.len())
+            pl.LazyFrame(chosen_samples, schema={"samples": pl.List(pl.Categorical)}, orient="row")
             .join(sample_combinations, how="cross")
-            .with_columns(pl.col("samples").list.gather(pl.col("sample_combinations")))
             .select(
-                samples = pl.concat_list("sample", "samples")
+                pl.col("samples")
+                    .list.gather(pl.col("sample_combinations"))
                     .cast(pl.List(str))
                     .list.sort()
                     .list.join(",")
