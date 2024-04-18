@@ -34,5 +34,5 @@ test: false
 mock_sra: false
 aviary_dryrun: false
 conda_prefix: false
-tmpdir: "/tmp"
+tmpdir: false
 build: false

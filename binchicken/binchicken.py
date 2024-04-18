@@ -1111,7 +1111,7 @@ def main():
         retries_default = 3
         argument_group.add_argument("--cluster-retries", help=f"Number of times to retry a failed job when using cluster submission (see `--snakemake-profile`) [default: {retries_default}].", default=retries_default)
         argument_group.add_argument("--snakemake-args", help="Additional commands to be supplied to snakemake in the form of a space-prefixed single string e.g. \" --quiet\"", default="")
-        argument_group.add_argument("--tmp-dir", help="Path to temporary directory. [default: Use path from TMPDIR env variable]")
+        argument_group.add_argument("--tmp-dir", help="Path to temporary directory. [default: no default]")
 
     def add_base_arguments(argument_group):
         argument_group.add_argument("--forward", "--reads", "--sequences", nargs='+', help="input forward/unpaired nucleotide read sequence(s)")
@@ -1328,8 +1328,6 @@ def main():
         args.aviary_gtdbtk_db = load_variable("GTDBTK_DATA_PATH")
     if not hasattr(args, "aviary_checkm2_db") or not args.aviary_checkm2_db:
         args.aviary_checkm2_db = load_variable("CHECKM2DB")
-    if not args.tmp_dir:
-        args.tmp_dir = load_variable("TMPDIR")
 
     if hasattr(args, "genomes"):
         if not (args.genomes or args.genomes_list):
