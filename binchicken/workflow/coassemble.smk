@@ -695,7 +695,7 @@ rule aviary_assemble:
         drymkdir = "&& mkdir -p "+output_dir+"/coassemble/{coassembly}/assemble/assembly" if config["aviary_dryrun"] else "",
         drytouch = "&& touch "+output_dir+"/coassemble/{coassembly}/assemble/assembly/final_contigs.fasta" if config["aviary_dryrun"] else "",
         conda_prefix = config["conda_prefix"] if config["conda_prefix"] else ".",
-        tmpdir = f"TMPDIR={config["tmpdir"]}" if config["tmpdir"] else "",
+        tmpdir = f"TMPDIR={config['tmpdir']}" if config["tmpdir"] else "",
     threads: lambda wildcards, attempt: get_assemble_threads(wildcards, attempt)
     resources:
         mem_mb = lambda wildcards, attempt: get_assemble_memory(wildcards, attempt, unit="MB"),
@@ -746,7 +746,7 @@ rule aviary_recover:
         fast = "--workflow recover_mags_no_singlem --skip-binners maxbin concoct rosella --skip-abundances --refinery-max-iterations 0" if config["aviary_speed"] == FAST_AVIARY_MODE else "",
         snakemake_profile = f"--snakemake-profile {config['snakemake_profile']}" if config["snakemake_profile"] else "",
         cluster_retries = f"--cluster-retries {config['cluster_retries']}" if config["cluster_retries"] else "",
-        tmpdir = f"TMPDIR={config["tmpdir"]}" if config["tmpdir"] else "",
+        tmpdir = f"TMPDIR={config['tmpdir']}" if config["tmpdir"] else "",
     localrule: True
     threads:
         int(config["aviary_recover_threads"])
