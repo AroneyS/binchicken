@@ -2,4 +2,4 @@ channels:
   - conda-forge
   - bioconda
 dependencies:
-  - aviary=0.8.*
+  - aviary=0.9.*
