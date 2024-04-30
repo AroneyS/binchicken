@@ -22,6 +22,11 @@ qc_reads_2 = {read: output_dir + f"/qc/{read}_2.fastq.gz" for read in config["re
 def get_mem_mb(wildcards, threads):
     return 8 * 1000 * threads
 
+def get_runtime(base_hours):
+    def runtime_func(wildcards, attempt):
+        return f"{attempt * base_hours}h"
+    return runtime_func
+
 def get_genomes(wildcards, version=None):
     version = version if version else wildcards.version
     if version == "":
@@ -523,7 +528,7 @@ rule map_reads:
     threads: 16
     resources:
         mem_mb=get_mem_mb,
-        runtime = "12h",
+        runtime = get_runtime(base_hours = 12),
     log:
         logs_dir + "/mapping/{read}_coverm.log",
     benchmark:
@@ -553,7 +558,7 @@ rule filter_bam_files:
     threads: 16
     resources:
         mem_mb=get_mem_mb,
-        runtime = "4h",
+        runtime = get_runtime(base_hours = 4),
     log:
         logs_dir + "/mapping/{read}_filter.log",
     benchmark:
@@ -580,7 +585,7 @@ rule bam_to_fastq:
     threads: 16
     resources:
         mem_mb=get_mem_mb,
-        runtime = "4h",
+        runtime = get_runtime(base_hours = 4),
     log:
         logs_dir + "/mapping/{read}_fastq.log",
     conda:
