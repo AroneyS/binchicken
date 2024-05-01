@@ -26,7 +26,7 @@ CLUSTER_COLUMNS = {
     "samples": str,
     "length": int,
     "total_targets": int,
-    "total_size": int,
+    "total_size": float,
     "recover_samples": str,
     "coassembly": str,
 }
