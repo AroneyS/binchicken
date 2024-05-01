@@ -6,7 +6,38 @@
 import polars as pl
 import os
 
-OUTPUT_COLUMNS={
+SINGLEM_COLUMNS = {
+    "gene": str,
+    "sample": str,
+    "sequence": str,
+    "num_hits": int,
+    "coverage": float,
+    "taxonomy": str,
+}
+
+TARGET_COLUMNS = SINGLEM_COLUMNS | {
+    "target": int,
+}
+APPRAISE_COLUMNS = SINGLEM_COLUMNS | {
+    "found_in": str,
+}
+
+CLUSTER_COLUMNS = {
+    "samples": str,
+    "length": int,
+    "total_targets": int,
+    "total_size": int,
+    "recover_samples": str,
+    "coassembly": str,
+}
+EDGE_COLUMNS = {
+    "style": str,
+    "cluster_size": int,
+    "samples": str,
+    "target_ids": str,
+}
+
+OUTPUT_COLUMNS = {
     "coassembly": str,
     "gene": str,
     "sequence": str,
@@ -302,11 +333,11 @@ if __name__ == "__main__":
     novel_hits_path = snakemake.output.novel_hits
     summary_stats_path = snakemake.output.summary_stats
 
-    target_otu_table = pl.read_csv(target_path, separator="\t")
-    binned_otu_table = pl.read_csv(binned_path, separator="\t")
-    elusive_clusters = pl.read_csv(elusive_clusters_path, separator="\t")
-    elusive_edges = pl.read_csv(elusive_edges_path, separator="\t")
-    recovered_otu_table = pl.read_csv(recovered_otu_table_path, separator="\t")
+    target_otu_table = pl.read_csv(target_path, separator="\t", dtypes=TARGET_COLUMNS)
+    binned_otu_table = pl.read_csv(binned_path, separator="\t", dtypes=APPRAISE_COLUMNS)
+    elusive_clusters = pl.read_csv(elusive_clusters_path, separator="\t", dtypes=CLUSTER_COLUMNS)
+    elusive_edges = pl.read_csv(elusive_edges_path, separator="\t", dtypes=EDGE_COLUMNS)
+    recovered_otu_table = pl.read_csv(recovered_otu_table_path, separator="\t", dtypes=SINGLEM_COLUMNS)
 
     matches, unmatched, summary = evaluate(target_otu_table, binned_otu_table, elusive_clusters, elusive_edges, recovered_otu_table, recovered_bins)
     # Export hits matching elusive targets
