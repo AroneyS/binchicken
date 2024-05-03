@@ -747,9 +747,10 @@ rule aviary_recover:
         snakemake_profile = f"--snakemake-profile {config['snakemake_profile']}" if config["snakemake_profile"] else "",
         cluster_retries = f"--cluster-retries {config['cluster_retries']}" if config["cluster_retries"] else "",
         tmpdir = f"TMPDIR={config['tmpdir']}" if config["tmpdir"] else "",
+        threads = int(config["aviary_recover_threads"])
     localrule: True
     threads:
-        int(config["aviary_recover_threads"])
+        1 if config["cluster_submission"] else int(config["aviary_recover_threads"])
     resources:
         mem_mb = int(config["aviary_recover_memory"])*1000,
         mem_gb = int(config["aviary_recover_memory"]),
@@ -771,12 +772,12 @@ rule aviary_recover:
         "-2 {params.reads_2} "
         "--output {params.output} "
         "{params.fast} "
-        "-n {threads} "
-        "-t {threads} "
+        "-n {params.threads} "
+        "-t {params.threads} "
         "-m {resources.mem_gb} "
         "--skip-qc "
         "{params.snakemake_profile} "
-        "{params.cluster_retries} "
+        "{params.retries} "
         "{params.dryrun} "
         "&> {log} "
         "&& touch {output} "
