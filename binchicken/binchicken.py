@@ -96,7 +96,7 @@ def read_list(path):
         return [line.strip() for line in f]
 
 def run_workflow(config, workflow, output_dir, cores=16, dryrun=False,
-                 profile=None, local_cores=1, cluster_retries=None,
+                 profile=None, local_cores=1, retries=None,
                  snakemake_args="", conda_frontend="mamba", conda_prefix=None):
     load_configfile(config)
 
@@ -113,7 +113,7 @@ def run_workflow(config, workflow, output_dir, cores=16, dryrun=False,
         jobs=f"--cores {cores}" if cores is not None else "--cores 1",
         profile="" if not profile else f"--profile {profile}",
         local=f"--local-cores {local_cores}",
-        retries="" if (cluster_retries is None) else f"--retries {cluster_retries}",
+        retries="" if (retries is None) else f"--retries {retries}",
         conda_frontend=f"--conda-frontend {conda_frontend}" if conda_frontend is not None else "",
         conda_prefix=f"--conda-prefix {conda_prefix}" if conda_prefix is not None else "",
         dryrun="--dryrun" if dryrun else "",
@@ -129,7 +129,7 @@ def download_sra(args):
         "reads_1": {},
         "reads_2": {},
         "snakemake_profile": args.snakemake_profile,
-        "cluster_retries": args.cluster_retries,
+        "retries": args.retries,
         "tmpdir": args.tmp_dir,
     }
 
@@ -152,7 +152,7 @@ def download_sra(args):
         dryrun = args.dryrun,
         profile = args.snakemake_profile,
         local_cores = args.local_cores,
-        cluster_retries = args.cluster_retries,
+        retries = args.retries,
         conda_prefix = args.conda_prefix,
         snakemake_args = target_rule + " " + args.snakemake_args if args.snakemake_args else target_rule,
     )
@@ -484,7 +484,7 @@ def coassemble(args):
         "aviary_recover_memory": args.aviary_recover_memory,
         "conda_prefix": args.conda_prefix,
         "snakemake_profile": args.snakemake_profile,
-        "cluster_retries": args.cluster_retries,
+        "retries": args.retries,
         "tmpdir": args.tmp_dir,
         "build": build_status,
     }
@@ -503,7 +503,7 @@ def coassemble(args):
         dryrun = args.dryrun,
         profile = args.snakemake_profile,
         local_cores = args.local_cores,
-        cluster_retries = args.cluster_retries,
+        retries = args.retries,
         conda_prefix = args.conda_prefix,
         snakemake_args = args.snakemake_args,
     )
@@ -585,7 +585,7 @@ def evaluate(args):
         "original_bins": original_bins,
         "prodigal_meta": args.prodigal_meta,
         "snakemake_profile": args.snakemake_profile,
-        "cluster_retries": args.cluster_retries,
+        "retries": args.retries,
         "tmpdir": args.tmp_dir,
     }
 
@@ -603,7 +603,7 @@ def evaluate(args):
         dryrun = args.dryrun,
         profile = args.snakemake_profile,
         local_cores = args.local_cores,
-        cluster_retries = args.cluster_retries,
+        retries = args.retries,
         conda_prefix = args.conda_prefix,
         snakemake_args = args.snakemake_args,
     )
@@ -1109,7 +1109,7 @@ def main():
         local_cores_default = 1
         argument_group.add_argument("--local-cores", type=int, help=f"Maximum number of cores to use on localrules when running in cluster mode [default: {local_cores_default}]", default=local_cores_default)
         retries_default = 3
-        argument_group.add_argument("--cluster-retries", help=f"Number of times to retry a failed job when using cluster submission (see `--snakemake-profile`) [default: {retries_default}].", default=retries_default)
+        argument_group.add_argument("--retries", help=f"Number of times to retry a failed job [default: {retries_default}].", default=retries_default)
         argument_group.add_argument("--snakemake-args", help="Additional commands to be supplied to snakemake in the form of a space-prefixed single string e.g. \" --quiet\"", default="")
         argument_group.add_argument("--tmp-dir", help="Path to temporary directory. [default: no default]")
 

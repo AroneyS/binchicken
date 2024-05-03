@@ -745,7 +745,7 @@ rule aviary_recover:
         singlem_metapackage = config["singlem_metapackage"],
         fast = "--workflow recover_mags_no_singlem --skip-binners maxbin concoct rosella --skip-abundances --refinery-max-iterations 0" if config["aviary_speed"] == FAST_AVIARY_MODE else "",
         snakemake_profile = f"--snakemake-profile {config['snakemake_profile']}" if config["snakemake_profile"] else "",
-        cluster_retries = f"--cluster-retries {config['cluster_retries']}" if config["cluster_retries"] else "",
+        retries = f"--cluster-retries {config['retries']}" if config["retries"] else "",
         tmpdir = f"TMPDIR={config['tmpdir']}" if config["tmpdir"] else "",
     localrule: True
     threads:
