@@ -777,7 +777,7 @@ rule aviary_recover:
         "-m {resources.mem_gb} "
         "--skip-qc "
         "{params.snakemake_profile} "
-        "{params.retries} "
+        "{params.cluster_retries} "
         "{params.dryrun} "
         "&> {log} "
         "&& touch {output} "

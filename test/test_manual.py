@@ -26,7 +26,7 @@ TWO_GENOMES = " ".join([
     os.path.join(path_to_data, "GB_GCA_013286235.2.fna"),
     ])
 
-MOCK_COASSEMBLE = os.path.join(path_to_data, "mock_coassemble")
+MOCK_COASSEMBLE = os.path.join(path_to_data, "mock_coassemble", "coassemble")
 APPRAISE_BINNED = os.path.join(MOCK_COASSEMBLE, "coassemble", "appraise", "binned.otu_table.tsv")
 APPRAISE_UNBINNED = os.path.join(MOCK_COASSEMBLE, "coassemble", "appraise", "unbinned.otu_table.tsv")
 ELUSIVE_CLUSTERS = os.path.join(MOCK_COASSEMBLE, "coassemble", "target", "elusive_clusters.tsv")
