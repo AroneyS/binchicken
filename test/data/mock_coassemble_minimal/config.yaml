@@ -46,4 +46,4 @@ reads_2:
   sample_2: ../sample_2.2.fq
   sample_3: ../sample_3.2.fq
 snakemake_profile: ''
-retries: 0
+cluster_retries: 0
