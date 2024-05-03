@@ -476,6 +476,7 @@ def coassemble(args):
         "aviary_speed": args.aviary_speed,
         "assembly_strategy": args.assembly_strategy,
         "run_aviary": args.run_aviary,
+        "cluster_submission": args.cluster_submission,
         "aviary_gtdbtk": args.aviary_gtdbtk_db,
         "aviary_checkm2": args.aviary_checkm2_db,
         "aviary_assemble_threads": args.aviary_assemble_cores,
@@ -1133,6 +1134,7 @@ def main():
 
     def add_aviary_options(argument_group):
         argument_group.add_argument("--run-aviary", action="store_true", help="Run Aviary commands for all identified coassemblies (unless specific coassemblies are chosen with --coassemblies) [default: do not]")
+        argument_group.add_argument("--cluster-submission", action="store_true", help="Flag that cluster submission will occur through `--snakemake-profile`. This sets the local threads of Aviary recover to 1, allowing parallel job submission [default: do not]")
         default_aviary_speed = FAST_AVIARY_MODE
         argument_group.add_argument("--aviary-speed", help=f"Run Aviary recover in 'fast' or 'comprehensive' mode. Fast mode skips slow binners and refinement steps. [default: {default_aviary_speed}]",
                                     default=default_aviary_speed, choices=[FAST_AVIARY_MODE, COMPREHENSIVE_AVIARY_MODE])
@@ -1378,6 +1380,8 @@ def main():
                 raise Exception("Max recovery samples (--max-recovery-samples) must be greater than or equal to number of coassembly samples (--num-coassembly-samples)")
         if args.run_aviary and not (args.aviary_gtdbtk_db and args.aviary_checkm2_db):
             raise Exception("Run Aviary (--run-aviary) requires paths to GTDB-Tk and CheckM2 databases to be provided (--aviary-gtdbtk-db or GTDBTK_DATA_PATH and --aviary-checkm2-db or CHECKM2DB)")
+        if args.cluster_submission and not args.snakemake_profile:
+                logging.warning("The arg `--cluster-submission` is only a flag and cannot activate cluster submission alone. Please see `--snakemake-profile` for cluster submission.")
         if (args.sample_query or args.sample_query_list or args.sample_query_dir) and args.taxa_of_interest and args.assemble_unmapped:
             raise Exception("Unmapping is incompatible with the combination of sample query and taxa of interest")
 
@@ -1407,6 +1411,8 @@ def main():
         coassemble_output_argument_verification(args)
         if args.run_aviary and not (args.aviary_gtdbtk_db and args.aviary_checkm2_db):
             raise Exception("Run Aviary (--run-aviary) requires paths to GTDB-Tk and CheckM2 databases to be provided (--aviary-gtdbtk-db and --aviary-checkm2-db)")
+        if args.cluster_submission and not args.snakemake_profile:
+            logging.warning("The arg `--cluster-submission` is only a flag and cannot activate cluster submission alone. Please see `--snakemake-profile` for cluster submission.")
         update(args)
 
     elif args.subparser_name == "iterate":

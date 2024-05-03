@@ -102,6 +102,7 @@ class Tests(unittest.TestCase):
             f"--snakemake-profile mqsub "
             f"--local-cores 5 "
             f"--cluster-retries 1 "
+            f"--cluster-submission "
         )
         subprocess.run(cmd, shell=True, check=True)
 
