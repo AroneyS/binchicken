@@ -89,7 +89,7 @@ def evaluate(target_otu_table, binned_otu_table, elusive_clusters, elusive_edges
         .group_by("samples_hash", "coassembly")
         .agg(
             pl.first("target_ids"),
-            pl.len().alias("count"),
+            pl.count(),
             pl.first("cluster_size"),
             pl.col("samples").unique(),
             )
@@ -281,7 +281,7 @@ def summarise_stats(matches, combined_otu_table, recovered_bins):
             )
         .unnest("name")
         .group_by("coassembly")
-        .agg(pl.len().alias("n"))
+        .agg(pl.count().alias("n"))
         .with_columns(
             pl.lit("match").alias("status"),
             pl.lit("bins").alias("statistic"),
