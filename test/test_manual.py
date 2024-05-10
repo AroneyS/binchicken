@@ -140,7 +140,10 @@ class Tests(unittest.TestCase):
             f"--coassemble-summary {os.path.join(MOCK_COASSEMBLE, 'summary.tsv')} "
             f"--output {output_dir} "
             f"--conda-prefix {path_to_conda} "
-            f"--snakemake-args '--profile mqsub --retries 1' "
+            f"--snakemake-profile mqsub "
+            f"--local-cores 5 "
+            f"--cluster-retries 1 "
+            f"--cluster-submission "
         )
         subprocess.run(cmd, shell=True, check=True)
 
