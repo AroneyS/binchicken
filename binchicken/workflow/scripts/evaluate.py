@@ -45,6 +45,7 @@ OUTPUT_COLUMNS = {
     "target": str,
     "found_in": str,
     "source_samples": str,
+    "source_num_hits": int,
     "source_coverage": float,
     "taxonomy": str,
     }
@@ -123,6 +124,7 @@ def evaluate(target_otu_table, binned_otu_table, elusive_clusters, elusive_edges
         .group_by("gene", "sequence", "coassembly", "taxonomy", "found_in", "target")
         .agg(
             pl.col("source_samples").sort().str.concat(","),
+            source_num_hits = pl.sum("num_hits"),
             source_coverage = pl.sum("coverage"),
             )
     )
@@ -138,7 +140,7 @@ def evaluate(target_otu_table, binned_otu_table, elusive_clusters, elusive_edges
             ])
         .select([
             pl.col("sample").str.replace(r"_1$", "").str.replace(r"\.1$", ""),
-            "gene", "sequence", "taxonomy", "found_in", "coverage"
+            "gene", "sequence", "taxonomy", "found_in", "num_hits", "coverage"
             ])
         .join(sample_coassemblies, left_on="sample", right_on="samples", how="left")
         .drop_nulls("coassembly")
@@ -148,6 +150,7 @@ def evaluate(target_otu_table, binned_otu_table, elusive_clusters, elusive_edges
             pl.first("found_in"),
             pl.lit(None).cast(str).alias("target"),
             pl.col("sample").unique().sort().str.concat(",").alias("source_samples"),
+            pl.sum("num_hits").alias("source_num_hits"),
             pl.sum("coverage").alias("source_coverage"),
             ])
         .unique()
@@ -172,7 +175,8 @@ def evaluate(target_otu_table, binned_otu_table, elusive_clusters, elusive_edges
             haystack_otu_table, on=["coassembly", "gene", "sequence"], how="outer_coalesce", suffix="old"
             )
         .select(
-            "coassembly", "gene", "sequence", "genome", "target", "found_in", "source_samples", "source_coverage",
+            "coassembly", "gene", "sequence", "genome", "target", "found_in",
+            "source_samples", "source_num_hits", "source_coverage",
             pl.when(pl.col("taxonomy").is_null())
                 .then(pl.col("taxonomyold"))
                 .otherwise(pl.col("taxonomy"))
