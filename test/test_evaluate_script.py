@@ -21,6 +21,7 @@ OUTPUT_COLUMNS={
     "target": str,
     "found_in": str,
     "source_samples": str,
+    "source_coverage": float,
     "taxonomy": str,
     }
 SUMMARY_COLUMNS = {
@@ -67,13 +68,13 @@ class Tests(unittest.TestCase):
             }
 
         expected_matches = pl.DataFrame([
-            ["coassembly_0", "S3.1", "AAA", "genome_1_transcripts", "10", None, "sample_1,sample_2", "Root"],
-            ["coassembly_0", "S3.1", "BBB", "genome_1_transcripts", None, "oldgenome_1", "sample_1", "Root"],
-            ["coassembly_0", "S3.1", "CCC", "genome_1_transcripts", None, None, "sample_1,sample_2", "Root"],
-            ["coassembly_0", "S3.1", "DDD", "genome_1_transcripts", None, None, "sample_1", "Root"],
+            ["coassembly_0", "S3.1", "AAA", "genome_1_transcripts", "10", None, "sample_1,sample_2", 20.0, "Root"],
+            ["coassembly_0", "S3.1", "BBB", "genome_1_transcripts", None, "oldgenome_1", "sample_1", 10.0, "Root"],
+            ["coassembly_0", "S3.1", "CCC", "genome_1_transcripts", None, None, "sample_1,sample_2", 4.0, "Root"],
+            ["coassembly_0", "S3.1", "DDD", "genome_1_transcripts", None, None, "sample_1", 2.0, "Root"],
         ], schema=OUTPUT_COLUMNS)
         expected_unmatched = pl.DataFrame([
-            ["coassembly_0", "S3.1", "AAB", "genome_1_transcripts", None, None, None, "Root"],
+            ["coassembly_0", "S3.1", "AAB", "genome_1_transcripts", None, None, None, None, "Root"],
         ], schema=OUTPUT_COLUMNS)
         expected_summary = pl.DataFrame([
             ["coassembly_0", "sequences", "targets", 1, 0, 1, 100],
@@ -112,7 +113,7 @@ class Tests(unittest.TestCase):
             }
 
         expected_matches = pl.DataFrame([
-            ["coassembly_0", "S3.1", "AAA", "genome_1_transcripts", "10", None, "sample_1,sample_2", "Root"],
+            ["coassembly_0", "S3.1", "AAA", "genome_1_transcripts", "10", None, "sample_1,sample_2", 20.0, "Root"],
         ], schema=OUTPUT_COLUMNS)
         expected_unmatched = pl.DataFrame([
         ], schema=OUTPUT_COLUMNS)
@@ -153,10 +154,10 @@ class Tests(unittest.TestCase):
             }
 
         expected_matches = pl.DataFrame([
-            ["coassembly_0", "S3.1", "AAA", None, "10", None, "sample_1,sample_2", "Root; old"],
+            ["coassembly_0", "S3.1", "AAA", None, "10", None, "sample_1,sample_2", 20.0, "Root; old"],
         ], schema=OUTPUT_COLUMNS)
         expected_unmatched = pl.DataFrame([
-            ["coassembly_0", "S3.1", "AAB", "genome_1_transcripts", None, None, None, "Root"],
+            ["coassembly_0", "S3.1", "AAB", "genome_1_transcripts", None, None, None, None, "Root"],
         ], schema=OUTPUT_COLUMNS)
         expected_summary = pl.DataFrame([
             ["coassembly_0", "sequences", "targets", 0, 1, 1, 0],
@@ -230,11 +231,11 @@ class Tests(unittest.TestCase):
             }
 
         expected_matches = pl.DataFrame([
-            ["coassembly_0", "S3.1", "AAA", "genome_1_transcripts", "10", None, "sample_1,sample_2", "Root"],
+            ["coassembly_0", "S3.1", "AAA", "genome_1_transcripts", "10", None, "sample_1,sample_2", 20.0, "Root"],
         ], schema=OUTPUT_COLUMNS)
         expected_unmatched = pl.DataFrame([
-            ["coassembly_0", "S3.1", "AAB", "genome_1_transcripts", None, None, None, "Root"],
-            ["coassembly_0", "S3.1", "BBB", "genome_1_transcripts", None, None, None, "Root"],
+            ["coassembly_0", "S3.1", "AAB", "genome_1_transcripts", None, None, None, None, "Root"],
+            ["coassembly_0", "S3.1", "BBB", "genome_1_transcripts", None, None, None, None, "Root"],
         ], schema=OUTPUT_COLUMNS)
         expected_summary = pl.DataFrame([
             ["coassembly_0", "sequences", "targets", 1, 0, 1, 100],
@@ -276,11 +277,11 @@ class Tests(unittest.TestCase):
             }
 
         expected_matches = pl.DataFrame([
-            ["coassembly_0", "S3.1", "AAA", "genome_1_transcripts", "10", None, "sample_1,sample_2", "Root"],
-            ["coassembly_0", "S3.1", "BBB", "genome_1_transcripts", None, "oldgenome_1", "sample_1,sample_2", "Root"],
+            ["coassembly_0", "S3.1", "AAA", "genome_1_transcripts", "10", None, "sample_1,sample_2", 20.0, "Root"],
+            ["coassembly_0", "S3.1", "BBB", "genome_1_transcripts", None, "oldgenome_1", "sample_1,sample_2", 20.0, "Root"],
         ], schema=OUTPUT_COLUMNS)
         expected_unmatched = pl.DataFrame([
-            ["coassembly_0", "S3.1", "AAB", "genome_1_transcripts", None, None, None, "Root"],
+            ["coassembly_0", "S3.1", "AAB", "genome_1_transcripts", None, None, None, None, "Root"],
         ], schema=OUTPUT_COLUMNS)
         expected_summary = pl.DataFrame([
             ["coassembly_0", "sequences", "targets", 1, 0, 1, 100],
@@ -334,15 +335,15 @@ class Tests(unittest.TestCase):
             }
 
         expected_matches = pl.DataFrame([
-            ["coassembly_0", "S3.1", "AAA", "genome_1_transcripts", "10", None, "sample_1,sample_2", "Root"],
-            ["coassembly_0", "S3.1", "BBB", "genome_1_transcripts", None, "oldgenome_1", "sample_1", "Root"],
-            ["coassembly_1", "S3.1", "CCC", "genome_1_transcripts", "11", None, "sample_1,sample_3", "Root"],
-            ["coassembly_1", "S3.1", "DDD", "genome_1_transcripts", None, "oldgenome_2", "sample_3", "Root"],
-            ["coassembly_1", "S3.1", "EEE", "genome_1_transcripts", None, None, "sample_1,sample_3", "Root"],
+            ["coassembly_0", "S3.1", "AAA", "genome_1_transcripts", "10", None, "sample_1,sample_2", 20.0, "Root"],
+            ["coassembly_0", "S3.1", "BBB", "genome_1_transcripts", None, "oldgenome_1", "sample_1", 10.0, "Root"],
+            ["coassembly_1", "S3.1", "CCC", "genome_1_transcripts", "11", None, "sample_1,sample_3", 20.0, "Root"],
+            ["coassembly_1", "S3.1", "DDD", "genome_1_transcripts", None, "oldgenome_2", "sample_3", 10.0, "Root"],
+            ["coassembly_1", "S3.1", "EEE", "genome_1_transcripts", None, None, "sample_1,sample_3", 4.0, "Root"],
         ], schema=OUTPUT_COLUMNS)
         expected_unmatched = pl.DataFrame([
-            ["coassembly_0", "S3.1", "AAB", "genome_1_transcripts", None, None, None, "Root"],
-            ["coassembly_1", "S3.1", "CCD", "genome_1_transcripts", None, None, None, "Root"],
+            ["coassembly_0", "S3.1", "AAB", "genome_1_transcripts", None, None, None, None, "Root"],
+            ["coassembly_1", "S3.1", "CCD", "genome_1_transcripts", None, None, None, None, "Root"],
         ], schema=OUTPUT_COLUMNS)
         expected_summary = pl.DataFrame([
             ["coassembly_0", "sequences", "targets", 1, 0, 1, 100],
@@ -402,17 +403,17 @@ class Tests(unittest.TestCase):
             }
 
         expected_matches = pl.DataFrame([
-            ["coassembly_0", "S3.1", "AAA", "genome_1_transcripts", "10", None, "sample_1,sample_2", "Root"],
-            ["coassembly_0", "S3.1", "BBB", "genome_1_transcripts", None, "oldgenome_1", "sample_1", "Root"],
-            ["coassembly_0", "S3.1", "CCC", "genome_1_transcripts", "11", None, "sample_1,sample_3", "Root"],
-            ["coassembly_0", "S3.1", "DDD", "genome_1_transcripts", None, "oldgenome_2", "sample_3", "Root"],
-            ["coassembly_1", "S3.1", "AAA", "genome_1_transcripts", "10", None, "sample_1,sample_2", "Root"],
-            ["coassembly_1", "S3.1", "BBB", "genome_1_transcripts", None, "oldgenome_1", "sample_1", "Root"],
+            ["coassembly_0", "S3.1", "AAA", "genome_1_transcripts", "10", None, "sample_1,sample_2", 20.0, "Root"],
+            ["coassembly_0", "S3.1", "BBB", "genome_1_transcripts", None, "oldgenome_1", "sample_1", 10.0, "Root"],
+            ["coassembly_0", "S3.1", "CCC", "genome_1_transcripts", "11", None, "sample_1,sample_3", 20.0, "Root"],
+            ["coassembly_0", "S3.1", "DDD", "genome_1_transcripts", None, "oldgenome_2", "sample_3", 10.0, "Root"],
+            ["coassembly_1", "S3.1", "AAA", "genome_1_transcripts", "10", None, "sample_1,sample_2", 20.0, "Root"],
+            ["coassembly_1", "S3.1", "BBB", "genome_1_transcripts", None, "oldgenome_1", "sample_1", 10.0, "Root"],
         ], schema=OUTPUT_COLUMNS)
         expected_unmatched = pl.DataFrame([
-            ["coassembly_0", "S3.1", "AAB", "genome_1_transcripts", None, None, None, "Root"],
-            ["coassembly_0", "S3.1", "CCD", "genome_1_transcripts", None, None, None, "Root"],
-            ["coassembly_1", "S3.1", "AAB", "genome_1_transcripts", None, None, None, "Root"],
+            ["coassembly_0", "S3.1", "AAB", "genome_1_transcripts", None, None, None, None, "Root"],
+            ["coassembly_0", "S3.1", "CCD", "genome_1_transcripts", None, None, None, None, "Root"],
+            ["coassembly_1", "S3.1", "AAB", "genome_1_transcripts", None, None, None, None, "Root"],
         ], schema=OUTPUT_COLUMNS)
         expected_summary = pl.DataFrame([
             ["coassembly_0", "sequences", "targets", 2, 0, 2, 100],
@@ -476,19 +477,19 @@ class Tests(unittest.TestCase):
             }
 
         expected_matches = pl.DataFrame([
-            ["coassembly_0", "S3.1", "AAA", "genome_0_transcripts", "10", None, "sample_1,sample_3", "Root"],
-            ["coassembly_0", "S3.1", "AAA", "genome_1_transcripts", "10", None, "sample_1,sample_3", "Root"],
-            ["coassembly_0", "S3.1", "BBB", "genome_1_transcripts", None, "oldgenome_1", "sample_3", "Root"],
-            ["coassembly_0", "S3.1", "CCC", None, "11", None, "sample_1,sample_2", "Root; old"],
-            ["coassembly_0", "S3.1", "YYY", None, "98", None, "sample_1,sample_2", "Root; old"],
-            ["coassembly_0", "S3.1", "ZZZ", None, "99", None, "sample_2,sample_3", "Root; old"],
-            ["coassembly_1", "S3.1", "CCC", "genome_1_transcripts", "11", None, "sample_1,sample_2", "Root"],
-            ["coassembly_1", "S3.1", "DDD", "genome_1_transcripts", None, "oldgenome_2", "sample_1", "Root"],
-            ["coassembly_1", "S3.1", "YYY", None, "98", None, "sample_1,sample_2", "Root; old"],
+            ["coassembly_0", "S3.1", "AAA", "genome_0_transcripts", "10", None, "sample_1,sample_3", 20.0, "Root"],
+            ["coassembly_0", "S3.1", "AAA", "genome_1_transcripts", "10", None, "sample_1,sample_3", 20.0, "Root"],
+            ["coassembly_0", "S3.1", "BBB", "genome_1_transcripts", None, "oldgenome_1", "sample_3", 10.0, "Root"],
+            ["coassembly_0", "S3.1", "CCC", None, "11", None, "sample_1,sample_2", 20.0, "Root; old"],
+            ["coassembly_0", "S3.1", "YYY", None, "98", None, "sample_1,sample_2", 20.0, "Root; old"],
+            ["coassembly_0", "S3.1", "ZZZ", None, "99", None, "sample_2,sample_3", 20.0, "Root; old"],
+            ["coassembly_1", "S3.1", "CCC", "genome_1_transcripts", "11", None, "sample_1,sample_2", 20.0, "Root"],
+            ["coassembly_1", "S3.1", "DDD", "genome_1_transcripts", None, "oldgenome_2", "sample_1", 10.0, "Root"],
+            ["coassembly_1", "S3.1", "YYY", None, "98", None, "sample_1,sample_2", 20.0, "Root; old"],
         ], schema=OUTPUT_COLUMNS)
         expected_unmatched = pl.DataFrame([
-            ["coassembly_0", "S3.1", "AAB", "genome_1_transcripts", None, None, None, "Root"],
-            ["coassembly_1", "S3.1", "CCD", "genome_1_transcripts", None, None, None, "Root"],
+            ["coassembly_0", "S3.1", "AAB", "genome_1_transcripts", None, None, None, None, "Root"],
+            ["coassembly_1", "S3.1", "CCD", "genome_1_transcripts", None, None, None, None, "Root"],
         ], schema=OUTPUT_COLUMNS)
         expected_summary = pl.DataFrame([
             ["coassembly_0", "sequences", "targets", 1, 3, 4, 25],
@@ -536,8 +537,8 @@ class Tests(unittest.TestCase):
             }
 
         expected_matches = pl.DataFrame([
-            ["coassembly_0", "S3.1", "AAA", "genome_1_transcripts", "10", None, "sample_1,sample_2", "Root"],
-            ["coassembly_0", "S3.1", "CCC", "genome_1_transcripts", None, None, "sample_1", "Root"],
+            ["coassembly_0", "S3.1", "AAA", "genome_1_transcripts", "10", None, "sample_1,sample_2", 20.0, "Root"],
+            ["coassembly_0", "S3.1", "CCC", "genome_1_transcripts", None, None, "sample_1", 2.0, "Root"],
         ], schema=OUTPUT_COLUMNS)
         expected_unmatched = pl.DataFrame([
         ], schema=OUTPUT_COLUMNS)
