@@ -34,7 +34,7 @@ def build_reads_list(forward, reverse):
             joint_name = os.path.commonprefix(
                 [os.path.basename(forward), os.path.basename(reverse)]
                 )
-            joint_name = joint_name.rstrip("_").rstrip(".")
+            joint_name = joint_name.rstrip(r"_R|_|\.")
 
             if joint_name in forward_reads:
                 raise Exception(f"Duplicate basename: {joint_name}")
