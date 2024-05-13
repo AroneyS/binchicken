@@ -340,6 +340,7 @@ class Tests(unittest.TestCase):
             ["coassembly_0", "S3.1", "BBB", "genome_1_transcripts", None, "oldgenome_1", "sample_1", 5, 10.0, "Root"],
             ["coassembly_1", "S3.1", "CCC", "genome_1_transcripts", "11", None, "sample_1,sample_3", 10, 20.0, "Root"],
             ["coassembly_1", "S3.1", "DDD", "genome_1_transcripts", None, "oldgenome_2", "sample_3", 5, 10.0, "Root"],
+            ["coassembly_0", "S3.1", "EEE", None, None, None, "sample_1", 1, 2.0, "Root; old"],
             ["coassembly_1", "S3.1", "EEE", "genome_1_transcripts", None, None, "sample_1,sample_3", 2, 4.0, "Root"],
         ], schema=OUTPUT_COLUMNS)
         expected_unmatched = pl.DataFrame([
