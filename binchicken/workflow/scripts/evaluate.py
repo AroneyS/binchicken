@@ -132,15 +132,19 @@ def evaluate(target_otu_table, binned_otu_table, elusive_clusters, elusive_edges
     # Add binned otu table to above with target NA
     nontarget_otu_table = (
         pl.concat([
-            binned_otu_table,
+            binned_otu_table
+                .with_columns(target = pl.lit(None).cast(str)),
             target_otu_table
                 .join(elusive_otu_table, on=["gene", "sequence"], how="anti")
                 .drop("target")
-                .with_columns(pl.lit(None).cast(str).alias("found_in"))
+                .with_columns(
+                    found_in = pl.lit(None).cast(str),
+                    target = pl.lit("None"),
+                    ),
             ])
         .select([
             pl.col("sample").str.replace(r"_1$", "").str.replace(r"\.1$", ""),
-            "gene", "sequence", "taxonomy", "found_in", "num_hits", "coverage"
+            "gene", "sequence", "taxonomy", "found_in", "num_hits", "coverage", "target"
             ])
         .join(sample_coassemblies, left_on="sample", right_on="samples", how="left")
         .drop_nulls("coassembly")
@@ -148,7 +152,7 @@ def evaluate(target_otu_table, binned_otu_table, elusive_clusters, elusive_edges
         .agg([
             pl.first("taxonomy"),
             pl.first("found_in"),
-            pl.lit(None).cast(str).alias("target"),
+            pl.first("target"),
             pl.col("sample").unique().sort().str.concat(",").alias("source_samples"),
             pl.sum("num_hits").alias("source_num_hits"),
             pl.sum("coverage").alias("source_coverage"),
@@ -194,6 +198,9 @@ def evaluate(target_otu_table, binned_otu_table, elusive_clusters, elusive_edges
         .filter(
             ~pl.all_horizontal(pl.col(["target", "found_in", "source_samples"]).is_null())
             )
+        .with_columns(
+            target = pl.when(pl.col("target") == "None").then(pl.lit(None)).otherwise(pl.col("target"))
+            )
     )
 
     unmatched = (
@@ -213,6 +220,9 @@ def summarise_stats(matches, combined_otu_table, recovered_bins):
         combined_otu_table
         .filter(
             pl.col("genome").is_not_null()
+            )
+        .with_columns(
+            target = pl.when(pl.col("target") == "None").then(pl.lit(None)).otherwise(pl.col("target"))
             )
     )
 
