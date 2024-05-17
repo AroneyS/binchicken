@@ -5,10 +5,10 @@
 ![](https://anaconda.org/bioconda/binchicken/badges/license.svg)
 ![](https://anaconda.org/bioconda/binchicken/badges/platforms.svg)
 
-# Bin chicken
+# Bin Chicken
 
 [<img src="docs/_include/binchicken_logo.png" width="50%" />](binchicken_logo.png)
 
-Bin chicken - targeted recovery of low abundance metagenome assembled genomes through intelligent coassembly.
+Bin Chicken - targeted recovery of low abundance metagenome assembled genomes through intelligent coassembly.
 
 Documentation can be found at https://AroneyS.github.io/binchicken/

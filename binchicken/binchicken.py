@@ -337,7 +337,7 @@ def evaluate_bins(aviary_outputs, checkm_version, min_completeness, max_contamin
         completeness_col = "Completeness (CheckM2)"
         contamination_col = "Contamination (CheckM2)"
     elif checkm_version == "build":
-        logging.info("Mock bins for Bin chicken build")
+        logging.info("Mock bins for Bin Chicken build")
         return {"iteration_0-coassembly_0-0": os.path.join(aviary_outputs[0], "iteration_0-coassembly_0-0.fna")}
     else:
         raise ValueError("Invalid CheckM version")
@@ -526,7 +526,7 @@ def coassemble(args):
     except (FileNotFoundError, NoDataError):
         pass
 
-    logging.info(f"Bin chicken coassemble complete.")
+    logging.info(f"Bin Chicken coassemble complete.")
     logging.info(f"Cluster summary at {os.path.join(args.output, 'coassemble', 'summary.tsv')}")
     logging.info(f"More details at {os.path.join(args.output, 'coassemble', 'target', 'elusive_clusters.tsv')}")
     if args.run_aviary:
@@ -535,7 +535,7 @@ def coassemble(args):
         logging.info(f"Aviary commands for coassembly and recovery in shell scripts at {os.path.join(args.output, 'coassemble', 'commands')}")
 
 def evaluate(args):
-    logging.info("Loading Bin chicken coassemble info")
+    logging.info("Loading Bin Chicken coassemble info")
     if args.coassemble_output:
         coassemble_dir = os.path.abspath(args.coassemble_output)
         coassemble_target_dir = os.path.join(coassemble_dir, "target")
@@ -609,7 +609,7 @@ def evaluate(args):
         snakemake_args = args.snakemake_args,
     )
 
-    logging.info(f"Bin chicken evaluate complete.")
+    logging.info(f"Bin Chicken evaluate complete.")
     logging.info(f"Coassembly evaluation summary at {os.path.join(args.output, 'evaluate', 'evaluate', 'summary_stats.tsv')}")
     logging.info(f"Genome recovery breakdown by phyla at {os.path.join(args.output, 'evaluate', 'evaluate', 'plots', 'combined', 'phylum_recovered.png')}")
 
@@ -626,7 +626,7 @@ def update(args):
             args.forward = [os.path.normpath(os.path.join(args.coassemble_output, "..", v)) for _,v in old_config["reads_1"].items()]
             args.reverse = [os.path.normpath(os.path.join(args.coassemble_output, "..", v)) for _,v in old_config["reads_2"].items()]
 
-    logging.info("Loading Bin chicken coassemble info")
+    logging.info("Loading Bin Chicken coassemble info")
     if args.coassemble_output:
         coassemble_dir = os.path.abspath(args.coassemble_output)
         coassemble_target_dir = os.path.join(coassemble_dir, "target")
@@ -686,7 +686,7 @@ def update(args):
     args.sample_read_size = sample_read_size
     coassemble(args)
 
-    logging.info(f"Bin chicken update complete.")
+    logging.info(f"Bin Chicken update complete.")
     if not args.run_aviary:
         logging.info(f"Aviary commands for coassembly and recovery in shell scripts at {os.path.join(args.output, 'coassemble', 'commands')}")
 
@@ -785,7 +785,7 @@ def iterate(args):
         f.writelines("\n".join(["\t".join([os.path.abspath(bins[bin]), bin + ".fna"]) for bin in bins]))
 
     if args.coassemble_output:
-        logging.info("Processing previous Bin chicken coassemble run")
+        logging.info("Processing previous Bin Chicken coassemble run")
         coassemble_appraise_dir = os.path.join(os.path.abspath(args.coassemble_output), "appraise")
         args.coassemble_unbinned = os.path.join(coassemble_appraise_dir, "unbinned.otu_table.tsv")
         args.coassemble_binned = os.path.join(coassemble_appraise_dir, "binned.otu_table.tsv")
@@ -878,7 +878,7 @@ def iterate(args):
         logging.warn("Suggested coassemblies may match those from previous iterations. To check, use `--elusive-clusters`.")
         logging.warn("To exclude, provide previous run with `--coassemble-output` or use `--exclude-coassembles`.")
 
-    logging.info(f"Bin chicken iterate complete.")
+    logging.info(f"Bin Chicken iterate complete.")
     logging.info(f"Cluster summary at {os.path.join(args.output, 'coassemble', 'summary.tsv')}")
     logging.info(f"More details at {os.path.join(args.output, 'coassemble', 'target', 'elusive_clusters.tsv')}")
     logging.info(f"Aviary commands for coassembly and recovery in shell scripts at {os.path.join(args.output, 'coassemble', 'commands')}")
@@ -1018,12 +1018,12 @@ def build(args):
         coassemble(args)
 
 
-    logging.info(f"Bin chicken build complete.")
+    logging.info(f"Bin Chicken build complete.")
     logging.info(f"Conda envs at {conda_prefix}")
     logging.info(f"Re-activate conda env to load env variables.")
 
 def main():
-    main_parser = btu.BirdArgparser(program="Bin chicken", version = __version__, program_invocation="binchicken",
+    main_parser = btu.BirdArgparser(program="Bin Chicken", version = __version__, program_invocation="binchicken",
         examples = {
             "coassemble": [
                 btu.Example(
@@ -1159,15 +1159,15 @@ def main():
 
     def add_main_coassemble_output_arguments(argument_group):
         argument_group.add_argument("--coassemble-output", help="Output dir from coassemble subcommand")
-        argument_group.add_argument("--coassemble-unbinned", help="SingleM appraise unbinned output from Bin chicken coassemble (alternative to --coassemble-output)")
-        argument_group.add_argument("--coassemble-binned", help="SingleM appraise binned output from Bin chicken coassemble (alternative to --coassemble-output)")
+        argument_group.add_argument("--coassemble-unbinned", help="SingleM appraise unbinned output from Bin Chicken coassemble (alternative to --coassemble-output)")
+        argument_group.add_argument("--coassemble-binned", help="SingleM appraise binned output from Bin Chicken coassemble (alternative to --coassemble-output)")
 
     def add_coassemble_output_arguments(argument_group):
         add_main_coassemble_output_arguments(argument_group)
-        argument_group.add_argument("--coassemble-targets", help="Target sequences output from Bin chicken coassemble (alternative to --coassemble-output)")
-        argument_group.add_argument("--coassemble-elusive-edges", help="Elusive edges output from Bin chicken coassemble (alternative to --coassemble-output)")
-        argument_group.add_argument("--coassemble-elusive-clusters", help="Elusive clusters output from Bin chicken coassemble (alternative to --coassemble-output)")
-        argument_group.add_argument("--coassemble-summary", help="Summary output from Bin chicken coassemble (alternative to --coassemble-output)")
+        argument_group.add_argument("--coassemble-targets", help="Target sequences output from Bin Chicken coassemble (alternative to --coassemble-output)")
+        argument_group.add_argument("--coassemble-elusive-edges", help="Elusive edges output from Bin Chicken coassemble (alternative to --coassemble-output)")
+        argument_group.add_argument("--coassemble-elusive-clusters", help="Elusive clusters output from Bin Chicken coassemble (alternative to --coassemble-output)")
+        argument_group.add_argument("--coassemble-summary", help="Summary output from Bin Chicken coassemble (alternative to --coassemble-output)")
 
     ###########################################################################
 
@@ -1304,7 +1304,7 @@ def main():
     ###########################################################################
 
     args = main_parser.parse_the_args()
-    logging.info(f"Bin chicken v{__version__}")
+    logging.info(f"Bin Chicken v{__version__}")
     logging.info(f"Command: {' '.join(['binchicken'] + sys.argv[1:])}")
 
     os.environ["POLARS_MAX_THREADS"] = str(args.local_cores)
@@ -1390,7 +1390,7 @@ def main():
         summary_flag = args.coassemble_summary if evaluate else True
         if not args.coassemble_output and not (args.coassemble_unbinned and args.coassemble_binned and args.coassemble_targets and \
                                                args.coassemble_elusive_edges and args.coassemble_elusive_clusters and summary_flag):
-            raise Exception("Either Bin chicken coassemble output (--coassemble-output) or specific input files must be provided")
+            raise Exception("Either Bin Chicken coassemble output (--coassemble-output) or specific input files must be provided")
 
     if args.subparser_name == "coassemble":
         coassemble_argument_verification(args)
@@ -1418,11 +1418,11 @@ def main():
 
     elif args.subparser_name == "iterate":
         if args.sample_query or args.sample_query_list or args.sample_query_dir:
-            raise Exception("Query arguments are incompatible with Bin chicken iterate")
+            raise Exception("Query arguments are incompatible with Bin Chicken iterate")
         if args.sample_singlem_dir or args.sample_query_dir:
-            raise Exception("Directory arguments are incompatible with Bin chicken iterate")
+            raise Exception("Directory arguments are incompatible with Bin Chicken iterate")
         if args.single_assembly:
-            raise Exception("Single assembly is incompatible with Bin chicken iterate")
+            raise Exception("Single assembly is incompatible with Bin Chicken iterate")
         if not args.aviary_outputs and not (args.new_genomes or args.new_genomes_list) and not args.coassemble_output:
             raise Exception("New genomes or aviary outputs must be provided for iteration")
         if (args.forward and args.forward_list) or (args.reverse and args.reverse_list) or (args.genomes and args.genomes_list):

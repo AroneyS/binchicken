@@ -1,4 +1,4 @@
-name: Test Bin chicken with Setup-Miniconda From Marketplace
+name: Test Bin Chicken with Setup-Miniconda From Marketplace
 on: [push]
 
 jobs:
@@ -33,7 +33,7 @@ jobs:
           sudo rm -rf /opt/ghc
           sudo rm -rf "/usr/local/share/boost"
           sudo rm -rf "$AGENT_TOOLSDIRECTORY"
-      - name: Install Bin chicken
+      - name: Install Bin Chicken
         run: |
           pip install -e .
       - name: Run unit tests

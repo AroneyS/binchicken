@@ -5,7 +5,7 @@ title: setup
 Environment setup
 ========
 
-Bin chicken uses separate conda environments for each subprocess.
+Bin Chicken uses separate conda environments for each subprocess.
 Run `binchicken build` to create those subprocess conda environments and setup environment variables.
 
 Conda prefix is the directory you want to contain the subprocess conda environments.

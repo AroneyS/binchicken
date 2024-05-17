@@ -1,9 +1,9 @@
-Bin chicken
+Bin Chicken
 =============
 
-Bin chicken is a tool that performs targeted recovery of low abundance metagenome assembled genomes through intelligent coassembly.
+Bin Chicken is a tool that performs targeted recovery of low abundance metagenome assembled genomes through intelligent coassembly.
 
-![Bin chicken workflow](/workflow.png)
+![Bin Chicken workflow](/workflow.png)
 
 ## Example workflow
 
