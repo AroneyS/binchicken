@@ -145,7 +145,7 @@ def download_sra(args):
     if "mock_sra=True" in args.snakemake_args:
         target_rule = "mock_download_sra --resources downloading=1"
     else:
-        target_rule = "download_sra --resources downloading=1"
+        target_rule = "download_sra --resources downloading=3"
 
     run_workflow(
         config = config_path,
