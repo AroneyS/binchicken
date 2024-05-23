@@ -1417,6 +1417,9 @@ def main():
             raise Exception("Run Aviary (--run-aviary) requires paths to GTDB-Tk and CheckM2 databases to be provided (--aviary-gtdbtk-db and --aviary-checkm2-db)")
         if args.cluster_submission and not args.snakemake_profile:
             logging.warning("The arg `--cluster-submission` is only a flag and cannot activate cluster submission alone. Please see `--snakemake-profile` for cluster submission.")
+        if args.coassemble_output:
+            if os.path.abspath(args.coassemble_output) == os.path.abspath(args.output):
+                raise Exception("Output directory must be different from coassemble output directory")
         update(args)
 
     elif args.subparser_name == "iterate":
@@ -1433,6 +1436,9 @@ def main():
         if not ((args.genomes or args.genomes_list) and (args.forward or args.forward_list)) and not args.coassemble_output:
             raise Exception("Reference genomes or forward reads must be provided if --coassemble-output not given")
         coassemble_argument_verification(args, iterate=True)
+        if args.coassemble_output:
+            if os.path.abspath(args.coassemble_output) == os.path.abspath(args.output):
+                raise Exception("Output directory must be different from coassemble output directory")
         iterate(args)
 
     elif args.subparser_name == "build":
