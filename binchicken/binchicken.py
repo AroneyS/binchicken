@@ -93,7 +93,10 @@ def copy_input(input, output, suppress=False):
 
 def read_list(path):
     with open(path) as f:
-        return [line.strip() for line in f]
+        contents = [line.strip() for line in f]
+    if not contents:
+        raise Exception(f"Empty list at {path}")
+    return contents
 
 def run_workflow(config, workflow, output_dir, cores=16, dryrun=False,
                  profile=None, local_cores=1, cluster_retries=None,
