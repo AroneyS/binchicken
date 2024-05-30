@@ -1,0 +1,21 @@
+Bootstrap: docker
+From: continuumio/miniconda3
+
+%post
+    /opt/conda/bin/conda create -n binchicken -c conda-forge -c bioconda binchicken
+    . $(conda info --base)/etc/profile.d/conda.sh
+    conda activate binchicken
+    binchicken build --conda-prefix /opt/conda/envs/
+
+%test
+    . $(conda info --base)/etc/profile.d/conda.sh
+    conda activate binchicken
+    binchicken -h
+
+%runscript
+    . $(conda info --base)/etc/profile.d/conda.sh
+    conda activate binchicken
+    exec "$@"
+
+%labels
+    Author Samuel Aroney
