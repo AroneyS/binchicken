@@ -6,6 +6,9 @@ From: continuumio/miniconda3
     . $(conda info --base)/etc/profile.d/conda.sh
     conda activate binchicken
     binchicken build --conda-prefix /opt/conda/envs/
+    rm -rf build genome_1.fna sample_*
+    conda clean -af
+    rm -rf /opt/conda/envs/*/pkgs
 
 %test
     . $(conda info --base)/etc/profile.d/conda.sh
