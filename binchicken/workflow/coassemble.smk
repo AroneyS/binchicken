@@ -743,7 +743,7 @@ rule aviary_recover:
         checkm2 = config["aviary_checkm2"],
         conda_prefix = config["conda_prefix"] if config["conda_prefix"] else ".",
         singlem_metapackage = config["singlem_metapackage"],
-        fast = "--skip-singlem --skip-abundances --refinery-max-iterations 0" if config["aviary_speed"] == FAST_AVIARY_MODE else "",
+        fast = "--binning-only --refinery-max-iterations 0" if config["aviary_speed"] == FAST_AVIARY_MODE else "",
         snakemake_profile = f"--snakemake-profile {config['snakemake_profile']}" if config["snakemake_profile"] else "",
         cluster_retries = f"--cluster-retries {config['cluster_retries']}" if config["cluster_retries"] else "",
         tmpdir = f"TMPDIR={config['tmpdir']}" if config["tmpdir"] else "",
