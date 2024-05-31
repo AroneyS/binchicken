@@ -10,6 +10,8 @@ From: continuumio/miniconda3
     . $(conda info --base)/etc/profile.d/conda.sh
     conda activate binchicken
     binchicken build --conda-prefix /opt/conda/envs/ --singlem-metapackage /singlem_metapackage --checkm2-db /CheckM2_database
+    find /singlem_metapackage /CheckM2_database -type d -print0 | xargs -0 chmod 755
+    find /singlem_metapackage /CheckM2_database -type f -print0 | xargs -0 chmod +r
     rm -rf build genome_1.fna sample_*
     conda clean -af
     rm -rf /opt/conda/envs/*/pkgs
