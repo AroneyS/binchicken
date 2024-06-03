@@ -5,6 +5,10 @@ From: continuumio/miniconda3:24.4.0-0
     /root/db/singlem/20240531/S4.2.2.GTDB_r214.metapackage_20240502.smpkg.zb /singlem_metapackage
     /root/db/checkm2/20240531/CheckM2_database /CheckM2_database
 
+%environment
+    export SINGLEM_METAPACKAGE_PATH=/singlem_metapackage
+    export CHECKM2DB=/CheckM2_database
+
 %post
     /opt/conda/bin/conda create -n binchicken -c conda-forge -c bioconda binchicken
     . $(conda info --base)/etc/profile.d/conda.sh
