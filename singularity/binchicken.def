@@ -1,5 +1,5 @@
 Bootstrap: docker
-From: continuumio/miniconda3
+From: continuumio/miniconda3:24.4.0-0
 
 %files
     /root/db/singlem/20240531/S4.2.2.GTDB_r214.metapackage_20240502.smpkg.zb /singlem_metapackage
