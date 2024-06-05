@@ -6,7 +6,8 @@ os.environ["POLARS_MAX_THREADS"] = "8"
 import numpy as np
 import polars as pl
 from polars.testing import assert_frame_equal
-from binchicken.workflow.scripts.target_elusive import get_clusters, pipeline
+from bird_tool_utils import in_tempdir
+from binchicken.workflow.scripts.target_elusive import get_clusters, pipeline, streaming_pipeline
 
 CLUSTERS_COLUMNS = {
     "samples": str,
@@ -576,160 +577,180 @@ class Tests(unittest.TestCase):
         self.assertDataFrameEqual(expected_edges, observed_edges)
 
     def test_target_elusive_preclustered_four_way(self):
-        unbinned = pl.DataFrame([
-            ["S3.1", "sample_1", "AAA", 2, 4, "Root", ""],
-            ["S3.1", "sample_1", "AAC", 1, 3.5, "Root", ""],
-            ["S3.1", "sample_2", "AAA", 2, 4, "Root", ""],
-            ["S3.1", "sample_2", "AAB", 2, 4, "Root", ""],
-            ["S3.1", "sample_2", "AAC", 1, 3.5, "Root", ""],
-            ["S3.1", "sample_3", "AAA", 2, 4, "Root", ""],
-            ["S3.1", "sample_3", "AAB", 2, 4, "Root", ""],
-            ["S3.1", "sample_3", "AAC", 1, 3.5, "Root", ""],
-            ["S3.1", "sample_4", "AAB", 2, 4, "Root", ""],
-            ["S3.1", "sample_4", "AAC", 1, 3.5, "Root", ""],
-        ], schema=APPRAISE_COLUMNS)
-        samples = set(["sample_1", "sample_2", "sample_3", "sample_4"])
-        preclusters = pl.DataFrame([
-            ["sample_1,sample_3,sample_4"],
-            ["sample_1,sample_2,sample_4"],
-            ["sample_1,sample_2,sample_3,sample_4"],
-        ], schema=CLUSTERS_COLUMNS)
+        with in_tempdir():
+            unbinned = pl.DataFrame([
+                ["S3.1", "sample_1", "AAA", 2, 4, "Root", ""],
+                ["S3.1", "sample_1", "AAC", 1, 3.5, "Root", ""],
+                ["S3.1", "sample_2", "AAA", 2, 4, "Root", ""],
+                ["S3.1", "sample_2", "AAB", 2, 4, "Root", ""],
+                ["S3.1", "sample_2", "AAC", 1, 3.5, "Root", ""],
+                ["S3.1", "sample_3", "AAA", 2, 4, "Root", ""],
+                ["S3.1", "sample_3", "AAB", 2, 4, "Root", ""],
+                ["S3.1", "sample_3", "AAC", 1, 3.5, "Root", ""],
+                ["S3.1", "sample_4", "AAB", 2, 4, "Root", ""],
+                ["S3.1", "sample_4", "AAC", 1, 3.5, "Root", ""],
+            ], schema=APPRAISE_COLUMNS)
+            samples = set(["sample_1", "sample_2", "sample_3", "sample_4"])
+            preclusters = pl.DataFrame([
+                ["sample_1,sample_3,sample_4"],
+                ["sample_1,sample_2,sample_4"],
+                ["sample_1,sample_2,sample_3,sample_4"],
+            ], schema=CLUSTERS_COLUMNS)
 
-        expected_targets = pl.DataFrame([
-            ["S3.1", "sample_1", "AAA", 2, 4, "Root", "0"],
-            ["S3.1", "sample_1", "AAC", 1, 3.5, "Root", "1"],
-            ["S3.1", "sample_2", "AAA", 2, 4, "Root", "0"],
-            ["S3.1", "sample_2", "AAB", 2, 4, "Root", "2"],
-            ["S3.1", "sample_2", "AAC", 1, 3.5, "Root", "1"],
-            ["S3.1", "sample_3", "AAA", 2, 4, "Root", "0"],
-            ["S3.1", "sample_3", "AAB", 2, 4, "Root", "2"],
-            ["S3.1", "sample_3", "AAC", 1, 3.5, "Root", "1"],
-            ["S3.1", "sample_4", "AAB", 2, 4, "Root", "2"],
-            ["S3.1", "sample_4", "AAC", 1, 3.5, "Root", "1"],
-        ], schema=TARGETS_COLUMNS)
-        expected_edges = pl.DataFrame([
-            ["match", 3, "sample_1,sample_3,sample_4", "1"],
-            ["match", 3, "sample_1,sample_2,sample_4", "1"],
-            ["match", 4, "sample_1,sample_2,sample_3,sample_4", "1"],
-        ], schema=EDGES_COLUMNS)
+            expected_targets = pl.DataFrame([
+                ["S3.1", "sample_1", "AAA", 2, 4, "Root", "0"],
+                ["S3.1", "sample_1", "AAC", 1, 3.5, "Root", "1"],
+                ["S3.1", "sample_2", "AAA", 2, 4, "Root", "0"],
+                ["S3.1", "sample_2", "AAB", 2, 4, "Root", "2"],
+                ["S3.1", "sample_2", "AAC", 1, 3.5, "Root", "1"],
+                ["S3.1", "sample_3", "AAA", 2, 4, "Root", "0"],
+                ["S3.1", "sample_3", "AAB", 2, 4, "Root", "2"],
+                ["S3.1", "sample_3", "AAC", 1, 3.5, "Root", "1"],
+                ["S3.1", "sample_4", "AAB", 2, 4, "Root", "2"],
+                ["S3.1", "sample_4", "AAC", 1, 3.5, "Root", "1"],
+            ], schema=TARGETS_COLUMNS)
+            expected_edges = pl.DataFrame([
+                ["match", 3, "sample_1,sample_3,sample_4", "1"],
+                ["match", 3, "sample_1,sample_2,sample_4", "1"],
+                ["match", 4, "sample_1,sample_2,sample_3,sample_4", "1"],
+            ], schema=EDGES_COLUMNS)
 
-        observed_targets, observed_edges = pipeline(
-            unbinned,
-            samples,
-            sample_preclusters=preclusters,
-            MAX_COASSEMBLY_SAMPLES=2,
-            )
-        self.assertDataFrameEqual(expected_targets, observed_targets)
-        self.assertDataFrameEqual(expected_edges, observed_edges)
+            streaming_pipeline(
+                unbinned,
+                samples,
+                sample_preclusters=preclusters,
+                targets_path="targets.tsv",
+                edges_path="edges.tsv",
+                MAX_COASSEMBLY_SAMPLES=2,
+                )
+            observed_targets = pl.read_csv("targets.tsv", dtypes=TARGETS_COLUMNS, separator="\t")
+            observed_edges = pl.read_csv("edges.tsv", dtypes=EDGES_COLUMNS, separator="\t")
+            self.assertDataFrameEqual(expected_targets, observed_targets)
+            self.assertDataFrameEqual(expected_edges, observed_edges)
 
     def test_target_elusive_preclustered_single_assembly(self):
-        unbinned = pl.DataFrame([
-            ["S3.1", "sample_1", "AAA", 5, 10, "Root", ""],
-            ["S3.1", "sample_1", "AAB", 5, 10, "Root", ""],
-            ["S3.1", "sample_2", "AAA", 5, 10, "Root", ""],
-            ["S3.1", "sample_2", "AAB", 5, 10, "Root", ""],
-            ["S3.1", "sample_3", "AAA", 5, 10, "Root", ""],
-            ["S3.1", "sample_3", "AAC", 5, 10, "Root", ""],
-        ], schema=APPRAISE_COLUMNS)
-        samples = set(["sample_1", "sample_2", "sample_3"])
-        preclusters = pl.DataFrame([
-            # ["sample_1,sample_2"],
-            ["sample_1,sample_3"],
-            ["sample_2,sample_3"],
-        ], schema=CLUSTERS_COLUMNS)
+        with in_tempdir():
+            unbinned = pl.DataFrame([
+                ["S3.1", "sample_1", "AAA", 5, 10, "Root", ""],
+                ["S3.1", "sample_1", "AAB", 5, 10, "Root", ""],
+                ["S3.1", "sample_2", "AAA", 5, 10, "Root", ""],
+                ["S3.1", "sample_2", "AAB", 5, 10, "Root", ""],
+                ["S3.1", "sample_3", "AAA", 5, 10, "Root", ""],
+                ["S3.1", "sample_3", "AAC", 5, 10, "Root", ""],
+            ], schema=APPRAISE_COLUMNS)
+            samples = set(["sample_1", "sample_2", "sample_3"])
+            preclusters = pl.DataFrame([
+                # ["sample_1,sample_2"],
+                ["sample_1,sample_3"],
+                ["sample_2,sample_3"],
+            ], schema=CLUSTERS_COLUMNS)
 
-        expected_targets = pl.DataFrame([
-            ["S3.1", "sample_1", "AAA", 5, 10, "Root", "0"],
-            ["S3.1", "sample_1", "AAB", 5, 10, "Root", "1"],
-            ["S3.1", "sample_2", "AAA", 5, 10, "Root", "0"],
-            ["S3.1", "sample_2", "AAB", 5, 10, "Root", "1"],
-            ["S3.1", "sample_3", "AAA", 5, 10, "Root", "0"],
-            ["S3.1", "sample_3", "AAC", 5, 10, "Root", "2"],
-        ], schema=TARGETS_COLUMNS)
-        expected_edges = pl.DataFrame([
-            # ["match", 2, "sample_1,sample_2", "0,1"],
-            ["match", 2, "sample_1,sample_3", "0"],
-            ["match", 2, "sample_2,sample_3", "0"],
-        ], schema=EDGES_COLUMNS)
+            expected_targets = pl.DataFrame([
+                ["S3.1", "sample_1", "AAA", 5, 10, "Root", "0"],
+                ["S3.1", "sample_1", "AAB", 5, 10, "Root", "1"],
+                ["S3.1", "sample_2", "AAA", 5, 10, "Root", "0"],
+                ["S3.1", "sample_2", "AAB", 5, 10, "Root", "1"],
+                ["S3.1", "sample_3", "AAA", 5, 10, "Root", "0"],
+                ["S3.1", "sample_3", "AAC", 5, 10, "Root", "2"],
+            ], schema=TARGETS_COLUMNS)
+            expected_edges = pl.DataFrame([
+                # ["match", 2, "sample_1,sample_2", "0,1"],
+                ["match", 2, "sample_1,sample_3", "0"],
+                ["match", 2, "sample_2,sample_3", "0"],
+            ], schema=EDGES_COLUMNS)
 
-        observed_targets, observed_edges = pipeline(
-            unbinned,
-            samples,
-            sample_preclusters=preclusters,
-            MAX_COASSEMBLY_SAMPLES=1,
-            )
-        self.assertDataFrameEqual(expected_targets, observed_targets)
-        self.assertDataFrameEqual(expected_edges, observed_edges)
+            streaming_pipeline(
+                unbinned,
+                samples,
+                sample_preclusters=preclusters,
+                targets_path="targets.tsv",
+                edges_path="edges.tsv",
+                MAX_COASSEMBLY_SAMPLES=1,
+                )
+            observed_targets = pl.read_csv("targets.tsv", dtypes=TARGETS_COLUMNS, separator="\t")
+            observed_edges = pl.read_csv("edges.tsv", dtypes=EDGES_COLUMNS, separator="\t")
+            self.assertDataFrameEqual(expected_targets, observed_targets)
+            self.assertDataFrameEqual(expected_edges, observed_edges)
 
     def test_target_elusive_preclustered_no_targets(self):
-        unbinned = pl.DataFrame([
-            ["S3.1", "sample_1", "AAA", 1, 3, "Root", ""],
-            ["S3.2", "sample_1", "AAB", 1, 3, "Root", ""],
-            ["S3.1", "sample_2", "AAA", 1, 3, "Root", ""],
-            ["S3.2", "sample_2", "AAB", 1, 3, "Root", ""],
-        ], schema=APPRAISE_COLUMNS)
-        samples = set(["sample_1", "sample_2"])
-        preclusters = pl.DataFrame([
-            ["sample_1,sample_2"],
-        ], schema=CLUSTERS_COLUMNS)
+        with in_tempdir():
+            unbinned = pl.DataFrame([
+                ["S3.1", "sample_1", "AAA", 1, 3, "Root", ""],
+                ["S3.2", "sample_1", "AAB", 1, 3, "Root", ""],
+                ["S3.1", "sample_2", "AAA", 1, 3, "Root", ""],
+                ["S3.2", "sample_2", "AAB", 1, 3, "Root", ""],
+            ], schema=APPRAISE_COLUMNS)
+            samples = set(["sample_1", "sample_2"])
+            preclusters = pl.DataFrame([
+                ["sample_1,sample_2"],
+            ], schema=CLUSTERS_COLUMNS)
 
-        expected_targets = pl.DataFrame([
-            ["S3.1", "sample_1", "AAA", 1, 3, "Root", "0"],
-            ["S3.2", "sample_1", "AAB", 1, 3, "Root", "1"],
-            ["S3.1", "sample_2", "AAA", 1, 3, "Root", "0"],
-            ["S3.2", "sample_2", "AAB", 1, 3, "Root", "1"],
-        ], schema=TARGETS_COLUMNS)
-        expected_edges = pl.DataFrame([
-        ], schema=EDGES_COLUMNS)
+            expected_targets = pl.DataFrame([
+                ["S3.1", "sample_1", "AAA", 1, 3, "Root", "0"],
+                ["S3.2", "sample_1", "AAB", 1, 3, "Root", "1"],
+                ["S3.1", "sample_2", "AAA", 1, 3, "Root", "0"],
+                ["S3.2", "sample_2", "AAB", 1, 3, "Root", "1"],
+            ], schema=TARGETS_COLUMNS)
+            expected_edges = pl.DataFrame([
+            ], schema=EDGES_COLUMNS)
 
-        observed_targets, observed_edges = pipeline(
-            unbinned,
-            samples,
-            sample_preclusters=preclusters,
-            )
-        self.assertDataFrameEqual(expected_targets, observed_targets)
-        self.assertDataFrameEqual(expected_edges, observed_edges)
+            streaming_pipeline(
+                unbinned,
+                samples,
+                sample_preclusters=preclusters,
+                targets_path="targets.tsv",
+                edges_path="edges.tsv",
+                )
+            observed_targets = pl.read_csv("targets.tsv", dtypes=TARGETS_COLUMNS, separator="\t")
+            observed_edges = pl.read_csv("edges.tsv", dtypes=EDGES_COLUMNS, separator="\t")
+            self.assertDataFrameEqual(expected_targets, observed_targets)
+            self.assertDataFrameEqual(expected_edges, observed_edges)
 
     def test_target_elusive_preclustered_empty(self):
-        unbinned = pl.DataFrame([
-            ["S3.1", "sample_1", "AAA", 2, 4, "Root", ""],
-            ["S3.1", "sample_1", "AAC", 1, 3.5, "Root", ""],
-            ["S3.1", "sample_2", "AAA", 2, 4, "Root", ""],
-            ["S3.1", "sample_2", "AAB", 2, 4, "Root", ""],
-            ["S3.1", "sample_2", "AAC", 1, 3.5, "Root", ""],
-            ["S3.1", "sample_3", "AAA", 2, 4, "Root", ""],
-            ["S3.1", "sample_3", "AAB", 2, 4, "Root", ""],
-            ["S3.1", "sample_3", "AAC", 1, 3.5, "Root", ""],
-            ["S3.1", "sample_4", "AAB", 2, 4, "Root", ""],
-            ["S3.1", "sample_4", "AAC", 1, 3.5, "Root", ""],
-        ], schema=APPRAISE_COLUMNS)
-        samples = set(["sample_1", "sample_2", "sample_3", "sample_4"])
-        preclusters = pl.DataFrame([
-        ], schema=CLUSTERS_COLUMNS)
+        with in_tempdir():
+            unbinned = pl.DataFrame([
+                ["S3.1", "sample_1", "AAA", 2, 4, "Root", ""],
+                ["S3.1", "sample_1", "AAC", 1, 3.5, "Root", ""],
+                ["S3.1", "sample_2", "AAA", 2, 4, "Root", ""],
+                ["S3.1", "sample_2", "AAB", 2, 4, "Root", ""],
+                ["S3.1", "sample_2", "AAC", 1, 3.5, "Root", ""],
+                ["S3.1", "sample_3", "AAA", 2, 4, "Root", ""],
+                ["S3.1", "sample_3", "AAB", 2, 4, "Root", ""],
+                ["S3.1", "sample_3", "AAC", 1, 3.5, "Root", ""],
+                ["S3.1", "sample_4", "AAB", 2, 4, "Root", ""],
+                ["S3.1", "sample_4", "AAC", 1, 3.5, "Root", ""],
+            ], schema=APPRAISE_COLUMNS)
+            samples = set(["sample_1", "sample_2", "sample_3", "sample_4"])
+            preclusters = pl.DataFrame([
+            ], schema=CLUSTERS_COLUMNS)
 
-        expected_targets = pl.DataFrame([
-            ["S3.1", "sample_1", "AAA", 2, 4, "Root", "0"],
-            ["S3.1", "sample_1", "AAC", 1, 3.5, "Root", "1"],
-            ["S3.1", "sample_2", "AAA", 2, 4, "Root", "0"],
-            ["S3.1", "sample_2", "AAB", 2, 4, "Root", "2"],
-            ["S3.1", "sample_2", "AAC", 1, 3.5, "Root", "1"],
-            ["S3.1", "sample_3", "AAA", 2, 4, "Root", "0"],
-            ["S3.1", "sample_3", "AAB", 2, 4, "Root", "2"],
-            ["S3.1", "sample_3", "AAC", 1, 3.5, "Root", "1"],
-            ["S3.1", "sample_4", "AAB", 2, 4, "Root", "2"],
-            ["S3.1", "sample_4", "AAC", 1, 3.5, "Root", "1"],
-        ], schema=TARGETS_COLUMNS)
-        expected_edges = pl.DataFrame([
-        ], schema=EDGES_COLUMNS)
+            expected_targets = pl.DataFrame([
+                ["S3.1", "sample_1", "AAA", 2, 4, "Root", "0"],
+                ["S3.1", "sample_1", "AAC", 1, 3.5, "Root", "1"],
+                ["S3.1", "sample_2", "AAA", 2, 4, "Root", "0"],
+                ["S3.1", "sample_2", "AAB", 2, 4, "Root", "2"],
+                ["S3.1", "sample_2", "AAC", 1, 3.5, "Root", "1"],
+                ["S3.1", "sample_3", "AAA", 2, 4, "Root", "0"],
+                ["S3.1", "sample_3", "AAB", 2, 4, "Root", "2"],
+                ["S3.1", "sample_3", "AAC", 1, 3.5, "Root", "1"],
+                ["S3.1", "sample_4", "AAB", 2, 4, "Root", "2"],
+                ["S3.1", "sample_4", "AAC", 1, 3.5, "Root", "1"],
+            ], schema=TARGETS_COLUMNS)
+            expected_edges = pl.DataFrame([
+            ], schema=EDGES_COLUMNS)
 
-        observed_targets, observed_edges = pipeline(
-            unbinned,
-            samples,
-            sample_preclusters=preclusters,
-            MAX_COASSEMBLY_SAMPLES=2,
-            )
-        self.assertDataFrameEqual(expected_targets, observed_targets)
-        self.assertDataFrameEqual(expected_edges, observed_edges)
+            streaming_pipeline(
+                unbinned,
+                samples,
+                sample_preclusters=preclusters,
+                targets_path="targets.tsv",
+                edges_path="edges.tsv",
+                MAX_COASSEMBLY_SAMPLES=2,
+                )
+            observed_targets = pl.read_csv("targets.tsv", dtypes=TARGETS_COLUMNS, separator="\t")
+            observed_edges = pl.read_csv("edges.tsv", dtypes=EDGES_COLUMNS, separator="\t")
+            self.assertDataFrameEqual(expected_targets, observed_targets)
+            self.assertDataFrameEqual(expected_edges, observed_edges)
 
 
 if __name__ == '__main__':

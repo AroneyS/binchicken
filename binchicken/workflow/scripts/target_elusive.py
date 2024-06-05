@@ -66,11 +66,9 @@ def get_clusters(
     logging.info(f"Found {preclusters.height} preclusters")
     return preclusters
 
-
 def pipeline(
     unbinned,
     samples,
-    sample_preclusters=None,
     MIN_COASSEMBLY_COVERAGE=10,
     TAXA_OF_INTEREST="",
     MAX_COASSEMBLY_SAMPLES=2):
@@ -158,42 +156,94 @@ def pipeline(
 
         return pl.concat(dfs)
 
-    if sample_preclusters is not None:
-        logging.info("Using chosen clusters to find appropriate targets")
-        with pl.StringCache():
-            sparse_edges = (
-                sample_preclusters
-                .lazy()
-                .with_columns(sample_ids = pl.col("samples").str.split(",").cast(pl.List(pl.Categorical)))
-                .with_columns(cluster_size = pl.col("sample_ids").list.len())
-                .explode("sample_ids")
-                .join(unbinned.lazy().select("target", "coverage", sample_ids=pl.col("sample").cast(pl.Categorical)), on="sample_ids")
-                .group_by("samples", "cluster_size", "target")
-                .agg(pl.sum("coverage"), count = pl.len())
-                .filter(pl.col("count") == pl.col("cluster_size"))
-                .filter(pl.col("coverage") > MIN_COASSEMBLY_COVERAGE)
-                .group_by("samples", "cluster_size")
-                .agg(target_ids = pl.col("target").cast(pl.Utf8).sort().str.concat(","))
-                .with_columns(style = pl.lit("match"))
-                .select("style", "cluster_size", "samples", "target_ids")
-                .collect(streaming=True)
+    logging.info("Grouping targets into paired matches and pooled samples for clusters of size 3+")
+    sparse_edges = (
+        unbinned
+        .select(
+            "target",
+            "coverage",
+            samples = pl.col("sample").map_elements(lambda x: [x], return_dtype=pl.List(pl.Utf8)),
             )
-    else:
-        logging.info("Grouping targets into paired matches and pooled samples for clusters of size 3+")
-        sparse_edges = (
-            unbinned
-            .select(
-                "target",
-                "coverage",
-                samples = pl.col("sample").map_elements(lambda x: [x], return_dtype=pl.List(pl.Utf8)),
-                )
-            .group_by("target")
-            .map_groups(process_groups)
-            .group_by(["style", "cluster_size", "samples"])
-            .agg(target_ids = pl.col("target").cast(pl.Utf8).sort().str.concat(","))
-        )
+        .group_by("target")
+        .map_groups(process_groups)
+        .group_by(["style", "cluster_size", "samples"])
+        .agg(target_ids = pl.col("target").cast(pl.Utf8).sort().str.concat(","))
+    )
 
     return unbinned.with_columns(pl.col("target").cast(pl.Utf8)), sparse_edges
+
+def streaming_pipeline(
+    unbinned,
+    samples,
+    sample_preclusters,
+    targets_path,
+    edges_path,
+    MIN_COASSEMBLY_COVERAGE=10,
+    TAXA_OF_INTEREST="",
+    MAX_COASSEMBLY_SAMPLES=2):
+
+    logging.info(f"Polars using {str(pl.thread_pool_size())} threads")
+
+    if len(unbinned) == 0:
+        logging.warning("No unbinned sequences found")
+        return unbinned.rename({"found_in": "target"}), pl.DataFrame(schema=EDGES_COLUMNS)
+
+    if MAX_COASSEMBLY_SAMPLES < 2:
+        # Set to 2 to produce paired edges
+        MAX_COASSEMBLY_SAMPLES = 2
+
+    # Filter TAXA_OF_INTEREST
+    if TAXA_OF_INTEREST:
+        logging.info(f"Filtering for taxa of interest: {TAXA_OF_INTEREST}")
+        unbinned = unbinned.filter(
+            pl.col("taxonomy").str.contains(TAXA_OF_INTEREST, literal=True)
+        )
+
+    logging.info("Grouping hits by marker gene sequences to form targets")
+    unbinned = (
+        unbinned
+        .with_columns(
+            pl.when(pl.col("sample").is_in(samples))
+            .then(pl.col("sample"))
+            .otherwise(pl.col("sample").str.replace(r"(_|\.)R?1$", ""))
+            )
+        .filter(pl.col("sample").is_in(samples))
+        .drop("found_in")
+        .with_row_index("target")
+        .select(
+            "gene", "sample", "sequence", "num_hits", "coverage", "taxonomy",
+            pl.first("target").over(["gene", "sequence"]).rank("dense") - 1,
+            )
+    )
+
+    if unbinned.height == 0:
+        logging.warning("No SingleM sequences found for the given samples")
+        return unbinned.with_columns(pl.col("target").cast(pl.Utf8)), pl.DataFrame(schema=EDGES_COLUMNS)
+
+    logging.info("Using chosen clusters to find appropriate targets")
+    with pl.StringCache():
+        sparse_edges = (
+            sample_preclusters
+            .lazy()
+            .with_columns(sample_ids = pl.col("samples").str.split(",").cast(pl.List(pl.Categorical)))
+            .with_columns(cluster_size = pl.col("sample_ids").list.len())
+            .explode("sample_ids")
+            .join(unbinned.lazy().select("target", "coverage", sample_ids=pl.col("sample").cast(pl.Categorical)), on="sample_ids")
+            .group_by("samples", "cluster_size", "target")
+            .agg(pl.sum("coverage"), count = pl.len())
+            .filter(pl.col("count") == pl.col("cluster_size"))
+            .filter(pl.col("coverage") > MIN_COASSEMBLY_COVERAGE)
+            .group_by("samples", "cluster_size")
+            .agg(target_ids = pl.col("target").cast(pl.Utf8).sort().str.concat(","))
+            .with_columns(style = pl.lit("match"))
+            .select("style", "cluster_size", "samples", "target_ids")
+            .collect(streaming=True)
+        )
+
+    unbinned.with_columns(pl.col("target").cast(pl.Utf8)).write_csv(targets_path, separator="\t")
+    sparse_edges.sort("style", "cluster_size", "samples").write_csv(edges_path, separator="\t")
+
+    return
 
 if __name__ == "__main__":
     os.environ["POLARS_MAX_THREADS"] = str(snakemake.threads)
@@ -216,6 +266,8 @@ if __name__ == "__main__":
     edges_path = snakemake.output.output_edges
     samples = set(snakemake.params.samples)
 
+    unbinned = pl.read_csv(unbinned_path, separator="\t")
+
     if distances_path:
         os.environ["POLARS_STREAMING_CHUNK_SIZE"] = "1"
         import polars as pl
@@ -227,18 +279,23 @@ if __name__ == "__main__":
             PRECLUSTER_SIZE=PRECLUSTER_SIZE,
             MAX_COASSEMBLY_SAMPLES=MAX_COASSEMBLY_SAMPLES,
             )
+        streaming_pipeline(
+            unbinned,
+            samples,
+            sample_preclusters=sample_preclusters,
+            targets_path=targets_path,
+            edges_path=edges_path,
+            MIN_COASSEMBLY_COVERAGE=MIN_COASSEMBLY_COVERAGE,
+            TAXA_OF_INTEREST=TAXA_OF_INTEREST,
+            MAX_COASSEMBLY_SAMPLES=MAX_COASSEMBLY_SAMPLES,
+            )
     else:
-        sample_preclusters = None
-
-    unbinned = pl.read_csv(unbinned_path, separator="\t")
-
-    targets, edges = pipeline(
-        unbinned,
-        samples,
-        sample_preclusters=sample_preclusters,
-        MIN_COASSEMBLY_COVERAGE=MIN_COASSEMBLY_COVERAGE,
-        TAXA_OF_INTEREST=TAXA_OF_INTEREST,
-        MAX_COASSEMBLY_SAMPLES=MAX_COASSEMBLY_SAMPLES,
-        )
-    targets.write_csv(targets_path, separator="\t")
-    edges.sort("style", "cluster_size", "samples").write_csv(edges_path, separator="\t")
+        targets, edges = pipeline(
+            unbinned,
+            samples,
+            MIN_COASSEMBLY_COVERAGE=MIN_COASSEMBLY_COVERAGE,
+            TAXA_OF_INTEREST=TAXA_OF_INTEREST,
+            MAX_COASSEMBLY_SAMPLES=MAX_COASSEMBLY_SAMPLES,
+            )
+        targets.write_csv(targets_path, separator="\t")
+        edges.sort("style", "cluster_size", "samples").write_csv(edges_path, separator="\t")
