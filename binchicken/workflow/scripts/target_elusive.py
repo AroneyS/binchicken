@@ -221,27 +221,35 @@ def streaming_pipeline(
         return unbinned.with_columns(pl.col("target").cast(pl.Utf8)), pl.DataFrame(schema=EDGES_COLUMNS)
 
     logging.info("Using chosen clusters to find appropriate targets")
-    with pl.StringCache():
-        sparse_edges = (
-            sample_preclusters
-            .lazy()
-            .with_columns(sample_ids = pl.col("samples").str.split(",").cast(pl.List(pl.Categorical)))
-            .with_columns(cluster_size = pl.col("sample_ids").list.len())
-            .explode("sample_ids")
-            .join(unbinned.lazy().select("target", "coverage", sample_ids=pl.col("sample").cast(pl.Categorical)), on="sample_ids")
-            .group_by("samples", "cluster_size", "target")
-            .agg(pl.sum("coverage"), count = pl.len())
-            .filter(pl.col("count") == pl.col("cluster_size"))
-            .filter(pl.col("coverage") > MIN_COASSEMBLY_COVERAGE)
-            .group_by("samples", "cluster_size")
-            .agg(target_ids = pl.col("target").cast(pl.Utf8).sort().str.concat(","))
-            .with_columns(style = pl.lit("match"))
-            .select("style", "cluster_size", "samples", "target_ids")
-            .collect(streaming=True)
-        )
+    with open(edges_path, "w") as f:
+        f.write("style\tcluster_size\tsamples\ttarget_ids\n")
+
+        for precluster in sample_preclusters.iter_rows():
+            samples = precluster[0]
+            sample_ids = samples.split(",")
+            cluster_size = len(sample_ids)
+            targets = (
+                unbinned
+                .filter(pl.col("sample").is_in(sample_ids))
+                .group_by("target")
+                .agg(
+                    coverage = pl.sum("coverage"),
+                    count = pl.len(),
+                    )
+                .filter(pl.col("count") == cluster_size)
+                .filter(pl.col("coverage") > MIN_COASSEMBLY_COVERAGE)
+                .select(pl.col("target").cast(pl.Utf8))
+                .get_column("target")
+                .to_list()
+            )
+            target_ids = ",".join(sorted(targets))
+
+            if len(targets) == 0:
+                continue
+
+            f.write(f"match\t{cluster_size}\t{samples}\t{target_ids}\n")
 
     unbinned.with_columns(pl.col("target").cast(pl.Utf8)).write_csv(targets_path, separator="\t")
-    sparse_edges.sort("style", "cluster_size", "samples").write_csv(edges_path, separator="\t")
 
     return
 
