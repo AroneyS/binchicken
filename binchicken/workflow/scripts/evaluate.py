@@ -98,13 +98,13 @@ def evaluate(target_otu_table, binned_otu_table, elusive_clusters, elusive_edges
 
     elusive_otu_table = (
         coassembly_edges
-        .join(relevant_target_otu_table, on="target", how="left")
+        .join(relevant_target_otu_table, on="target", how="left", coalesce=True)
         .select(
             "gene", "sequence", "coassembly", "taxonomy",
             pl.lit(None).cast(str).alias("found_in"),
             "target",
             )
-        .join(sample_edges, on=["coassembly", "target"], how="left")
+        .join(sample_edges, on=["coassembly", "target"], how="left", coalesce=True)
     )
 
     # Add binned otu table to above with target NA
@@ -120,7 +120,7 @@ def evaluate(target_otu_table, binned_otu_table, elusive_clusters, elusive_edges
             pl.col("sample").str.replace(r"_1$", "").str.replace(r"\.1$", ""),
             "gene", "sequence", "taxonomy", "found_in"
             ])
-        .join(sample_coassemblies, left_on="sample", right_on="samples", how="left")
+        .join(sample_coassemblies, left_on="sample", right_on="samples", how="left", coalesce=True)
         .drop_nulls("coassembly")
         .group_by(["gene", "sequence", "coassembly"])
         .agg([
@@ -261,7 +261,7 @@ def summarise_stats(matches, combined_otu_table, recovered_bins):
             pl.lit("match").alias("status"),
             pl.lit("bins").alias("statistic"),
             )
-        .join(summary.rename({"value": "match"}), on=["coassembly", "status", "statistic"], how="left")
+        .join(summary.rename({"value": "match"}), on=["coassembly", "status", "statistic"], how="left", coalesce=True)
         .select(
             "coassembly",
             pl.lit("nonmatch").alias("status"),

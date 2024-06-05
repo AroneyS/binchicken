@@ -51,7 +51,7 @@ if __name__ == "__main__":
     TAXA_OF_INTEREST = snakemake.params.taxa_of_interest
     output_path = snakemake.output.sketch
 
-    unbinned = pl.read_csv(unbinned_path, separator="\t", dtypes=SINGLEM_OTU_TABLE_SCHEMA)
+    unbinned = pl.read_csv(unbinned_path, separator="\t", schema_overrides=SINGLEM_OTU_TABLE_SCHEMA)
 
     if TAXA_OF_INTEREST:
         logging.info(f"Filtering for taxa of interest: {TAXA_OF_INTEREST}")

@@ -47,10 +47,10 @@ CAT_RECOVERY_COLUMNS={
 
 class Tests(unittest.TestCase):
     def assertDataFrameEqual(self, a, b):
-        assert_frame_equal(a, b, check_dtype=False)
+        assert_frame_equal(a, b, check_dtypes=False)
 
     def assertSeriesEqual(self, a, b):
-        assert_series_equal(a, b, check_dtype=False)
+        assert_series_equal(a, b, check_dtypes=False)
 
     def test_cluster_graph(self):
         elusive_edges = pl.DataFrame([

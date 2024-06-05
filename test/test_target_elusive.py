@@ -42,7 +42,7 @@ EDGES_COLUMNS = {
 
 class Tests(unittest.TestCase):
     def assertDataFrameEqual(self, a, b):
-        assert_frame_equal(a, b, check_dtype=False, check_row_order=False)
+        assert_frame_equal(a, b, check_dtypes=False, check_row_order=False)
 
     def test_get_clusters(self):
         distances = np.array([
@@ -623,8 +623,8 @@ class Tests(unittest.TestCase):
                 edges_path="edges.tsv",
                 MAX_COASSEMBLY_SAMPLES=2,
                 )
-            observed_targets = pl.read_csv("targets.tsv", dtypes=TARGETS_COLUMNS, separator="\t")
-            observed_edges = pl.read_csv("edges.tsv", dtypes=EDGES_COLUMNS, separator="\t")
+            observed_targets = pl.read_csv("targets.tsv", schema_overrides=TARGETS_COLUMNS, separator="\t")
+            observed_edges = pl.read_csv("edges.tsv", schema_overrides=EDGES_COLUMNS, separator="\t")
             self.assertDataFrameEqual(expected_targets, observed_targets)
             self.assertDataFrameEqual(expected_edges, observed_edges)
 
@@ -667,8 +667,8 @@ class Tests(unittest.TestCase):
                 edges_path="edges.tsv",
                 MAX_COASSEMBLY_SAMPLES=1,
                 )
-            observed_targets = pl.read_csv("targets.tsv", dtypes=TARGETS_COLUMNS, separator="\t")
-            observed_edges = pl.read_csv("edges.tsv", dtypes=EDGES_COLUMNS, separator="\t")
+            observed_targets = pl.read_csv("targets.tsv", schema_overrides=TARGETS_COLUMNS, separator="\t")
+            observed_edges = pl.read_csv("edges.tsv", schema_overrides=EDGES_COLUMNS, separator="\t")
             self.assertDataFrameEqual(expected_targets, observed_targets)
             self.assertDataFrameEqual(expected_edges, observed_edges)
 
@@ -701,8 +701,8 @@ class Tests(unittest.TestCase):
                 targets_path="targets.tsv",
                 edges_path="edges.tsv",
                 )
-            observed_targets = pl.read_csv("targets.tsv", dtypes=TARGETS_COLUMNS, separator="\t")
-            observed_edges = pl.read_csv("edges.tsv", dtypes=EDGES_COLUMNS, separator="\t")
+            observed_targets = pl.read_csv("targets.tsv", schema_overrides=TARGETS_COLUMNS, separator="\t")
+            observed_edges = pl.read_csv("edges.tsv", schema_overrides=EDGES_COLUMNS, separator="\t")
             self.assertDataFrameEqual(expected_targets, observed_targets)
             self.assertDataFrameEqual(expected_edges, observed_edges)
 
@@ -747,8 +747,8 @@ class Tests(unittest.TestCase):
                 edges_path="edges.tsv",
                 MAX_COASSEMBLY_SAMPLES=2,
                 )
-            observed_targets = pl.read_csv("targets.tsv", dtypes=TARGETS_COLUMNS, separator="\t")
-            observed_edges = pl.read_csv("edges.tsv", dtypes=EDGES_COLUMNS, separator="\t")
+            observed_targets = pl.read_csv("targets.tsv", schema_overrides=TARGETS_COLUMNS, separator="\t")
+            observed_edges = pl.read_csv("edges.tsv", schema_overrides=EDGES_COLUMNS, separator="\t")
             self.assertDataFrameEqual(expected_targets, observed_targets)
             self.assertDataFrameEqual(expected_edges, observed_edges)
 
