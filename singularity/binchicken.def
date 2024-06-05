@@ -9,6 +9,7 @@ From: continuumio/miniconda3:24.4.0-0
 %environment
     export SINGLEM_METAPACKAGE_PATH=/singlem_metapackage
     export CHECKM2DB=/CheckM2_database
+    export CONDA_ENV_PATH=/opt/conda/envs/
 
 %post
     /opt/conda/bin/conda env create --file /binchicken/binchicken.yml
