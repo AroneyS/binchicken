@@ -5,6 +5,7 @@
 
 import polars as pl
 import os
+os.environ["OPENBLAS_NUM_THREADS"] = "1"
 import logging
 import numpy as np
 import itertools
@@ -109,7 +110,8 @@ def streaming_pipeline(
     edges_path,
     MIN_COASSEMBLY_COVERAGE=10,
     TAXA_OF_INTEREST="",
-    MAX_COASSEMBLY_SAMPLES=2):
+    MAX_COASSEMBLY_SAMPLES=2,
+    threads=1):
 
     logging.info(f"Polars using {str(pl.thread_pool_size())} threads")
 
@@ -150,7 +152,7 @@ def streaming_pipeline(
         return unbinned.with_columns(pl.col("target").cast(pl.Utf8)), pl.DataFrame(schema=EDGES_COLUMNS)
 
     logging.info("Using chosen clusters to find appropriate targets")
-    with mp.get_context("spawn").Pool(pl.thread_pool_size()) as pool:
+    with mp.get_context("spawn").Pool(threads) as pool:
         q = mp.Manager().Queue()
 
         pool.apply_async(process_listener, (edges_path, q))
@@ -281,7 +283,10 @@ def pipeline(
     return unbinned.with_columns(pl.col("target").cast(pl.Utf8)), sparse_edges
 
 if __name__ == "__main__":
-    os.environ["POLARS_MAX_THREADS"] = str(snakemake.threads)
+    if snakemake.input.distances:
+        os.environ["POLARS_STREAMING_CHUNK_SIZE"] = "1"
+    else:
+        os.environ["POLARS_MAX_THREADS"] = str(snakemake.threads)
     import polars as pl
 
     logging.basicConfig(
@@ -323,6 +328,7 @@ if __name__ == "__main__":
             MIN_COASSEMBLY_COVERAGE=MIN_COASSEMBLY_COVERAGE,
             TAXA_OF_INTEREST=TAXA_OF_INTEREST,
             MAX_COASSEMBLY_SAMPLES=MAX_COASSEMBLY_SAMPLES,
+            threads=snakemake.threads,
             )
     else:
         targets, edges = pipeline(
