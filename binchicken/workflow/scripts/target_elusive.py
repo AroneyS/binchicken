@@ -66,6 +66,87 @@ def get_clusters(
     logging.info(f"Found {preclusters.height} preclusters")
     return preclusters
 
+def streaming_pipeline(
+    unbinned,
+    samples,
+    sample_preclusters,
+    targets_path,
+    edges_path,
+    MIN_COASSEMBLY_COVERAGE=10,
+    TAXA_OF_INTEREST="",
+    MAX_COASSEMBLY_SAMPLES=2):
+
+    logging.info(f"Polars using {str(pl.thread_pool_size())} threads")
+
+    if len(unbinned) == 0:
+        logging.warning("No unbinned sequences found")
+        return unbinned.rename({"found_in": "target"}), pl.DataFrame(schema=EDGES_COLUMNS)
+
+    if MAX_COASSEMBLY_SAMPLES < 2:
+        # Set to 2 to produce paired edges
+        MAX_COASSEMBLY_SAMPLES = 2
+
+    # Filter TAXA_OF_INTEREST
+    if TAXA_OF_INTEREST:
+        logging.info(f"Filtering for taxa of interest: {TAXA_OF_INTEREST}")
+        unbinned = unbinned.filter(
+            pl.col("taxonomy").str.contains(TAXA_OF_INTEREST, literal=True)
+        )
+
+    logging.info("Grouping hits by marker gene sequences to form targets")
+    unbinned = (
+        unbinned
+        .with_columns(
+            pl.when(pl.col("sample").is_in(samples))
+            .then(pl.col("sample"))
+            .otherwise(pl.col("sample").str.replace(r"(_|\.)R?1$", ""))
+            )
+        .filter(pl.col("sample").is_in(samples))
+        .drop("found_in")
+        .with_row_index("target")
+        .select(
+            "gene", "sample", "sequence", "num_hits", "coverage", "taxonomy",
+            pl.first("target").over(["gene", "sequence"]).rank("dense") - 1,
+            )
+    )
+
+    if unbinned.height == 0:
+        logging.warning("No SingleM sequences found for the given samples")
+        return unbinned.with_columns(pl.col("target").cast(pl.Utf8)), pl.DataFrame(schema=EDGES_COLUMNS)
+
+    logging.info("Using chosen clusters to find appropriate targets")
+    with open(edges_path, "w") as f:
+        f.write("style\tcluster_size\tsamples\ttarget_ids\n")
+
+        for precluster in sample_preclusters.iter_rows():
+            samples = precluster[0]
+            sample_ids = samples.split(",")
+            cluster_size = len(sample_ids)
+            targets = (
+                unbinned
+                .filter(pl.col("sample").is_in(sample_ids))
+                .group_by("target")
+                .agg(
+                    coverage = pl.sum("coverage"),
+                    count = pl.len(),
+                    )
+                .filter(pl.col("count") == cluster_size)
+                .filter(pl.col("coverage") > MIN_COASSEMBLY_COVERAGE)
+                .select(pl.col("target").cast(pl.Utf8))
+                .get_column("target")
+                .to_list()
+            )
+            target_ids = ",".join(sorted(targets))
+
+            if len(targets) == 0:
+                continue
+
+            f.write(f"match\t{cluster_size}\t{samples}\t{target_ids}\n")
+
+    unbinned.with_columns(pl.col("target").cast(pl.Utf8)).write_csv(targets_path, separator="\t")
+
+    return
+
 def pipeline(
     unbinned,
     samples,
@@ -171,87 +252,6 @@ def pipeline(
     )
 
     return unbinned.with_columns(pl.col("target").cast(pl.Utf8)), sparse_edges
-
-def streaming_pipeline(
-    unbinned,
-    samples,
-    sample_preclusters,
-    targets_path,
-    edges_path,
-    MIN_COASSEMBLY_COVERAGE=10,
-    TAXA_OF_INTEREST="",
-    MAX_COASSEMBLY_SAMPLES=2):
-
-    logging.info(f"Polars using {str(pl.thread_pool_size())} threads")
-
-    if len(unbinned) == 0:
-        logging.warning("No unbinned sequences found")
-        return unbinned.rename({"found_in": "target"}), pl.DataFrame(schema=EDGES_COLUMNS)
-
-    if MAX_COASSEMBLY_SAMPLES < 2:
-        # Set to 2 to produce paired edges
-        MAX_COASSEMBLY_SAMPLES = 2
-
-    # Filter TAXA_OF_INTEREST
-    if TAXA_OF_INTEREST:
-        logging.info(f"Filtering for taxa of interest: {TAXA_OF_INTEREST}")
-        unbinned = unbinned.filter(
-            pl.col("taxonomy").str.contains(TAXA_OF_INTEREST, literal=True)
-        )
-
-    logging.info("Grouping hits by marker gene sequences to form targets")
-    unbinned = (
-        unbinned
-        .with_columns(
-            pl.when(pl.col("sample").is_in(samples))
-            .then(pl.col("sample"))
-            .otherwise(pl.col("sample").str.replace(r"(_|\.)R?1$", ""))
-            )
-        .filter(pl.col("sample").is_in(samples))
-        .drop("found_in")
-        .with_row_index("target")
-        .select(
-            "gene", "sample", "sequence", "num_hits", "coverage", "taxonomy",
-            pl.first("target").over(["gene", "sequence"]).rank("dense") - 1,
-            )
-    )
-
-    if unbinned.height == 0:
-        logging.warning("No SingleM sequences found for the given samples")
-        return unbinned.with_columns(pl.col("target").cast(pl.Utf8)), pl.DataFrame(schema=EDGES_COLUMNS)
-
-    logging.info("Using chosen clusters to find appropriate targets")
-    with open(edges_path, "w") as f:
-        f.write("style\tcluster_size\tsamples\ttarget_ids\n")
-
-        for precluster in sample_preclusters.iter_rows():
-            samples = precluster[0]
-            sample_ids = samples.split(",")
-            cluster_size = len(sample_ids)
-            targets = (
-                unbinned
-                .filter(pl.col("sample").is_in(sample_ids))
-                .group_by("target")
-                .agg(
-                    coverage = pl.sum("coverage"),
-                    count = pl.len(),
-                    )
-                .filter(pl.col("count") == cluster_size)
-                .filter(pl.col("coverage") > MIN_COASSEMBLY_COVERAGE)
-                .select(pl.col("target").cast(pl.Utf8))
-                .get_column("target")
-                .to_list()
-            )
-            target_ids = ",".join(sorted(targets))
-
-            if len(targets) == 0:
-                continue
-
-            f.write(f"match\t{cluster_size}\t{samples}\t{target_ids}\n")
-
-    unbinned.with_columns(pl.col("target").cast(pl.Utf8)).write_csv(targets_path, separator="\t")
-
-    return
 
 if __name__ == "__main__":
     os.environ["POLARS_MAX_THREADS"] = str(snakemake.threads)
