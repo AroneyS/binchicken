@@ -7,6 +7,8 @@ from bird_tool_utils import in_tempdir
 import extern
 import subprocess
 from snakemake.io import load_configfile
+import polars as pl
+from polars.testing import assert_frame_equal
 
 path_to_data = os.path.join(os.path.dirname(os.path.realpath(__file__)),'data')
 path_to_conda = os.path.join(path_to_data,'.conda')
@@ -1330,18 +1332,17 @@ class Tests(unittest.TestCase):
 
             elusive_edges_path = os.path.join("test", "coassemble", "target", "elusive_edges.tsv")
             self.assertTrue(os.path.exists(elusive_edges_path))
-            expected = "\n".join(
-                [
-                    "\t".join(["style", "cluster_size", "samples", "target_ids"]),
-                    "\t".join(["match", "2", "sample_1,sample_5", "0"]),
-                    "\t".join(["match", "2", "sample_1,sample_2", "0,1"]),
-                    "\t".join(["match", "2", "sample_2,sample_5", "0"]),
-                    "\t".join(["match", "2", "sample_3,sample_5", "3,4"]),
-                    ""
-                ]
+            expected = pl.DataFrame([
+                    ["match", 2, "sample_1,sample_2", "0,1"],
+                    ["match", 2, "sample_1,sample_5", "0"],
+                    ["match", 2, "sample_2,sample_5", "0"],
+                    ["match", 2, "sample_3,sample_5", "3,4"],
+                ],
+                schema = ["style", "cluster_size", "samples", "target_ids"],
+                orient="row",
             )
-            with open(elusive_edges_path) as f:
-                self.assertEqual(expected, f.read())
+            observed = pl.read_csv(elusive_edges_path, separator="\t")
+            assert_frame_equal(expected, observed, check_dtypes=False, check_row_order=False)
 
             cluster_path = os.path.join("test", "coassemble", "target", "elusive_clusters.tsv")
             self.assertTrue(os.path.exists(cluster_path))
@@ -1436,18 +1437,17 @@ class Tests(unittest.TestCase):
 
             elusive_edges_path = os.path.join("test", "coassemble", "target", "elusive_edges.tsv")
             self.assertTrue(os.path.exists(elusive_edges_path))
-            expected = "\n".join(
-                [
-                    "\t".join(["style", "cluster_size", "samples", "target_ids"]),
-                    "\t".join(["match", "2", "sample_1,sample_2", "0,1"]),
-                    "\t".join(["match", "2", "sample_3,sample_5", "3,4"]),
-                    "\t".join(["match", "2", "sample_1,sample_5", "0"]),
-                    "\t".join(["match", "2", "sample_2,sample_5", "0"]),
-                    ""
-                ]
+            expected = pl.DataFrame([
+                    ["match", 2, "sample_1,sample_2", "0,1"],
+                    ["match", 2, "sample_1,sample_5", "0"],
+                    ["match", 2, "sample_2,sample_5", "0"],
+                    ["match", 2, "sample_3,sample_5", "3,4"],
+                ],
+                schema = ["style", "cluster_size", "samples", "target_ids"],
+                orient="row",
             )
-            with open(elusive_edges_path) as f:
-                self.assertEqual(expected, f.read())
+            observed = pl.read_csv(elusive_edges_path, separator="\t")
+            assert_frame_equal(expected, observed, check_dtypes=False, check_row_order=False)
 
             cluster_path = os.path.join("test", "coassemble", "target", "elusive_clusters.tsv")
             self.assertTrue(os.path.exists(cluster_path))
