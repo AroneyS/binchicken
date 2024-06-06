@@ -8,6 +8,7 @@ import os
 import logging
 import numpy as np
 import itertools
+import multiprocessing as mp
 
 EDGES_COLUMNS={
     "style": str,
@@ -66,6 +67,40 @@ def get_clusters(
     logging.info(f"Found {preclusters.height} preclusters")
     return preclusters
 
+
+def process_precluster(precluster, unbinned, MIN_COASSEMBLY_COVERAGE, q):
+    samples = precluster[0]
+    sample_ids = samples.split(",")
+    cluster_size = len(sample_ids)
+    targets = (
+        unbinned
+        .filter(pl.col("sample").is_in(sample_ids))
+        .group_by("target")
+        .agg(
+            coverage = pl.sum("coverage"),
+            count = pl.len(),
+            )
+        .filter(pl.col("count") == cluster_size)
+        .filter(pl.col("coverage") > MIN_COASSEMBLY_COVERAGE)
+        .select(pl.col("target").cast(pl.Utf8))
+        .get_column("target")
+        .to_list()
+    )
+    target_ids = ",".join(sorted(targets))
+
+    if len(targets) > 0:
+        q.put(f"match\t{cluster_size}\t{samples}\t{target_ids}\n")
+
+def process_listener(filepath, q):
+    with open(filepath, "w") as f:
+        f.write("style\tcluster_size\tsamples\ttarget_ids\n")
+        while True:
+            m = q.get()
+            if m == "kill":
+                break
+            f.write(str(m))
+            f.flush()
+
 def streaming_pipeline(
     unbinned,
     samples,
@@ -115,33 +150,25 @@ def streaming_pipeline(
         return unbinned.with_columns(pl.col("target").cast(pl.Utf8)), pl.DataFrame(schema=EDGES_COLUMNS)
 
     logging.info("Using chosen clusters to find appropriate targets")
-    with open(edges_path, "w") as f:
-        f.write("style\tcluster_size\tsamples\ttarget_ids\n")
+    with mp.get_context("spawn").Pool(pl.thread_pool_size()) as pool:
+        q = mp.Manager().Queue()
 
+        pool.apply_async(process_listener, (edges_path, q))
+
+        jobs = []
         for precluster in sample_preclusters.iter_rows():
-            samples = precluster[0]
-            sample_ids = samples.split(",")
-            cluster_size = len(sample_ids)
-            targets = (
-                unbinned
-                .filter(pl.col("sample").is_in(sample_ids))
-                .group_by("target")
-                .agg(
-                    coverage = pl.sum("coverage"),
-                    count = pl.len(),
-                    )
-                .filter(pl.col("count") == cluster_size)
-                .filter(pl.col("coverage") > MIN_COASSEMBLY_COVERAGE)
-                .select(pl.col("target").cast(pl.Utf8))
-                .get_column("target")
-                .to_list()
-            )
-            target_ids = ",".join(sorted(targets))
+            job = pool.apply_async(process_precluster, args=(precluster, unbinned, MIN_COASSEMBLY_COVERAGE, q))
+            jobs.append(job)
 
-            if len(targets) == 0:
-                continue
+        for job in jobs:
+            job.get()
 
-            f.write(f"match\t{cluster_size}\t{samples}\t{target_ids}\n")
+        q.put("kill")
+
+    if not os.path.exists(edges_path):
+        logging.warning("No edges found")
+        with open(edges_path, "w") as f:
+            f.write("style\tcluster_size\tsamples\ttarget_ids\n")
 
     unbinned.with_columns(pl.col("target").cast(pl.Utf8)).write_csv(targets_path, separator="\t")
 
