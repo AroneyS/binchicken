@@ -3,9 +3,9 @@
 #########################
 # Author: Samuel Aroney
 
-import polars as pl
 import os
 os.environ["OPENBLAS_NUM_THREADS"] = "1"
+import polars as pl
 import logging
 import numpy as np
 import itertools
