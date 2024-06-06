@@ -1333,8 +1333,8 @@ class Tests(unittest.TestCase):
             expected = "\n".join(
                 [
                     "\t".join(["style", "cluster_size", "samples", "target_ids"]),
-                    "\t".join(["match", "2", "sample_1,sample_2", "0,1"]),
                     "\t".join(["match", "2", "sample_1,sample_5", "0"]),
+                    "\t".join(["match", "2", "sample_1,sample_2", "0,1"]),
                     "\t".join(["match", "2", "sample_2,sample_5", "0"]),
                     "\t".join(["match", "2", "sample_3,sample_5", "3,4"]),
                     ""
@@ -1440,9 +1440,9 @@ class Tests(unittest.TestCase):
                 [
                     "\t".join(["style", "cluster_size", "samples", "target_ids"]),
                     "\t".join(["match", "2", "sample_1,sample_2", "0,1"]),
+                    "\t".join(["match", "2", "sample_3,sample_5", "3,4"]),
                     "\t".join(["match", "2", "sample_1,sample_5", "0"]),
                     "\t".join(["match", "2", "sample_2,sample_5", "0"]),
-                    "\t".join(["match", "2", "sample_3,sample_5", "3,4"]),
                     ""
                 ]
             )
