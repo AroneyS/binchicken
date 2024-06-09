@@ -3,5 +3,4 @@ channels:
   - bioconda
 dependencies:
   - python>=3.7
-  - singlem=0.16.*
-  - smafa=0.7.*
+  - singlem=0.18.*
