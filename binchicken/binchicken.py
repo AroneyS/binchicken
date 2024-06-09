@@ -1145,7 +1145,7 @@ def main():
         default_assembly_strategy = DYNAMIC_ASSEMBLY_STRATEGY
         argument_group.add_argument("--assembly-strategy", help=f"Assembly strategy to use with Aviary. [default: {default_assembly_strategy}; attempts metaspades and if fails, switches to megahit]",
                                     default=default_assembly_strategy, choices=[DYNAMIC_ASSEMBLY_STRATEGY, METASPADES_ASSEMBLY, MEGAHIT_ASSEMBLY])
-        argument_group.add_argument("--aviary-gtdbtk-db", help="Path to GTDB-Tk database directory for Aviary. [default: use path from GTDBTK_DATA_PATH env variable]")
+        argument_group.add_argument("--aviary-gtdbtk-db", help=f"Path to GTDB-Tk database directory for Aviary. Only required if --aviary-speed is set to {COMPREHENSIVE_AVIARY_MODE} [default: use path from GTDBTK_DATA_PATH env variable]")
         argument_group.add_argument("--aviary-checkm2-db", help="Path to CheckM2 database directory for Aviary. [default: use path from CHECKM2DB env variable]")
         aviary_assemble_default_cores = 64
         argument_group.add_argument("--aviary-assemble-cores", type=int, help=f"Maximum number of cores for Aviary assemble to use. [default: {aviary_assemble_default_cores}]",
@@ -1297,8 +1297,8 @@ def main():
 
     build_parser = main_parser.new_subparser("build", "Create dependency conda environments")
     build_parser.add_argument("--singlem-metapackage", help="SingleM metapackage")
-    build_parser.add_argument("--gtdbtk-db", help="GTDBtk release database")
     build_parser.add_argument("--checkm2-db", help="CheckM2 database")
+    build_parser.add_argument(f"--gtdbtk-db", help="GTDBtk release database (Only required if --aviary-speed is set to {COMPREHENSIVE_AVIARY_MODE})")
     tmp_default = "/tmp"
     build_parser.add_argument("--set-tmp-dir", help=f"Set temporary directory [default: {tmp_default}]", default=tmp_default)
     build_parser.add_argument("--skip-aviary-envs", help="Do not install Aviary subworkflow environments", action="store_true")
@@ -1382,8 +1382,11 @@ def main():
         else:
             if args.num_coassembly_samples > args.max_recovery_samples:
                 raise Exception("Max recovery samples (--max-recovery-samples) must be greater than or equal to number of coassembly samples (--num-coassembly-samples)")
-        if args.run_aviary and not (args.aviary_gtdbtk_db and args.aviary_checkm2_db):
-            raise Exception("Run Aviary (--run-aviary) requires paths to GTDB-Tk and CheckM2 databases to be provided (--aviary-gtdbtk-db or GTDBTK_DATA_PATH and --aviary-checkm2-db or CHECKM2DB)")
+        if args.run_aviary:
+            if args.aviary_speed == FAST_AVIARY_MODE and not args.aviary_checkm2_db:
+                raise Exception("Run Aviary (--run-aviary) fast mode requires path to CheckM2 databases to be provided (--aviary-checkm2-db or CHECKM2DB)")
+            if args.aviary_speed != FAST_AVIARY_MODE and not (args.aviary_gtdbtk_db and args.aviary_checkm2_db):
+                raise Exception("Run Aviary (--run-aviary) comprehensive mode requires paths to GTDB-Tk and CheckM2 databases to be provided (--aviary-gtdbtk-db or GTDBTK_DATA_PATH and --aviary-checkm2-db or CHECKM2DB)")
         if args.cluster_submission and not args.snakemake_profile:
                 logging.warning("The arg `--cluster-submission` is only a flag and cannot activate cluster submission alone. Please see `--snakemake-profile` for cluster submission.")
         if (args.sample_query or args.sample_query_list or args.sample_query_dir) and args.taxa_of_interest and args.assemble_unmapped:
