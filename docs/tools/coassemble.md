@@ -1,5 +1,5 @@
 ---
-title: Bin chicken coassemble
+title: Bin Chicken coassemble
 ---
 # binchicken coassemble
 
@@ -59,67 +59,51 @@ This is required to prevent `--local-cores` from limiting the number of threads 
 
   input forward/unpaired nucleotide read sequence(s)
 
-```{=html}
 <!-- -->
-```
 
 **\--forward-list**, **\--reads-list**, **\--sequences-list** *FORWARD_LIST*
 
   input forward/unpaired nucleotide read sequence(s) newline separated
 
-```{=html}
 <!-- -->
-```
 
 **\--reverse** *REVERSE* [*REVERSE* \...]
 
   input reverse nucleotide read sequence(s)
 
-```{=html}
 <!-- -->
-```
 
 **\--reverse-list** *REVERSE_LIST*
 
   input reverse nucleotide read sequence(s) newline separated
 
-```{=html}
 <!-- -->
-```
 
 **\--genomes** *GENOMES* [*GENOMES* \...]
 
   Reference genomes for read mapping
 
-```{=html}
 <!-- -->
-```
 
 **\--genomes-list** *GENOMES_LIST*
 
   Reference genomes for read mapping newline separated
 
-```{=html}
 <!-- -->
-```
 
 **\--coassembly-samples** *COASSEMBLY_SAMPLES* [*COASSEMBLY_SAMPLES* \...]
 
   Restrict coassembly to these samples. Remaining samples will still
     be used for recovery [default: use all samples]
 
-```{=html}
 <!-- -->
-```
 
 **\--coassembly-samples-list** *COASSEMBLY_SAMPLES_LIST*
 
   Restrict coassembly to these samples, newline separated. Remaining
     samples will still be used for recovery [default: use all samples]
 
-```{=html}
 <!-- -->
-```
 
 **\--singlem-metapackage** *SINGLEM_METAPACKAGE*
 
@@ -134,9 +118,7 @@ This is required to prevent `--local-cores` from limiting the number of threads 
     name]\_read.otu_table.tsv\". If provided, SingleM pipe sample is
     skipped
 
-```{=html}
 <!-- -->
-```
 
 **\--sample-singlem-list** *SAMPLE_SINGLEM_LIST*
 
@@ -144,9 +126,7 @@ This is required to prevent `--local-cores` from limiting the number of threads 
     name]\_read.otu_table.tsv\" newline separated. If provided, SingleM
     pipe sample is skipped
 
-```{=html}
 <!-- -->
-```
 
 **\--sample-singlem-dir** *SAMPLE_SINGLEM_DIR*
 
@@ -154,9 +134,7 @@ This is required to prevent `--local-cores` from limiting the number of threads 
     \"[sample name]\_read.otu_table.tsv\". If provided, SingleM pipe
     sample is skipped
 
-```{=html}
 <!-- -->
-```
 
 **\--sample-query** *SAMPLE_QUERY* [*SAMPLE_QUERY* \...]
 
@@ -164,9 +142,7 @@ This is required to prevent `--local-cores` from limiting the number of threads 
     in the form \"[sample name]\_query.otu_table.tsv\". If provided,
     SingleM pipe and appraise are skipped
 
-```{=html}
 <!-- -->
-```
 
 **\--sample-query-list** *SAMPLE_QUERY_LIST*
 
@@ -174,9 +150,7 @@ This is required to prevent `--local-cores` from limiting the number of threads 
     in the form \"[sample name]\_query.otu_table.tsv\" newline
     separated. If provided, SingleM pipe and appraise are skipped
 
-```{=html}
 <!-- -->
-```
 
 **\--sample-query-dir** *SAMPLE_QUERY_DIR*
 
@@ -185,36 +159,28 @@ This is required to prevent `--local-cores` from limiting the number of threads 
     name]\_query.otu_table.tsv\". If provided, SingleM pipe and
     appraise are skipped
 
-```{=html}
 <!-- -->
-```
 
 **\--sample-read-size** *SAMPLE_READ_SIZE*
 
   Comma separated list of sample name and size (bp). If provided,
     sample read counting is skipped
 
-```{=html}
 <!-- -->
-```
 
 **\--genome-transcripts** *GENOME_TRANSCRIPTS* [*GENOME_TRANSCRIPTS* \...]
 
   Genome transcripts for reference database, in the form
     \"[genome]\_protein.fna\"
 
-```{=html}
 <!-- -->
-```
 
 **\--genome-transcripts-list** *GENOME_TRANSCRIPTS_LIST*
 
   Genome transcripts for reference database, in the form
     \"[genome]\_protein.fna\" newline separated
 
-```{=html}
 <!-- -->
-```
 
 **\--genome-singlem** *GENOME_SINGLEM*
 
@@ -228,26 +194,20 @@ This is required to prevent `--local-cores` from limiting the number of threads 
   Only consider sequences from this GTDB taxa (e.g.
     p\_\_Planctomycetota) [default: all]
 
-```{=html}
 <!-- -->
-```
 
 **\--appraise-sequence-identity** *APPRAISE_SEQUENCE_IDENTITY*
 
   Minimum sequence identity for SingleM appraise against reference
     database [default: 86%, Genus-level]
 
-```{=html}
 <!-- -->
-```
 
 **\--min-sequence-coverage** *MIN_SEQUENCE_COVERAGE*
 
   Minimum combined coverage for sequence inclusion [default: 10]
 
-```{=html}
 <!-- -->
-```
 
 **\--single-assembly**
 
@@ -255,61 +215,47 @@ This is required to prevent `--local-cores` from limiting the number of threads 
     Forces \--num-coassembly-samples and \--max-coassembly-samples to 1
     and sets \--max- coassembly-size to None
 
-```{=html}
 <!-- -->
-```
 
 **\--exclude-coassemblies** *EXCLUDE_COASSEMBLIES* [*EXCLUDE_COASSEMBLIES* \...]
 
   List of coassemblies to exclude, space separated, in the form
     \"sample_1,sample_2\"
 
-```{=html}
 <!-- -->
-```
 
 **\--exclude-coassemblies-list** *EXCLUDE_COASSEMBLIES_LIST*
 
   List of coassemblies to exclude, space separated, in the form
     \"sample_1,sample_2\", newline separated
 
-```{=html}
 <!-- -->
-```
 
 **\--num-coassembly-samples** *NUM_COASSEMBLY_SAMPLES*
 
   Number of samples per coassembly cluster [default: 2]
 
-```{=html}
 <!-- -->
-```
 
 **\--max-coassembly-samples** *MAX_COASSEMBLY_SAMPLES*
 
   Upper bound for number of samples per coassembly cluster [default:
     \--num- coassembly-samples]
 
-```{=html}
 <!-- -->
-```
 
 **\--max-coassembly-size** *MAX_COASSEMBLY_SIZE*
 
   Maximum size (Gbp) of coassembly cluster [default: 50Gbp]
 
-```{=html}
 <!-- -->
-```
 
 **\--max-recovery-samples** *MAX_RECOVERY_SAMPLES*
 
   Upper bound for number of related samples to use for differential
     abundance binning [default: 20]
 
-```{=html}
 <!-- -->
-```
 
 **\--prodigal-meta**
 
@@ -321,53 +267,41 @@ This is required to prevent `--local-cores` from limiting the number of threads 
 
   Only assemble reads that do not map to reference genomes
 
-```{=html}
 <!-- -->
-```
 
 **\--run-qc**
 
   Run Fastp QC on reads
 
-```{=html}
 <!-- -->
-```
 
 **\--unmapping-min-appraised** *UNMAPPING_MIN_APPRAISED*
 
   Minimum fraction of sequences binned to justify unmapping [default:
     0.1]
 
-```{=html}
 <!-- -->
-```
 
 **\--unmapping-max-identity** *UNMAPPING_MAX_IDENTITY*
 
   Maximum sequence identity of mapped sequences kept for coassembly
     [default: 99%]
 
-```{=html}
 <!-- -->
-```
 
 **\--unmapping-max-alignment** *UNMAPPING_MAX_ALIGNMENT*
 
   Maximum percent alignment of mapped sequences kept for coassembly
     [default: 99%]
 
-```{=html}
 <!-- -->
-```
 
 **\--run-aviary**
 
   Run Aviary commands for all identified coassemblies (unless specific
     coassemblies are chosen with \--coassemblies) [default: do not]
 
-```{=html}
 <!-- -->
-```
 
 **\--cluster-submission**
 
@@ -375,70 +309,55 @@ This is required to prevent `--local-cores` from limiting the number of threads 
     \`\--snakemake-profile\`. This sets the local threads of Aviary
     recover to 1, allowing parallel job submission [default: do not]
 
-```{=html}
 <!-- -->
-```
 
 **\--aviary-speed** {fast,comprehensive}
 
   Run Aviary recover in \'fast\' or \'comprehensive\' mode. Fast mode
     skips slow binners and refinement steps. [default: fast]
 
-```{=html}
 <!-- -->
-```
 
 **\--assembly-strategy** {dynamic,metaspades,megahit}
 
   Assembly strategy to use with Aviary. [default: dynamic; attempts
     metaspades and if fails, switches to megahit]
 
-```{=html}
 <!-- -->
-```
 
 **\--aviary-gtdbtk-db** *AVIARY_GTDBTK_DB*
 
-  Path to GTDB-Tk database directory for Aviary. [default: use path
-    from GTDBTK_DATA_PATH env variable]
+  Path to GTDB-Tk database directory for Aviary. Only required if
+    \--aviary-speed is set to comprehensive [default: use path from
+    GTDBTK_DATA_PATH env variable]
 
-```{=html}
 <!-- -->
-```
 
 **\--aviary-checkm2-db** *AVIARY_CHECKM2_DB*
 
   Path to CheckM2 database directory for Aviary. [default: use path
     from CHECKM2DB env variable]
 
-```{=html}
 <!-- -->
-```
 
 **\--aviary-assemble-cores** *AVIARY_ASSEMBLE_CORES*
 
   Maximum number of cores for Aviary assemble to use. [default: 64]
 
-```{=html}
 <!-- -->
-```
 
 **\--aviary-assemble-memory** *AVIARY_ASSEMBLE_MEMORY*
 
   Maximum amount of memory for Aviary assemble to use (Gigabytes).
     [default: 500]
 
-```{=html}
 <!-- -->
-```
 
 **\--aviary-recover-cores** *AVIARY_RECOVER_CORES*
 
   Maximum number of cores for Aviary recover to use. [default: 32]
 
-```{=html}
 <!-- -->
-```
 
 **\--aviary-recover-memory** *AVIARY_RECOVER_MEMORY*
 
@@ -451,34 +370,26 @@ This is required to prevent `--local-cores` from limiting the number of threads 
 
   Output directory [default: .]
 
-```{=html}
 <!-- -->
-```
 
 **\--conda-prefix** *CONDA_PREFIX*
 
   Path to conda environment install location. [default: Use path from
     CONDA_ENV_PATH env variable]
 
-```{=html}
 <!-- -->
-```
 
 **\--cores** *CORES*
 
   Maximum number of cores to use [default: 1]
 
-```{=html}
 <!-- -->
-```
 
 **\--dryrun**
 
   dry run workflow
 
-```{=html}
 <!-- -->
-```
 
 **\--snakemake-profile** *SNAKEMAKE_PROFILE*
 
@@ -487,36 +398,28 @@ This is required to prevent `--local-cores` from limiting the number of threads 
     Can be used to submit rules as jobs to cluster engine (see
     https://snakemake.readthedocs.io/en/v7.32.3/executing/cluster.html).
 
-```{=html}
 <!-- -->
-```
 
 **\--local-cores** *LOCAL_CORES*
 
   Maximum number of cores to use on localrules when running in cluster
     mode [default: 1]
 
-```{=html}
 <!-- -->
-```
 
 **\--cluster-retries** *CLUSTER_RETRIES*
 
   Number of times to retry a failed job when using cluster submission
     (see \`\--snakemake-profile\`) [default: 3].
 
-```{=html}
 <!-- -->
-```
 
 **\--snakemake-args** *SNAKEMAKE_ARGS*
 
   Additional commands to be supplied to snakemake in the form of a
     space- prefixed single string e.g. \" \--quiet\"
 
-```{=html}
 <!-- -->
-```
 
 **\--tmp-dir** *TMP_DIR*
 
@@ -528,33 +431,25 @@ This is required to prevent `--local-cores` from limiting the number of threads 
 
   output debug information
 
-```{=html}
 <!-- -->
-```
 
 **\--version**
 
   output version information and quit
 
-```{=html}
 <!-- -->
-```
 
 **\--quiet**
 
   only output errors
 
-```{=html}
 <!-- -->
-```
 
 **\--full-help**
 
   print longer help message
 
-```{=html}
 <!-- -->
-```
 
 **\--full-help-roff**
 
