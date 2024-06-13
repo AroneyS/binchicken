@@ -74,7 +74,8 @@ def streaming_pipeline(
     edges_path,
     MIN_COASSEMBLY_COVERAGE=10,
     TAXA_OF_INTEREST="",
-    MAX_COASSEMBLY_SAMPLES=2):
+    MAX_COASSEMBLY_SAMPLES=2,
+    CHUNK_SIZE=2):
 
     logging.info(f"Polars using {str(pl.thread_pool_size())} threads")
 
@@ -146,15 +147,12 @@ def streaming_pipeline(
 
         return(sparse_edges)
 
-    chunk_size = 2
-    num_rows = sample_preclusters.height
-    num_chunks = (num_rows + chunk_size - 1) // chunk_size # Ceiling division to include all rows
-
+    num_chunks = (sample_preclusters.height + CHUNK_SIZE - 1) // CHUNK_SIZE # Ceiling division to include all rows
     with open(edges_path, "w") as f:
         with pl.StringCache():
             for i in range(num_chunks):
-                start_row = i * chunk_size
-                chunk = sample_preclusters.slice(start_row, chunk_size)
+                start_row = i * CHUNK_SIZE
+                chunk = sample_preclusters.slice(start_row, CHUNK_SIZE)
                 processed_chunk = process_chunk(chunk)
                 processed_chunk.write_csv(f, separator="\t", include_header=i==0)
 
@@ -309,6 +307,7 @@ if __name__ == "__main__":
             MIN_COASSEMBLY_COVERAGE=MIN_COASSEMBLY_COVERAGE,
             TAXA_OF_INTEREST=TAXA_OF_INTEREST,
             MAX_COASSEMBLY_SAMPLES=MAX_COASSEMBLY_SAMPLES,
+            CHUNK_SIZE=1000,
             )
     else:
         targets, edges = pipeline(

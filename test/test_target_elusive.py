@@ -622,6 +622,7 @@ class Tests(unittest.TestCase):
                 targets_path="targets.tsv",
                 edges_path="edges.tsv",
                 MAX_COASSEMBLY_SAMPLES=2,
+                CHUNK_SIZE=2,
                 )
             observed_targets = pl.read_csv("targets.tsv", schema_overrides=TARGETS_COLUMNS, separator="\t")
             observed_edges = pl.read_csv("edges.tsv", schema_overrides=EDGES_COLUMNS, separator="\t")
@@ -666,6 +667,7 @@ class Tests(unittest.TestCase):
                 targets_path="targets.tsv",
                 edges_path="edges.tsv",
                 MAX_COASSEMBLY_SAMPLES=1,
+                CHUNK_SIZE=2,
                 )
             observed_targets = pl.read_csv("targets.tsv", schema_overrides=TARGETS_COLUMNS, separator="\t")
             observed_edges = pl.read_csv("edges.tsv", schema_overrides=EDGES_COLUMNS, separator="\t")
@@ -710,6 +712,7 @@ class Tests(unittest.TestCase):
                 targets_path="targets.tsv",
                 edges_path="edges.tsv",
                 MAX_COASSEMBLY_SAMPLES=1,
+                CHUNK_SIZE=2,
                 )
             observed_targets = pl.read_csv("targets.tsv", schema_overrides=TARGETS_COLUMNS, separator="\t")
             observed_edges = pl.read_csv("edges.tsv", schema_overrides=EDGES_COLUMNS, separator="\t")
@@ -744,6 +747,7 @@ class Tests(unittest.TestCase):
                 sample_preclusters=preclusters,
                 targets_path="targets.tsv",
                 edges_path="edges.tsv",
+                CHUNK_SIZE=2,
                 )
             observed_targets = pl.read_csv("targets.tsv", schema_overrides=TARGETS_COLUMNS, separator="\t")
             observed_edges = pl.read_csv("edges.tsv", schema_overrides=EDGES_COLUMNS, separator="\t")
@@ -790,6 +794,7 @@ class Tests(unittest.TestCase):
                 targets_path="targets.tsv",
                 edges_path="edges.tsv",
                 MAX_COASSEMBLY_SAMPLES=2,
+                CHUNK_SIZE=2,
                 )
             observed_targets = pl.read_csv("targets.tsv", schema_overrides=TARGETS_COLUMNS, separator="\t")
             observed_edges = pl.read_csv("edges.tsv", schema_overrides=EDGES_COLUMNS, separator="\t")
