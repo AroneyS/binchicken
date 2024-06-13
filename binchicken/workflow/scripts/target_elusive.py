@@ -125,9 +125,9 @@ def streaming_pipeline(
         return
 
     logging.info("Using chosen clusters to find appropriate targets")
-    with pl.StringCache():
+    def process_chunk(df):
         sparse_edges = (
-            sample_preclusters
+            df
             .lazy()
             .with_columns(sample_ids = pl.col("samples").str.split(",").cast(pl.List(pl.Categorical)))
             .with_columns(cluster_size = pl.col("sample_ids").list.len())
@@ -144,8 +144,19 @@ def streaming_pipeline(
             .collect(streaming=True)
         )
 
-    unbinned.with_columns(pl.col("target").cast(pl.Utf8)).write_csv(targets_path, separator="\t")
-    sparse_edges.sort("style", "cluster_size", "samples").write_csv(edges_path, separator="\t")
+        return(sparse_edges)
+
+    chunk_size = 2
+    num_rows = sample_preclusters.height
+    num_chunks = (num_rows + chunk_size - 1) // chunk_size # Ceiling division to include all rows
+
+    with open(edges_path, "w") as f:
+        with pl.StringCache():
+            for i in range(num_chunks):
+                start_row = i * chunk_size
+                chunk = sample_preclusters.slice(start_row, chunk_size)
+                processed_chunk = process_chunk(chunk)
+                processed_chunk.write_csv(f, separator="\t", include_header=i==0)
 
     return
 
