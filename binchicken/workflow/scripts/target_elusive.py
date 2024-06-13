@@ -4,12 +4,10 @@
 # Author: Samuel Aroney
 
 import os
-os.environ["OPENBLAS_NUM_THREADS"] = "1"
 import polars as pl
 import logging
 import numpy as np
 import itertools
-import multiprocessing as mp
 
 EDGES_COLUMNS={
     "style": str,
@@ -68,40 +66,6 @@ def get_clusters(
     logging.info(f"Found {preclusters.height} preclusters")
     return preclusters
 
-
-def process_precluster(precluster, unbinned, MIN_COASSEMBLY_COVERAGE, q):
-    samples = precluster[0]
-    sample_ids = samples.split(",")
-    cluster_size = len(sample_ids)
-    targets = (
-        unbinned
-        .filter(pl.col("sample").is_in(sample_ids))
-        .group_by("target")
-        .agg(
-            coverage = pl.sum("coverage"),
-            count = pl.len(),
-            )
-        .filter(pl.col("count") == cluster_size)
-        .filter(pl.col("coverage") > MIN_COASSEMBLY_COVERAGE)
-        .select(pl.col("target").cast(pl.Utf8))
-        .get_column("target")
-        .to_list()
-    )
-    target_ids = ",".join(sorted(targets))
-
-    if len(targets) > 0:
-        q.put(f"match\t{cluster_size}\t{samples}\t{target_ids}\n")
-
-def process_listener(filepath, q):
-    with open(filepath, "w") as f:
-        f.write("style\tcluster_size\tsamples\ttarget_ids\n")
-        while True:
-            m = q.get()
-            if m == "kill":
-                break
-            f.write(str(m))
-            f.flush()
-
 def streaming_pipeline(
     unbinned,
     samples,
@@ -110,8 +74,7 @@ def streaming_pipeline(
     edges_path,
     MIN_COASSEMBLY_COVERAGE=10,
     TAXA_OF_INTEREST="",
-    MAX_COASSEMBLY_SAMPLES=2,
-    threads=1):
+    MAX_COASSEMBLY_SAMPLES=2):
 
     logging.info(f"Polars using {str(pl.thread_pool_size())} threads")
 
@@ -152,27 +115,27 @@ def streaming_pipeline(
         return unbinned.with_columns(pl.col("target").cast(pl.Utf8)), pl.DataFrame(schema=EDGES_COLUMNS)
 
     logging.info("Using chosen clusters to find appropriate targets")
-    with mp.get_context("spawn").Pool(threads) as pool:
-        q = mp.Manager().Queue()
-
-        pool.apply_async(process_listener, (edges_path, q))
-
-        jobs = []
-        for precluster in sample_preclusters.iter_rows():
-            job = pool.apply_async(process_precluster, args=(precluster, unbinned, MIN_COASSEMBLY_COVERAGE, q))
-            jobs.append(job)
-
-        for job in jobs:
-            job.get()
-
-        q.put("kill")
-
-    if not os.path.exists(edges_path):
-        logging.warning("No edges found")
-        with open(edges_path, "w") as f:
-            f.write("style\tcluster_size\tsamples\ttarget_ids\n")
+    with pl.StringCache():
+        sparse_edges = (
+            sample_preclusters
+            .lazy()
+            .with_columns(sample_ids = pl.col("samples").str.split(",").cast(pl.List(pl.Categorical)))
+            .with_columns(cluster_size = pl.col("sample_ids").list.len())
+            .explode("sample_ids")
+            .join(unbinned.lazy().select("target", "coverage", sample_ids=pl.col("sample").cast(pl.Categorical)), on="sample_ids")
+            .group_by("samples", "cluster_size", "target")
+            .agg(pl.sum("coverage"), count = pl.len())
+            .filter(pl.col("count") == pl.col("cluster_size"))
+            .filter(pl.col("coverage") > MIN_COASSEMBLY_COVERAGE)
+            .group_by("samples", "cluster_size")
+            .agg(target_ids = pl.col("target").cast(pl.Utf8).sort().str.concat(","))
+            .with_columns(style = pl.lit("match"))
+            .select("style", "cluster_size", "samples", "target_ids")
+            .collect(streaming=True)
+        )
 
     unbinned.with_columns(pl.col("target").cast(pl.Utf8)).write_csv(targets_path, separator="\t")
+    sparse_edges.sort("style", "cluster_size", "samples").write_csv(edges_path, separator="\t")
 
     return
 
@@ -283,10 +246,7 @@ def pipeline(
     return unbinned.with_columns(pl.col("target").cast(pl.Utf8)), sparse_edges
 
 if __name__ == "__main__":
-    if snakemake.input.distances:
-        os.environ["POLARS_STREAMING_CHUNK_SIZE"] = "1"
-    else:
-        os.environ["POLARS_MAX_THREADS"] = str(snakemake.threads)
+    os.environ["POLARS_MAX_THREADS"] = str(snakemake.threads)
     import polars as pl
 
     logging.basicConfig(
@@ -328,7 +288,6 @@ if __name__ == "__main__":
             MIN_COASSEMBLY_COVERAGE=MIN_COASSEMBLY_COVERAGE,
             TAXA_OF_INTEREST=TAXA_OF_INTEREST,
             MAX_COASSEMBLY_SAMPLES=MAX_COASSEMBLY_SAMPLES,
-            threads=snakemake.threads,
             )
     else:
         targets, edges = pipeline(
