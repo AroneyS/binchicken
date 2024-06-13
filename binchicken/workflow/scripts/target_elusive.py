@@ -80,7 +80,9 @@ def streaming_pipeline(
 
     if len(unbinned) == 0:
         logging.warning("No unbinned sequences found")
-        return unbinned.rename({"found_in": "target"}), pl.DataFrame(schema=EDGES_COLUMNS)
+        unbinned.rename({"found_in": "target"}).write_csv(targets_path, separator="\t")
+        pl.DataFrame(schema=EDGES_COLUMNS).write_csv(edges_path, separator="\t")
+        return
 
     if MAX_COASSEMBLY_SAMPLES < 2:
         # Set to 2 to produce paired edges
@@ -110,9 +112,17 @@ def streaming_pipeline(
             )
     )
 
+    unbinned.with_columns(pl.col("target").cast(pl.Utf8)).write_csv(targets_path, separator="\t")
+
     if unbinned.height == 0:
         logging.warning("No SingleM sequences found for the given samples")
-        return unbinned.with_columns(pl.col("target").cast(pl.Utf8)), pl.DataFrame(schema=EDGES_COLUMNS)
+        pl.DataFrame(schema=EDGES_COLUMNS).write_csv(edges_path, separator="\t")
+        return
+
+    if sample_preclusters.height == 0:
+        logging.warning("No preclusters found")
+        pl.DataFrame(schema=EDGES_COLUMNS).write_csv(edges_path, separator="\t")
+        return
 
     logging.info("Using chosen clusters to find appropriate targets")
     with pl.StringCache():
