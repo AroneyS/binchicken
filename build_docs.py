@@ -65,7 +65,7 @@ if __name__ == '__main__':
 
                 with open(f"docs/{subdir}/{subcommand}.md",'w') as f:
                     f.write("---\n")
-                    f.write(f"title: Bin chicken {subcommand}\n")
+                    f.write(f"title: Bin Chicken {subcommand}\n")
                     f.write("---\n")
                     f.write(f"# binchicken {subcommand}\n")
 
@@ -77,7 +77,7 @@ if __name__ == '__main__':
                 man_usage = remove_before("DESCRIPTION", man_usage)
                 with open("docs/{}/{}.md".format(subdir, subcommand),'w') as f:
                     f.write("---\n")
-                    f.write(f"title: Bin chicken {subcommand}\n")
+                    f.write(f"title: Bin Chicken {subcommand}\n")
                     f.write("---\n")
                     f.write(f"# binchicken {subcommand}\n")
 

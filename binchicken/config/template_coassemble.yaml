@@ -26,6 +26,7 @@ unmapping_max_alignment: 1
 aviary_speed: "fast"
 assembly_strategy: "dynamic"
 run_aviary: false
+cluster_submission: false
 aviary_gtdbtk: ""
 aviary_checkm2: ""
 aviary_assemble_memory: 1
@@ -36,5 +37,5 @@ test: false
 mock_sra: false
 aviary_dryrun: false
 conda_prefix: false
-tmpdir: "/tmp"
+tmpdir: false
 build: false

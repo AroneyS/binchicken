@@ -733,7 +733,7 @@ rule aviary_assemble:
         drymkdir = "&& mkdir -p "+output_dir+"/coassemble/{coassembly}/assemble/assembly" if config["aviary_dryrun"] else "",
         drytouch = "&& touch "+output_dir+"/coassemble/{coassembly}/assemble/assembly/final_contigs.fasta" if config["aviary_dryrun"] else "",
         conda_prefix = config["conda_prefix"] if config["conda_prefix"] else ".",
-        tmpdir = config["tmpdir"],
+        tmpdir = f"TMPDIR={config['tmpdir']}" if config["tmpdir"] else "",
     threads: lambda wildcards, attempt: get_assemble_threads(wildcards, attempt)
     resources:
         mem_mb = lambda wildcards, attempt: get_assemble_memory(wildcards, attempt, unit="MB"),
@@ -750,7 +750,7 @@ rule aviary_assemble:
         "EGGNOG_DATA_DIR=. "
         "CONDA_ENV_PATH={params.conda_prefix} "
         "SINGLEM_METAPACKAGE_PATH=. "
-        "TMPDIR={params.tmpdir} "
+        "{params.tmpdir} "
         "aviary assemble "
         "--coassemble "
         "-1 {params.reads_1} "
@@ -781,13 +781,14 @@ rule aviary_recover:
         checkm2 = config["aviary_checkm2"],
         conda_prefix = config["conda_prefix"] if config["conda_prefix"] else ".",
         singlem_metapackage = config["singlem_metapackage"],
-        fast = "--workflow recover_mags_no_singlem --skip-binners maxbin concoct rosella --skip-abundances --refinery-max-iterations 0" if config["aviary_speed"] == FAST_AVIARY_MODE else "",
+        fast = "--binning-only --refinery-max-iterations 0" if config["aviary_speed"] == FAST_AVIARY_MODE else "",
         snakemake_profile = f"--snakemake-profile {config['snakemake_profile']}" if config["snakemake_profile"] else "",
         cluster_retries = f"--cluster-retries {config['cluster_retries']}" if config["cluster_retries"] else "",
-        tmpdir = config["tmpdir"],
+        tmpdir = f"TMPDIR={config['tmpdir']}" if config["tmpdir"] else "",
+        threads = int(config["aviary_recover_threads"])
     localrule: True
     threads:
-        int(config["aviary_recover_threads"])
+        1 if config["cluster_submission"] else int(config["aviary_recover_threads"])
     resources:
         mem_mb = int(config["aviary_recover_memory"])*1000,
         mem_gb = int(config["aviary_recover_memory"]),
@@ -802,15 +803,15 @@ rule aviary_recover:
         "EGGNOG_DATA_DIR=. "
         "CONDA_ENV_PATH={params.conda_prefix} "
         "SINGLEM_METAPACKAGE_PATH={params.singlem_metapackage} "
-        "TMPDIR={params.tmpdir} "
+        "{params.tmpdir} "
         "aviary recover "
         "--assembly {input.assembly} "
         "-1 {params.reads_1} "
         "-2 {params.reads_2} "
         "--output {params.output} "
         "{params.fast} "
-        "-n {threads} "
-        "-t {threads} "
+        "-n {params.threads} "
+        "-t {params.threads} "
         "-m {resources.mem_gb} "
         "--skip-qc "
         "{params.snakemake_profile} "

@@ -37,7 +37,7 @@ def build_reads_list(forward, reverse):
             joint_name = os.path.commonprefix(
                 [os.path.basename(forward), os.path.basename(reverse)]
                 )
-            joint_name = joint_name.rstrip("_").rstrip(".")
+            joint_name = joint_name.rstrip(r"_R|_|\.")
 
             if joint_name in forward_reads:
                 raise Exception(f"Duplicate basename: {joint_name}")
@@ -96,7 +96,10 @@ def copy_input(input, output, suppress=False):
 
 def read_list(path):
     with open(path) as f:
-        return [line.strip() for line in f]
+        contents = [line.strip() for line in f]
+    if not contents:
+        raise Exception(f"Empty list at {path}")
+    return contents
 
 def run_workflow(config, workflow, output_dir, cores=16, dryrun=False,
                  profile=None, local_cores=1, cluster_retries=None,
@@ -145,7 +148,7 @@ def download_sra(args):
     if "mock_sra=True" in args.snakemake_args:
         target_rule = "mock_download_sra --resources downloading=1"
     else:
-        target_rule = "download_sra --resources downloading=1"
+        target_rule = "download_sra --resources downloading=3"
 
     run_workflow(
         config = config_path,
@@ -342,7 +345,7 @@ def evaluate_bins(aviary_outputs, checkm_version, min_completeness, max_contamin
         completeness_col = "Completeness (CheckM2)"
         contamination_col = "Contamination (CheckM2)"
     elif checkm_version == "build":
-        logging.info("Mock bins for Bin chicken build")
+        logging.info("Mock bins for Bin Chicken build")
         return {"iteration_0-coassembly_0-0": os.path.join(aviary_outputs[0], "iteration_0-coassembly_0-0.fna")}
     else:
         raise ValueError("Invalid CheckM version")
@@ -498,6 +501,7 @@ def coassemble(args):
         "aviary_speed": args.aviary_speed,
         "assembly_strategy": args.assembly_strategy,
         "run_aviary": args.run_aviary,
+        "cluster_submission": args.cluster_submission,
         "aviary_gtdbtk": args.aviary_gtdbtk_db,
         "aviary_checkm2": args.aviary_checkm2_db,
         "aviary_assemble_threads": args.aviary_assemble_cores,
@@ -547,7 +551,7 @@ def coassemble(args):
     except (FileNotFoundError, NoDataError):
         pass
 
-    logging.info(f"Bin chicken coassemble complete.")
+    logging.info(f"Bin Chicken coassemble complete.")
     logging.info(f"Cluster summary at {os.path.join(args.output, 'coassemble', 'summary.tsv')}")
     logging.info(f"More details at {os.path.join(args.output, 'coassemble', 'target', 'elusive_clusters.tsv')}")
     if args.run_aviary:
@@ -556,7 +560,7 @@ def coassemble(args):
         logging.info(f"Aviary commands for coassembly and recovery in shell scripts at {os.path.join(args.output, 'coassemble', 'commands')}")
 
 def evaluate(args):
-    logging.info("Loading Bin chicken coassemble info")
+    logging.info("Loading Bin Chicken coassemble info")
     if args.coassemble_output:
         coassemble_dir = os.path.abspath(args.coassemble_output)
         coassemble_target_dir = os.path.join(coassemble_dir, "target")
@@ -630,7 +634,7 @@ def evaluate(args):
         snakemake_args = args.snakemake_args,
     )
 
-    logging.info(f"Bin chicken evaluate complete.")
+    logging.info(f"Bin Chicken evaluate complete.")
     logging.info(f"Coassembly evaluation summary at {os.path.join(args.output, 'evaluate', 'evaluate', 'summary_stats.tsv')}")
     logging.info(f"Genome recovery breakdown by phyla at {os.path.join(args.output, 'evaluate', 'evaluate', 'plots', 'combined', 'phylum_recovered.png')}")
 
@@ -647,7 +651,7 @@ def update(args):
             args.forward = [os.path.normpath(os.path.join(args.coassemble_output, "..", v)) for _,v in old_config["reads_1"].items()]
             args.reverse = [os.path.normpath(os.path.join(args.coassemble_output, "..", v)) for _,v in old_config["reads_2"].items()]
 
-    logging.info("Loading Bin chicken coassemble info")
+    logging.info("Loading Bin Chicken coassemble info")
     if args.coassemble_output:
         coassemble_dir = os.path.abspath(args.coassemble_output)
         coassemble_target_dir = os.path.join(coassemble_dir, "target")
@@ -707,7 +711,7 @@ def update(args):
     args.sample_read_size = sample_read_size
     coassemble(args)
 
-    logging.info(f"Bin chicken update complete.")
+    logging.info(f"Bin Chicken update complete.")
     if not args.run_aviary:
         logging.info(f"Aviary commands for coassembly and recovery in shell scripts at {os.path.join(args.output, 'coassemble', 'commands')}")
 
@@ -806,7 +810,7 @@ def iterate(args):
         f.writelines("\n".join(["\t".join([os.path.abspath(bins[bin]), bin + ".fna"]) for bin in bins]))
 
     if args.coassemble_output:
-        logging.info("Processing previous Bin chicken coassemble run")
+        logging.info("Processing previous Bin Chicken coassemble run")
         coassemble_appraise_dir = os.path.join(os.path.abspath(args.coassemble_output), "appraise")
         args.coassemble_unbinned = os.path.join(coassemble_appraise_dir, "unbinned.otu_table.tsv")
         args.coassemble_binned = os.path.join(coassemble_appraise_dir, "binned.otu_table.tsv")
@@ -899,7 +903,7 @@ def iterate(args):
         logging.warn("Suggested coassemblies may match those from previous iterations. To check, use `--elusive-clusters`.")
         logging.warn("To exclude, provide previous run with `--coassemble-output` or use `--exclude-coassembles`.")
 
-    logging.info(f"Bin chicken iterate complete.")
+    logging.info(f"Bin Chicken iterate complete.")
     logging.info(f"Cluster summary at {os.path.join(args.output, 'coassemble', 'summary.tsv')}")
     logging.info(f"More details at {os.path.join(args.output, 'coassemble', 'target', 'elusive_clusters.tsv')}")
     if args.run_aviary:
@@ -952,6 +956,7 @@ def build(args):
     args.new_genomes_list = None
     args.coassembly_samples_list = None
     args.sample_read_size = None
+    args.cluster_submission = False
     args.aviary_gtdbtk_db = "."
     args.aviary_checkm2_db = "."
     args.aviary_assemble_cores = None
@@ -1044,12 +1049,12 @@ def build(args):
         coassemble(args)
 
 
-    logging.info(f"Bin chicken build complete.")
+    logging.info(f"Bin Chicken build complete.")
     logging.info(f"Conda envs at {conda_prefix}")
     logging.info(f"Re-activate conda env to load env variables.")
 
 def main():
-    main_parser = btu.BirdArgparser(program="Bin chicken", version = __version__, program_invocation="binchicken",
+    main_parser = btu.BirdArgparser(program="Bin Chicken", version = __version__, program_invocation="binchicken",
         examples = {
             "coassemble": [
                 btu.Example(
@@ -1139,7 +1144,7 @@ def main():
         retries_default = 3
         argument_group.add_argument("--cluster-retries", help=f"Number of times to retry a failed job when using cluster submission (see `--snakemake-profile`) [default: {retries_default}].", default=retries_default)
         argument_group.add_argument("--snakemake-args", help="Additional commands to be supplied to snakemake in the form of a space-prefixed single string e.g. \" --quiet\"", default="")
-        argument_group.add_argument("--tmp-dir", help="Path to temporary directory. [default: Use path from TMPDIR env variable]")
+        argument_group.add_argument("--tmp-dir", help="Path to temporary directory. [default: no default]")
 
     def add_base_arguments(argument_group):
         argument_group.add_argument("--forward", "--reads", "--sequences", nargs='+', help="input forward/unpaired nucleotide read sequence(s)")
@@ -1161,13 +1166,14 @@ def main():
 
     def add_aviary_options(argument_group):
         argument_group.add_argument("--run-aviary", action="store_true", help="Run Aviary commands for all identified coassemblies (unless specific coassemblies are chosen with --coassemblies) [default: do not]")
+        argument_group.add_argument("--cluster-submission", action="store_true", help="Flag that cluster submission will occur through `--snakemake-profile`. This sets the local threads of Aviary recover to 1, allowing parallel job submission [default: do not]")
         default_aviary_speed = FAST_AVIARY_MODE
         argument_group.add_argument("--aviary-speed", help=f"Run Aviary recover in 'fast' or 'comprehensive' mode. Fast mode skips slow binners and refinement steps. [default: {default_aviary_speed}]",
                                     default=default_aviary_speed, choices=[FAST_AVIARY_MODE, COMPREHENSIVE_AVIARY_MODE])
         default_assembly_strategy = DYNAMIC_ASSEMBLY_STRATEGY
         argument_group.add_argument("--assembly-strategy", help=f"Assembly strategy to use with Aviary. [default: {default_assembly_strategy}; attempts metaspades and if fails, switches to megahit]",
                                     default=default_assembly_strategy, choices=[DYNAMIC_ASSEMBLY_STRATEGY, METASPADES_ASSEMBLY, MEGAHIT_ASSEMBLY])
-        argument_group.add_argument("--aviary-gtdbtk-db", help="Path to GTDB-Tk database directory for Aviary. [default: use path from GTDBTK_DATA_PATH env variable]")
+        argument_group.add_argument("--aviary-gtdbtk-db", help=f"Path to GTDB-Tk database directory for Aviary. Only required if --aviary-speed is set to {COMPREHENSIVE_AVIARY_MODE} [default: use path from GTDBTK_DATA_PATH env variable]")
         argument_group.add_argument("--aviary-checkm2-db", help="Path to CheckM2 database directory for Aviary. [default: use path from CHECKM2DB env variable]")
         aviary_assemble_default_cores = 64
         argument_group.add_argument("--aviary-assemble-cores", type=int, help=f"Maximum number of cores for Aviary assemble to use. [default: {aviary_assemble_default_cores}]",
@@ -1184,15 +1190,15 @@ def main():
 
     def add_main_coassemble_output_arguments(argument_group):
         argument_group.add_argument("--coassemble-output", help="Output dir from coassemble subcommand")
-        argument_group.add_argument("--coassemble-unbinned", help="SingleM appraise unbinned output from Bin chicken coassemble (alternative to --coassemble-output)")
-        argument_group.add_argument("--coassemble-binned", help="SingleM appraise binned output from Bin chicken coassemble (alternative to --coassemble-output)")
+        argument_group.add_argument("--coassemble-unbinned", help="SingleM appraise unbinned output from Bin Chicken coassemble (alternative to --coassemble-output)")
+        argument_group.add_argument("--coassemble-binned", help="SingleM appraise binned output from Bin Chicken coassemble (alternative to --coassemble-output)")
 
     def add_coassemble_output_arguments(argument_group):
         add_main_coassemble_output_arguments(argument_group)
-        argument_group.add_argument("--coassemble-targets", help="Target sequences output from Bin chicken coassemble (alternative to --coassemble-output)")
-        argument_group.add_argument("--coassemble-elusive-edges", help="Elusive edges output from Bin chicken coassemble (alternative to --coassemble-output)")
-        argument_group.add_argument("--coassemble-elusive-clusters", help="Elusive clusters output from Bin chicken coassemble (alternative to --coassemble-output)")
-        argument_group.add_argument("--coassemble-summary", help="Summary output from Bin chicken coassemble (alternative to --coassemble-output)")
+        argument_group.add_argument("--coassemble-targets", help="Target sequences output from Bin Chicken coassemble (alternative to --coassemble-output)")
+        argument_group.add_argument("--coassemble-elusive-edges", help="Elusive edges output from Bin Chicken coassemble (alternative to --coassemble-output)")
+        argument_group.add_argument("--coassemble-elusive-clusters", help="Elusive clusters output from Bin Chicken coassemble (alternative to --coassemble-output)")
+        argument_group.add_argument("--coassemble-summary", help="Summary output from Bin Chicken coassemble (alternative to --coassemble-output)")
 
     ###########################################################################
 
@@ -1322,8 +1328,8 @@ def main():
 
     build_parser = main_parser.new_subparser("build", "Create dependency conda environments")
     build_parser.add_argument("--singlem-metapackage", help="SingleM metapackage")
-    build_parser.add_argument("--gtdbtk-db", help="GTDBtk release database")
     build_parser.add_argument("--checkm2-db", help="CheckM2 database")
+    build_parser.add_argument(f"--gtdbtk-db", help="GTDBtk release database (Only required if --aviary-speed is set to {COMPREHENSIVE_AVIARY_MODE})")
     tmp_default = "/tmp"
     build_parser.add_argument("--set-tmp-dir", help=f"Set temporary directory [default: {tmp_default}]", default=tmp_default)
     build_parser.add_argument("--skip-aviary-envs", help="Do not install Aviary subworkflow environments", action="store_true")
@@ -1332,7 +1338,7 @@ def main():
     ###########################################################################
 
     args = main_parser.parse_the_args()
-    logging.info(f"Bin chicken v{__version__}")
+    logging.info(f"Bin Chicken v{__version__}")
     logging.info(f"Command: {' '.join(['binchicken'] + sys.argv[1:])}")
 
     os.environ["POLARS_MAX_THREADS"] = str(args.local_cores)
@@ -1359,8 +1365,6 @@ def main():
         args.aviary_gtdbtk_db = load_variable("GTDBTK_DATA_PATH")
     if not hasattr(args, "aviary_checkm2_db") or not args.aviary_checkm2_db:
         args.aviary_checkm2_db = load_variable("CHECKM2DB")
-    if not args.tmp_dir:
-        args.tmp_dir = load_variable("TMPDIR")
 
     if hasattr(args, "genomes"):
         if not (args.genomes or args.genomes_list):
@@ -1409,8 +1413,13 @@ def main():
         else:
             if args.num_coassembly_samples > args.max_recovery_samples:
                 raise Exception("Max recovery samples (--max-recovery-samples) must be greater than or equal to number of coassembly samples (--num-coassembly-samples)")
-        if args.run_aviary and not (args.aviary_gtdbtk_db and args.aviary_checkm2_db):
-            raise Exception("Run Aviary (--run-aviary) requires paths to GTDB-Tk and CheckM2 databases to be provided (--aviary-gtdbtk-db or GTDBTK_DATA_PATH and --aviary-checkm2-db or CHECKM2DB)")
+        if args.run_aviary:
+            if args.aviary_speed == FAST_AVIARY_MODE and not args.aviary_checkm2_db:
+                raise Exception("Run Aviary (--run-aviary) fast mode requires path to CheckM2 databases to be provided (--aviary-checkm2-db or CHECKM2DB)")
+            if args.aviary_speed != FAST_AVIARY_MODE and not (args.aviary_gtdbtk_db and args.aviary_checkm2_db):
+                raise Exception("Run Aviary (--run-aviary) comprehensive mode requires paths to GTDB-Tk and CheckM2 databases to be provided (--aviary-gtdbtk-db or GTDBTK_DATA_PATH and --aviary-checkm2-db or CHECKM2DB)")
+        if args.cluster_submission and not args.snakemake_profile:
+                logging.warning("The arg `--cluster-submission` is only a flag and cannot activate cluster submission alone. Please see `--snakemake-profile` for cluster submission.")
         if (args.sample_query or args.sample_query_list or args.sample_query_dir) and args.taxa_of_interest and args.assemble_unmapped:
             raise Exception("Unmapping is incompatible with the combination of sample query and taxa of interest")
 
@@ -1418,7 +1427,7 @@ def main():
         summary_flag = args.coassemble_summary if evaluate else True
         if not args.coassemble_output and not (args.coassemble_unbinned and args.coassemble_binned and args.coassemble_targets and \
                                                args.coassemble_elusive_edges and args.coassemble_elusive_clusters and summary_flag):
-            raise Exception("Either Bin chicken coassemble output (--coassemble-output) or specific input files must be provided")
+            raise Exception("Either Bin Chicken coassemble output (--coassemble-output) or specific input files must be provided")
 
     if args.subparser_name == "coassemble":
         coassemble_argument_verification(args)
@@ -1440,15 +1449,20 @@ def main():
         coassemble_output_argument_verification(args)
         if args.run_aviary and not (args.aviary_gtdbtk_db and args.aviary_checkm2_db):
             raise Exception("Run Aviary (--run-aviary) requires paths to GTDB-Tk and CheckM2 databases to be provided (--aviary-gtdbtk-db and --aviary-checkm2-db)")
+        if args.cluster_submission and not args.snakemake_profile:
+            logging.warning("The arg `--cluster-submission` is only a flag and cannot activate cluster submission alone. Please see `--snakemake-profile` for cluster submission.")
+        if args.coassemble_output:
+            if os.path.abspath(args.coassemble_output) == os.path.abspath(args.output):
+                raise Exception("Output directory must be different from coassemble output directory")
         update(args)
 
     elif args.subparser_name == "iterate":
         if args.sample_query or args.sample_query_list or args.sample_query_dir:
-            raise Exception("Query arguments are incompatible with Bin chicken iterate")
+            raise Exception("Query arguments are incompatible with Bin Chicken iterate")
         if args.sample_singlem_dir or args.sample_query_dir:
-            raise Exception("Directory arguments are incompatible with Bin chicken iterate")
+            raise Exception("Directory arguments are incompatible with Bin Chicken iterate")
         if args.single_assembly:
-            raise Exception("Single assembly is incompatible with Bin chicken iterate")
+            raise Exception("Single assembly is incompatible with Bin Chicken iterate")
         if not args.aviary_outputs and not (args.new_genomes or args.new_genomes_list) and not args.coassemble_output:
             raise Exception("New genomes or aviary outputs must be provided for iteration")
         if (args.forward and args.forward_list) or (args.reverse and args.reverse_list) or (args.genomes and args.genomes_list):
@@ -1456,6 +1470,9 @@ def main():
         if not ((args.genomes or args.genomes_list) and (args.forward or args.forward_list)) and not args.coassemble_output:
             raise Exception("Reference genomes or forward reads must be provided if --coassemble-output not given")
         coassemble_argument_verification(args, iterate=True)
+        if args.coassemble_output:
+            if os.path.abspath(args.coassemble_output) == os.path.abspath(args.output):
+                raise Exception("Output directory must be different from coassemble output directory")
         iterate(args)
 
     elif args.subparser_name == "build":

@@ -5,7 +5,7 @@ title: installation
 Installation
 ========
 
-There are several ways to install Bin chicken
+There are several ways to install Bin Chicken
 
 ## Install from Bioconda
 

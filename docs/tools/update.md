@@ -1,9 +1,9 @@
 ---
-title: Bin chicken update
+title: Bin Chicken update
 ---
 # binchicken update
 
-Applies further processing to a previous Bin chicken coassemble run.
+Applies further processing to a previous Bin Chicken coassemble run.
 
 Any combinations of the following:
 
@@ -37,35 +37,51 @@ binchicken update --coassemble-output coassemble_dir --sra \
 
   input forward/unpaired nucleotide read sequence(s)
 
+<!-- -->
+
 **\--forward-list**, **\--reads-list**, **\--sequences-list** *FORWARD_LIST*
 
   input forward/unpaired nucleotide read sequence(s) newline separated
+
+<!-- -->
 
 **\--reverse** *REVERSE* [*REVERSE* \...]
 
   input reverse nucleotide read sequence(s)
 
+<!-- -->
+
 **\--reverse-list** *REVERSE_LIST*
 
   input reverse nucleotide read sequence(s) newline separated
+
+<!-- -->
 
 **\--genomes** *GENOMES* [*GENOMES* \...]
 
   Reference genomes for read mapping
 
+<!-- -->
+
 **\--genomes-list** *GENOMES_LIST*
 
   Reference genomes for read mapping newline separated
+
+<!-- -->
 
 **\--coassembly-samples** *COASSEMBLY_SAMPLES* [*COASSEMBLY_SAMPLES* \...]
 
   Restrict coassembly to these samples. Remaining samples will still
     be used for recovery [default: use all samples]
 
+<!-- -->
+
 **\--coassembly-samples-list** *COASSEMBLY_SAMPLES_LIST*
 
   Restrict coassembly to these samples, newline separated. Remaining
     samples will still be used for recovery [default: use all samples]
+
+<!-- -->
 
 **\--sra**
 
@@ -78,101 +94,152 @@ binchicken update --coassemble-output coassemble_dir --sra \
 
   Output dir from coassemble subcommand
 
+<!-- -->
+
 **\--coassemble-unbinned** *COASSEMBLE_UNBINNED*
 
-  SingleM appraise unbinned output from Bin chicken coassemble
+  SingleM appraise unbinned output from Bin Chicken coassemble
     (alternative to \--coassemble-output)
+
+<!-- -->
 
 **\--coassemble-binned** *COASSEMBLE_BINNED*
 
-  SingleM appraise binned output from Bin chicken coassemble
+  SingleM appraise binned output from Bin Chicken coassemble
     (alternative to \--coassemble-output)
+
+<!-- -->
 
 **\--coassemble-targets** *COASSEMBLE_TARGETS*
 
-  Target sequences output from Bin chicken coassemble (alternative to
+  Target sequences output from Bin Chicken coassemble (alternative to
     \--coassemble-output)
+
+<!-- -->
 
 **\--coassemble-elusive-edges** *COASSEMBLE_ELUSIVE_EDGES*
 
-  Elusive edges output from Bin chicken coassemble (alternative to
+  Elusive edges output from Bin Chicken coassemble (alternative to
     \--coassemble- output)
+
+<!-- -->
 
 **\--coassemble-elusive-clusters** *COASSEMBLE_ELUSIVE_CLUSTERS*
 
-  Elusive clusters output from Bin chicken coassemble (alternative to
+  Elusive clusters output from Bin Chicken coassemble (alternative to
     \--coassemble-output)
+
+<!-- -->
 
 **\--coassemble-summary** *COASSEMBLE_SUMMARY*
 
-  Summary output from Bin chicken coassemble (alternative to
+  Summary output from Bin Chicken coassemble (alternative to
     \--coassemble- output)
+
+<!-- -->
 
 **\--coassemblies** *COASSEMBLIES* [*COASSEMBLIES* \...]
 
   Choose specific coassemblies from elusive clusters (e.g.
     coassembly_0)
 
+<!-- -->
+
 **\--assemble-unmapped**
 
   Only assemble reads that do not map to reference genomes
 
+<!-- -->
+
 **\--run-qc**
 
   Run Fastp QC on reads
+
+<!-- -->
 
 **\--unmapping-min-appraised** *UNMAPPING_MIN_APPRAISED*
 
   Minimum fraction of sequences binned to justify unmapping [default:
     0.1]
 
+<!-- -->
+
 **\--unmapping-max-identity** *UNMAPPING_MAX_IDENTITY*
 
   Maximum sequence identity of mapped sequences kept for coassembly
     [default: 99%]
+
+<!-- -->
 
 **\--unmapping-max-alignment** *UNMAPPING_MAX_ALIGNMENT*
 
   Maximum percent alignment of mapped sequences kept for coassembly
     [default: 99%]
 
+<!-- -->
+
 **\--run-aviary**
 
   Run Aviary commands for all identified coassemblies (unless specific
     coassemblies are chosen with \--coassemblies) [default: do not]
+
+<!-- -->
+
+**\--cluster-submission**
+
+  Flag that cluster submission will occur through
+    \`\--snakemake-profile\`. This sets the local threads of Aviary
+    recover to 1, allowing parallel job submission [default: do not]
+
+<!-- -->
 
 **\--aviary-speed** {fast,comprehensive}
 
   Run Aviary recover in \'fast\' or \'comprehensive\' mode. Fast mode
     skips slow binners and refinement steps. [default: fast]
 
+<!-- -->
+
 **\--assembly-strategy** {dynamic,metaspades,megahit}
 
   Assembly strategy to use with Aviary. [default: dynamic; attempts
     metaspades and if fails, switches to megahit]
 
+<!-- -->
+
 **\--aviary-gtdbtk-db** *AVIARY_GTDBTK_DB*
 
-  Path to GTDB-Tk database directory for Aviary. [default: use path
-    from GTDBTK_DATA_PATH env variable]
+  Path to GTDB-Tk database directory for Aviary. Only required if
+    \--aviary-speed is set to comprehensive [default: use path from
+    GTDBTK_DATA_PATH env variable]
+
+<!-- -->
 
 **\--aviary-checkm2-db** *AVIARY_CHECKM2_DB*
 
   Path to CheckM2 database directory for Aviary. [default: use path
     from CHECKM2DB env variable]
 
+<!-- -->
+
 **\--aviary-assemble-cores** *AVIARY_ASSEMBLE_CORES*
 
   Maximum number of cores for Aviary assemble to use. [default: 64]
+
+<!-- -->
 
 **\--aviary-assemble-memory** *AVIARY_ASSEMBLE_MEMORY*
 
   Maximum amount of memory for Aviary assemble to use (Gigabytes).
     [default: 500]
 
+<!-- -->
+
 **\--aviary-recover-cores** *AVIARY_RECOVER_CORES*
 
   Maximum number of cores for Aviary recover to use. [default: 32]
+
+<!-- -->
 
 **\--aviary-recover-memory** *AVIARY_RECOVER_MEMORY*
 
@@ -185,18 +252,26 @@ binchicken update --coassemble-output coassemble_dir --sra \
 
   Output directory [default: .]
 
+<!-- -->
+
 **\--conda-prefix** *CONDA_PREFIX*
 
   Path to conda environment install location. [default: Use path from
     CONDA_ENV_PATH env variable]
 
+<!-- -->
+
 **\--cores** *CORES*
 
   Maximum number of cores to use [default: 1]
 
+<!-- -->
+
 **\--dryrun**
 
   dry run workflow
+
+<!-- -->
 
 **\--snakemake-profile** *SNAKEMAKE_PROFILE*
 
@@ -205,25 +280,32 @@ binchicken update --coassemble-output coassemble_dir --sra \
     Can be used to submit rules as jobs to cluster engine (see
     https://snakemake.readthedocs.io/en/v7.32.3/executing/cluster.html).
 
+<!-- -->
+
 **\--local-cores** *LOCAL_CORES*
 
   Maximum number of cores to use on localrules when running in cluster
     mode [default: 1]
+
+<!-- -->
 
 **\--cluster-retries** *CLUSTER_RETRIES*
 
   Number of times to retry a failed job when using cluster submission
     (see \`\--snakemake-profile\`) [default: 3].
 
+<!-- -->
+
 **\--snakemake-args** *SNAKEMAKE_ARGS*
 
   Additional commands to be supplied to snakemake in the form of a
     space- prefixed single string e.g. \" \--quiet\"
 
+<!-- -->
+
 **\--tmp-dir** *TMP_DIR*
 
-  Path to temporary directory. [default: Use path from TMPDIR env
-    variable]
+  Path to temporary directory. [default: no default]
 
 # OTHER GENERAL OPTIONS
 
@@ -231,17 +313,25 @@ binchicken update --coassemble-output coassemble_dir --sra \
 
   output debug information
 
+<!-- -->
+
 **\--version**
 
   output version information and quit
+
+<!-- -->
 
 **\--quiet**
 
   only output errors
 
+<!-- -->
+
 **\--full-help**
 
   print longer help message
+
+<!-- -->
 
 **\--full-help-roff**
 

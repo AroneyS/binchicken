@@ -21,7 +21,7 @@ binchicken coassemble --forward reads_1.1.fq ... --reverse reads_1.2.fq ... --si
 # Create snakemake profile at ~/.config/snakemake/qsub with cluster, cluster-status, cluster-cancel, etc.
 # See https://snakemake.readthedocs.io/en/stable/executing/cli.html#profiles
 binchicken coassemble --forward reads_1.1.fq ... --reverse reads_1.2.fq ... --run-aviary \
-  --snakemake-profile qsub --local-cores 64 --cores 64
+  --snakemake-profile qsub --cluster-submission --local-cores 64 --cores 64
 ```
 
 Important options:
@@ -36,7 +36,13 @@ Important options:
   - Run coassemblies with differential-abudance-binning samples with the tool of your choice (see `coassemble/target/elusive_clusters.tsv` in output)
 - The taxa of the considered sequences can be filtered to target a specific taxon (e.g. `--taxa-of-interest "p__Planctomycetota"`).
 - Differential-abundance binning samples for single-assembly can also be found (`--single-assembly`)
-- Snakemake profiles can be used to automatically submit jobs to HPC clusters (`--snakemake-profile`)
 
 Paired end reads of form reads_1.1.fq, reads_1_1.fq and reads_1_R1.fq, where reads_1 is the sample name are automatically detected and matched to their basename.
 Most intermediate files can be provided to skip intermediate steps (e.g. SingleM otu tables, read sizes or genome transcripts; see `binchicken coassemble --full-help`).
+
+## Cluster submission
+
+Snakemake profiles can be used to automatically submit jobs to HPC clusters (`--snakemake-profile`).
+Note that Aviary assemble commands are submitted to the cluster, while Aviary recover commands are run locally such that Aviary handles cluster submission.
+The `--cluster-submission` flag sets the local Aviary recover thread usage to 1, to enable multiple runs in parallel within `--local-cores`.
+This is required to prevent `--local-cores` from limiting the number of threads per submitted job.

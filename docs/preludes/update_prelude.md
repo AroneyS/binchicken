@@ -1,5 +1,5 @@
 
-Applies further processing to a previous Bin chicken coassemble run.
+Applies further processing to a previous Bin Chicken coassemble run.
 
 Any combinations of the following:
 
