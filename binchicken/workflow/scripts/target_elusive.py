@@ -17,18 +17,28 @@ EDGES_COLUMNS={
     }
 
 def get_clusters(
-        distances,
-        samples,
+        sample_distances,
         PRECLUSTER_SIZE=2,
         MAX_COASSEMBLY_SAMPLES=2):
     logging.info(f"Polars using {str(pl.thread_pool_size())} threads")
 
-    if len(distances) == 0:
+    if sample_distances.height == 0:
         return pl.DataFrame(schema={"samples": str})
 
     if MAX_COASSEMBLY_SAMPLES < 2:
         # Set to 2 to produce paired edges
         MAX_COASSEMBLY_SAMPLES = 2
+
+    logging.info("Converting to numpy array")
+    samples = np.unique(sample_distances.select(["query_name", "match_name"]).to_numpy().flatten())
+    distances = np.full((len(samples), len(samples)), np.inf)
+    np.fill_diagonal(distances, 0)
+
+    for row in sample_distances.iter_rows():
+        i, j = np.where(samples == row[0])[0][0], np.where(samples == row[1])[0][0]
+        distances[i, j] = row[2]
+        distances[j, i] = row[2]
+
 
     logging.info("Processing distances...")
     best_samples = np.argsort(distances, axis=1)[:, :PRECLUSTER_SIZE]
@@ -292,9 +302,12 @@ if __name__ == "__main__":
         import polars as pl
         from sourmash import fig
         distances, samples = fig.load_matrix_and_labels(distances_path)
+        sample_distances = (
+            pl.read_csv(distances_path)
+            .select("query_name", "match_name", "jaccard")
+        )
         sample_preclusters = get_clusters(
-            distances,
-            samples,
+            sample_distances,
             PRECLUSTER_SIZE=PRECLUSTER_SIZE,
             MAX_COASSEMBLY_SAMPLES=MAX_COASSEMBLY_SAMPLES,
             )

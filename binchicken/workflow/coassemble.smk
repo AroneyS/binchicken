@@ -368,6 +368,8 @@ rule sketch_samples:
         runtime = lambda wildcards, attempt: 6*60*attempt,
     log:
         logs_dir + "/precluster/sketching.log"
+    benchmark:
+        benchmarks_dir + "/precluster/sketching.tsv"
     script:
         "scripts/sketch_samples.py"
 
@@ -375,26 +377,27 @@ rule distance_samples:
     input:
         sketch = output_dir + "/sketch/samples.sig",
     output:
-        distance = output_dir + "/sketch/samples.mat"
+        distance = output_dir + "/sketch/samples.csv"
     threads: 64
     resources:
         mem_mb=get_mem_mb,
         runtime = lambda wildcards, attempt: 48*60*attempt,
     log:
         logs_dir + "/precluster/distance.log"
+    benchmark:
+        benchmarks_dir + "/precluster/distance.tsv"
     shell:
-        "sourmash compare "
+        "sourmash scripts pairwise "
         "{input.sketch} "
         "-o {output.distance} "
         "-k 60 "
-        "--distance-matrix "
-        "-p {threads} "
+        "-c {threads} "
         "&> {log} "
 
 rule target_elusive:
     input:
         unbinned = output_dir + "/appraise/unbinned.otu_table.tsv",
-        distances = output_dir + "/sketch/samples.mat" if config["kmer_precluster"] else [],
+        distances = output_dir + "/sketch/samples.csv" if config["kmer_precluster"] else [],
     output:
         output_edges = output_dir + "/target/elusive_edges.tsv",
         output_targets = output_dir + "/target/targets.tsv",
