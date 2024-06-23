@@ -6,7 +6,8 @@
 import polars as pl
 import os
 import logging
-from sourmash import MinHash, SourmashSignature, save_signatures
+from sourmash import MinHash, SourmashSignature
+from sourmash.sourmash_args import SaveSignaturesToLocation
 from concurrent.futures import ProcessPoolExecutor
 
 SINGLEM_OTU_TABLE_SCHEMA = {
@@ -65,5 +66,6 @@ if __name__ == "__main__":
     signatures = processing(unbinned, threads=threads)
     logging.info("Saving sketches to file")
 
-    with open(output_path, "w") as f:
-        save_signatures(signatures, f)
+    with SaveSignaturesToLocation(output_path) as save_sigs:
+        for sig_obj in signatures:
+            save_sigs.add(sig_obj)
