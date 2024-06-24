@@ -300,8 +300,6 @@ if __name__ == "__main__":
     if distances_path:
         os.environ["POLARS_STREAMING_CHUNK_SIZE"] = "1"
         import polars as pl
-        from sourmash import fig
-        distances, samples = fig.load_matrix_and_labels(distances_path)
         sample_distances = (
             pl.read_csv(distances_path)
             .select("query_name", "match_name", "jaccard")
