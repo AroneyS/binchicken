@@ -1327,7 +1327,7 @@ class Tests(unittest.TestCase):
             sketch_path = os.path.join("test", "coassemble", "sketch", "samples.sig")
             self.assertTrue(os.path.exists(sketch_path))
 
-            distance_path = os.path.join("test", "coassemble", "sketch", "samples.mat")
+            distance_path = os.path.join("test", "coassemble", "sketch", "samples.csv")
             self.assertTrue(os.path.exists(distance_path))
 
             elusive_edges_path = os.path.join("test", "coassemble", "target", "elusive_edges.tsv")
@@ -1400,7 +1400,7 @@ class Tests(unittest.TestCase):
             sketch_path = os.path.join("test", "coassemble", "sketch", "samples.sig")
             self.assertTrue(os.path.exists(sketch_path))
 
-            distance_path = os.path.join("test", "coassemble", "sketch", "samples.mat")
+            distance_path = os.path.join("test", "coassemble", "sketch", "samples.csv")
             self.assertTrue(os.path.exists(distance_path))
 
             elusive_edges_path = os.path.join("test", "coassemble", "target", "elusive_edges.tsv")
