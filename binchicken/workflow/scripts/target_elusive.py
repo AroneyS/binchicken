@@ -302,7 +302,7 @@ if __name__ == "__main__":
         import polars as pl
         sample_distances = (
             pl.read_csv(distances_path)
-            .select("query_name", "match_name", "jaccard")
+            .select("query_name", "match_name", jaccard = 1 - pl.col("jaccard"))
         )
         sample_preclusters = get_clusters(
             sample_distances,

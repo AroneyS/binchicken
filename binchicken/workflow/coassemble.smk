@@ -391,6 +391,7 @@ rule distance_samples:
         "{input.sketch} "
         "-o {output.distance} "
         "-k 60 "
+        "-s 1 "
         "-c {threads} "
         "&> {log} "
 
