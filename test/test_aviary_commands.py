@@ -39,7 +39,7 @@ reads_2 = {
 
 class Tests(unittest.TestCase):
     def assertDataFrameEqual(self, a, b):
-        assert_frame_equal(a, b, check_dtype=False)
+        assert_frame_equal(a, b, check_dtypes=False)
 
     def test_aviary_commands(self):
         elusive_clusters = pl.DataFrame([

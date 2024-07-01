@@ -40,6 +40,7 @@ def join_list_subsets(df1, df2):
             df2,
             on=["length"],
             how="left",
+            coalesce=True,
         )
         .filter(pl.col("right_samples").is_not_null())
         .filter(pl.col("samples").list.set_intersection("right_samples").list.len() >= pl.col("length"))
@@ -53,7 +54,7 @@ def join_list_subsets(df1, df2):
 
     return (
         df1
-        .join(output, on="samples_hash", how="left")
+        .join(output, on="samples_hash", how="left", coalesce=True)
         .with_columns(pl.col("extra_targets").fill_null([]))
         )
 
@@ -79,7 +80,7 @@ def find_recover_candidates(df, samples_df, MAX_RECOVERY_SAMPLES=20):
         df
         .select("samples_hash", "target_ids")
         .explode("target_ids")
-        .join(samples_df, on="target_ids", how="left")
+        .join(samples_df, on="target_ids", how="left", coalesce=True)
         .group_by("samples_hash", "recover_candidates")
         .agg(pl.len().alias("count"))
         .sort("count", descending=True)
@@ -89,7 +90,7 @@ def find_recover_candidates(df, samples_df, MAX_RECOVERY_SAMPLES=20):
         .agg("recover_candidates")
     )
 
-    return df.join(output, on="samples_hash", how="left")
+    return df.join(output, on="samples_hash", how="left", coalesce=True)
 
 def pipeline(
         elusive_edges,
@@ -236,7 +237,7 @@ def pipeline(
             .join(excluded_coassemblies, on="samples_hash", how="anti")
             .with_columns(length = pl.col("samples").list.len())
             .explode("samples")
-            .join(read_size, on="samples", how="left")
+            .join(read_size, on="samples", how="left", coalesce=True)
             .group_by("samples_hash")
             .agg(
                 pl.col("samples"),
@@ -316,7 +317,7 @@ if __name__ == "__main__":
     read_size_path = snakemake.input.read_size
     elusive_clusters_path = snakemake.output.elusive_clusters
 
-    elusive_edges = pl.read_csv(elusive_edges_path, separator="\t", dtypes={"target_ids": str})
+    elusive_edges = pl.read_csv(elusive_edges_path, separator="\t", schema_overrides={"target_ids": str})
     read_size = pl.read_csv(read_size_path, has_header=False, new_columns=["sample", "read_size"])
 
     if elusive_edges.height > 10**4:

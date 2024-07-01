@@ -39,7 +39,7 @@ APPRAISE_COLUMNS={
 
 class Tests(unittest.TestCase):
     def assertDataFrameEqual(self, a, b):
-        assert_frame_equal(a, b, check_dtype=False)
+        assert_frame_equal(a, b, check_dtypes=False)
 
     def test_query_processing(self):
         query = pl.DataFrame([

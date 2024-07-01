@@ -355,9 +355,50 @@ rule count_bp_reads:
         "::: {params.names} :::+ {input.reads_1} :::+ {input.reads_2} "
         "> {output}"
 
+rule sketch_samples:
+    input:
+        unbinned = output_dir + "/appraise/unbinned.otu_table.tsv",
+    output:
+        sketch = output_dir + "/sketch/samples.sig"
+    params:
+        taxa_of_interest = config["taxa_of_interest"],
+    threads: 16
+    resources:
+        mem_mb=get_mem_mb,
+        runtime = lambda wildcards, attempt: 6*60*attempt,
+    log:
+        logs_dir + "/precluster/sketching.log"
+    benchmark:
+        benchmarks_dir + "/precluster/sketching.tsv"
+    script:
+        "scripts/sketch_samples.py"
+
+rule distance_samples:
+    input:
+        sketch = output_dir + "/sketch/samples.sig",
+    output:
+        distance = output_dir + "/sketch/samples.csv"
+    threads: 64
+    resources:
+        mem_mb=get_mem_mb,
+        runtime = lambda wildcards, attempt: 48*60*attempt,
+    log:
+        logs_dir + "/precluster/distance.log"
+    benchmark:
+        benchmarks_dir + "/precluster/distance.tsv"
+    shell:
+        "sourmash scripts pairwise "
+        "{input.sketch} "
+        "-o {output.distance} "
+        "-k 60 "
+        "-s 1 "
+        "-c {threads} "
+        "&> {log} "
+
 rule target_elusive:
     input:
-        unbinned = output_dir + "/appraise/unbinned.otu_table.tsv"
+        unbinned = output_dir + "/appraise/unbinned.otu_table.tsv",
+        distances = output_dir + "/sketch/samples.csv" if config["kmer_precluster"] else [],
     output:
         output_edges = output_dir + "/target/elusive_edges.tsv",
         output_targets = output_dir + "/target/targets.tsv",
@@ -366,7 +407,8 @@ rule target_elusive:
         max_coassembly_samples = config["max_coassembly_samples"],
         taxa_of_interest = config["taxa_of_interest"],
         samples = config["reads_1"],
-    threads: 32
+        precluster_size = config["precluster_size"],
+    threads: 64
     resources:
         mem_mb=get_mem_mb,
         runtime = lambda wildcards, attempt: 24*60*attempt,
