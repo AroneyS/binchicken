@@ -303,7 +303,7 @@ if __name__ == "__main__":
         sample_distances = (
             pl.read_csv(distances_path)
             .select("query_name", "match_name", jaccard = 1 - pl.col("jaccard"))
-            .filter(pl.col("jaccard") < 0.9)
+            .filter(pl.col("jaccard") < 0.99)
         )
         sample_preclusters = get_clusters(
             sample_distances,
