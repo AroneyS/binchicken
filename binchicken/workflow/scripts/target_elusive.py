@@ -30,15 +30,21 @@ def get_clusters(
         MAX_COASSEMBLY_SAMPLES = 2
 
     logging.info("Converting to numpy array")
-    samples = np.unique(sample_distances.select(["query_name", "match_name"]).to_numpy().flatten())
+    query_names_np = sample_distances.select("query_name").to_numpy().flatten()
+    match_names_np = sample_distances.select("match_name").to_numpy().flatten()
+    distances_np = sample_distances.select("jaccard").to_numpy().flatten()
+
+    samples = np.unique(np.concatenate([query_names_np, match_names_np]))
+    sample_to_index = {sample: index for index, sample in enumerate(samples)}
+
+    logging.info("Initialize the distances matrix")
     distances = np.full((len(samples), len(samples)), np.inf)
     np.fill_diagonal(distances, 0)
 
-    for row in sample_distances.iter_rows():
-        i, j = np.where(samples == row[0])[0][0], np.where(samples == row[1])[0][0]
-        distances[i, j] = row[2]
-        distances[j, i] = row[2]
-
+    logging.info("Populate the distances matrix")
+    for query_name, match_name, distance in zip(query_names_np, match_names_np, distances_np):
+        i, j = sample_to_index[query_name], sample_to_index[match_name]
+        distances[i, j] = distances[j, i] = distance
 
     logging.info("Processing distances...")
     best_samples = np.argsort(distances, axis=1)[:, :PRECLUSTER_SIZE]
