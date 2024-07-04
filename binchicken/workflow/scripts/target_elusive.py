@@ -304,12 +304,11 @@ if __name__ == "__main__":
     unbinned = pl.read_csv(unbinned_path, separator="\t")
 
     if distances_path:
-        os.environ["POLARS_STREAMING_CHUNK_SIZE"] = "1"
-        import polars as pl
         sample_distances = (
-            pl.read_csv(distances_path)
+            pl.scan_csv(distances_path)
             .select("query_name", "match_name", jaccard = 1 - pl.col("jaccard"))
             .filter(pl.col("jaccard") < 0.99)
+            .collect(streaming=True)
         )
         sample_preclusters = get_clusters(
             sample_distances,
