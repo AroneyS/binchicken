@@ -52,9 +52,9 @@ class Tests(unittest.TestCase):
 
     def test_get_clusters(self):
         sample_distances = pl.DataFrame([
-            ["sample_1", "sample_2", 0.5],
-            ["sample_1", "sample_3", 1],
-            ["sample_2", "sample_3", 0.9],
+            ["sample_1", "sample_2", 1-0.5],
+            ["sample_1", "sample_3", 1-1],
+            ["sample_2", "sample_3", 1-0.9],
         ], schema=SAMPLE_DISTANCES_COLUMNS)
 
         expected_clusters = pl.DataFrame([
@@ -67,9 +67,9 @@ class Tests(unittest.TestCase):
 
     def test_get_clusters_size_three(self):
         sample_distances = pl.DataFrame([
-            ["1", "2", 0.5],
-            ["1", "3", 1],
-            ["2", "3", 0.9],
+            ["1", "2", 1-0.5],
+            ["1", "3", 1-1],
+            ["2", "3", 1-0.9],
         ], schema=SAMPLE_DISTANCES_COLUMNS)
 
         expected_clusters = pl.DataFrame([
@@ -88,12 +88,12 @@ class Tests(unittest.TestCase):
 
     def test_get_clusters_size_three_of_four(self):
         sample_distances = pl.DataFrame([
-            ["1", "2", 0.1],
-            ["1", "3", 0.2],
-            ["1", "4", 0.4],
-            ["2", "3", 0.2],
-            ["2", "4", 0.4],
-            ["3", "4", 1],
+            ["1", "2", 1-0.1],
+            ["1", "3", 1-0.2],
+            ["1", "4", 1-0.4],
+            ["2", "3", 1-0.2],
+            ["2", "4", 1-0.4],
+            ["3", "4", 1-1],
         ], schema=SAMPLE_DISTANCES_COLUMNS)
 
         expected_clusters = pl.DataFrame([
@@ -118,9 +118,9 @@ class Tests(unittest.TestCase):
 
     def test_get_clusters_size_three_of_four_missing(self):
         sample_distances = pl.DataFrame([
-            ["1", "2", 0.1],
-            ["1", "3", 0.2],
-            ["2", "3", 0.2],
+            ["1", "2", 1-0.1],
+            ["1", "3", 1-0.2],
+            ["2", "3", 1-0.2],
         ], schema=SAMPLE_DISTANCES_COLUMNS)
 
         expected_clusters = pl.DataFrame([
@@ -145,12 +145,12 @@ class Tests(unittest.TestCase):
 
     def test_get_clusters_size_three_of_four_balanced(self):
         sample_distances = pl.DataFrame([
-            ["1", "2", 0.2],
-            ["1", "3", 0.3],
-            ["1", "4", 0.4],
-            ["2", "3", 1],
-            ["2", "4", 0.2],
-            ["3", "4", 0.1],
+            ["1", "2", 1-0.2],
+            ["1", "3", 1-0.3],
+            ["1", "4", 1-0.4],
+            ["2", "3", 1-1],
+            ["2", "4", 1-0.2],
+            ["3", "4", 1-0.1],
         ], schema=SAMPLE_DISTANCES_COLUMNS)
 
         expected_clusters = pl.DataFrame([
@@ -175,11 +175,11 @@ class Tests(unittest.TestCase):
 
     def test_get_clusters_size_three_of_four_balanced_missing(self):
         sample_distances = pl.DataFrame([
-            ["1", "2", 0.2],
-            ["1", "3", 0.3],
-            ["1", "4", 0.4],
-            ["2", "4", 0.2],
-            ["3", "4", 0.1],
+            ["1", "2", 1-0.2],
+            ["1", "3", 1-0.3],
+            ["1", "4", 1-0.4],
+            ["2", "4", 1-0.2],
+            ["3", "4", 1-0.1],
         ], schema=SAMPLE_DISTANCES_COLUMNS)
 
         expected_clusters = pl.DataFrame([
@@ -204,16 +204,16 @@ class Tests(unittest.TestCase):
 
     def test_get_clusters_size_four_of_five(self):
         sample_distances = pl.DataFrame([
-            ["1", "2", 0.2],
-            ["1", "3", 0.3],
-            ["1", "4", 0.4],
-            ["1", "5", 0.5],
-            ["2", "3", 0.2],
-            ["2", "4", 0.3],
-            ["2", "5", 0.4],
-            ["3", "4", 0.3],
-            ["3", "5", 0.3],
-            ["4", "5", 0.1],
+            ["1", "2", 1-0.2],
+            ["1", "3", 1-0.3],
+            ["1", "4", 1-0.4],
+            ["1", "5", 1-0.5],
+            ["2", "3", 1-0.2],
+            ["2", "4", 1-0.3],
+            ["2", "5", 1-0.4],
+            ["3", "4", 1-0.3],
+            ["3", "5", 1-0.3],
+            ["4", "5", 1-0.1],
         ], schema=SAMPLE_DISTANCES_COLUMNS)
 
         expected_clusters = pl.DataFrame([
@@ -248,15 +248,15 @@ class Tests(unittest.TestCase):
 
     def test_get_clusters_size_four_of_five_missing(self):
         sample_distances = pl.DataFrame([
-            ["1", "2", 0.2],
-            ["1", "3", 0.3],
-            ["1", "4", 0.4],
-            ["2", "3", 0.2],
-            ["2", "4", 0.3],
-            ["2", "5", 0.4],
-            ["3", "4", 0.3],
-            ["3", "5", 0.3],
-            ["4", "5", 0.1],
+            ["1", "2", 1-0.2],
+            ["1", "3", 1-0.3],
+            ["1", "4", 1-0.4],
+            ["2", "3", 1-0.2],
+            ["2", "4", 1-0.3],
+            ["2", "5", 1-0.4],
+            ["3", "4", 1-0.3],
+            ["3", "5", 1-0.3],
+            ["4", "5", 1-0.1],
         ], schema=SAMPLE_DISTANCES_COLUMNS)
 
         expected_clusters = pl.DataFrame([
@@ -291,15 +291,15 @@ class Tests(unittest.TestCase):
 
     def test_get_clusters_real_world(self):
         sample_distances = pl.DataFrame([
-            ["SRR12149290", "SRR10571243", 0.16],
-            ["ERR3201415", "ERR3220216", 0.16],
-            ["ERR1414209", "ERR4804028", 0.16],
-            ["SRR6979552", "SRR15213103", 0.07],
-            ["SRR12149290", "SRR12352217", 0.16],
-            ["SRR6979552", "SRR4831657", 0.09],
-            ["ERR3201415", "SRR11784293", 0.09],
-            ["SRR4249921", "SRR5207344", 0.15],
-            ["SRR6979552", "SRR6980357", 0.25],
+            ["SRR12149290", "SRR10571243", 1-0.16],
+            ["ERR3201415", "ERR3220216", 1-0.16],
+            ["ERR1414209", "ERR4804028", 1-0.16],
+            ["SRR6979552", "SRR15213103", 1-0.07],
+            ["SRR12149290", "SRR12352217", 1-0.16],
+            ["SRR6979552", "SRR4831657", 1-0.09],
+            ["ERR3201415", "SRR11784293", 1-0.09],
+            ["SRR4249921", "SRR5207344", 1-0.15],
+            ["SRR6979552", "SRR6980357", 1-0.25],
         ], schema=SAMPLE_DISTANCES_COLUMNS)
 
         expected_clusters = pl.DataFrame([

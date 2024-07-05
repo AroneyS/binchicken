@@ -7,6 +7,7 @@ import os
 import polars as pl
 import logging
 import numpy as np
+import scipy.sparse as sp
 import itertools
 
 EDGES_COLUMNS={
@@ -29,25 +30,36 @@ def get_clusters(
         # Set to 2 to produce paired edges
         MAX_COASSEMBLY_SAMPLES = 2
 
-    logging.info("Converting to numpy array")
-    query_names_np = sample_distances.select("query_name").to_numpy().flatten()
-    match_names_np = sample_distances.select("match_name").to_numpy().flatten()
-    distances_np = sample_distances.select("jaccard").to_numpy().flatten()
-
-    samples = np.unique(np.concatenate([query_names_np, match_names_np]))
+    logging.info("Converting to sparse array")
+    samples = np.unique(np.concatenate([
+        sample_distances.select("query_name").to_numpy().flatten(),
+        sample_distances.select("match_name").to_numpy().flatten(),
+    ]))
     sample_to_index = {sample: index for index, sample in enumerate(samples)}
 
-    logging.info("Initialize the distances matrix")
-    distances = np.full((len(samples), len(samples)), np.inf)
-    np.fill_diagonal(distances, 0)
-
-    logging.info("Populate the distances matrix")
-    for query_name, match_name, distance in zip(query_names_np, match_names_np, distances_np):
-        i, j = sample_to_index[query_name], sample_to_index[match_name]
-        distances[i, j] = distances[j, i] = distance
+    logging.info("Initialise the array")
+    distances = (
+        sp.coo_matrix(
+            (
+                sample_distances.select("jaccard").to_numpy().flatten().astype(np.float32),
+                (
+                    np.array([sample_to_index[name] for name in sample_distances.select("query_name").to_numpy().flatten()]),
+                    np.array([sample_to_index[name] for name in sample_distances.select("match_name").to_numpy().flatten()])
+                )
+            ),
+            shape=(len(samples), len(samples))
+        )
+        .tocsr()
+    )
+    distances = distances + distances.transpose()
+    distances.setdiag(1)
 
     logging.info("Processing distances...")
-    best_samples = np.argsort(distances, axis=1)[:, :PRECLUSTER_SIZE]
+    best_samples = np.empty((distances.shape[0], PRECLUSTER_SIZE), dtype=np.int32)
+    for i in range(distances.shape[0]):
+        row = distances.getrow(i).toarray().ravel()
+        best_samples[i] = np.argsort(row)[-PRECLUSTER_SIZE:]
+
     chosen_samples = [[[samples[i]] + list(np.array(samples)[b[b != i]])] for i, b in enumerate(best_samples)]
 
     sample_combinations = (
@@ -93,7 +105,7 @@ def streaming_pipeline(
     MAX_COASSEMBLY_SAMPLES=2,
     CHUNK_SIZE=2):
 
-    logging.info(f"Polars using {str(pl.thread_pool_size())} threads")
+    # logging.info(f"Polars using {str(pl.thread_pool_size())} threads")
 
     if len(unbinned) == 0:
         logging.warning("No unbinned sequences found")
@@ -306,8 +318,8 @@ if __name__ == "__main__":
     if distances_path:
         sample_distances = (
             pl.scan_csv(distances_path)
-            .select("query_name", "match_name", jaccard = 1 - pl.col("jaccard"))
-            .filter(pl.col("jaccard") < 0.99)
+            .select("query_name", "match_name", "jaccard")
+            .filter(pl.col("jaccard") > 0.01)
             .collect(streaming=True)
         )
         sample_preclusters = get_clusters(
