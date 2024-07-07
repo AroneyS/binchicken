@@ -95,8 +95,14 @@ class Tests(unittest.TestCase):
             output_raw = subprocess.run(cmd, shell=True, check=True, capture_output=True)
             output = output_raw.stderr.decode('ascii')
 
-            self.assertTrue("Some samples had no targets with sufficient combined coverage for coassembly prediction" in output)
-            self.assertTrue("These were: sample_4" in output)
+            self.assertTrue("1 samples had no targets with sufficient combined coverage for coassembly prediction" in output)
+            self.assertTrue("These are recorded at " in output)
+
+            unused_samples_path = os.path.join("test", "coassemble", "target", "unused_samples.tsv")
+            self.assertTrue(os.path.exists(unused_samples_path))
+            expected = "\n".join(["sample_4"])
+            with open(unused_samples_path) as f:
+                self.assertEqual(expected, f.read())
 
             config_path = os.path.join("test", "config.yaml")
             self.assertTrue(os.path.exists(config_path))
