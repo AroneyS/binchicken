@@ -546,8 +546,11 @@ def coassemble(args):
         )
         unused_samples = [s for s in forward_reads.keys() if s not in edge_samples]
         if unused_samples:
-            logging.warning(f"Some samples had no targets with sufficient combined coverage for coassembly prediction")
-            logging.warning(f"These were: {' '.join(unused_samples)}")
+            unused_samples_file = os.path.join(args.output, "coassemble", "target", "unused_samples.tsv")
+            with open(unused_samples_file, "w") as f:
+                f.write("\n".join(unused_samples))
+            logging.warning(f"{len(unused_samples)} samples had no targets with sufficient combined coverage for coassembly prediction")
+            logging.warning(f"These are recorded at {unused_samples_file}")
     except (FileNotFoundError, NoDataError):
         pass
 
