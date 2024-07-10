@@ -34,7 +34,7 @@ def processing(unbinned, output_path, threads=1):
     output_dir = os.path.dirname(output_path)
 
     logging.info("Generating sketches")
-    groups = [g for g in unbinned.select("sample", "sequence").group_by(["sample"])]
+    groups = [g for g in unbinned.set_sorted("sample").select("sample", "sequence").group_by(["sample"])]
     threads = min(threads, len(groups))
 
     # Distribute groups among threads more evenly
