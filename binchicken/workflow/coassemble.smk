@@ -22,6 +22,11 @@ qc_reads_2 = {read: output_dir + f"/qc/{read}_2.fastq.gz" for read in config["re
 def get_mem_mb(wildcards, threads, attempt):
     return 8 * 1000 * threads * attempt
 
+def get_runtime(base_hours):
+    def runtime_func(wildcards, attempt):
+        return f"{attempt * base_hours}h"
+    return runtime_func
+
 def get_genomes(wildcards, version=None):
     version = version if version else wildcards.version
     if version == "":
@@ -119,7 +124,7 @@ rule singlem_pipe_reads:
     threads: 1
     resources:
         mem_mb=get_mem_mb,
-        runtime = lambda wildcards, attempt: 24*60*attempt,
+        runtime = get_runtime(base_hours = 24),
     conda:
         "env/singlem.yml"
     shell:
@@ -147,7 +152,7 @@ rule genome_transcripts:
     threads: 1
     resources:
         mem_mb=get_mem_mb,
-        runtime = lambda wildcards, attempt: 1*60*attempt,
+        runtime = get_runtime(base_hours = 1),
     group: "singlem_bins"
     conda:
         "env/prodigal.yml"
@@ -172,7 +177,7 @@ rule singlem_pipe_genomes:
     threads: 1
     resources:
         mem_mb=get_mem_mb,
-        runtime = lambda wildcards, attempt: 1*60*attempt,
+        runtime = get_runtime(base_hours = 1),
     group: "singlem_bins"
     conda:
         "env/singlem.yml"
@@ -225,7 +230,7 @@ rule singlem_appraise:
     threads: 1
     resources:
         mem_mb=get_mem_mb,
-        runtime = lambda wildcards, attempt: 24*60*attempt,
+        runtime = get_runtime(base_hours = 24),
     conda:
         "env/singlem.yml"
     shell:
@@ -276,7 +281,7 @@ rule update_appraise:
     threads: 1
     resources:
         mem_mb=get_mem_mb,
-        runtime = lambda wildcards, attempt: 24*60*attempt,
+        runtime = get_runtime(base_hours = 24),
     conda:
         "env/singlem.yml"
     shell:
@@ -313,7 +318,7 @@ rule query_processing:
     threads: 1
     resources:
         mem_mb=get_mem_mb,
-        runtime = lambda wildcards, attempt: 24*60*attempt,
+        runtime = get_runtime(base_hours = 24),
     script:
         "scripts/query_processing.py"
 
@@ -347,7 +352,7 @@ rule count_bp_reads:
     threads: 8
     resources:
         mem_mb=get_mem_mb,
-        runtime = lambda wildcards, attempt: 24*60*attempt,
+        runtime = get_runtime(base_hours = 24),
     shell:
         "parallel -k -j {threads} "
         "echo -n {{1}}, '&&' "
@@ -365,7 +370,7 @@ rule sketch_samples:
     threads: 16
     resources:
         mem_mb=get_mem_mb,
-        runtime = lambda wildcards, attempt: 6*60*attempt,
+        runtime = get_runtime(base_hours = 6),
     log:
         logs_dir + "/precluster/sketching.log"
     benchmark:
@@ -381,7 +386,7 @@ rule distance_samples:
     threads: 64
     resources:
         mem_mb=get_mem_mb,
-        runtime = lambda wildcards, attempt: 48*60*attempt,
+        runtime = get_runtime(base_hours = 48),
     log:
         logs_dir + "/precluster/distance.log"
     benchmark:
@@ -411,7 +416,7 @@ rule target_elusive:
     threads: 64
     resources:
         mem_mb=get_mem_mb,
-        runtime = lambda wildcards, attempt: 24*60*attempt,
+        runtime = get_runtime(base_hours = 24),
     log:
         logs_dir + "/target/target_elusive.log"
     benchmark:
@@ -435,7 +440,7 @@ checkpoint cluster_graph:
     threads: 64
     resources:
         mem_mb=get_mem_mb,
-        runtime = lambda wildcards, attempt: 48*60*attempt,
+        runtime = get_runtime(base_hours = 48),
     log:
         logs_dir + "/target/cluster_graph.log"
     benchmark:
@@ -455,7 +460,7 @@ rule download_read:
     threads: 4
     resources:
         mem_mb=get_mem_mb,
-        runtime = lambda wildcards, attempt: 4*60*attempt,
+        runtime = get_runtime(base_hours = 4),
         downloading = 1,
     conda:
         "env/kingfisher.yml"
@@ -514,11 +519,11 @@ rule qc_reads:
     params:
         quality_cutoff = 15,
         unqualified_percent_limit = 40,
-        min_length = 80,
+        min_length = 70,
     threads: 32
     resources:
         mem_mb=get_mem_mb,
-        runtime = lambda wildcards, attempt: 4*60*attempt,
+        runtime = get_runtime(base_hours = 4),
     log:
         logs_dir + "/mapping/{read}_qc.log"
     benchmark:
@@ -565,7 +570,7 @@ rule map_reads:
     threads: 32
     resources:
         mem_mb=get_mem_mb,
-        runtime = lambda wildcards, attempt: 12*60*attempt,
+        runtime = get_runtime(base_hours = 12),
     log:
         logs_dir + "/mapping/{read}_coverm.log",
     benchmark:
@@ -595,7 +600,7 @@ rule filter_bam_files:
     threads: 32
     resources:
         mem_mb=get_mem_mb,
-        runtime = lambda wildcards, attempt: 4*60*attempt,
+        runtime = get_runtime(base_hours = 4),
     log:
         logs_dir + "/mapping/{read}_filter.log",
     benchmark:
@@ -622,7 +627,7 @@ rule bam_to_fastq:
     threads: 32
     resources:
         mem_mb=get_mem_mb,
-        runtime = lambda wildcards, attempt: 4*60*attempt,
+        runtime = get_runtime(base_hours = 4),
     log:
         logs_dir + "/mapping/{read}_fastq.log",
     conda:
@@ -742,7 +747,7 @@ rule aviary_assemble:
     resources:
         mem_mb = lambda wildcards, attempt: get_assemble_memory(wildcards, attempt, unit="MB"),
         mem_gb = get_assemble_memory,
-        runtime = lambda wildcards, attempt: 96*60*attempt,
+        runtime = get_runtime(base_hours = 96),
         assembler = get_assemble_assembler,
     log:
         logs_dir + "/aviary/{coassembly}_assemble.log"
