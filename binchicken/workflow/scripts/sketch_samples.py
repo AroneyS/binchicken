@@ -63,7 +63,6 @@ def processing(unbinned, output_path, threads=1):
 if __name__ == "__main__":
     os.environ["POLARS_MAX_THREADS"] = str(snakemake.threads)
     import polars as pl
-    logging.info(f"Polars using {str(pl.thread_pool_size())} threads")
 
     logging.basicConfig(
         filename=snakemake.log[0],
@@ -71,6 +70,7 @@ if __name__ == "__main__":
         format='%(asctime)s %(levelname)s: %(message)s',
         datefmt='%Y/%m/%d %I:%M:%S %p'
         )
+    logging.info(f"Polars using {str(pl.thread_pool_size())} threads")
 
     unbinned_path = snakemake.input.unbinned
     TAXA_OF_INTEREST = snakemake.params.taxa_of_interest
