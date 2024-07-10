@@ -8,6 +8,8 @@ import os
 import logging
 from sourmash import MinHash, SourmashSignature
 from sourmash.sourmash_args import SaveSignaturesToLocation
+from concurrent.futures import ProcessPoolExecutor
+import extern
 
 SINGLEM_OTU_TABLE_SCHEMA = {
     "gene": str,
@@ -18,22 +20,45 @@ SINGLEM_OTU_TABLE_SCHEMA = {
     "taxonomy": str,
     }
 
-def processing(unbinned):
+def process_groups(groups, output_path):
+    with SaveSignaturesToLocation(output_path) as save_sigs:
+        for group in groups:
+            sample, sequences = group
+            mh = MinHash(n=0, ksize=60, scaled=1, track_abundance=False)
+            for seq in sequences.iter_rows():
+                mh.add_sequence(seq[1].replace("-", "A").replace("N", "A"))
+            signature = SourmashSignature(mh, name=sample[0])
+            save_sigs.add(signature)
+
+def processing(unbinned, output_path, threads=1):
+    output_dir = os.path.dirname(output_path)
+
     logging.info("Generating sketches")
-    hashes = []
-    samples = []
-    parent_mh = MinHash(n=0, ksize=60, scaled=1, track_abundance=False)
-    for group in unbinned.select("sample", "sequence").group_by(["sample"]):
-        mh = parent_mh.copy_and_clear()
-        for seq in group[1].iter_rows():
-            mh.add_sequence(seq[1].replace("-", "A").replace("N", "A"))
+    groups = [g for g in unbinned.select("sample", "sequence").group_by(["sample"])]
+    threads = min(threads, len(groups))
 
-        samples.append(group[0][0])
-        hashes.append(mh)
+    # Distribute groups among threads more evenly
+    grouped = [[] for _ in range(threads)]
+    for i, group in enumerate(groups):
+        grouped[i % threads].append(group)
 
-    signatures = [SourmashSignature(hashes[i], name=samples[i]) for i in range(len(hashes))]
+    del groups
+
+    with ProcessPoolExecutor(max_workers=threads) as executor:
+        futures = []
+        for i, group_subset in enumerate(grouped):
+            output_subpath = os.path.join(output_dir, f"signatures_thread_{i}.sig")
+            future = executor.submit(process_groups, group_subset, output_subpath)
+            futures.append(future)
+
+        for future in futures:
+            future.result()
+
+    # Concatenate all files - replacing intervening [] with ,
+    extern.run(f"sed 's/^\[//;s/\]$/,/' {os.path.join(output_dir, 'signatures_thread_*.sig')} | tr -d '\n' | sed 's/,$/]/;s/^/\[/' > {output_path}")
+
     logging.info("Done")
-    return signatures
+    return output_path
 
 if __name__ == "__main__":
     os.environ["POLARS_MAX_THREADS"] = str(snakemake.threads)
@@ -50,6 +75,7 @@ if __name__ == "__main__":
     unbinned_path = snakemake.input.unbinned
     TAXA_OF_INTEREST = snakemake.params.taxa_of_interest
     output_path = snakemake.output.sketch
+    threads = snakemake.threads
 
     unbinned = pl.read_csv(unbinned_path, separator="\t", schema_overrides=SINGLEM_OTU_TABLE_SCHEMA)
 
@@ -59,9 +85,4 @@ if __name__ == "__main__":
             pl.col("taxonomy").str.contains(TAXA_OF_INTEREST, literal=True)
         )
 
-    signatures = processing(unbinned)
-    logging.info("Saving sketches to file")
-
-    with SaveSignaturesToLocation(output_path) as save_sigs:
-        for sig_obj in signatures:
-            save_sigs.add(sig_obj)
+    signatures = processing(unbinned, output_path, threads=threads)
