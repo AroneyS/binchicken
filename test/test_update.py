@@ -343,7 +343,7 @@ class Tests(unittest.TestCase):
                 f"--forward SRR8334323 SRR8334324 "
                 f"--sra "
                 f"--genomes {GENOMES} "
-                f"--coassemble-output {MOCK_COASSEMBLE} "
+                f"--coassemble-output {MOCK_COASSEMBLE_SRA} "
                 f"--output test "
                 f"--conda-prefix {path_to_conda} "
                 f"--dryrun "
