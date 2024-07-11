@@ -683,6 +683,21 @@ def update(args):
         os.makedirs(os.path.join(args.output, "coassemble", "target"), exist_ok=True)
         elusive_clusters.write_csv(os.path.join(args.output, "coassemble", "target", "elusive_clusters.tsv"), separator="\t")
 
+    if args.sra and args.coassemble_elusive_clusters:
+        if not args.coassemblies:
+            elusive_clusters = pl.read_csv(os.path.abspath(args.coassemble_elusive_clusters), separator="\t")
+
+        sra_samples = (
+            elusive_clusters
+            .select(pl.col("recover_samples").str.split(","))
+            .explode("recover_samples")
+            .unique()
+            .get_column("recover_samples")
+            .to_list()
+        )
+        args.forward = [f for f in args.forward if f in sra_samples]
+        args.reverse = [r for r in args.reverse if r in sra_samples]
+
     copy_input(
         os.path.abspath(args.coassemble_unbinned),
         os.path.join(args.output, "coassemble", "appraise", "unbinned.otu_table.tsv")

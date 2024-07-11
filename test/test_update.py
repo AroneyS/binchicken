@@ -238,24 +238,29 @@ class Tests(unittest.TestCase):
             self.assertTrue("test/coassemble/sra/SRR8334323.done" in output_sra)
             self.assertTrue("test/coassemble/sra/SRR8334324.done" in output_sra)
             self.assertTrue("test/coassemble/sra/SRR8334325.done" in output_sra)
-            self.assertTrue("test/coassemble/sra/SRR8334326.done" in output_sra)
+            self.assertTrue("test/coassemble/sra/SRR8334326.done" not in output_sra)
 
-            output = output_comb.split("Building DAG of jobs...")[2]
-            self.assertTrue("singlem_pipe_reads" not in output)
-            self.assertTrue("genome_transcripts" not in output)
-            self.assertTrue("singlem_pipe_genomes" not in output)
-            self.assertTrue("singlem_summarise_genomes" not in output)
-            self.assertTrue("singlem_appraise" not in output)
-            self.assertTrue("query_processing" not in output)
-            self.assertTrue("single_assembly" not in output)
-            self.assertTrue("count_bp_reads" in output)
-            self.assertTrue("target_elusive" not in output)
-            self.assertTrue("cluster_graph" not in output)
-            self.assertTrue("qc_reads" in output)
-            self.assertTrue("collect_genomes" in output)
-            self.assertTrue("map_reads" in output)
-            self.assertTrue("finish_mapping" in output)
-            self.assertTrue("aviary_commands" in output)
+    def test_update_minimal_sra_coassemblies(self):
+        with in_tempdir():
+            cmd = (
+                f"binchicken update "
+                f"--assemble-unmapped "
+                f"--coassemble-output {MOCK_COASSEMBLE_SRA} "
+                f"--coassemblies coassembly_0 "
+                f"--sra "
+                f"--output test "
+                f"--conda-prefix {path_to_conda} "
+                f"--dryrun "
+            )
+            output_comb = extern.run(cmd)
+
+            output_sra = output_comb.split("Building DAG of jobs...")[1]
+            self.assertTrue("download_sra" in output_sra)
+            self.assertTrue("aviary_commands" not in output_sra)
+            self.assertTrue("test/coassemble/sra/SRR8334323.done" in output_sra)
+            self.assertTrue("test/coassemble/sra/SRR8334324.done" in output_sra)
+            self.assertTrue("test/coassemble/sra/SRR8334325.done" not in output_sra)
+            self.assertTrue("test/coassemble/sra/SRR8334326.done" not in output_sra)
 
     def test_update_specified_files(self):
         with in_tempdir():
