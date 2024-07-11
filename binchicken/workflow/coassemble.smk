@@ -314,7 +314,6 @@ rule query_processing:
     params:
         sequence_identity = config["appraise_sequence_identity"],
         window_size = 60,
-        taxa_of_interest = config["taxa_of_interest"],
     threads: 1
     resources:
         mem_mb=get_mem_mb,
