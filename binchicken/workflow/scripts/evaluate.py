@@ -146,7 +146,7 @@ def evaluate(target_otu_table, binned_otu_table, elusive_clusters, elusive_edges
             pl.col("sample").str.replace(r"_1$", "").str.replace(r"\.1$", ""),
             "gene", "sequence", "taxonomy", "found_in", "num_hits", "coverage", "target"
             ])
-        .join(sample_coassemblies, left_on="sample", right_on="samples", how="left")
+        .join(sample_coassemblies, left_on="sample", right_on="samples", how="left", coalesce=True)
         .drop_nulls("coassembly")
         .group_by(["gene", "sequence", "coassembly"])
         .agg([
@@ -296,7 +296,7 @@ def summarise_stats(matches, combined_otu_table, recovered_bins):
             pl.lit("match").alias("status"),
             pl.lit("bins").alias("statistic"),
             )
-        .join(summary.rename({"value": "match"}), on=["coassembly", "status", "statistic"], how="left")
+        .join(summary.rename({"value": "match"}), on=["coassembly", "status", "statistic"], how="left", coalesce=True)
         .select(
             "coassembly",
             pl.lit("nonmatch").alias("status"),

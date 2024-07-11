@@ -31,7 +31,7 @@ SUMMARY_COLUMNS={
 
 class Tests(unittest.TestCase):
     def assertDataFrameEqual(self, a, b):
-        assert_frame_equal(a, b, check_dtype=False, check_row_order=False)
+        assert_frame_equal(a, b, check_dtypes=False, check_row_order=False)
 
     def test_summarise_coassemblies(self):
         elusive_clusters = pl.DataFrame([
