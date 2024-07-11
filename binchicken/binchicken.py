@@ -148,7 +148,7 @@ def download_sra(args):
     if "mock_sra=True" in args.snakemake_args:
         target_rule = "mock_download_sra --resources downloading=1"
     else:
-        target_rule = "download_sra --resources downloading=3"
+        target_rule = f"download_sra --resources downloading={args.download_limit}"
 
     run_workflow(
         config = config_path,
@@ -988,6 +988,7 @@ def build(args):
     args.coassemblies = None
     args.singlem_metapackage = "."
     args.kmer_precluster = PRECLUSTER_NEVER_MODE
+    args.download_limit = 1
 
     # Create mock input files
     forward_reads = [os.path.join(args.output, "sample_" + s + ".1.fq") for s in ["1", "2", "3"]]
@@ -1312,6 +1313,8 @@ def main():
     update_base = update_parser.add_argument_group("Input arguments")
     add_base_arguments(update_base)
     update_base.add_argument("--sra", action="store_true", help="Download reads from SRA (read argument still required). Also sets --run-qc.")
+    default_download_limit = 3
+    update_base.add_argument("--download-limit", type=int, help=f"Parallel download limit [default: {default_download_limit}]", default=default_download_limit)
     # Coassembly options
     update_coassembly = update_parser.add_argument_group("Coassembly options")
     add_coassemble_output_arguments(update_coassembly)
