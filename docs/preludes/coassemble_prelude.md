@@ -44,5 +44,5 @@ Most intermediate files can be provided to skip intermediate steps (e.g. SingleM
 
 Snakemake profiles can be used to automatically submit jobs to HPC clusters (`--snakemake-profile`).
 Note that Aviary assemble commands are submitted to the cluster, while Aviary recover commands are run locally such that Aviary handles cluster submission.
-The `--cluster-submission` flag sets the local Aviary recover thread usage to 1, to enable multiple runs in parallel within `--local-cores`.
+The `--cluster-submission` flag sets the local Aviary recover thread usage to 1, to enable multiple runs in parallel by setting `--local-cores` to greater than 1.
 This is required to prevent `--local-cores` from limiting the number of threads per submitted job.
