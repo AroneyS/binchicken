@@ -651,8 +651,12 @@ def update(args):
             args.genomes = [os.path.normpath(os.path.join(args.coassemble_output, "..", v)) for _,v in old_config["genomes"].items()]
             args.no_genomes = False
         if not (args.forward or args.forward_list):
-            args.forward = [os.path.normpath(os.path.join(args.coassemble_output, "..", v)) for _,v in old_config["reads_1"].items()]
-            args.reverse = [os.path.normpath(os.path.join(args.coassemble_output, "..", v)) for _,v in old_config["reads_2"].items()]
+            if args.sra:
+                args.forward = [k for k,_ in old_config["reads_1"].items()]
+                args.reverse = [k for k,_ in old_config["reads_2"].items()]
+            else:
+                args.forward = [os.path.normpath(os.path.join(args.coassemble_output, "..", v)) for _,v in old_config["reads_1"].items()]
+                args.reverse = [os.path.normpath(os.path.join(args.coassemble_output, "..", v)) for _,v in old_config["reads_2"].items()]
 
     logging.info("Loading Bin Chicken coassemble info")
     if args.coassemble_output:

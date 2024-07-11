@@ -1,0 +1,3 @@
+style	cluster_size	samples	target_ids
+match	2	SRR8334323,SRR8334324	0,1
+match	2	SRR8334323,SRR8334325	2
