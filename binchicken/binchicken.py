@@ -651,8 +651,12 @@ def update(args):
             args.genomes = [os.path.normpath(os.path.join(args.coassemble_output, "..", v)) for _,v in old_config["genomes"].items()]
             args.no_genomes = False
         if not (args.forward or args.forward_list):
-            args.forward = [os.path.normpath(os.path.join(args.coassemble_output, "..", v)) for _,v in old_config["reads_1"].items()]
-            args.reverse = [os.path.normpath(os.path.join(args.coassemble_output, "..", v)) for _,v in old_config["reads_2"].items()]
+            if args.sra:
+                args.forward = [k for k,_ in old_config["reads_1"].items()]
+                args.reverse = [k for k,_ in old_config["reads_2"].items()]
+            else:
+                args.forward = [os.path.normpath(os.path.join(args.coassemble_output, "..", v)) for _,v in old_config["reads_1"].items()]
+                args.reverse = [os.path.normpath(os.path.join(args.coassemble_output, "..", v)) for _,v in old_config["reads_2"].items()]
 
     logging.info("Loading Bin Chicken coassemble info")
     if args.coassemble_output:
@@ -678,6 +682,21 @@ def update(args):
 
         os.makedirs(os.path.join(args.output, "coassemble", "target"), exist_ok=True)
         elusive_clusters.write_csv(os.path.join(args.output, "coassemble", "target", "elusive_clusters.tsv"), separator="\t")
+
+    if args.sra and args.coassemble_elusive_clusters:
+        if not args.coassemblies:
+            elusive_clusters = pl.read_csv(os.path.abspath(args.coassemble_elusive_clusters), separator="\t")
+
+        sra_samples = (
+            elusive_clusters
+            .select(pl.col("recover_samples").str.split(","))
+            .explode("recover_samples")
+            .unique()
+            .get_column("recover_samples")
+            .to_list()
+        )
+        args.forward = [f for f in args.forward if f in sra_samples]
+        args.reverse = args.forward
 
     copy_input(
         os.path.abspath(args.coassemble_unbinned),
