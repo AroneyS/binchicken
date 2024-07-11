@@ -653,7 +653,7 @@ def update(args):
         if not (args.forward or args.forward_list):
             if args.sra:
                 args.forward = [k for k,_ in old_config["reads_1"].items()]
-                args.reverse = args.forward
+                args.reverse = [k for k,_ in old_config["reads_2"].items()]
             else:
                 args.forward = [os.path.normpath(os.path.join(args.coassemble_output, "..", v)) for _,v in old_config["reads_1"].items()]
                 args.reverse = [os.path.normpath(os.path.join(args.coassemble_output, "..", v)) for _,v in old_config["reads_2"].items()]
@@ -696,7 +696,7 @@ def update(args):
             .to_list()
         )
         args.forward = [f for f in args.forward if f in sra_samples]
-        args.reverse = [r for r in args.reverse if r in sra_samples]
+        args.reverse = args.forward
 
     copy_input(
         os.path.abspath(args.coassemble_unbinned),
