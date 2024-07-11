@@ -681,7 +681,13 @@ def update(args):
         elusive_clusters = elusive_clusters.filter(pl.col("coassembly").is_in(args.coassemblies))
 
         os.makedirs(os.path.join(args.output, "coassemble", "target"), exist_ok=True)
-        elusive_clusters.write_csv(os.path.join(args.output, "coassemble", "target", "elusive_clusters.tsv"), separator="\t")
+        # remove file before writing
+        elusive_clusters_path = os.path.join(args.output, "coassemble", "target", "elusive_clusters.tsv")
+        try:
+            os.remove(elusive_clusters_path)
+        except FileNotFoundError:
+            pass
+        elusive_clusters.write_csv(elusive_clusters_path, separator="\t")
 
     if args.sra and args.coassemble_elusive_clusters:
         if not args.coassemblies:
