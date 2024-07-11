@@ -457,7 +457,7 @@ rule download_read:
     params:
         dir = output_dir + "/sra",
         name = "{read}",
-    threads: 4
+    threads: 1
     resources:
         mem_mb=get_mem_mb,
         runtime = get_runtime(base_hours = 4),
