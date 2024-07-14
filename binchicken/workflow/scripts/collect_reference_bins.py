@@ -23,24 +23,18 @@ def pipeline(appraise_binned, appraise_unbinned, sample, MIN_APPRAISED=0.1, TRIM
         appraise_binned
         .with_columns(
             pl.col("sample").cast(str),
-            sample_remove_suffix1 = pl.col("sample").str.replace(r"\.1$", ""),
-            sample_remove_suffix2 = pl.col("sample").str.replace(r"_1$", ""),
+            sample_remove_suffix = pl.col("sample").str.replace(r"(_|\.)R?1$", ""),
             )
-        .filter(
-            (pl.col("sample") == sample) | (pl.col("sample_remove_suffix1") == sample) | (pl.col("sample_remove_suffix2") == sample)
-            )
+        .filter((pl.col("sample") == sample) | (pl.col("sample_remove_suffix") == sample))
     )
 
     appraise_unbinned = (
         appraise_unbinned
         .with_columns(
             pl.col("sample").cast(str),
-            sample_remove_suffix1 = pl.col("sample").str.replace(r"\.1$", ""),
-            sample_remove_suffix2 = pl.col("sample").str.replace(r"_1$", ""),
+            sample_remove_suffix = pl.col("sample").str.replace(r"(_|\.)R?1$", ""),
             )
-        .filter(
-            (pl.col("sample") == sample) | (pl.col("sample_remove_suffix1") == sample) | (pl.col("sample_remove_suffix2") == sample)
-            )
+        .filter((pl.col("sample") == sample) | (pl.col("sample_remove_suffix") == sample))
     )
 
     num_binned = sum(appraise_binned.get_column("num_hits").to_list())
