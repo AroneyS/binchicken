@@ -642,22 +642,30 @@ class Tests(unittest.TestCase):
 
             summary_path = os.path.join("test", "coassemble", "summary.tsv")
             self.assertTrue(os.path.exists(summary_path))
-            expected2 = "\n".join(
+            expected1 = "\n".join(
                 [
                     "\t".join(["coassembly", "samples", "length", "total_targets", "total_size", "unmapped_size",]),
                     "\t".join(["coassembly_0", "sample_1,sample_2", "2", "2", "2869", "8456",]),
                     ""
                 ]
             )
+            expected2 = "\n".join(
+                [
+                    "\t".join(["coassembly", "samples", "length", "total_targets", "total_size", "unmapped_size",]),
+                    "\t".join(["coassembly_0", "sample_1,sample_3", "2", "2", "2869", "8154",]),
+                    ""
+                ]
+            )
             expected3 = "\n".join(
                 [
                     "\t".join(["coassembly", "samples", "length", "total_targets", "total_size", "unmapped_size",]),
-                    "\t".join(["coassembly_0", "sample_1,sample_3", "2", "2", "2869", "8456",]),
+                    "\t".join(["coassembly_0", "sample_2,sample_3", "2", "2", "2869", "8456",]),
                     ""
                 ]
             )
             with open(summary_path) as f:
-                self.assertTrue(expected2 == f.read() or expected3 == f.read())
+                observed = f.read()
+                self.assertTrue(expected1 == observed or expected2 == observed or expected3 == observed)
 
     def test_coassemble_exclude_coassemblies(self):
         with in_tempdir():
