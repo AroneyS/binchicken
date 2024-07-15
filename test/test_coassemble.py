@@ -656,16 +656,9 @@ class Tests(unittest.TestCase):
                     ""
                 ]
             )
-            expected3 = "\n".join(
-                [
-                    "\t".join(["coassembly", "samples", "length", "total_targets", "total_size", "unmapped_size",]),
-                    "\t".join(["coassembly_0", "sample_2,sample_3", "2", "2", "2869", "8456",]),
-                    ""
-                ]
-            )
             with open(summary_path) as f:
                 observed = f.read()
-                self.assertTrue(expected1 == observed or expected2 == observed or expected3 == observed)
+                self.assertTrue(expected1 == observed or expected2 == observed)
 
     def test_coassemble_exclude_coassemblies(self):
         with in_tempdir():
