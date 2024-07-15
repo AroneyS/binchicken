@@ -1451,8 +1451,6 @@ def main():
                 raise Exception("Run Aviary (--run-aviary) comprehensive mode requires paths to GTDB-Tk and CheckM2 databases to be provided (--aviary-gtdbtk-db or GTDBTK_DATA_PATH and --aviary-checkm2-db or CHECKM2DB)")
         if args.cluster_submission and not args.snakemake_profile:
                 logging.warning("The arg `--cluster-submission` is only a flag and cannot activate cluster submission alone. Please see `--snakemake-profile` for cluster submission.")
-        if (args.sample_query or args.sample_query_list or args.sample_query_dir) and args.taxa_of_interest and args.assemble_unmapped:
-            raise Exception("Unmapping is incompatible with the combination of sample query and taxa of interest")
 
     def coassemble_output_argument_verification(args, evaluate=False):
         summary_flag = args.coassemble_summary if evaluate else True

@@ -482,15 +482,19 @@ class Tests(unittest.TestCase):
                 f"binchicken coassemble "
                 f"--forward {SAMPLE_READS_FORWARD} "
                 f"--reverse {SAMPLE_READS_REVERSE} "
-                f"--genomes {GENOMES} "
+                f"--genomes {TWO_GENOMES} "
                 f"--genome-transcripts {GENOME_TRANSCRIPTS} "
                 f"--sample-query {SAMPLE_QUERY} "
                 f"--sample-singlem {SAMPLE_QUERY_SINGLEM} "
                 f"--sample-read-size {SAMPLE_READ_SIZE} "
                 f"--taxa-of-interest \"p__Actinobacteriota\" "
+                f"--assemble-unmapped "
+                f"--unmapping-max-identity 99 "
+                f"--unmapping-max-alignment 90 "
+                f"--unmapping-min-appraised 0.09 "
+                f"--prodigal-meta "
                 f"--output test "
                 f"--conda-prefix {path_to_conda} "
-                f"--snakemake-args \"cluster_graph\" "
             )
             extern.run(cmd)
 
@@ -502,6 +506,9 @@ class Tests(unittest.TestCase):
             expected = "\n".join(
                 [
                     "\t".join(["gene", "sample", "sequence", "num_hits", "coverage", "taxonomy", "found_in"]),
+                    "\t".join(["S3.7.ribosomal_protein_S7", "sample_1", "TTCCAGGTGCCTACCGAAGTTCGTCCCGAGCGTAAAATTGCATTGGGTATGAAATGGCTC", "2", "3.28", "Root; d__Bacteria; p__Bacteroidota; c__Bacteroidia; o__Sphingobacteriales; f__Sphingobacteriaceae; g__Mucilaginibacter; s__Mucilaginibacter sp013286235", "GB_GCA_013286235.1,GB_GCA_013286235.2"]),
+                    "\t".join(["S3.7.ribosomal_protein_S7", "sample_2", "TTCCAGGTGCCTACCGAAGTTCGTCCCGAGCGTAAAATTGCATTGGGTATGAAATGGCTC", "1", "1.64", "Root; d__Bacteria; p__Bacteroidota; c__Bacteroidia; o__Sphingobacteriales; f__Sphingobacteriaceae; g__Mucilaginibacter; s__Mucilaginibacter sp013286235", "GB_GCA_013286235.1"]),
+                    "\t".join(["S3.7.ribosomal_protein_S7", "sample_3", "TTCCAGGTGCCTACCGAAGTTCGTCCCGAGCGTAAAATTGCATTGGGTATGAAATGGCTC", "1", "1.64", "Root; d__Bacteria; p__Bacteroidota; c__Bacteroidia; o__Sphingobacteriales; f__Sphingobacteriaceae; g__Mucilaginibacter; s__Mucilaginibacter sp013286235", "GB_GCA_013286235.1"]),
                     ""
                 ]
             )
@@ -520,6 +527,15 @@ class Tests(unittest.TestCase):
                         "coverage",
                         "taxonomy",
                         "found_in",
+                    ]),
+                    "\t".join([
+                        "S3.7.ribosomal_protein_S7",
+                        "sample_1",
+                        "TATCAAGTTCCACAAGAAGTTAGAGGAGAAAGAAGAATCTCGTTAGCTATTAGATGGATT",
+                        "3",
+                        "4.92",
+                        "Root; d__Bacteria; p__Proteobacteria; c__Gammaproteobacteria; o__Burkholderiales; f__Burkholderiaceae; g__Polynucleobacter; s__Polynucleobacter sp018688335",
+                        "",
                     ]),
                     "\t".join([
                         "S3.7.ribosomal_protein_S7",
@@ -555,6 +571,15 @@ class Tests(unittest.TestCase):
                         "5",
                         "8.21",
                         "Root; d__Bacteria; p__Actinobacteriota; c__Actinomycetia; o__Mycobacteriales; f__Mycobacteriaceae; g__Nocardia; s__Nocardia grenadensis4",
+                        "",
+                    ]),
+                    "\t".join([
+                        "S3.7.ribosomal_protein_S7",
+                        "sample_2",
+                        "TATCAAGTTCCACAAGAAGTTAGAGGAGAAAGAAGAATCTCGTTAGCTATTAGATGGATT",
+                        "4",
+                        "6.57",
+                        "Root; d__Bacteria; p__Proteobacteria; c__Gammaproteobacteria; o__Burkholderiales; f__Burkholderiaceae; g__Polynucleobacter; s__Polynucleobacter sp018688335",
                         "",
                     ]),
                     "\t".join([
@@ -607,6 +632,33 @@ class Tests(unittest.TestCase):
 
             cluster_path = os.path.join("test", "coassemble", "target", "elusive_clusters.tsv")
             self.assertTrue(os.path.exists(cluster_path))
+
+            unmapped_sample_1_path = os.path.join("test", "coassemble", "mapping", "sample_1_unmapped.1.fq.gz")
+            self.assertTrue(os.path.exists(unmapped_sample_1_path))
+            with gzip.open(unmapped_sample_1_path) as f:
+                file = f.read().decode()
+                self.assertTrue("@A00178:112:HMNM5DSXX:4:1622:16405:19194" in file)
+                self.assertTrue("@A00178:112:HMNM5DSXX:4:9999:19126:17300" not in file)
+
+            summary_path = os.path.join("test", "coassemble", "summary.tsv")
+            self.assertTrue(os.path.exists(summary_path))
+            expected1 = "\n".join(
+                [
+                    "\t".join(["coassembly", "samples", "length", "total_targets", "total_size", "unmapped_size",]),
+                    "\t".join(["coassembly_0", "sample_1,sample_2", "2", "2", "2869", "8456",]),
+                    ""
+                ]
+            )
+            expected2 = "\n".join(
+                [
+                    "\t".join(["coassembly", "samples", "length", "total_targets", "total_size", "unmapped_size",]),
+                    "\t".join(["coassembly_0", "sample_1,sample_3", "2", "2", "2869", "8154",]),
+                    ""
+                ]
+            )
+            with open(summary_path) as f:
+                observed = f.read()
+                self.assertTrue(expected1 == observed or expected2 == observed)
 
     def test_coassemble_exclude_coassemblies(self):
         with in_tempdir():
