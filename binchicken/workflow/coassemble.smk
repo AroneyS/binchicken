@@ -366,10 +366,10 @@ rule sketch_samples:
         sketch = output_dir + "/sketch/samples.sig"
     params:
         taxa_of_interest = config["taxa_of_interest"],
-    threads: 16
+    threads: 64
     resources:
         mem_mb=get_mem_mb,
-        runtime = get_runtime(base_hours = 6),
+        runtime = get_runtime(base_hours = 96),
     log:
         logs_dir + "/precluster/sketching.log"
     benchmark:

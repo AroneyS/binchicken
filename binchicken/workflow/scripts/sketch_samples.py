@@ -33,7 +33,7 @@ def process_groups(groups, output_path):
 def processing(unbinned, output_path, threads=1):
     output_dir = os.path.dirname(output_path)
 
-    logging.info("Generating sketches")
+    logging.info("Grouping samples")
     groups = [g for g in unbinned.set_sorted("sample").select("sample", "sequence").group_by(["sample"])]
     threads = min(threads, len(groups))
 
@@ -44,6 +44,7 @@ def processing(unbinned, output_path, threads=1):
 
     del groups
 
+    logging.info("Generating sketches in separate threads")
     with ProcessPoolExecutor(max_workers=threads) as executor:
         futures = []
         for i, group_subset in enumerate(grouped):
@@ -54,8 +55,8 @@ def processing(unbinned, output_path, threads=1):
         for future in futures:
             future.result()
 
-    # Concatenate all files - replacing intervening [] with ,
-    extern.run(f"sed 's/^\[//;s/\]$/,/' {os.path.join(output_dir, 'signatures_thread_*.sig')} | tr -d '\n' | sed 's/,$/]/;s/^/\[/' > {output_path}")
+    logging.info("Concatenating sketches")
+    extern.run(f"sourmash sig cat {os.path.join(output_dir, 'signatures_thread_*.sig')} -o {output_path}")
 
     logging.info("Done")
     return output_path
