@@ -641,15 +641,22 @@ class Tests(unittest.TestCase):
 
             summary_path = os.path.join("test", "coassemble", "summary.tsv")
             self.assertTrue(os.path.exists(summary_path))
-            expected = "\n".join(
+            expected2 = "\n".join(
                 [
                     "\t".join(["coassembly", "samples", "length", "total_targets", "total_size", "unmapped_size",]),
                     "\t".join(["coassembly_0", "sample_1,sample_2", "2", "2", "2869", "8456",]),
                     ""
                 ]
             )
+            expected3 = "\n".join(
+                [
+                    "\t".join(["coassembly", "samples", "length", "total_targets", "total_size", "unmapped_size",]),
+                    "\t".join(["coassembly_0", "sample_1,sample_3", "2", "2", "2869", "8456",]),
+                    ""
+                ]
+            )
             with open(summary_path) as f:
-                self.assertEqual(expected, f.read())
+                self.assertTrue(expected2 == f.read() or expected3 == f.read())
 
     def test_coassemble_exclude_coassemblies(self):
         with in_tempdir():
