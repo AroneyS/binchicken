@@ -238,8 +238,7 @@ class Tests(unittest.TestCase):
                         "3",
                         "8758",
                         "8456",
-                    ]),
-                    ""
+                    ])
                 ]
             )
             with open(summary_path) as f:
@@ -482,7 +481,7 @@ class Tests(unittest.TestCase):
                 f"binchicken coassemble "
                 f"--forward {SAMPLE_READS_FORWARD} "
                 f"--reverse {SAMPLE_READS_REVERSE} "
-                f"--genomes {GENOMES} "
+                f"--genomes {TWO_GENOMES} "
                 f"--genome-transcripts {GENOME_TRANSCRIPTS} "
                 f"--sample-query {SAMPLE_QUERY} "
                 f"--sample-singlem {SAMPLE_QUERY_SINGLEM} "
@@ -491,6 +490,7 @@ class Tests(unittest.TestCase):
                 f"--assemble-unmapped "
                 f"--unmapping-max-identity 99 "
                 f"--unmapping-max-alignment 90 "
+                f"--unmapping-min-appraised 0.09 "
                 f"--prodigal-meta "
                 f"--output test "
                 f"--conda-prefix {path_to_conda} "
@@ -506,6 +506,9 @@ class Tests(unittest.TestCase):
             expected = "\n".join(
                 [
                     "\t".join(["gene", "sample", "sequence", "num_hits", "coverage", "taxonomy", "found_in"]),
+                    "\t".join(["S3.7.ribosomal_protein_S7", "sample_1", "TTCCAGGTGCCTACCGAAGTTCGTCCCGAGCGTAAAATTGCATTGGGTATGAAATGGCTC", "2", "3.28", "Root; d__Bacteria; p__Bacteroidota; c__Bacteroidia; o__Sphingobacteriales; f__Sphingobacteriaceae; g__Mucilaginibacter; s__Mucilaginibacter sp013286235", "GB_GCA_013286235.1,GB_GCA_013286235.2"]),
+                    "\t".join(["S3.7.ribosomal_protein_S7", "sample_2", "TTCCAGGTGCCTACCGAAGTTCGTCCCGAGCGTAAAATTGCATTGGGTATGAAATGGCTC", "1", "1.64", "Root; d__Bacteria; p__Bacteroidota; c__Bacteroidia; o__Sphingobacteriales; f__Sphingobacteriaceae; g__Mucilaginibacter; s__Mucilaginibacter sp013286235", "GB_GCA_013286235.1"]),
+                    "\t".join(["S3.7.ribosomal_protein_S7", "sample_3", "TTCCAGGTGCCTACCGAAGTTCGTCCCGAGCGTAAAATTGCATTGGGTATGAAATGGCTC", "1", "1.64", "Root; d__Bacteria; p__Bacteroidota; c__Bacteroidia; o__Sphingobacteriales; f__Sphingobacteriaceae; g__Mucilaginibacter; s__Mucilaginibacter sp013286235", "GB_GCA_013286235.1"]),
                     ""
                 ]
             )
