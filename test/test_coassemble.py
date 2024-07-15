@@ -496,7 +496,6 @@ class Tests(unittest.TestCase):
                 f"--conda-prefix {path_to_conda} "
             )
             extern.run(cmd)
-            import pdb; pdb.set_trace()
 
             config_path = os.path.join("test", "config.yaml")
             self.assertTrue(os.path.exists(config_path))
