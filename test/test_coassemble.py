@@ -238,7 +238,8 @@ class Tests(unittest.TestCase):
                         "3",
                         "8758",
                         "8456",
-                    ])
+                    ]),
+                    ""
                 ]
             )
             with open(summary_path) as f:
