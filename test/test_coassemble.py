@@ -645,6 +645,7 @@ class Tests(unittest.TestCase):
                 [
                     "\t".join(["coassembly", "samples", "length", "total_targets", "total_size", "unmapped_size",]),
                     "\t".join(["coassembly_0", "sample_1,sample_2", "2", "2", "2869", "8456",]),
+                    ""
                 ]
             )
             with open(summary_path) as f:
