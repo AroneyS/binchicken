@@ -63,9 +63,10 @@ def pipeline(appraise_binned, appraise_unbinned, sample, MIN_APPRAISED=0.1, TRIM
             pl.col("coverage")
             )
         .with_columns(
-            pl.col("coverage").list.sort().list.slice(
-                pl.col("cut"), pl.col("coverage").list.len() - 2 * pl.col("cut")
-                ).list.mean()
+            pl.col("coverage")
+                .list.sort()
+                .list.slice(pl.col("cut"), pl.col("coverage").list.len() - 2 * pl.col("cut"))
+                .list.mean()
             )
         .filter(pl.col("coverage") > 0)
         .get_column("found_in")
