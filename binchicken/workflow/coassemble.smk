@@ -359,6 +359,23 @@ rule count_bp_reads:
         "::: {params.names} :::+ {input.reads_1} :::+ {input.reads_2} "
         "> {output}"
 
+rule abundance_weighting:
+    input:
+        unbinned = output_dir + "/appraise/unbinned.otu_table.tsv",
+        binned = output_dir + "/appraise/binned.otu_table.tsv",
+    output:
+        weighted = output_dir + "/appraise/weighted.otu_table.tsv"
+    threads: 64
+    resources:
+        mem_mb=get_mem_mb,
+        runtime = get_runtime(base_hours = 24),
+    log:
+        logs_dir + "/appraise/abundance_weighting.log"
+    benchmark:
+        benchmarks_dir + "/appraise/abundance_weighting.tsv"
+    script:
+        "scripts/abundance_weighting.py"
+
 rule sketch_samples:
     input:
         unbinned = output_dir + "/appraise/unbinned.otu_table.tsv",
@@ -423,10 +440,28 @@ rule target_elusive:
     script:
         "scripts/target_elusive.py"
 
+rule target_weighting:
+    input:
+        targets = output_dir + "/target/targets.tsv",
+        weighting = output_dir + "/appraise/weighted.otu_table.tsv" if config["abundance_weighted"] else [],
+    output:
+        targets_weighted = output_dir + "/target/targets_weighted.tsv",
+    threads: 64
+    resources:
+        mem_mb=get_mem_mb,
+        runtime = get_runtime(base_hours = 24),
+    log:
+        logs_dir + "/target/target_weighting.log"
+    benchmark:
+        benchmarks_dir + "/target/target_weighting.tsv"
+    script:
+        "scripts/target_weighting.py"
+
 checkpoint cluster_graph:
     input:
         elusive_edges = output_dir + "/target/elusive_edges.tsv",
         read_size = output_dir + "/read_size.csv",
+        targets_weighted = output_dir + "/target/targets_weighted.tsv" if config["abundance_weighted"] else [],
     output:
         elusive_clusters = output_dir + "/target/elusive_clusters.tsv"
     params:

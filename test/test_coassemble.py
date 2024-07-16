@@ -55,6 +55,12 @@ SAMPLE_SINGLEM_PRE = ' '.join([
     os.path.join(MOCK_COASSEMBLE, "coassemble", "pipe_precluster", "sample_3_read.otu_table.tsv"),
     os.path.join(MOCK_COASSEMBLE, "coassemble", "pipe_precluster", "sample_5_read.otu_table.tsv"),
     ])
+SAMPLE_SINGLEM_WEIGHT = ' '.join([
+    os.path.join(MOCK_COASSEMBLE, "coassemble", "pipe_weight", "sample_1_read.otu_table.tsv"),
+    os.path.join(MOCK_COASSEMBLE, "coassemble", "pipe_weight", "sample_2_read.otu_table.tsv"),
+    os.path.join(MOCK_COASSEMBLE, "coassemble", "pipe_weight", "sample_3_read.otu_table.tsv"),
+    os.path.join(MOCK_COASSEMBLE, "coassemble", "pipe_weight", "sample_5_read.otu_table.tsv"),
+    ])
 
 GENOME_TRANSCRIPTS = ' '.join([os.path.join(path_to_data, "GB_GCA_013286235.1_protein.fna")])
 GENOME_SINGLEM = os.path.join(MOCK_COASSEMBLE, "coassemble", "summarise", "bins_summarised.otu_table2.tsv")
@@ -970,9 +976,11 @@ class Tests(unittest.TestCase):
             self.assertTrue("query_processing" not in output)
             self.assertTrue("single_assembly" not in output)
             self.assertTrue("count_bp_reads" not in output)
+            self.assertTrue("abundance_weighting" not in output)
             self.assertTrue("sketch_samples" not in output)
             self.assertTrue("distance_samples" not in output)
             self.assertTrue("target_elusive" in output)
+            self.assertTrue("target_weighting" not in output)
             self.assertTrue("cluster_graph" in output)
             self.assertTrue("qc_reads" not in output)
             self.assertTrue("collect_genomes" not in output)
@@ -1010,9 +1018,11 @@ class Tests(unittest.TestCase):
             self.assertTrue("query_processing" not in output)
             self.assertTrue("single_assembly" not in output)
             self.assertTrue("count_bp_reads" not in output)
+            self.assertTrue("abundance_weighting" not in output)
             self.assertTrue("sketch_samples" not in output)
             self.assertTrue("distance_samples" not in output)
             self.assertTrue("target_elusive" in output)
+            self.assertTrue("target_weighting" not in output)
             self.assertTrue("cluster_graph" in output)
             self.assertTrue("qc_reads" not in output)
             self.assertTrue("collect_genomes" not in output)
@@ -1054,9 +1064,11 @@ class Tests(unittest.TestCase):
             self.assertTrue("query_processing" not in output)
             self.assertTrue("single_assembly" not in output)
             self.assertTrue("count_bp_reads" in output)
+            self.assertTrue("abundance_weighting" not in output)
             self.assertTrue("sketch_samples" not in output)
             self.assertTrue("distance_samples" not in output)
             self.assertTrue("target_elusive" in output)
+            self.assertTrue("target_weighting" not in output)
             self.assertTrue("cluster_graph" in output)
             self.assertTrue("qc_reads" not in output)
             self.assertTrue("collect_genomes" in output)
@@ -1099,9 +1111,11 @@ class Tests(unittest.TestCase):
             self.assertTrue("query_processing" not in output)
             self.assertTrue("single_assembly" not in output)
             self.assertTrue("count_bp_reads" in output)
+            self.assertTrue("abundance_weighting" not in output)
             self.assertTrue("sketch_samples" not in output)
             self.assertTrue("distance_samples" not in output)
             self.assertTrue("target_elusive" in output)
+            self.assertTrue("target_weighting" not in output)
             self.assertTrue("cluster_graph" in output)
             self.assertTrue("qc_reads" in output)
             self.assertTrue("collect_genomes" in output)
@@ -1147,9 +1161,11 @@ class Tests(unittest.TestCase):
             self.assertTrue("query_processing" not in output)
             self.assertTrue("single_assembly" not in output)
             self.assertTrue("count_bp_reads" in output)
+            self.assertTrue("abundance_weighting" not in output)
             self.assertTrue("sketch_samples" not in output)
             self.assertTrue("distance_samples" not in output)
             self.assertTrue("target_elusive" in output)
+            self.assertTrue("target_weighting" not in output)
             self.assertTrue("cluster_graph" in output)
             self.assertTrue("qc_reads" not in output)
             self.assertTrue("collect_genomes" in output)
@@ -1198,9 +1214,11 @@ class Tests(unittest.TestCase):
             self.assertTrue("query_processing" not in output)
             self.assertTrue("single_assembly" not in output)
             self.assertTrue("count_bp_reads" not in output)
+            self.assertTrue("abundance_weighting" not in output)
             self.assertTrue("sketch_samples" not in output)
             self.assertTrue("distance_samples" not in output)
             self.assertTrue("target_elusive" in output)
+            self.assertTrue("target_weighting" not in output)
             self.assertTrue("cluster_graph" in output)
             self.assertTrue("qc_reads" not in output)
             self.assertTrue("collect_genomes" not in output)
@@ -1236,9 +1254,11 @@ class Tests(unittest.TestCase):
             self.assertTrue("query_processing" in output)
             self.assertTrue("single_assembly" not in output)
             self.assertTrue("count_bp_reads" not in output)
+            self.assertTrue("abundance_weighting" not in output)
             self.assertTrue("sketch_samples" not in output)
             self.assertTrue("distance_samples" not in output)
             self.assertTrue("target_elusive" in output)
+            self.assertTrue("target_weighting" not in output)
             self.assertTrue("cluster_graph" in output)
             self.assertTrue("qc_reads" not in output)
             self.assertTrue("collect_genomes" not in output)
@@ -1274,9 +1294,51 @@ class Tests(unittest.TestCase):
             self.assertTrue("query_processing" not in output)
             self.assertTrue("single_assembly" not in output)
             self.assertTrue("count_bp_reads" not in output)
+            self.assertTrue("abundance_weighting" not in output)
             self.assertTrue("sketch_samples" in output)
             self.assertTrue("distance_samples" in output)
             self.assertTrue("target_elusive" in output)
+            self.assertTrue("target_weighting" not in output)
+            self.assertTrue("cluster_graph" in output)
+            self.assertTrue("qc_reads" not in output)
+            self.assertTrue("collect_genomes" not in output)
+            self.assertTrue("map_reads" not in output)
+            self.assertTrue("finish_mapping" not in output)
+            self.assertTrue("aviary_commands" in output)
+
+    def test_coassemble_weighted_dryrun(self):
+        with in_tempdir():
+            cmd = (
+                f"binchicken coassemble "
+                f"--abundance-weighted "
+                f"--forward {SAMPLE_READS_FORWARD} "
+                f"--reverse {SAMPLE_READS_REVERSE} "
+                f"--genomes {GENOMES} "
+                f"--genome-transcripts {GENOME_TRANSCRIPTS} "
+                f"--sample-singlem {SAMPLE_SINGLEM} "
+                f"--sample-read-size {SAMPLE_READ_SIZE} "
+                f"--genome-singlem {GENOME_SINGLEM} "
+                f"--singlem-metapackage {METAPACKAGE} "
+                f"--output test "
+                f"--conda-prefix {path_to_conda} "
+                f"--dryrun "
+                f"--snakemake-args \" --quiet\" "
+            )
+            output = extern.run(cmd)
+
+            self.assertTrue("singlem_pipe_reads" not in output)
+            self.assertTrue("genome_transcripts" not in output)
+            self.assertTrue("singlem_pipe_genomes" not in output)
+            self.assertTrue("singlem_summarise_genomes" not in output)
+            self.assertTrue("singlem_appraise" in output)
+            self.assertTrue("query_processing" not in output)
+            self.assertTrue("single_assembly" not in output)
+            self.assertTrue("count_bp_reads" not in output)
+            self.assertTrue("abundance_weighting" in output)
+            self.assertTrue("sketch_samples" not in output)
+            self.assertTrue("distance_samples" not in output)
+            self.assertTrue("target_elusive" in output)
+            self.assertTrue("target_weighting" in output)
             self.assertTrue("cluster_graph" in output)
             self.assertTrue("qc_reads" not in output)
             self.assertTrue("collect_genomes" not in output)
@@ -1557,6 +1619,172 @@ class Tests(unittest.TestCase):
             with open(cluster_path) as f:
                 self.assertEqual(expected, f.read())
 
+    def test_coassemble_weighted(self):
+        with in_tempdir():
+            cmd = (
+                f"binchicken coassemble "
+                f"--abundance-weighted "
+                f"--forward {SAMPLE_READS_FORWARD_PRE} "
+                f"--reverse {SAMPLE_READS_REVERSE_PRE} "
+                f"--sample-singlem {SAMPLE_SINGLEM_WEIGHT} "
+                f"--genomes {GENOMES} "
+                f"--genome-singlem {GENOME_SINGLEM} "
+                f"--singlem-metapackage {METAPACKAGE} "
+                f"--output test "
+                f"--conda-prefix {path_to_conda} "
+            )
+            extern.run(cmd)
+
+            config_path = os.path.join("test", "config.yaml")
+            self.assertTrue(os.path.exists(config_path))
+
+            read_size_path = os.path.join("test", "coassemble", "read_size.csv")
+            self.assertTrue(os.path.exists(read_size_path))
+            expected = "\n".join(
+                [
+                    ",".join(["sample_1", "4832"]),
+                    ",".join(["sample_2", "3926"]),
+                    ",".join(["sample_3", "3624"]),
+                    ",".join(["sample_5", "3624"]),
+                    ""
+                ]
+            )
+            with open(read_size_path) as f:
+                self.assertEqual(expected, f.read())
+
+            weights_path = os.path.join("test", "coassemble", "appraise", "weighted.otu_table.tsv")
+            self.assertTrue(os.path.exists(weights_path))
+            expected = pl.DataFrame([
+                    ["S3.7.ribosomal_protein_S7", "TACGAGCGGATCG---------------GTTATATATCGAAAGCTCATGCGGCCATATCG", 0.16913],
+                    ["S3.7.ribosomal_protein_S7", "ATCGACTGACTTGATCGATCTTTGACGACGAGAGAGAGAGCGACGCGCCGAGAGGTTTCA", 0.333333],
+                    ["S3.7.ribosomal_protein_S7", "AAAAGTCCTGATCGTAGCTAATAATATTATGCGTACGTCAGTACGTACTGACTGACGTAA", 0.496446],
+                    ["S3.7.ribosomal_protein_S7", "AGCGTCGAGCGATCGATCGTACGTAGCGGGGATCGTATTTACTATCTACTAACGAGCAAA", 0.895837],
+                    ["S3.7.ribosomal_protein_S7", "ATGACTAGTCATAGCTAGATTTGAGGCAGCAGGAGTTAGGAAAGCCCCCGGAGTTAGCTA", 0.01819],
+                    ["S3.7.ribosomal_protein_S7", "TGACTAGCTGGGCTAGCTATATTCTTTTTACGAGCGCGAGGAAAGCGACAGCGGCCAGGC", 0.024822],
+                    ["S3.7.ribosomal_protein_S7", "TACGAGCGGATCGTGCACGTAGTCAGTCGTTATATATCGAAAGCTCATGCGGCCATATCG", 0.16913],
+                ],
+                schema = ["gene", "sequence", "weight"],
+                orient="row",
+            )
+            observed = pl.read_csv(weights_path, separator="\t")
+            assert_frame_equal(expected, observed, check_dtypes=False, check_row_order=False, atol=1e-5)
+
+            target_weights_path = os.path.join("test", "coassemble", "target", "targets_weighted.tsv")
+            self.assertTrue(os.path.exists(target_weights_path))
+            expected = pl.DataFrame([
+                    [0, 0.01819],
+                    [1, 0.024822],
+                    [2, 0.895837],
+                    [3, 0.496446],
+                    [4, 0.333333],
+                    [5, 0.16913],
+                    [6, 0.16913],
+                ],
+                schema = ["target", "weight"],
+                orient="row",
+            )
+            observed = pl.read_csv(target_weights_path, separator="\t")
+            assert_frame_equal(expected, observed, check_dtypes=False, check_row_order=False, atol=1e-5)
+
+            elusive_edges_path = os.path.join("test", "coassemble", "target", "elusive_edges.tsv")
+            self.assertTrue(os.path.exists(elusive_edges_path))
+            expected = pl.DataFrame([
+                    ["match", 2, "sample_1,sample_2", "0,1,3"],
+                    ["match", 2, "sample_1,sample_5", "0,2"],
+                    ["match", 2, "sample_2,sample_5", "0"],
+                    ["match", 2, "sample_3,sample_5", "5,6"],
+                ],
+                schema = ["style", "cluster_size", "samples", "target_ids"],
+                orient="row",
+            )
+            observed = pl.read_csv(elusive_edges_path, separator="\t")
+            assert_frame_equal(expected, observed, check_dtypes=False, check_row_order=False)
+
+            cluster_path = os.path.join("test", "coassemble", "target", "elusive_clusters.tsv")
+            self.assertTrue(os.path.exists(cluster_path))
+            expected = pl.DataFrame([
+                    ["sample_1,sample_5", 2, 0.914027, 7248, "sample_1,sample_5", "coassembly_0"],
+                ],
+                schema = ["samples", "length", "total_targets", "total_size", "recover_samples", "coassembly"],
+                orient="row",
+            )
+            observed = pl.read_csv(cluster_path, separator="\t")
+            assert_frame_equal(expected, observed, check_dtypes=False, check_row_order=False, atol=1e-5)
+
+    def test_coassemble_weighted_target_taxa(self):
+        with in_tempdir():
+            cmd = (
+                f"binchicken coassemble "
+                f"--abundance-weighted "
+                f"--forward {SAMPLE_READS_FORWARD_PRE} "
+                f"--reverse {SAMPLE_READS_REVERSE_PRE} "
+                f"--sample-singlem {SAMPLE_SINGLEM_WEIGHT} "
+                f"--taxa-of-interest p__Abyssobacteria "
+                f"--singlem-metapackage {METAPACKAGE} "
+                f"--output test "
+                f"--conda-prefix {path_to_conda} "
+            )
+            extern.run(cmd)
+
+            config_path = os.path.join("test", "config.yaml")
+            self.assertTrue(os.path.exists(config_path))
+
+            weights_path = os.path.join("test", "coassemble", "appraise", "weighted.otu_table.tsv")
+            self.assertTrue(os.path.exists(weights_path))
+            expected = pl.DataFrame([
+                    ["S3.7.ribosomal_protein_S7", "TACGAGCGGATCG---------------GTTATATATCGAAAGCTCATGCGGCCATATCG", 0.16913],
+                    ["S3.7.ribosomal_protein_S7", "ATCGACTGACTTGATCGATCTTTGACGACGAGAGAGAGAGCGACGCGCCGAGAGGTTTCA", 0.333333],
+                    ["S3.7.ribosomal_protein_S7", "AAAAGTCCTGATCGTAGCTAATAATATTATGCGTACGTCAGTACGTACTGACTGACGTAA", 0.496446],
+                    ["S3.7.ribosomal_protein_S7", "AGCGTCGAGCGATCGATCGTACGTAGCGGGGATCGTATTTACTATCTACTAACGAGCAAA", 0.895837],
+                    ["S3.7.ribosomal_protein_S7", "ATGACTAGTCATAGCTAGATTTGAGGCAGCAGGAGTTAGGAAAGCCCCCGGAGTTAGCTA", 0.01819],
+                    ["S3.7.ribosomal_protein_S7", "TGACTAGCTGGGCTAGCTATATTCTTTTTACGAGCGCGAGGAAAGCGACAGCGGCCAGGC", 0.024822],
+                    ["S3.7.ribosomal_protein_S7", "TACGAGCGGATCGTGCACGTAGTCAGTCGTTATATATCGAAAGCTCATGCGGCCATATCG", 0.16913],
+                    ["S3.7.ribosomal_protein_S7", "TTCCAGGTGCCTACTGAAGTTCGTCCCGAGCGTAAAATTGCATTGGGTATGAAATGGCTG", 0.050684],
+                ],
+                schema = ["gene", "sequence", "weight"],
+                orient="row",
+            )
+            observed = pl.read_csv(weights_path, separator="\t")
+            assert_frame_equal(expected, observed, check_dtypes=False, check_row_order=False, atol=1e-5)
+
+            target_weights_path = os.path.join("test", "coassemble", "target", "targets_weighted.tsv")
+            self.assertTrue(os.path.exists(target_weights_path))
+            expected = pl.DataFrame([
+                    [0, 0.496446],
+                    [1, 0.01819],
+                    [2, 0.024822],
+                    [3, 0.050684],
+                    [4, 0.16913],
+                    [5, 0.16913],
+                ],
+                schema = ["target", "weight"],
+                orient="row",
+            )
+            observed = pl.read_csv(target_weights_path, separator="\t")
+            assert_frame_equal(expected, observed, check_dtypes=False, check_row_order=False, atol=1e-5)
+
+            elusive_edges_path = os.path.join("test", "coassemble", "target", "elusive_edges.tsv")
+            self.assertTrue(os.path.exists(elusive_edges_path))
+            expected = "\n".join(
+                [
+                    "\t".join(["style", "cluster_size", "samples", "target_ids"]),
+                    "\t".join(["match", "2", "sample_2,sample_5", "0"]),
+                    ""
+                ]
+            )
+            with open(elusive_edges_path) as f:
+                self.assertEqual(expected, f.read())
+
+            cluster_path = os.path.join("test", "coassemble", "target", "elusive_clusters.tsv")
+            self.assertTrue(os.path.exists(cluster_path))
+            expected = pl.DataFrame([
+                    ["sample_2,sample_5", 2, 0.496446, 7248, "sample_1,sample_5", "coassembly_0"],
+                ],
+                schema = ["samples", "length", "total_targets", "total_size", "recover_samples", "coassembly"],
+                orient="row",
+            )
+            observed = pl.read_csv(cluster_path, separator="\t")
+            assert_frame_equal(expected, observed, check_dtypes=False, check_row_order=False, atol=1e-5)
 
 if __name__ == '__main__':
     unittest.main()
