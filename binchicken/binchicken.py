@@ -1266,7 +1266,7 @@ def main():
         max_coassembly_size_default = 50
         coassemble_clustering.add_argument("--max-coassembly-size", type=int, help=f"Maximum size (Gbp) of coassembly cluster [default: {max_coassembly_size_default}Gbp]", default=max_coassembly_size_default)
         coassemble_clustering.add_argument("--max-recovery-samples", type=int, help="Upper bound for number of related samples to use for differential abundance binning [default: 20]", default=20)
-        coassemble_clustering.add_argument("--kmer-precluster", help="Run kmer preclustering of unbinned window sequences. [default: large; perform preclustering when given >1000 samples]",
+        coassemble_clustering.add_argument("--kmer-precluster", help="Run kmer preclustering using unbinned window sequences as kmers. [default: large; perform preclustering when given >1000 samples]",
                                     default=PRECLUSTER_SIZE_DEP_MODE, choices=[PRECLUSTER_NEVER_MODE, PRECLUSTER_SIZE_DEP_MODE, PRECLUSTER_ALWAYS_MODE])
         coassemble_clustering.add_argument("--precluster-size", type=int, help="# of samples within each sample's precluster [default: 5 * max-recovery-samples]")
         coassemble_clustering.add_argument("--prodigal-meta", action="store_true", help="Use prodigal \"-p meta\" argument (for testing)")
