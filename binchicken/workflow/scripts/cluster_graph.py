@@ -140,7 +140,7 @@ def pipeline(
             weightings = (
                 weightings
                 .lazy()
-                .select("weight", target_ids = pl.col("target").cast(pl.UInt32))
+                .select(target_ids = pl.col("target").cast(pl.UInt32), weight = "weight")
             )
             weightings_dict = dict(weightings.collect().iter_rows())
         else:
@@ -265,9 +265,10 @@ def pipeline(
                 filter_max_coassembly_size,
                 MAX_COASSEMBLY_SIZE=MAX_COASSEMBLY_SIZE,
                 )
+            .with_columns(weighting = pl.lit(weightings is not None))
             .with_columns(
-                total_targets = pl.when(weightings is not None)
-                .then(pl.col("target_ids").list.eval(pl.element().map_dict(weightings_dict)).list.sum())
+                total_targets = pl.when(pl.col("weighting"))
+                .then(pl.col("target_ids").list.eval(pl.element().replace(weightings_dict, default=0)).list.sum())
                 .otherwise(pl.col("target_ids").list.len()),
             )
             .sort("total_targets", "total_size", descending=[True, False])
@@ -300,7 +301,9 @@ def pipeline(
                 .cast(pl.List(pl.Utf8))
                 .list.sort()
                 .list.join(","),
-                total_targets = pl.col("target_ids").list.len(),
+                total_targets = pl.when(pl.col("weighting"))
+                    .then(pl.col("total_targets"))
+                    .otherwise(pl.col("target_ids").list.len()),
                 )
             .sort("total_targets", "total_size", descending=[True, False])
             .with_row_index("coassembly")
