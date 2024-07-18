@@ -1,5 +1,6 @@
 gene	sample	sequence	num_hits	coverage	taxonomy
 S3.7.ribosomal_protein_S7	sample_2	ATGACTAGTCATAGCTAGATTTGAGGCAGCAGGAGTTAGGAAAGCCCCCGGAGTTAGCTA	5	10	Root; d__Bacteria; p__Abyssobacteria
-S3.7.ribosomal_protein_S7	sample_2	TGACTAGCTGGGCTAGCTATATTCTTTTTACGAGCGCGAGGAAAGCGACAGCGGCCAGGC	5	10	Root; d__Bacteria; p__Abyssobacteria
+S3.7.ribosomal_protein_S7	sample_2	TGACTAGCTGGGCTAGCTATATTCTTTTTACGAGCGCGAGGAAAGCGACAGCGGCCAGGC	5	10	Root; d__Bacteria; p__Pseudomonadota
 S3.7.ribosomal_protein_S7	sample_2	TTCCAGGTGCCTACTGAAGTTCGTCCCGAGCGTAAAATTGCATTGGGTATGAAATGGCTG	10	20.5	Root; d__Bacteria; p__Abyssobacteria
 S3.7.ribosomal_protein_S7	sample_2	AAAAGTCCTGATCGTAGCTAATAATATTATGCGTACGTCAGTACGTACTGACTGACGTAA	100	200	Root; d__Bacteria; p__Abyssobacteria
+S3.7.ribosomal_protein_S7	sample_2	TACGAGCGGATCG---------------GTTATATATCGAAAGCTCATGCGGCCATATCG	5	10	Root; d__Bacteria; p__Abyssobacteria
