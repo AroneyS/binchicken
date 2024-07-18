@@ -25,7 +25,7 @@ APPRAISE_COLUMNS = SINGLEM_COLUMNS | {
 CLUSTER_COLUMNS = {
     "samples": str,
     "length": int,
-    "total_targets": int,
+    "total_targets": float,
     "total_size": float,
     "recover_samples": str,
     "coassembly": str,
