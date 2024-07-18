@@ -494,7 +494,7 @@ rule download_read:
     threads: 1
     resources:
         mem_mb=get_mem_mb,
-        runtime = get_runtime(base_hours = 4),
+        runtime = get_runtime(base_hours = 16),
         downloading = 1,
     conda:
         "env/kingfisher.yml"
@@ -508,6 +508,7 @@ rule download_read:
         "-f fastq.gz "
         "-m ena-ftp prefetch ena-ascp aws-http aws-cp "
         "-t {threads} "
+        "--download_threads {threads} "
         "&> {log} "
         "&& touch {output.done}"
 
