@@ -11,7 +11,7 @@ ELUSIVE_CLUSTERS_COLUMNS={
     "coassembly": str,
     "samples": str,
     "length": int,
-    "total_targets": int,
+    "total_targets": float,
     "total_size": int,
     }
 
@@ -24,7 +24,7 @@ SUMMARY_COLUMNS={
     "coassembly": str,
     "samples": str,
     "length": int,
-    "total_targets": int,
+    "total_targets": float,
     "total_size": int,
     "unmapped_size": int,
     }

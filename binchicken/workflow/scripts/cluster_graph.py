@@ -11,7 +11,7 @@ import logging
 OUTPUT_COLUMNS={
     "samples": str,
     "length": int,
-    "total_targets": int,
+    "total_targets": float,
     "total_size": int,
     "recover_samples": str,
     "coassembly": str,

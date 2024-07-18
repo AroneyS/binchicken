@@ -28,7 +28,7 @@ CAT_CLUSTERS_COLUMNS={
     "samples": pl.List(pl.Utf8),
     "length": int,
     "target_ids": pl.List(pl.UInt32),
-    "total_targets": int,
+    "total_targets": float,
     "total_size": int,
     }
 SAMPLE_TARGETS_COLUMNS={
@@ -40,7 +40,7 @@ CAT_RECOVERY_COLUMNS={
     "samples": pl.List(pl.Utf8),
     "length": int,
     "target_ids": pl.List(pl.UInt32),
-    "total_targets": int,
+    "total_targets": float,
     "total_size": int,
     "recover_candidates": pl.List(pl.Utf8),
     }

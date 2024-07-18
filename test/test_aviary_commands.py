@@ -10,7 +10,7 @@ from binchicken.workflow.scripts.aviary_commands import pipeline
 ELUSIVE_CLUSTERS_COLUMNS={
     "samples": str,
     "length": int,
-    "total_targets": int,
+    "total_targets": float,
     "total_size": int,
     "recover_samples": str,
     "coassembly": str,
