@@ -366,6 +366,8 @@ rule abundance_weighting:
     output:
         weighted = output_dir + "/appraise/weighted.otu_table.tsv"
     threads: 64
+    params:
+        samples = config["abundance_weighted_samples"]
     resources:
         mem_mb=get_mem_mb,
         runtime = get_runtime(base_hours = 24),

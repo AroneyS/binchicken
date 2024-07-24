@@ -1715,6 +1715,45 @@ class Tests(unittest.TestCase):
             observed = pl.read_csv(cluster_path, separator="\t")
             assert_frame_equal(expected, observed, check_dtypes=False, check_row_order=False, atol=1e-5)
 
+    def test_coassemble_weighted_specific_samples(self):
+        with in_tempdir():
+            cmd = (
+                f"binchicken coassemble "
+                f"--abundance-weighted "
+                f"--abundance-weighted-samples sample_1 sample_2 "
+                f"--forward {SAMPLE_READS_FORWARD_PRE} "
+                f"--reverse {SAMPLE_READS_REVERSE_PRE} "
+                f"--sample-singlem {SAMPLE_SINGLEM_WEIGHT} "
+                f"--genomes {GENOMES} "
+                f"--genome-singlem {GENOME_SINGLEM} "
+                f"--singlem-metapackage {METAPACKAGE} "
+                f"--output test "
+                f"--conda-prefix {path_to_conda} "
+            )
+            extern.run(cmd)
+
+            config_path = os.path.join("test", "config.yaml")
+            self.assertTrue(os.path.exists(config_path))
+
+            read_size_path = os.path.join("test", "coassemble", "read_size.csv")
+            self.assertTrue(os.path.exists(read_size_path))
+
+            weights_path = os.path.join("test", "coassemble", "appraise", "weighted.otu_table.tsv")
+            self.assertTrue(os.path.exists(weights_path))
+            expected = pl.DataFrame([
+                    ["S3.7.ribosomal_protein_S7", "ATGACTAGTCATAGCTAGATTTGAGGCAGCAGGAAGCAGCATAGCTACGACACACCCCCC", 0.008064],
+                    ["S3.7.ribosomal_protein_S7", "AGCGTCGAGCGATCGATCGTACGTAGCGGGGATCGTATTTACTATCTACTAACGAGCAAA", 0.806451],
+                    ["S3.7.ribosomal_protein_S7", "AAAAGTCCTGATCGTAGCTAATAATATTATGCGTACGTCAGTACGTACTGACTGACGTAA", 0.479846],
+                    ["S3.7.ribosomal_protein_S7", "TGACTAGCTGGGCTAGCTATATTCTTTTTACGAGCGCGAGGAAAGCGACAGCGGCCAGGC", 0.023992],
+                    ["S3.7.ribosomal_protein_S7", "TACGAGCGGATCG---------------GTTATATATCGAAAGCTCATGCGGCCATATCG", 0.039920],
+                    ["S3.7.ribosomal_protein_S7", "ATGACTAGTCATAGCTAGATTTGAGGCAGCAGGAGTTAGGAAAGCCCCCGGAGTTAGCTA", 0.039920],
+                ],
+                schema = ["gene", "sequence", "weight"],
+                orient="row",
+            )
+            observed = pl.read_csv(weights_path, separator="\t")
+            assert_frame_equal(expected, observed, check_dtypes=False, check_row_order=False, atol=1e-5)
+
     def test_coassemble_weighted_target_taxa(self):
         with in_tempdir():
             cmd = (

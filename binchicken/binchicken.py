@@ -491,6 +491,7 @@ def coassemble(args):
         "max_coassembly_size": args.max_coassembly_size,
         "max_recovery_samples": args.max_recovery_samples,
         "abundance_weighted": args.abundance_weighted,
+        "abundance_weighted_samples": args.abundance_weighted_samples,
         "kmer_precluster": kmer_precluster,
         "precluster_size": args.precluster_size,
         "prodigal_meta": args.prodigal_meta,
@@ -996,6 +997,7 @@ def build(args):
     args.coassemblies = None
     args.singlem_metapackage = "."
     args.abundance_weighted = False
+    args.abundance_weighted_samples_list = None
     args.kmer_precluster = PRECLUSTER_NEVER_MODE
     args.download_limit = 1
 
@@ -1270,6 +1272,7 @@ def main():
         coassemble_clustering.add_argument("--max-coassembly-size", type=int, help=f"Maximum size (Gbp) of coassembly cluster [default: {max_coassembly_size_default}Gbp]", default=max_coassembly_size_default)
         coassemble_clustering.add_argument("--max-recovery-samples", type=int, help="Upper bound for number of related samples to use for differential abundance binning [default: 20]", default=20)
         coassemble_clustering.add_argument("--abundance-weighted", action="store_true", help="Weight sequences by mean sample abundance when ranking clusters [default: False]")
+        coassemble_clustering.add_argument("--abundance-weighted-samples", nargs='+', help="Restrict sequence weighting to these samples. Remaining samples will still be used for coassembly [default: use all samples]", default=[])
         coassemble_clustering.add_argument("--kmer-precluster", help="Run kmer preclustering using unbinned window sequences as kmers. [default: large; perform preclustering when given >1000 samples]",
                                     default=PRECLUSTER_SIZE_DEP_MODE, choices=[PRECLUSTER_NEVER_MODE, PRECLUSTER_SIZE_DEP_MODE, PRECLUSTER_ALWAYS_MODE])
         coassemble_clustering.add_argument("--precluster-size", type=int, help="# of samples within each sample's precluster [default: 5 * max-recovery-samples]")
