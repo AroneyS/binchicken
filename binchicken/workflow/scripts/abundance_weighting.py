@@ -32,7 +32,7 @@ def pipeline(unbinned, binned, samples=None):
 
     total_coverage = (
         pl.concat([binned, unbinned])
-        .group_by("sample")
+        .group_by("sample", "gene")
         .agg(total_coverage = pl.sum("coverage"))
     )
 
@@ -44,9 +44,9 @@ def pipeline(unbinned, binned, samples=None):
 
     weighted = (
         unbinned
-        .join(total_coverage, on="sample")
+        .join(total_coverage, on=["sample", "gene"])
         .with_columns(weight = pl.col("coverage") / pl.col("total_coverage"))
-        .group_by(["gene", "sequence"])
+        .group_by("gene", "sequence")
         .agg(pl.mean("weight"))
     )
 

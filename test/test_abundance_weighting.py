@@ -44,6 +44,28 @@ class Tests(unittest.TestCase):
         observed = pipeline(unbinned, binned)
         self.assertDataFrameEqual(expected, observed)
 
+    def test_abundance_weighting_other_genes(self):
+        unbinned = pl.DataFrame([
+            ["S3.1", "sample_1", "AAA", 9, 10, "Root", ""],
+            ["S3.1", "sample_2", "AAA", 9, 10, "Root", ""],
+            ["S3.2", "sample_1", "AAA", 9, 10, "Root", ""],
+            ["S3.2", "sample_2", "AAA", 9, 10, "Root", ""],
+        ], schema=APPRAISE_COLUMNS)
+        binned = pl.DataFrame([
+            ["S3.1", "sample_1", "AAB", 5, 10, "Root", ""],
+            ["S3.1", "sample_2", "AAB", 5, 10, "Root", ""],
+            ["S3.2", "sample_1", "AAB", 5, 10, "Root", ""],
+            ["S3.2", "sample_2", "AAB", 5, 10, "Root", ""],
+        ], schema=APPRAISE_COLUMNS)
+
+        expected = pl.DataFrame([
+            ["S3.1", "AAA", 0.5],
+            ["S3.2", "AAA", 0.5],
+        ], schema=WEIGHTING_COLUMNS)
+
+        observed = pipeline(unbinned, binned)
+        self.assertDataFrameEqual(expected, observed)
+
     def test_abundance_weighting_no_binned(self):
         unbinned = pl.DataFrame([
             ["S3.1", "sample_1", "AAA", 9, 10, "Root", ""],
