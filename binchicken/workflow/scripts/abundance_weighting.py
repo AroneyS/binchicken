@@ -23,7 +23,7 @@ WEIGHTING_COLUMNS = {
     "weight": float,
 }
 
-def pipeline(unbinned, binned):
+def pipeline(unbinned, binned, samples=None):
     logging.info(f"Polars using {str(pl.thread_pool_size())} threads")
 
     if len(unbinned) == 0:
@@ -32,15 +32,21 @@ def pipeline(unbinned, binned):
 
     total_coverage = (
         pl.concat([binned, unbinned])
-        .group_by("sample")
+        .group_by("sample", "gene")
         .agg(total_coverage = pl.sum("coverage"))
     )
 
+    if samples:
+        total_coverage = (
+            total_coverage
+            .filter(pl.col("sample").is_in(samples))
+        )
+
     weighted = (
         unbinned
-        .join(total_coverage, on="sample")
+        .join(total_coverage, on=["sample", "gene"])
         .with_columns(weight = pl.col("coverage") / pl.col("total_coverage"))
-        .group_by(["gene", "sequence"])
+        .group_by("gene", "sequence")
         .agg(pl.mean("weight"))
     )
 
@@ -60,9 +66,10 @@ if __name__ == "__main__":
     unbinned_path = snakemake.input.unbinned
     binned_path = snakemake.input.binned
     weighted_path = snakemake.output.weighted
+    samples = snakemake.params.samples
 
     unbinned = pl.read_csv(unbinned_path, separator="\t", dtypes=APPRAISE_COLUMNS)
     binned = pl.read_csv(binned_path, separator="\t", dtypes=APPRAISE_COLUMNS)
 
-    weighted = pipeline(unbinned, binned)
+    weighted = pipeline(unbinned, binned, samples)
     weighted.write_csv(weighted_path, separator="\t")
