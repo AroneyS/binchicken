@@ -411,6 +411,9 @@ def coassemble(args):
     if args.exclude_coassemblies_list:
         args.exclude_coassemblies = read_list(args.exclude_coassemblies_list)
 
+    if args.abundance_weighted_samples_list:
+        args.abundance_weighted_samples = read_list(args.abundance_weighted_samples_list)
+
     logging.info("Loading genome info")
     if args.genomes_list:
         args.genomes = read_list(args.genomes_list)
@@ -1273,6 +1276,7 @@ def main():
         coassemble_clustering.add_argument("--max-recovery-samples", type=int, help="Upper bound for number of related samples to use for differential abundance binning [default: 20]", default=20)
         coassemble_clustering.add_argument("--abundance-weighted", action="store_true", help="Weight sequences by mean sample abundance when ranking clusters [default: False]")
         coassemble_clustering.add_argument("--abundance-weighted-samples", nargs='+', help="Restrict sequence weighting to these samples. Remaining samples will still be used for coassembly [default: use all samples]", default=[])
+        coassemble_clustering.add_argument("--abundance-weighted-samples-list", help="Restrict sequence weighting to these samples, newline separated. Remaining samples will still be used for coassembly [default: use all samples]", default=[])
         coassemble_clustering.add_argument("--kmer-precluster", help="Run kmer preclustering using unbinned window sequences as kmers. [default: large; perform preclustering when given >1000 samples]",
                                     default=PRECLUSTER_SIZE_DEP_MODE, choices=[PRECLUSTER_NEVER_MODE, PRECLUSTER_SIZE_DEP_MODE, PRECLUSTER_ALWAYS_MODE])
         coassemble_clustering.add_argument("--precluster-size", type=int, help="# of samples within each sample's precluster [default: 5 * max-recovery-samples]")
@@ -1440,7 +1444,8 @@ def main():
         if not args.singlem_metapackage and not os.environ['SINGLEM_METAPACKAGE_PATH'] and not args.sample_query and not args.sample_query_list:
             raise Exception("SingleM metapackage (--singlem-metapackage or SINGLEM_METAPACKAGE_PATH environment variable, see SingleM data) must be provided when SingleM query otu tables are not provided")
         if (args.sample_singlem and args.sample_singlem_list) or (args.sample_singlem_dir and args.sample_singlem_list) or (args.sample_singlem and args.sample_singlem_dir) or \
-            (args.sample_query and args.sample_query_list) or (args.sample_query_dir and args.sample_query_list) or (args.sample_query and args.sample_query_dir):
+            (args.sample_query and args.sample_query_list) or (args.sample_query_dir and args.sample_query_list) or (args.sample_query and args.sample_query_dir) or \
+            (args.coassembly_samples and args.coassembly_samples_list) or (args.abundance_weighted_samples and args.abundance_weighted_samples_list):
             raise Exception("General, list and directory arguments are mutually exclusive")
         if args.single_assembly:
             if 1 > args.max_recovery_samples:

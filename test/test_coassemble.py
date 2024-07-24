@@ -1134,6 +1134,7 @@ class Tests(unittest.TestCase):
             write_string_to_file(GENOME_TRANSCRIPTS, "genome_transcripts")
             write_string_to_file("sample_1\nsample_2", "coassembly_samples")
             write_string_to_file("sample_1,sample_2", "exclude_coassemblies")
+            write_string_to_file("sample_2\nsample_3", "abundance_samples")
 
             cmd = (
                 f"binchicken coassemble "
@@ -1144,6 +1145,7 @@ class Tests(unittest.TestCase):
                 f"--singlem-metapackage {METAPACKAGE} "
                 f"--coassembly-samples-list coassembly_samples "
                 f"--exclude-coassemblies-list exclude_coassemblies "
+                f"--abundance-weighted-samples-list abundance_samples "
                 f"--assemble-unmapped "
                 f"--assembly-strategy megahit "
                 f"--output test "
@@ -1177,6 +1179,7 @@ class Tests(unittest.TestCase):
             self.assertEqual(config["genomes"], {os.path.splitext(os.path.basename(g))[0]: g for g in GENOMES.split(" ")})
             self.assertEqual(config["coassembly_samples"], ["sample_1", "sample_2"])
             self.assertEqual(config["exclude_coassemblies"], ["sample_1,sample_2"])
+            self.assertEqual(config["abundance_weighted_samples"], ["sample_2", "sample_3"])
             self.assertEqual(config["reads_1"], {os.path.splitext(os.path.splitext(os.path.basename(s))[0])[0]: s for s in SAMPLE_READS_FORWARD.split(" ")})
             self.assertEqual(config["reads_2"], {os.path.splitext(os.path.splitext(os.path.basename(s))[0])[0]: s for s in SAMPLE_READS_REVERSE.split(" ")})
             self.assertEqual(config["assembly_strategy"], "megahit")
