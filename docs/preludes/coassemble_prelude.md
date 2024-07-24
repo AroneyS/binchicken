@@ -33,12 +33,26 @@ Important options:
 - Assembly and recovery running options:
   - Run directly through Aviary (`--run-aviary`)
   - Run Aviary commands manually (see `coassemble/commands` in output)
-  - Run coassemblies with differential-abudance-binning samples with the tool of your choice (see `coassemble/target/elusive_clusters.tsv` in output)
+  - Run coassemblies with differential-abundance-binning samples with the tool of your choice (see `coassemble/target/elusive_clusters.tsv` in output)
 - The taxa of the considered sequences can be filtered to target a specific taxon (e.g. `--taxa-of-interest "p__Planctomycetota"`).
 - Differential-abundance binning samples for single-assembly can also be found (`--single-assembly`)
 
 Paired end reads of form reads_1.1.fq, reads_1_1.fq and reads_1_R1.fq, where reads_1 is the sample name are automatically detected and matched to their basename.
 Most intermediate files can be provided to skip intermediate steps (e.g. SingleM otu tables, read sizes or genome transcripts; see `binchicken coassemble --full-help`).
+
+## Abundance weighting
+
+By default, coassemblies are ranked by the number of feasibly-recovered target sequences they contain.
+Instead, `--abundance-weighting` can be used to weight target sequences by their average abundance across samples.
+This prioritises recovery of the most abundant lineages.
+The samples for which abundances are calculated can be restricted using `--abundance-weighting-samples`.
+
+## Kmer preclustering
+
+Clustering groups of more than 1000 samples quickly leads to memory issues due to combinatorics.
+Kmer preclustering can be used (default if >1000 samples are provided, or use `--kmer-precluster always`) to reduce the number of combinations that are considered.
+This greatly reduces memory usage and allows scaling up to at least 250k samples.
+Kmer preclustering can be disabled with `--kmer-precluster never`.
 
 ## Cluster submission
 
