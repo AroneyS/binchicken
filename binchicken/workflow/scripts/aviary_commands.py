@@ -56,7 +56,7 @@ def pipeline(coassemblies, reads_1, reads_2, output_dir, assemble_threads, assem
                 pl.lit("/coassemble/"),
                 pl.col("coassembly"),
                 pl.lit("/recover"),
-                pl.when(pl.lit(fast)).then(pl.lit(" --workflow recover_mags_no_singlem --skip-binners maxbin concoct rosella --skip-abundances --refinery-max-iterations 0")).otherwise(pl.lit("")),
+                pl.when(pl.lit(fast)).then(pl.lit(" --binning-only --refinery-max-iterations 0")).otherwise(pl.lit("")),
                 pl.lit(" -n "),
                 pl.lit(recover_threads),
                 pl.lit(" -t "),
