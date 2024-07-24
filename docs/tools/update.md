@@ -88,6 +88,12 @@ binchicken update --coassemble-output coassemble_dir --sra \
   Download reads from SRA (read argument still required). Also sets
     \--run-qc.
 
+<!-- -->
+
+**\--download-limit** *DOWNLOAD_LIMIT*
+
+  Parallel download limit [default: 3]
+
 # COASSEMBLY OPTIONS
 
 **\--coassemble-output** *COASSEMBLE_OUTPUT*
