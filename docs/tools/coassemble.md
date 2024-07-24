@@ -47,9 +47,9 @@ Most intermediate files can be provided to skip intermediate steps (e.g. SingleM
 ## Abundance weighting
 
 By default, coassemblies are ranked by the number of feasibly-recovered target sequences they contain.
-Instead, `--abundance-weighting` can be used to weight target sequences by their average abundance across samples.
+Instead, `--abundance-weighted` can be used to weight target sequences by their average abundance across samples.
 This prioritises recovery of the most abundant lineages.
-The samples for which abundances are calculated can be restricted using `--abundance-weighting-samples`.
+The samples for which abundances are calculated can be restricted using `--abundance-weighted-samples`.
 
 ## Kmer preclustering
 
