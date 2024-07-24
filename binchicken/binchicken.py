@@ -321,6 +321,7 @@ def set_standard_args(args):
     args.max_recovery_samples = 1
     args.abundance_weighted = False
     args.abundance_weighted_samples_list = None
+    args.abundance_weighted_samples = []
     args.kmer_precluster = PRECLUSTER_NEVER_MODE
     args.precluster_size = 100
     args.prodigal_meta = False
