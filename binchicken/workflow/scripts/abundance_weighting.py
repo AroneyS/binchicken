@@ -39,11 +39,21 @@ def pipeline(unbinned, binned, samples=None):
     if samples:
         total_coverage = (
             total_coverage
+            .with_columns(
+                pl.when(pl.col("sample").is_in(samples))
+                .then(pl.col("sample"))
+                .otherwise(pl.col("sample").str.replace(r"(_|\.)R?1$", ""))
+                )
             .filter(pl.col("sample").is_in(samples))
         )
 
     weighted = (
         unbinned
+        .with_columns(
+            pl.when(pl.col("sample").is_in(samples))
+            .then(pl.col("sample"))
+            .otherwise(pl.col("sample").str.replace(r"(_|\.)R?1$", ""))
+            )
         .join(total_coverage, on=["sample", "gene"])
         .with_columns(weight = pl.col("coverage") / pl.col("total_coverage"))
         .group_by("gene", "sequence")
