@@ -137,6 +137,10 @@ def pipeline(
         )
 
         if weightings is not None:
+            if weightings.height == 0:
+                logging.error("No target weightings found")
+                return pl.DataFrame(schema=OUTPUT_COLUMNS)
+
             weightings = (
                 weightings
                 .lazy()
