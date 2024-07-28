@@ -26,6 +26,7 @@ MEGAHIT_ASSEMBLY = "megahit"
 PRECLUSTER_NEVER_MODE = "never"
 PRECLUSTER_SIZE_DEP_MODE = "large"
 PRECLUSTER_ALWAYS_MODE = "always"
+SUFFIX_RE = r"(_|\.)R?1$"
 
 def build_reads_list(forward, reverse):
     if reverse:

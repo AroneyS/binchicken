@@ -6,6 +6,7 @@
 import os
 import polars as pl
 import logging
+from binchicken.binchicken import SUFFIX_RE
 
 APPRAISE_COLUMNS = {
     "gene": str,
@@ -42,7 +43,7 @@ def pipeline(unbinned, binned, samples=None):
             .with_columns(
                 pl.when(pl.col("sample").is_in(samples))
                 .then(pl.col("sample"))
-                .otherwise(pl.col("sample").str.replace(r"(_|\.)R?1$", ""))
+                .otherwise(pl.col("sample").str.replace(SUFFIX_RE, ""))
                 )
             .filter(pl.col("sample").is_in(samples))
         )
@@ -52,7 +53,7 @@ def pipeline(unbinned, binned, samples=None):
         .with_columns(
             pl.when(pl.col("sample").is_in(samples))
             .then(pl.col("sample"))
-            .otherwise(pl.col("sample").str.replace(r"(_|\.)R?1$", ""))
+            .otherwise(pl.col("sample").str.replace(SUFFIX_RE, ""))
             )
         .join(total_coverage, on=["sample", "gene"])
         .with_columns(weight = pl.col("coverage") / pl.col("total_coverage"))
