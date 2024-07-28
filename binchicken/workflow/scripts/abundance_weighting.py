@@ -62,7 +62,6 @@ def pipeline(unbinned, binned, samples=None):
         .select("gene", "sequence")
         .unique()
     )
-    # import pdb; pdb.set_trace()
 
     weighted = (
         total_coverage
