@@ -68,8 +68,8 @@ if __name__ == "__main__":
     weighted_path = snakemake.output.weighted
     samples = snakemake.params.samples
 
-    unbinned = pl.read_csv(unbinned_path, separator="\t", dtypes=APPRAISE_COLUMNS)
-    binned = pl.read_csv(binned_path, separator="\t", dtypes=APPRAISE_COLUMNS)
+    unbinned = pl.read_csv(unbinned_path, separator="\t", schema_overrides=APPRAISE_COLUMNS)
+    binned = pl.read_csv(binned_path, separator="\t", schema_overrides=APPRAISE_COLUMNS)
 
     weighted = pipeline(unbinned, binned, samples)
     weighted.write_csv(weighted_path, separator="\t")

@@ -61,8 +61,8 @@ if __name__ == "__main__":
     weighting_path = snakemake.input.weighting
     targets_weighted_path = snakemake.output.targets_weighted
 
-    targets = pl.read_csv(targets_path, separator="\t", dtypes=TARGET_COLUMNS)
-    weighting = pl.read_csv(weighting_path, separator="\t", dtypes=WEIGHTING_COLUMNS)
+    targets = pl.read_csv(targets_path, separator="\t", schema_overrides=TARGET_COLUMNS)
+    weighting = pl.read_csv(weighting_path, separator="\t", schema_overrides=WEIGHTING_COLUMNS)
 
     targets_weighted = pipeline(targets, weighting)
     targets_weighted.write_csv(targets_weighted_path, separator="\t")

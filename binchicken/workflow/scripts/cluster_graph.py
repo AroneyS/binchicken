@@ -343,7 +343,7 @@ if __name__ == "__main__":
     read_size = pl.read_csv(read_size_path, has_header=False, new_columns=["sample", "read_size"])
 
     if weightings_path:
-        weightings = pl.read_csv(weightings_path, separator="\t", dtypes=TARGET_WEIGHTING_COLUMNS)
+        weightings = pl.read_csv(weightings_path, separator="\t", schema_overrides=TARGET_WEIGHTING_COLUMNS)
     else:
         weightings = None
 
