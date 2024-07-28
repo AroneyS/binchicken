@@ -57,9 +57,19 @@ def pipeline(unbinned, binned, samples=None):
                 )
         )
 
-    weighted = (
+    gene_sequences = (
         unbinned
-        .join(total_coverage, on=["sample", "gene"])
+        .select("gene", "sequence")
+        .unique()
+    )
+    # import pdb; pdb.set_trace()
+
+    weighted = (
+        total_coverage
+        .join(gene_sequences, on=["gene"])
+        .join(unbinned, on=["sample", "gene", "sequence"], how="full")
+        .filter(pl.col("sample").is_not_null())
+        .with_columns(pl.col("coverage").fill_null(0))
         .with_columns(weight = pl.col("coverage") / pl.col("total_coverage"))
         .group_by("gene", "sequence")
         .agg(pl.mean("weight"))
