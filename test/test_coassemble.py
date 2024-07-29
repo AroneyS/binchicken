@@ -1750,8 +1750,6 @@ class Tests(unittest.TestCase):
                     ["S3.7.ribosomal_protein_S7", "TGACTAGCTGGGCTAGCTATATTCTTTTTACGAGCGCGAGGAAAGCGACAGCGGCCAGGC", 0.023992],
                     ["S3.7.ribosomal_protein_S7", "TACGAGCGGATCG---------------GTTATATATCGAAAGCTCATGCGGCCATATCG", 0.019960],
                     ["S3.7.ribosomal_protein_S7", "ATGACTAGTCATAGCTAGATTTGAGGCAGCAGGAGTTAGGAAAGCCCCCGGAGTTAGCTA", 0.019960],
-                    ["S3.7.ribosomal_protein_S7", "ATCGACTGACTTGATCGATCTTTGACGACGAGAGAGAGAGCGACGCGCCGAGAGGTTTCA", 0.0],
-                    ["S3.7.ribosomal_protein_S7", "TACGAGCGGATCGTGCACGTAGTCAGTCGTTATATATCGAAAGCTCATGCGGCCATATCG", 0.0],
                 ],
                 schema = ["gene", "sequence", "weight"],
                 orient="row",
