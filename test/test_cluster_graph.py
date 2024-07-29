@@ -13,7 +13,10 @@ ELUSIVE_EDGES_COLUMNS={
     "samples": str,
     "target_ids": str,
     }
-READ_SIZE_COLUMNS=["sample", "read_size"]
+READ_SIZE_COLUMNS={
+    "sample": str,
+    "read_size": int,
+}
 ELUSIVE_CLUSTERS_COLUMNS={
     "samples": str,
     "length": int,
@@ -61,16 +64,16 @@ class Tests(unittest.TestCase):
         elusive_edges = pl.DataFrame([
             ["match", 2, "sample_2,sample_1", "0,1,2"],
             ["match", 2, "sample_1,sample_3", "1,2"],
-        ], schema=ELUSIVE_EDGES_COLUMNS)
+        ], orient="row", schema=ELUSIVE_EDGES_COLUMNS)
         read_size = pl.DataFrame([
             ["sample_1", 1000],
             ["sample_2", 2000],
             ["sample_3", 1000],
-        ], schema=READ_SIZE_COLUMNS)
+        ], orient="row", schema=READ_SIZE_COLUMNS)
 
         expected = pl.DataFrame([
             ["sample_1,sample_2", 2, 3, 3000, "sample_1,sample_2,sample_3", "coassembly_0"],
-        ], schema=ELUSIVE_CLUSTERS_COLUMNS)
+        ], orient="row", schema=ELUSIVE_CLUSTERS_COLUMNS)
         observed = pipeline(elusive_edges, read_size)
         self.assertDataFrameEqual(expected, observed)
 
@@ -82,7 +85,7 @@ class Tests(unittest.TestCase):
             ["match", 2, "4,5", "4,5,6,7"],
             ["match", 2, "4,6", "4,5,6,7,8"],
             ["match", 2, "5,6", "4,5,6,7,8,9"],
-        ], schema = ELUSIVE_EDGES_COLUMNS)
+        ], orient="row", schema=ELUSIVE_EDGES_COLUMNS)
         read_size = pl.DataFrame([
             ["1", 1000],
             ["2", 1000],
@@ -90,12 +93,12 @@ class Tests(unittest.TestCase):
             ["4", 1000],
             ["5", 1000],
             ["6", 1000],
-        ], schema=READ_SIZE_COLUMNS)
+        ], orient="row", schema=READ_SIZE_COLUMNS)
 
         expected = pl.DataFrame([
             ["5,6", 2, 6, 2000, "4,5,6", "coassembly_0"],
             ["2,3", 2, 3, 2000, "1,2,3", "coassembly_1"],
-        ], schema=ELUSIVE_CLUSTERS_COLUMNS)
+        ], orient="row", schema=ELUSIVE_CLUSTERS_COLUMNS)
         observed = pipeline(elusive_edges, read_size)
         self.assertDataFrameEqual(expected, observed)
 
@@ -108,14 +111,14 @@ class Tests(unittest.TestCase):
             ["match", 2, "2,4", "2,4"],
             ["match", 2, "3,4", "3,4"],
             ["match", 2, "4,5", "5"],
-        ], schema = ELUSIVE_EDGES_COLUMNS)
+        ], orient="row", schema=ELUSIVE_EDGES_COLUMNS)
         read_size = pl.DataFrame([
             ["1", 1000],
             ["2", 2000],
             ["3", 3000],
             ["4", 4000],
             ["5", 5000],
-        ], schema=READ_SIZE_COLUMNS)
+        ], orient="row", schema=READ_SIZE_COLUMNS)
 
         expected = pl.DataFrame([
             ["4", 1, 5, 4000, "1,2,3,4", "coassembly_0"],
@@ -123,7 +126,7 @@ class Tests(unittest.TestCase):
             ["2", 1, 4, 2000, "1,2,3,4", "coassembly_2"],
             ["3", 1, 4, 3000, "1,2,3,4", "coassembly_3"],
             ["5", 1, 1, 5000, "4,5", "coassembly_4"],
-        ], schema=ELUSIVE_CLUSTERS_COLUMNS)
+        ], orient="row", schema=ELUSIVE_CLUSTERS_COLUMNS)
         observed = pipeline(
             elusive_edges,
             read_size,
@@ -138,18 +141,18 @@ class Tests(unittest.TestCase):
             ["match", 2, "1,2", "1,2,3,4"],
             ["match", 2, "3,1", "5"],
             ["match", 2, "3,2", "6,7"],
-        ], schema = ELUSIVE_EDGES_COLUMNS)
+        ], orient="row", schema=ELUSIVE_EDGES_COLUMNS)
         read_size = pl.DataFrame([
             ["1", 1000],
             ["2", 1000],
             ["3", 1000],
-        ], schema=READ_SIZE_COLUMNS)
+        ], orient="row", schema=READ_SIZE_COLUMNS)
 
         expected = pl.DataFrame([
             ["2", 1, 6, 1000, "1,2", "coassembly_0"],
             ["1", 1, 5, 1000, "1,2", "coassembly_1"],
             ["3", 1, 3, 1000, "2,3", "coassembly_2"],
-        ], schema=ELUSIVE_CLUSTERS_COLUMNS)
+        ], orient="row", schema=ELUSIVE_CLUSTERS_COLUMNS)
         observed = pipeline(
             elusive_edges,
             read_size,
@@ -170,7 +173,7 @@ class Tests(unittest.TestCase):
             ["match", 2, "4,5", "5"],
             ["match", 2, "4,6", "5"],
             ["match", 2, "5,6", "5,6,7"],
-        ], schema = ELUSIVE_EDGES_COLUMNS)
+        ], orient="row", schema=ELUSIVE_EDGES_COLUMNS)
         read_size = pl.DataFrame([
             ["1", 1000],
             ["2", 2000],
@@ -178,13 +181,13 @@ class Tests(unittest.TestCase):
             ["4", 4000],
             ["5", 5000],
             ["6", 6000],
-        ], schema=READ_SIZE_COLUMNS)
+        ], orient="row", schema=READ_SIZE_COLUMNS)
 
         expected = pl.DataFrame([
             ["1,2", 2, 3, 3000, "1,2,3,4", "coassembly_0"],
             ["3,4", 2, 3, 7000, "1,2,3,4", "coassembly_1"],
             ["5,6", 2, 3, 11000, "4,5,6", "coassembly_2"],
-        ], schema=ELUSIVE_CLUSTERS_COLUMNS)
+        ], orient="row", schema=ELUSIVE_CLUSTERS_COLUMNS)
         observed = pipeline(
             elusive_edges,
             read_size,
@@ -202,19 +205,19 @@ class Tests(unittest.TestCase):
             ["match", 2, "5,1", "4"],
             ["match", 2, "5,3", "6"],
             ["match", 2, "4,5", "4,5,6"],
-        ], schema = ELUSIVE_EDGES_COLUMNS)
+        ], orient="row", schema=ELUSIVE_EDGES_COLUMNS)
         read_size = pl.DataFrame([
             ["1", 1000],
             ["2", 2000],
             ["3", 3000],
             ["4", 4000],
             ["5", 5000],
-        ], schema=READ_SIZE_COLUMNS)
+        ], orient="row", schema=READ_SIZE_COLUMNS)
 
         expected = pl.DataFrame([
             ["1,2", 2, 3, 3000, "1,2,3", "coassembly_0"],
             ["4,5", 2, 3, 9000, "3,4,5", "coassembly_1"],
-        ], schema=ELUSIVE_CLUSTERS_COLUMNS)
+        ], orient="row", schema=ELUSIVE_CLUSTERS_COLUMNS)
         observed = pipeline(
             elusive_edges,
             read_size,
@@ -232,19 +235,19 @@ class Tests(unittest.TestCase):
             ["match", 2, "5,1", "4"],
             ["match", 2, "5,3", "8"],
             ["match", 2, "4,5", "4,5,6"],
-        ], schema = ELUSIVE_EDGES_COLUMNS)
+        ], orient="row", schema=ELUSIVE_EDGES_COLUMNS)
         read_size = pl.DataFrame([
             ["1", 1000],
             ["2", 2000],
             ["3", 3000],
             ["4", 4000],
             ["5", 5000],
-        ], schema=READ_SIZE_COLUMNS)
+        ], orient="row", schema=READ_SIZE_COLUMNS)
 
         expected = pl.DataFrame([
             ["1,2", 2, 3, 3000, "1,2,3", "coassembly_0"],
             ["4,5", 2, 3, 9000, "1,4,5", "coassembly_1"],
-        ], schema=ELUSIVE_CLUSTERS_COLUMNS)
+        ], orient="row", schema=ELUSIVE_CLUSTERS_COLUMNS)
         observed = pipeline(
             elusive_edges,
             read_size,
@@ -255,7 +258,7 @@ class Tests(unittest.TestCase):
     def test_cluster_two_samples_among_many(self):
         elusive_edges = pl.DataFrame([
             ["match", 2, "1,2", "9,10"],
-        ], schema = ELUSIVE_EDGES_COLUMNS)
+        ], orient="row", schema=ELUSIVE_EDGES_COLUMNS)
         read_size = pl.DataFrame([
             ["1", 1000],
             ["2", 1000],
@@ -263,17 +266,17 @@ class Tests(unittest.TestCase):
             ["4", 1000],
             ["5", 1000],
             ["6", 1000],
-        ], schema=READ_SIZE_COLUMNS)
+        ], orient="row", schema=READ_SIZE_COLUMNS)
 
         expected = pl.DataFrame([
             ["1,2", 2, 2, 2000, "1,2", "coassembly_0"],
-        ], schema=ELUSIVE_CLUSTERS_COLUMNS)
+        ], orient="row", schema=ELUSIVE_CLUSTERS_COLUMNS)
         observed = pipeline(elusive_edges, read_size)
         self.assertDataFrameEqual(expected, observed)
 
     def test_cluster_no_edges(self):
         elusive_edges = pl.DataFrame([
-        ], schema = ELUSIVE_EDGES_COLUMNS)
+        ], orient="row", schema=ELUSIVE_EDGES_COLUMNS)
         read_size = pl.DataFrame([
             ["1", 1000],
             ["2", 1000],
@@ -281,24 +284,24 @@ class Tests(unittest.TestCase):
             ["4", 1000],
             ["5", 1000],
             ["6", 1000],
-        ], schema=READ_SIZE_COLUMNS)
+        ], orient="row", schema=READ_SIZE_COLUMNS)
 
         expected = pl.DataFrame([
-        ], schema=ELUSIVE_CLUSTERS_COLUMNS)
+        ], orient="row", schema=ELUSIVE_CLUSTERS_COLUMNS)
         observed = pipeline(elusive_edges, read_size)
         self.assertDataFrameEqual(expected, observed)
 
     def test_cluster_only_large_clusters(self):
         elusive_edges = pl.DataFrame([
             ["match", 2, "1,2", "9,10"],
-        ], schema = ELUSIVE_EDGES_COLUMNS)
+        ], orient="row", schema=ELUSIVE_EDGES_COLUMNS)
         read_size = pl.DataFrame([
             ["1", 10000],
             ["2", 10000],
-        ], schema=READ_SIZE_COLUMNS)
+        ], orient="row", schema=READ_SIZE_COLUMNS)
 
         expected = pl.DataFrame([
-        ], schema=ELUSIVE_CLUSTERS_COLUMNS)
+        ], orient="row", schema=ELUSIVE_CLUSTERS_COLUMNS)
         observed = pipeline(elusive_edges, read_size, MAX_COASSEMBLY_SIZE=2000)
         self.assertDataFrameEqual(expected, observed)
 
@@ -307,7 +310,7 @@ class Tests(unittest.TestCase):
             ["match", 2, "3,4", "1,4"],
             ["match", 3, "1,2,3", "1"],
             ["match", 3, "4,5,6", "4,5,6"],
-        ], schema = ELUSIVE_EDGES_COLUMNS)
+        ], orient="row", schema=ELUSIVE_EDGES_COLUMNS)
         read_size = pl.DataFrame([
             ["1", 1000],
             ["2", 1000],
@@ -315,12 +318,12 @@ class Tests(unittest.TestCase):
             ["4", 1000],
             ["5", 1000],
             ["6", 1000],
-        ], schema=READ_SIZE_COLUMNS)
+        ], orient="row", schema=READ_SIZE_COLUMNS)
 
         expected = pl.DataFrame([
             ["4,5,6", 3, 3, 3000, "3,4,5,6", "coassembly_0"],
             ["1,2,3", 3, 1, 3000, "1,2,3,4", "coassembly_1"],
-        ], schema=ELUSIVE_CLUSTERS_COLUMNS)
+        ], orient="row", schema=ELUSIVE_CLUSTERS_COLUMNS)
         observed = pipeline(
             elusive_edges,
             read_size,
@@ -336,7 +339,7 @@ class Tests(unittest.TestCase):
             ["match", 3, "1,2,3", "1,2,3,4"],
             ["match", 3, "2,3,4", "1,4"],
             ["match", 3, "4,5,6", "4,5,6"],
-        ], schema = ELUSIVE_EDGES_COLUMNS)
+        ], orient="row", schema=ELUSIVE_EDGES_COLUMNS)
         read_size = pl.DataFrame([
             ["1", 1000],
             ["2", 1000],
@@ -344,12 +347,12 @@ class Tests(unittest.TestCase):
             ["4", 1000],
             ["5", 1000],
             ["6", 1000],
-        ], schema=READ_SIZE_COLUMNS)
+        ], orient="row", schema=READ_SIZE_COLUMNS)
 
         expected = pl.DataFrame([
             ["1,2,3", 3, 4, 3000, "1,2,3,4", "coassembly_0"],
             ["4,5,6", 3, 3, 3000, "3,4,5,6", "coassembly_1"],
-        ], schema=ELUSIVE_CLUSTERS_COLUMNS)
+        ], orient="row", schema=ELUSIVE_CLUSTERS_COLUMNS)
         observed = pipeline(
             elusive_edges,
             read_size,
@@ -378,7 +381,7 @@ class Tests(unittest.TestCase):
             ["match", 2, "5,6", "10,11,12"],
             ["pool", 3, "1,2,3", "1,3"],
             ["pool", 3, "4,5,6", "6"],
-        ], schema = ELUSIVE_EDGES_COLUMNS)
+        ], orient="row", schema=ELUSIVE_EDGES_COLUMNS)
         read_size = pl.DataFrame([
             ["1", 1000],
             ["2", 2000],
@@ -386,12 +389,12 @@ class Tests(unittest.TestCase):
             ["4", 4000],
             ["5", 5000],
             ["6", 6000],
-        ], schema=READ_SIZE_COLUMNS)
+        ], orient="row", schema=READ_SIZE_COLUMNS)
 
         expected = pl.DataFrame([
             ["1,2,3", 3, 2, 6000, "1,2,3", "coassembly_0"],
             ["4,5,6", 3, 1, 15000, "4,5,6", "coassembly_1"],
-        ], schema=ELUSIVE_CLUSTERS_COLUMNS)
+        ], orient="row", schema=ELUSIVE_CLUSTERS_COLUMNS)
         observed = pipeline(
             elusive_edges,
             read_size,
@@ -413,7 +416,7 @@ class Tests(unittest.TestCase):
             ["match", 2, "5,6", "10,11,12"],
             ["pool", 3, "1,2,3", "1,3"],
             ["pool", 3, "4,5,6", "6"],
-        ], schema = ELUSIVE_EDGES_COLUMNS)
+        ], orient="row", schema=ELUSIVE_EDGES_COLUMNS)
         read_size = pl.DataFrame([
             ["1", 1000],
             ["2", 2000],
@@ -421,11 +424,11 @@ class Tests(unittest.TestCase):
             ["4", 4000],
             ["5", 5000],
             ["6", 6000],
-        ], schema=READ_SIZE_COLUMNS)
+        ], orient="row", schema=READ_SIZE_COLUMNS)
 
         expected = pl.DataFrame([
             ["1,2,3", 3, 2, 6000, "1,2,3", "coassembly_0"],
-        ], schema=ELUSIVE_CLUSTERS_COLUMNS)
+        ], orient="row", schema=ELUSIVE_CLUSTERS_COLUMNS)
         observed = pipeline(
             elusive_edges,
             read_size,
@@ -440,7 +443,7 @@ class Tests(unittest.TestCase):
         elusive_edges = pl.DataFrame([
             ["pool", 3, "1,2,3", "1,3"],
             ["pool", 3, "1,2,3,4,5,6", "2"],
-        ], schema = ELUSIVE_EDGES_COLUMNS)
+        ], orient="row", schema=ELUSIVE_EDGES_COLUMNS)
         read_size = pl.DataFrame([
             ["1", 1000],
             ["2", 2000],
@@ -448,11 +451,11 @@ class Tests(unittest.TestCase):
             ["4", 4000],
             ["5", 5000],
             ["6", 6000],
-        ], schema=READ_SIZE_COLUMNS)
+        ], orient="row", schema=READ_SIZE_COLUMNS)
 
         expected = pl.DataFrame([
             ["1,2,3", 3, 3, 6000, "1,2,3,4,5,6", "coassembly_0"],
-        ], schema=ELUSIVE_CLUSTERS_COLUMNS)
+        ], orient="row", schema=ELUSIVE_CLUSTERS_COLUMNS)
         observed = pipeline(
             elusive_edges,
             read_size,
@@ -503,7 +506,7 @@ class Tests(unittest.TestCase):
             ["pool", 4, "2,3,4,5", "1"],
             ["pool", 4, "1,2,3,4", "0,4"],
             ["pool", 4, "5,6,7,8", "8"],
-        ], schema = ELUSIVE_EDGES_COLUMNS)
+        ], orient="row", schema=ELUSIVE_EDGES_COLUMNS)
         read_size = pl.DataFrame([
             ["1", 1000],
             ["2", 2000],
@@ -513,7 +516,7 @@ class Tests(unittest.TestCase):
             ["6", 6000],
             ["7", 7000],
             ["8", 8000],
-        ], schema=READ_SIZE_COLUMNS)
+        ], orient="row", schema=READ_SIZE_COLUMNS)
 
         expected = pl.DataFrame([
             ["1,4", 2, 4, 5000, "1,2,3,4", "coassembly_0"],
@@ -524,7 +527,7 @@ class Tests(unittest.TestCase):
             ["6,7", 2, 2, 13000, "5,6,7,8", "coassembly_5"],
             ["5,6,7", 3, 1, 18000, "5,6,7,8", "coassembly_6"],
             ["5,6,7,8", 4, 1, 26000, "5,6,7,8", "coassembly_7"],
-        ], schema=ELUSIVE_CLUSTERS_COLUMNS)
+        ], orient="row", schema=ELUSIVE_CLUSTERS_COLUMNS)
         observed = pipeline(
             elusive_edges,
             read_size,
@@ -542,7 +545,7 @@ class Tests(unittest.TestCase):
             ["match", 2, "4,5", "4,5,6,7"],
             ["match", 2, "4,6", "4,5,6,7,8"],
             ["match", 2, "5,6", "4,5,6,7,8,9"],
-        ], schema = ELUSIVE_EDGES_COLUMNS)
+        ], orient="row", schema=ELUSIVE_EDGES_COLUMNS)
         read_size = pl.DataFrame([
             ["1", 1000],
             ["2", 1000],
@@ -550,12 +553,12 @@ class Tests(unittest.TestCase):
             ["4", 1000],
             ["5", 1000],
             ["6", 1000],
-        ], schema=READ_SIZE_COLUMNS)
+        ], orient="row", schema=READ_SIZE_COLUMNS)
 
         expected = pl.DataFrame([
             ["4,6", 2, 5, 2000, "4,5,6", "coassembly_0"],
             ["1,3", 2, 2, 2000, "1,2,3", "coassembly_1"],
-        ], schema=ELUSIVE_CLUSTERS_COLUMNS)
+        ], orient="row", schema=ELUSIVE_CLUSTERS_COLUMNS)
         observed = pipeline(elusive_edges, read_size, EXCLUDE_COASSEMBLIES=["2,3", "5,6"])
         self.assertDataFrameEqual(expected, observed)
 
@@ -570,7 +573,7 @@ class Tests(unittest.TestCase):
             ["match", 2, "4,5", "5"],
             ["match", 2, "4,6", "5"],
             ["match", 2, "5,6", "5,6,7"],
-        ], schema = ELUSIVE_EDGES_COLUMNS)
+        ], orient="row", schema=ELUSIVE_EDGES_COLUMNS)
         read_size = pl.DataFrame([
             ["1", 1000],
             ["2", 2000],
@@ -578,12 +581,12 @@ class Tests(unittest.TestCase):
             ["4", 4000],
             ["5", 5000],
             ["6", 6000],
-        ], schema=READ_SIZE_COLUMNS)
+        ], orient="row", schema=READ_SIZE_COLUMNS)
 
         expected = pl.DataFrame([
             ["1,2", 2, 3, 3000, "1,2,3,4", "coassembly_0"],
             ["4,5", 2, 1, 9000, "4,5,6", "coassembly_1"],
-        ], schema=ELUSIVE_CLUSTERS_COLUMNS)
+        ], orient="row", schema=ELUSIVE_CLUSTERS_COLUMNS)
         observed = pipeline(
             elusive_edges,
             read_size,
@@ -598,7 +601,7 @@ class Tests(unittest.TestCase):
             ["match", 2, "1,3", "3"],
             ["match", 2, "2,3", "3"],
             ["match", 2, "4,5", "1"],
-        ], schema = ELUSIVE_EDGES_COLUMNS)
+        ], orient="row", schema=ELUSIVE_EDGES_COLUMNS)
         read_size = pl.DataFrame([
             ["1", 1000],
             ["2", 2000],
@@ -606,11 +609,11 @@ class Tests(unittest.TestCase):
             ["4", 4000],
             ["5", 5000],
             ["6", 6000],
-        ], schema=READ_SIZE_COLUMNS)
+        ], orient="row", schema=READ_SIZE_COLUMNS)
 
         expected = pl.DataFrame([
             ["1,2", 2, 2, 3000, "1,2,4,5", "coassembly_0"],
-        ], schema=ELUSIVE_CLUSTERS_COLUMNS)
+        ], orient="row", schema=ELUSIVE_CLUSTERS_COLUMNS)
         observed = pipeline(
             elusive_edges,
             read_size,
@@ -624,17 +627,17 @@ class Tests(unittest.TestCase):
             ["match", 2, "1,2", "1,2,3,4"],
             ["match", 2, "3,1", "5"],
             ["match", 2, "3,2", "6,7"],
-        ], schema = ELUSIVE_EDGES_COLUMNS)
+        ], orient="row", schema=ELUSIVE_EDGES_COLUMNS)
         read_size = pl.DataFrame([
             ["1", 1000],
             ["2", 1000],
             ["3", 1000],
-        ], schema=READ_SIZE_COLUMNS)
+        ], orient="row", schema=READ_SIZE_COLUMNS)
 
         expected = pl.DataFrame([
             ["2", 1, 6, 1000, "1,2,3", "coassembly_0"],
             ["1", 1, 5, 1000, "1,2,3", "coassembly_1"],
-        ], schema=ELUSIVE_CLUSTERS_COLUMNS)
+        ], orient="row", schema=ELUSIVE_CLUSTERS_COLUMNS)
         observed = pipeline(
             elusive_edges,
             read_size,
@@ -650,7 +653,7 @@ class Tests(unittest.TestCase):
             ["pool", 3, "1,2,3,4,5,6", "1,3"],
             ["pool", 3, "1,2,3,4", "4"],
             ["pool", 3, "1,2,3", "6"],
-        ], schema = ELUSIVE_EDGES_COLUMNS)
+        ], orient="row", schema=ELUSIVE_EDGES_COLUMNS)
         read_size = pl.DataFrame([
             ["1", 1000],
             ["2", 2000],
@@ -658,11 +661,11 @@ class Tests(unittest.TestCase):
             ["4", 4000],
             ["5", 5000],
             ["6", 6000],
-        ], schema=READ_SIZE_COLUMNS)
+        ], orient="row", schema=READ_SIZE_COLUMNS)
 
         expected = pl.DataFrame([
             ["1,2,3", 3, 4, 6000, "1,2,3,4", "coassembly_0"],
-        ], schema=ELUSIVE_CLUSTERS_COLUMNS)
+        ], orient="row", schema=ELUSIVE_CLUSTERS_COLUMNS)
         observed = pipeline(
             elusive_edges,
             read_size,
@@ -677,22 +680,22 @@ class Tests(unittest.TestCase):
         elusive_edges = pl.DataFrame([
             ["match", 2, "sample_2,sample_1", "0,1,2"],
             ["match", 2, "sample_1,sample_3", "1,3"],
-        ], schema=ELUSIVE_EDGES_COLUMNS)
+        ], orient="row", schema=ELUSIVE_EDGES_COLUMNS)
         read_size = pl.DataFrame([
             ["sample_1", 1000],
             ["sample_2", 2000],
             ["sample_3", 1000],
-        ], schema=READ_SIZE_COLUMNS)
+        ], orient="row", schema=READ_SIZE_COLUMNS)
         weightings = pl.DataFrame([
             ["0", 0.01],
             ["1", 0.01],
             ["2", 0.01],
             ["3", 0.5],
-        ], schema=TARGET_WEIGHTING_COLUMNS)
+        ], orient="row", schema=TARGET_WEIGHTING_COLUMNS)
 
         expected = pl.DataFrame([
             ["sample_1,sample_3", 2, 0.51, 2000, "sample_1,sample_2,sample_3", "coassembly_0"],
-        ], schema=ELUSIVE_CLUSTERS_COLUMNS)
+        ], orient="row", schema=ELUSIVE_CLUSTERS_COLUMNS)
         observed = pipeline(elusive_edges, read_size, weightings)
         self.assertDataFrameEqual(expected, observed)
 
@@ -700,17 +703,17 @@ class Tests(unittest.TestCase):
         elusive_edges = pl.DataFrame([
             ["match", 2, "sample_2,sample_1", "0,1,2"],
             ["match", 2, "sample_1,sample_3", "1,3"],
-        ], schema=ELUSIVE_EDGES_COLUMNS)
+        ], orient="row", schema=ELUSIVE_EDGES_COLUMNS)
         read_size = pl.DataFrame([
             ["sample_1", 1000],
             ["sample_2", 2000],
             ["sample_3", 1000],
-        ], schema=READ_SIZE_COLUMNS)
+        ], orient="row", schema=READ_SIZE_COLUMNS)
         weightings = pl.DataFrame([
-        ], schema=TARGET_WEIGHTING_COLUMNS)
+        ], orient="row", schema=TARGET_WEIGHTING_COLUMNS)
 
         expected = pl.DataFrame([
-        ], schema=ELUSIVE_CLUSTERS_COLUMNS)
+        ], orient="row", schema=ELUSIVE_CLUSTERS_COLUMNS)
         observed = pipeline(elusive_edges, read_size, weightings)
         self.assertDataFrameEqual(expected, observed)
 
@@ -723,7 +726,7 @@ class Tests(unittest.TestCase):
                         [["a", "b", "c", "d"], ["3"], 4],
                         [["d", "e", "f"], ["4"], 3],
                         [["b", "c", "d", "g"], ["5"], 4],
-                    ], schema=["samples", "target_ids", "length"])
+                    ], orient="row", schema=["samples", "target_ids", "length"])
                 .with_columns(
                     pl.col("samples").cast(pl.List(pl.Categorical)),
                     pl.col("length").cast(pl.UInt32),
@@ -739,7 +742,7 @@ class Tests(unittest.TestCase):
                         [["b", "c", "d"], ["4"], 3],
                         [["b", "c", "d", "g"], ["5"], 3],
                         [["b", "c", "d"], ["6"], 2],
-                    ], schema=["samples", "target_ids", "cluster_size"])
+                    ], orient="row", schema=["samples", "target_ids", "cluster_size"])
                 .with_columns(pl.col("samples").cast(pl.List(pl.Categorical)))
                 .with_columns(samples_hash = pl.col("samples").list.sort().hash())
             )
@@ -751,7 +754,7 @@ class Tests(unittest.TestCase):
                         [["a", "b", "c", "d"], ["3"], 4, []],
                         [["d", "e", "f"], ["4"], 3, []],
                         [["b", "c", "d", "g"], ["5"], 4, []],
-                    ], schema=["samples", "target_ids", "length", "extra_targets"])
+                    ], orient="row", schema=["samples", "target_ids", "length", "extra_targets"])
                 .with_columns(pl.col("samples").cast(pl.List(pl.Categorical)))
                 .with_columns(samples_hash = pl.col("samples").list.sort().hash())
                 .select("samples", "target_ids", "length", "samples_hash", "extra_targets")
@@ -772,7 +775,7 @@ class Tests(unittest.TestCase):
                         [["a", "b", "c", "d"], ["3"], 4],
                         [["d", "e", "f"], ["4"], 3],
                         [["b", "c", "d", "g"], ["5"], 4],
-                    ], schema=["samples", "target_ids", "length"])
+                    ], orient="row", schema=["samples", "target_ids", "length"])
                 .with_columns(
                     pl.col("samples").cast(pl.List(pl.Categorical)),
                     pl.col("length").cast(pl.UInt32),
@@ -781,7 +784,7 @@ class Tests(unittest.TestCase):
             )
 
             df2 = (
-                pl.DataFrame([], schema={
+                pl.DataFrame([], orient="row", schema={
                     "samples": pl.List(pl.Categorical),
                     "target_ids": pl.List(str),
                     "samples_hash": pl.UInt64,
@@ -796,7 +799,7 @@ class Tests(unittest.TestCase):
                         [["a", "b", "c", "d"], ["3"], 4, []],
                         [["d", "e", "f"], ["4"], 3, []],
                         [["b", "c", "d", "g"], ["5"], 4, []],
-                    ], schema=["samples", "target_ids", "length", "extra_targets"])
+                    ], orient="row", schema=["samples", "target_ids", "length", "extra_targets"])
                 .with_columns(pl.col("samples").cast(pl.List(pl.Categorical)))
                 .with_columns(samples_hash = pl.col("samples").list.sort().hash())
                 .select("samples", "target_ids", "length", "samples_hash", "extra_targets")
@@ -817,7 +820,7 @@ class Tests(unittest.TestCase):
                         [["a", "b", "c", "d"], ["3"], 4],
                         [["d", "e", "f"], ["4"], 3],
                         [["b", "c", "d", "g"], ["5"], 4],
-                    ], schema=["samples", "target_ids", "length"])
+                    ], orient="row", schema=["samples", "target_ids", "length"])
                 .lazy()
                 .with_columns(
                     pl.col("samples").cast(pl.List(pl.Categorical)),
@@ -834,7 +837,7 @@ class Tests(unittest.TestCase):
                         [["b", "c", "d"], ["4"], 3],
                         [["b", "c", "d", "g"], ["5"], 3],
                         [["b", "c", "d"], ["6"], 2],
-                    ], schema=["samples", "target_ids", "cluster_size"])
+                    ], orient="row", schema=["samples", "target_ids", "cluster_size"])
                 .lazy()
                 .with_columns(pl.col("samples").cast(pl.List(pl.Categorical)))
                 .with_columns(samples_hash = pl.col("samples").list.sort().hash())
@@ -847,7 +850,7 @@ class Tests(unittest.TestCase):
                         [["a", "b", "c", "d"], ["3"], 4, []],
                         [["d", "e", "f"], ["4"], 3, []],
                         [["b", "c", "d", "g"], ["5"], 4, []],
-                    ], schema=["samples", "target_ids", "length", "extra_targets"])
+                    ], orient="row", schema=["samples", "target_ids", "length", "extra_targets"])
                 .with_columns(pl.col("samples").cast(pl.List(pl.Categorical)))
                 .with_columns(samples_hash = pl.col("samples").list.sort().hash())
                 .select("samples", "target_ids", "length", "samples_hash", "extra_targets")

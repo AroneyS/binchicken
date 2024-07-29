@@ -37,40 +37,40 @@ class Tests(unittest.TestCase):
         elusive_clusters = pl.DataFrame([
             ["coassembly_1", "sample_1,sample_2", 2, 200, 1000],
             ["coassembly_2", "sample_1,sample_3", 2, 100, 2000],
-        ], schema=ELUSIVE_CLUSTERS_COLUMNS)
+        ], orient="row", schema=ELUSIVE_CLUSTERS_COLUMNS)
 
         read_size = pl.DataFrame([
             ["sample_1", 100],
             ["sample_2", 200],
             ["sample_3", 300],
-        ], schema=READ_SIZE_COLUMNS)
+        ], orient="row", schema=READ_SIZE_COLUMNS)
 
         expected = pl.DataFrame([
             ["coassembly_1", "sample_1,sample_2", 2, 200, 1000, 300],
             ["coassembly_2", "sample_1,sample_3", 2, 100, 2000, 400],
-        ], schema=SUMMARY_COLUMNS)
+        ], orient="row", schema=SUMMARY_COLUMNS)
 
         observed = processing(elusive_clusters, read_size)
         self.assertDataFrameEqual(expected, observed)
 
     def test_summarise_coassemblies_empty_input(self):
-        elusive_clusters = pl.DataFrame([], schema=ELUSIVE_CLUSTERS_COLUMNS)
-        read_size = pl.DataFrame([], schema=READ_SIZE_COLUMNS)
+        elusive_clusters = pl.DataFrame([], orient="row", schema=ELUSIVE_CLUSTERS_COLUMNS)
+        read_size = pl.DataFrame([], orient="row", schema=READ_SIZE_COLUMNS)
 
-        expected = pl.DataFrame([], schema=SUMMARY_COLUMNS)
+        expected = pl.DataFrame([], orient="row", schema=SUMMARY_COLUMNS)
 
         observed = processing(elusive_clusters, read_size)
         self.assertDataFrameEqual(expected, observed)
 
     def test_summarise_coassemblies_empty_elusive_clusters(self):
-        elusive_clusters = pl.DataFrame([], schema=ELUSIVE_CLUSTERS_COLUMNS)
+        elusive_clusters = pl.DataFrame([], orient="row", schema=ELUSIVE_CLUSTERS_COLUMNS)
         read_size = pl.DataFrame([
             ["sample_1", 100],
             ["sample_2", 200],
             ["sample_3", 300],
-        ], schema=READ_SIZE_COLUMNS)
+        ], orient="row", schema=READ_SIZE_COLUMNS)
 
-        expected = pl.DataFrame([], schema=SUMMARY_COLUMNS)
+        expected = pl.DataFrame([], orient="row", schema=SUMMARY_COLUMNS)
 
         observed = processing(elusive_clusters, read_size)
         self.assertDataFrameEqual(expected, observed)
@@ -79,14 +79,14 @@ class Tests(unittest.TestCase):
         elusive_clusters = pl.DataFrame([
             ["coassembly_1", "sample_1,sample_2", 2, 200, 1000],
             ["coassembly_2", "sample_1,sample_3", 2, 100, 2000],
-        ], schema=ELUSIVE_CLUSTERS_COLUMNS)
+        ], orient="row", schema=ELUSIVE_CLUSTERS_COLUMNS)
 
         read_size = None
 
         expected = pl.DataFrame([
             ["coassembly_1", "sample_1,sample_2", 2, 200, 1000],
             ["coassembly_2", "sample_1,sample_3", 2, 100, 2000],
-        ], schema={k:v for k,v in SUMMARY_COLUMNS.items() if k != "unmapped_size"})
+        ], orient="row", schema={k:v for k,v in SUMMARY_COLUMNS.items() if k != "unmapped_size"})
 
         observed = processing(elusive_clusters, read_size)
         self.assertDataFrameEqual(expected, observed)

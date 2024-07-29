@@ -34,7 +34,7 @@ class Tests(unittest.TestCase):
                 ["S3.1", "sample_4", "ATGACTAGTCATAGCTAGATTTGAGGCAGCAGGAGTTAGGAAAGCCCCCGGAGTTAGCTA", 5, 10, "Root"], # 1
                 ["S3.1", "sample_4", "TACGAGCGGATCGTGCACGTAGTCAGTCGTTATATATCGAAAGCTCATGCGGCCATATCG", 5, 10, "Root"], # 4
                 ["S3.1", "sample_4", "TACGAGCGGATCG---------------GTTATATATCGAAAGCTCATGCGGCCATATCG", 5, 10, "Root"], # 5
-            ], schema=OTU_TABLE_COLUMNS)
+            ], orient="row", schema=OTU_TABLE_COLUMNS)
 
             expected_names = [
                 "sample_1",
