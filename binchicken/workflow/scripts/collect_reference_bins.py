@@ -55,8 +55,8 @@ def pipeline(appraise_binned, appraise_unbinned, sample, MIN_APPRAISED=0.1, TRIM
         .with_columns(pl.col("found_in").str.replace("_protein$", ""))
         .group_by(["gene", "found_in"])
         .agg(pl.col("coverage").sum())
-        .pivot(values="coverage", index="gene", columns="found_in", aggregate_function=None)
-        .melt(id_vars="gene", variable_name="found_in", value_name="coverage")
+        .pivot(values="coverage", index="gene", on="found_in", aggregate_function=None)
+        .unpivot(index="gene", variable_name="found_in", value_name="coverage")
         .fill_null(0)
         .group_by("found_in")
         .agg(

@@ -902,8 +902,7 @@ class Tests(unittest.TestCase):
                         ["12", [4,5,6]],
                         ["13", [4,5]],
                         ["14", [4]],
-                    ],
-                    schema=SAMPLE_TARGETS_COLUMNS
+                    ], orient="row", schema=SAMPLE_TARGETS_COLUMNS
                     )
                 .with_columns(pl.col("recover_candidates").cast(pl.Categorical))
             )
@@ -912,8 +911,7 @@ class Tests(unittest.TestCase):
                 pl.DataFrame([
                         [12341234, ["1","2","3","4"], 4, [1,2,3], 3, 4000],
                         [56785678, ["5","6","7","8"], 4, [4,5,6], 3, 4000],
-                    ],
-                    schema=CAT_CLUSTERS_COLUMNS
+                    ], orient="row", schema=CAT_CLUSTERS_COLUMNS
                     )
                 .with_columns(pl.col("samples").cast(pl.List(pl.Categorical)))
             )
@@ -922,8 +920,7 @@ class Tests(unittest.TestCase):
                 pl.DataFrame([
                         [12341234, ["1","2","3","4"], 4, [1,2,3], 3, 4000, ["1","2","3","4","9","10"]],
                         [56785678, ["5","6","7","8"], 4, [4,5,6], 3, 4000, ["5","6","7","8","12","13"]],
-                    ],
-                    schema=CAT_RECOVERY_COLUMNS
+                    ], orient="row", schema=CAT_RECOVERY_COLUMNS
                     )
                 .with_columns(
                     pl.col("samples").cast(pl.List(pl.Categorical)),
@@ -959,8 +956,7 @@ class Tests(unittest.TestCase):
                         ["12", [4,5,6]],
                         ["13", [4,5]],
                         ["14", [4]],
-                    ],
-                    schema=SAMPLE_TARGETS_COLUMNS
+                    ], orient="row", schema=SAMPLE_TARGETS_COLUMNS
                     )
                 .with_columns(pl.col("recover_candidates").cast(pl.Categorical))
                 .lazy()
@@ -970,8 +966,7 @@ class Tests(unittest.TestCase):
                 pl.DataFrame([
                         [12341234, ["1","2","3","4"], 4, [1,2,3], 3, 4000],
                         [56785678, ["5","6","7","8"], 4, [4,5,6], 3, 4000],
-                    ],
-                    schema=CAT_CLUSTERS_COLUMNS
+                    ], orient="row", schema=CAT_CLUSTERS_COLUMNS
                     )
                 .with_columns(pl.col("samples").cast(pl.List(pl.Categorical)))
                 .lazy()
@@ -981,8 +976,7 @@ class Tests(unittest.TestCase):
                 pl.DataFrame([
                         [12341234, ["1","2","3","4"], 4, [1,2,3], 3, 4000, ["1","2","3","4","9","10"]],
                         [56785678, ["5","6","7","8"], 4, [4,5,6], 3, 4000, ["5","6","7","8","12","13"]],
-                    ],
-                    schema=CAT_RECOVERY_COLUMNS
+                    ], orient="row", schema=CAT_RECOVERY_COLUMNS
                     )
                 .with_columns(
                     pl.col("samples").cast(pl.List(pl.Categorical)),

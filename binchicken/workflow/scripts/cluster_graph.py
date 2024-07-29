@@ -114,7 +114,7 @@ def pipeline(
 
     if len(elusive_edges) == 0:
         logging.warning("No elusive edges found")
-        return pl.DataFrame(schema=OUTPUT_COLUMNS)
+        return pl.DataFrame(orient="row", schema=OUTPUT_COLUMNS)
 
     is_pooled = any(elusive_edges["style"] == "pool")
 
@@ -272,7 +272,7 @@ def pipeline(
             .with_columns(weighting = pl.lit(weightings is not None))
             .with_columns(
                 total_targets = pl.when(pl.col("weighting"))
-                .then(pl.col("target_ids").list.eval(pl.element().replace(weightings_dict, default=0)).list.sum())
+                .then(pl.col("target_ids").list.eval(pl.element().replace_strict(weightings_dict, default=0)).list.sum())
                 .otherwise(pl.col("target_ids").list.len()),
             )
             .sort("total_targets", "total_size", descending=[True, False])
