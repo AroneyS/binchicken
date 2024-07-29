@@ -143,7 +143,6 @@ class Tests(unittest.TestCase):
 
         expected = pl.DataFrame([
             ["S3.1", "AAA", 0.5],
-            ["S3.1", "AAB", 0],
         ], schema=WEIGHTING_COLUMNS)
 
         observed = pipeline(unbinned, binned, samples)
@@ -164,7 +163,6 @@ class Tests(unittest.TestCase):
 
         expected = pl.DataFrame([
             ["S3.1", "AAA", 0.5],
-            ["S3.1", "AAB", 0],
         ], schema=WEIGHTING_COLUMNS)
 
         observed = pipeline(unbinned, binned, samples)
@@ -185,7 +183,6 @@ class Tests(unittest.TestCase):
 
         expected = pl.DataFrame([
             ["S3.1", "AAA", 0.5],
-            ["S3.1", "AAB", 0],
         ], schema=WEIGHTING_COLUMNS)
 
         observed = pipeline(unbinned, binned, samples)
@@ -206,7 +203,6 @@ class Tests(unittest.TestCase):
 
         expected = pl.DataFrame([
             ["S3.1", "AAA", 0.5],
-            ["S3.1", "AAB", 0],
         ], schema=WEIGHTING_COLUMNS)
 
         observed = pipeline(unbinned, binned, samples)

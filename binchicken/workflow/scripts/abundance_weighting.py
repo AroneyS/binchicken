@@ -72,6 +72,7 @@ def pipeline(unbinned, binned, samples=None):
         .with_columns(weight = pl.col("coverage") / pl.col("total_coverage"))
         .group_by("gene", "sequence")
         .agg(pl.mean("weight"))
+        .filter(pl.col("weight") > 0)
     )
 
     return weighted
