@@ -66,6 +66,24 @@ class Tests(unittest.TestCase):
         observed = pipeline(unbinned, binned)
         self.assertDataFrameEqual(expected, observed)
 
+    def test_abundance_weighting_sometimes_missing(self):
+        unbinned = pl.DataFrame([
+            ["S3.1", "sample_1", "AAA", 9, 10, "Root", ""],
+            ["S3.1", "sample_2", "AAA", 9, 10, "Root", ""],
+            ["S3.1", "sample_2", "AAB", 9, 10, "Root", ""],
+        ], schema=APPRAISE_COLUMNS)
+        binned = pl.DataFrame([
+            ["S3.1", "sample_1", "AAC", 5, 10, "Root", ""],
+        ], schema=APPRAISE_COLUMNS)
+
+        expected = pl.DataFrame([
+            ["S3.1", "AAA", 0.5],
+            ["S3.1", "AAB", 0.25],
+        ], schema=WEIGHTING_COLUMNS)
+
+        observed = pipeline(unbinned, binned)
+        self.assertDataFrameEqual(expected, observed)
+
     def test_abundance_weighting_no_binned(self):
         unbinned = pl.DataFrame([
             ["S3.1", "sample_1", "AAA", 9, 10, "Root", ""],
@@ -128,6 +146,86 @@ class Tests(unittest.TestCase):
         ], schema=WEIGHTING_COLUMNS)
 
         observed = pipeline(unbinned, binned, samples)
+        self.assertDataFrameEqual(expected, observed)
+
+    def test_abundance_weighting_suffix(self):
+        unbinned = pl.DataFrame([
+            ["S3.1", "sample_1.1", "AAA", 9, 10, "Root", ""],
+            ["S3.1", "sample_2.1", "AAA", 9, 10, "Root", ""],
+            ["S3.1", "sample_3.1", "AAA", 9, 10, "Root", ""],
+            ["S3.1", "sample_3.1", "AAB", 5, 10, "Root", ""],
+        ], schema=APPRAISE_COLUMNS)
+        binned = pl.DataFrame([
+            ["S3.1", "sample_1.1", "AAB", 5, 10, "Root", ""],
+            ["S3.1", "sample_2.1", "AAB", 5, 10, "Root", ""],
+        ], schema=APPRAISE_COLUMNS)
+        samples = ["sample_1", "sample_2"]
+
+        expected = pl.DataFrame([
+            ["S3.1", "AAA", 0.5],
+        ], schema=WEIGHTING_COLUMNS)
+
+        observed = pipeline(unbinned, binned, samples)
+        self.assertDataFrameEqual(expected, observed)
+
+    def test_abundance_weighting_suffix_underscore(self):
+        unbinned = pl.DataFrame([
+            ["S3.1", "sample_1_1", "AAA", 9, 10, "Root", ""],
+            ["S3.1", "sample_2_1", "AAA", 9, 10, "Root", ""],
+            ["S3.1", "sample_3_1", "AAA", 9, 10, "Root", ""],
+            ["S3.1", "sample_3_1", "AAB", 5, 10, "Root", ""],
+        ], schema=APPRAISE_COLUMNS)
+        binned = pl.DataFrame([
+            ["S3.1", "sample_1_1", "AAB", 5, 10, "Root", ""],
+            ["S3.1", "sample_2_1", "AAB", 5, 10, "Root", ""],
+        ], schema=APPRAISE_COLUMNS)
+        samples = ["sample_1", "sample_2"]
+
+        expected = pl.DataFrame([
+            ["S3.1", "AAA", 0.5],
+        ], schema=WEIGHTING_COLUMNS)
+
+        observed = pipeline(unbinned, binned, samples)
+        self.assertDataFrameEqual(expected, observed)
+
+    def test_abundance_weighting_suffix_R(self):
+        unbinned = pl.DataFrame([
+            ["S3.1", "sample_1_R1", "AAA", 9, 10, "Root", ""],
+            ["S3.1", "sample_2_R1", "AAA", 9, 10, "Root", ""],
+            ["S3.1", "sample_3_R1", "AAA", 9, 10, "Root", ""],
+            ["S3.1", "sample_3_R1", "AAB", 5, 10, "Root", ""],
+        ], schema=APPRAISE_COLUMNS)
+        binned = pl.DataFrame([
+            ["S3.1", "sample_1_R1", "AAB", 5, 10, "Root", ""],
+            ["S3.1", "sample_2_R1", "AAB", 5, 10, "Root", ""],
+        ], schema=APPRAISE_COLUMNS)
+        samples = ["sample_1", "sample_2"]
+
+        expected = pl.DataFrame([
+            ["S3.1", "AAA", 0.5],
+        ], schema=WEIGHTING_COLUMNS)
+
+        observed = pipeline(unbinned, binned, samples)
+        self.assertDataFrameEqual(expected, observed)
+
+    def test_abundance_weighting_suffix_underscore_fake(self):
+        unbinned = pl.DataFrame([
+            ["S3.1", "sample_1", "AAA", 9, 10, "Root", ""],
+            ["S3.1", "sample_2", "AAA", 9, 10, "Root", ""],
+            ["S3.1", "sample_3", "AAA", 9, 10, "Root", ""],
+            ["S3.1", "sample_3", "AAB", 5, 10, "Root", ""],
+        ], schema=APPRAISE_COLUMNS)
+        binned = pl.DataFrame([
+            ["S3.1", "sample_1", "AAC", 5, 10, "Root", ""],
+            ["S3.1", "sample_2", "AAC", 5, 10, "Root", ""],
+        ], schema=APPRAISE_COLUMNS)
+
+        expected = pl.DataFrame([
+            ["S3.1", "AAA", 0.5],
+            ["S3.1", "AAB", 0.5 / 3],
+        ], schema=WEIGHTING_COLUMNS)
+
+        observed = pipeline(unbinned, binned)
         self.assertDataFrameEqual(expected, observed)
 
     def test_abundance_weighting_specific_samples_more(self):

@@ -1658,14 +1658,14 @@ class Tests(unittest.TestCase):
             weights_path = os.path.join("test", "coassemble", "appraise", "weighted.otu_table.tsv")
             self.assertTrue(os.path.exists(weights_path))
             expected = pl.DataFrame([
-                    ["S3.7.ribosomal_protein_S7", "TACGAGCGGATCG---------------GTTATATATCGAAAGCTCATGCGGCCATATCG", 0.126051],
-                    ["S3.7.ribosomal_protein_S7", "ATCGACTGACTTGATCGATCTTTGACGACGAGAGAGAGAGCGACGCGCCGAGAGGTTTCA", 0.333333],
-                    ["S3.7.ribosomal_protein_S7", "AAAAGTCCTGATCGTAGCTAATAATATTATGCGTACGTCAGTACGTACTGACTGACGTAA", 0.479846],
-                    ["S3.7.ribosomal_protein_S7", "AGCGTCGAGCGATCGATCGTACGTAGCGGGGATCGTATTTACTATCTACTAACGAGCAAA", 0.893421],
-                    ["S3.7.ribosomal_protein_S7", "ATGACTAGTCATAGCTAGATTTGAGGCAGCAGGAGTTAGGAAAGCCCCCGGAGTTAGCTA", 0.022411],
-                    ["S3.7.ribosomal_protein_S7", "TGACTAGCTGGGCTAGCTATATTCTTTTTACGAGCGCGAGGAAAGCGACAGCGGCCAGGC", 0.023992],
-                    ["S3.7.ribosomal_protein_S7", "TACGAGCGGATCGTGCACGTAGTCAGTCGTTATATATCGAAAGCTCATGCGGCCATATCG", 0.169117],
-                    ["S3.7.ribosomal_protein_S7", "ATGACTAGTCATAGCTAGATTTGAGGCAGCAGGAAGCAGCATAGCTACGACACACCCCCC", 0.006483],
+                    ["S3.7.ribosomal_protein_S7", "TACGAGCGGATCG---------------GTTATATATCGAAAGCTCATGCGGCCATATCG", 0.094538],
+                    ["S3.7.ribosomal_protein_S7", "ATCGACTGACTTGATCGATCTTTGACGACGAGAGAGAGAGCGACGCGCCGAGAGGTTTCA", 0.083333],
+                    ["S3.7.ribosomal_protein_S7", "AAAAGTCCTGATCGTAGCTAATAATATTATGCGTACGTCAGTACGTACTGACTGACGTAA", 0.239923],
+                    ["S3.7.ribosomal_protein_S7", "AGCGTCGAGCGATCGATCGTACGTAGCGGGGATCGTATTTACTATCTACTAACGAGCAAA", 0.446710],
+                    ["S3.7.ribosomal_protein_S7", "ATGACTAGTCATAGCTAGATTTGAGGCAGCAGGAGTTAGGAAAGCCCCCGGAGTTAGCTA", 0.011205],
+                    ["S3.7.ribosomal_protein_S7", "TGACTAGCTGGGCTAGCTATATTCTTTTTACGAGCGCGAGGAAAGCGACAGCGGCCAGGC", 0.011996],
+                    ["S3.7.ribosomal_protein_S7", "TACGAGCGGATCGTGCACGTAGTCAGTCGTTATATATCGAAAGCTCATGCGGCCATATCG", 0.084558],
+                    ["S3.7.ribosomal_protein_S7", "ATGACTAGTCATAGCTAGATTTGAGGCAGCAGGAAGCAGCATAGCTACGACACACCCCCC", 0.003241],
                 ],
                 schema = ["gene", "sequence", "weight"],
                 orient="row",
@@ -1676,14 +1676,14 @@ class Tests(unittest.TestCase):
             target_weights_path = os.path.join("test", "coassemble", "target", "targets_weighted.tsv")
             self.assertTrue(os.path.exists(target_weights_path))
             expected = pl.DataFrame([
-                    [0, 0.006483],
-                    [1, 0.023992],
-                    [2, 0.893421],
-                    [3, 0.479846],
-                    [4, 0.022411],
-                    [5, 0.126051],
-                    [6, 0.333333],
-                    [7, 0.169117],
+                    [0, 0.003241],
+                    [1, 0.011996],
+                    [2, 0.446710],
+                    [3, 0.239923],
+                    [4, 0.011205],
+                    [5, 0.094538],
+                    [6, 0.083333],
+                    [7, 0.084558],
                 ],
                 schema = ["target", "weight"],
                 orient="row",
@@ -1709,8 +1709,8 @@ class Tests(unittest.TestCase):
             cluster_path = os.path.join("test", "coassemble", "target", "elusive_clusters.tsv")
             self.assertTrue(os.path.exists(cluster_path))
             expected = pl.DataFrame([
-                    ["sample_1,sample_5", 2, 0.899904, 8456, "sample_1,sample_5", "coassembly_0"],
-                    ["sample_2,sample_3", 2, 0.126051, 7550, "sample_2,sample_3,sample_5", "coassembly_1"],
+                    ["sample_1,sample_5", 2, 0.003241+0.446710, 8456, "sample_1,sample_5", "coassembly_0"],
+                    ["sample_2,sample_3", 2, 0.094538, 7550, "sample_2,sample_3,sample_5", "coassembly_1"],
                 ],
                 schema = ["samples", "length", "total_targets", "total_size", "recover_samples", "coassembly"],
                 orient="row",
@@ -1744,12 +1744,12 @@ class Tests(unittest.TestCase):
             weights_path = os.path.join("test", "coassemble", "appraise", "weighted.otu_table.tsv")
             self.assertTrue(os.path.exists(weights_path))
             expected = pl.DataFrame([
-                    ["S3.7.ribosomal_protein_S7", "ATGACTAGTCATAGCTAGATTTGAGGCAGCAGGAAGCAGCATAGCTACGACACACCCCCC", 0.008064],
-                    ["S3.7.ribosomal_protein_S7", "AGCGTCGAGCGATCGATCGTACGTAGCGGGGATCGTATTTACTATCTACTAACGAGCAAA", 0.806451],
+                    ["S3.7.ribosomal_protein_S7", "ATGACTAGTCATAGCTAGATTTGAGGCAGCAGGAAGCAGCATAGCTACGACACACCCCCC", 0.004032],
+                    ["S3.7.ribosomal_protein_S7", "AGCGTCGAGCGATCGATCGTACGTAGCGGGGATCGTATTTACTATCTACTAACGAGCAAA", 0.403225],
                     ["S3.7.ribosomal_protein_S7", "AAAAGTCCTGATCGTAGCTAATAATATTATGCGTACGTCAGTACGTACTGACTGACGTAA", 0.479846],
                     ["S3.7.ribosomal_protein_S7", "TGACTAGCTGGGCTAGCTATATTCTTTTTACGAGCGCGAGGAAAGCGACAGCGGCCAGGC", 0.023992],
-                    ["S3.7.ribosomal_protein_S7", "TACGAGCGGATCG---------------GTTATATATCGAAAGCTCATGCGGCCATATCG", 0.039920],
-                    ["S3.7.ribosomal_protein_S7", "ATGACTAGTCATAGCTAGATTTGAGGCAGCAGGAGTTAGGAAAGCCCCCGGAGTTAGCTA", 0.039920],
+                    ["S3.7.ribosomal_protein_S7", "TACGAGCGGATCG---------------GTTATATATCGAAAGCTCATGCGGCCATATCG", 0.019960],
+                    ["S3.7.ribosomal_protein_S7", "ATGACTAGTCATAGCTAGATTTGAGGCAGCAGGAGTTAGGAAAGCCCCCGGAGTTAGCTA", 0.019960],
                 ],
                 schema = ["gene", "sequence", "weight"],
                 orient="row",
@@ -1778,16 +1778,15 @@ class Tests(unittest.TestCase):
             weights_path = os.path.join("test", "coassemble", "appraise", "weighted.otu_table.tsv")
             self.assertTrue(os.path.exists(weights_path))
             expected = pl.DataFrame([
-                    ["S3.7.ribosomal_protein_S7", "ATGACTAGTCATAGCTAGATTTGAGGCAGCAGGAGTTAGGAAAGCCCCCGGAGTTAGCTA", 0.022411],
-                    ["S3.7.ribosomal_protein_S7", "TTCCAGGTGCCTACTGAAGTTCGTCCCGAGCGTAAAATTGCATTGGGTATGAAATGGCTG", 0.048982],
-                    ["S3.7.ribosomal_protein_S7", "TACGAGCGGATCGTGCACGTAGTCAGTCGTTATATATCGAAAGCTCATGCGGCCATATCG", 0.169117],
-                    ["S3.7.ribosomal_protein_S7", "ATGACTAGTCATAGCTAGATTTGAGGCAGCAGGAAGCAGCATAGCTACGACACACCCCCC", 0.006483],
-                    ["S3.7.ribosomal_protein_S7", "AGCGTCGAGCGATCGATCGTACGTAGCGGGGATCGTATTTACTATCTACTAACGAGCAAA", 0.893421],
-                    ["S3.7.ribosomal_protein_S7", "TACGAGCGGATCG---------------GTTATATATCGAAAGCTCATGCGGCCATATCG", 0.126051],
-                    ["S3.7.ribosomal_protein_S7", "TGACTAGCTGGGCTAGCTATATTCTTTTTACGAGCGCGAGGAAAGCGACAGCGGCCAGGC", 0.023992],
-                    ["S3.7.ribosomal_protein_S7", "AAAAGTCCTGATCGTAGCTAATAATATTATGCGTACGTCAGTACGTACTGACTGACGTAA", 0.479846],
-                    ["S3.7.ribosomal_protein_S7", "ATCGACTGACTTGATCGATCTTTGACGACGAGAGAGAGAGCGACGCGCCGAGAGGTTTCA", 0.333333],
-
+                    ["S3.7.ribosomal_protein_S7", "TACGAGCGGATCG---------------GTTATATATCGAAAGCTCATGCGGCCATATCG", 0.094538],
+                    ["S3.7.ribosomal_protein_S7", "ATCGACTGACTTGATCGATCTTTGACGACGAGAGAGAGAGCGACGCGCCGAGAGGTTTCA", 0.083333],
+                    ["S3.7.ribosomal_protein_S7", "AAAAGTCCTGATCGTAGCTAATAATATTATGCGTACGTCAGTACGTACTGACTGACGTAA", 0.239923],
+                    ["S3.7.ribosomal_protein_S7", "AGCGTCGAGCGATCGATCGTACGTAGCGGGGATCGTATTTACTATCTACTAACGAGCAAA", 0.446710],
+                    ["S3.7.ribosomal_protein_S7", "ATGACTAGTCATAGCTAGATTTGAGGCAGCAGGAGTTAGGAAAGCCCCCGGAGTTAGCTA", 0.011205],
+                    ["S3.7.ribosomal_protein_S7", "TGACTAGCTGGGCTAGCTATATTCTTTTTACGAGCGCGAGGAAAGCGACAGCGGCCAGGC", 0.011996],
+                    ["S3.7.ribosomal_protein_S7", "TACGAGCGGATCGTGCACGTAGTCAGTCGTTATATATCGAAAGCTCATGCGGCCATATCG", 0.084558],
+                    ["S3.7.ribosomal_protein_S7", "ATGACTAGTCATAGCTAGATTTGAGGCAGCAGGAAGCAGCATAGCTACGACACACCCCCC", 0.003241],
+                    ["S3.7.ribosomal_protein_S7", "TTCCAGGTGCCTACTGAAGTTCGTCCCGAGCGTAAAATTGCATTGGGTATGAAATGGCTG", 0.024491],
                 ],
                 schema = ["gene", "sequence", "weight"],
                 orient="row",
@@ -1798,11 +1797,11 @@ class Tests(unittest.TestCase):
             target_weights_path = os.path.join("test", "coassemble", "target", "targets_weighted.tsv")
             self.assertTrue(os.path.exists(target_weights_path))
             expected = pl.DataFrame([
-                    [0, 0.479846],
-                    [1, 0.022411],
-                    [2, 0.048982],
-                    [3, 0.126051],
-                    [4, 0.169117],
+                    [0, 0.239923],
+                    [1, 0.011205],
+                    [2, 0.024491],
+                    [3, 0.094538],
+                    [4, 0.084558],
                 ],
                 schema = ["target", "weight"],
                 orient="row",
@@ -1826,7 +1825,7 @@ class Tests(unittest.TestCase):
             cluster_path = os.path.join("test", "coassemble", "target", "elusive_clusters.tsv")
             self.assertTrue(os.path.exists(cluster_path))
             expected = pl.DataFrame([
-                    ["sample_1,sample_2", 2, 0.479846, 8758, "sample_1,sample_2", "coassembly_0"],
+                    ["sample_1,sample_2", 2, 0.239923, 8758, "sample_1,sample_2", "coassembly_0"],
                 ],
                 schema = ["samples", "length", "total_targets", "total_size", "recover_samples", "coassembly"],
                 orient="row",

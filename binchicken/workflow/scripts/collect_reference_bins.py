@@ -7,6 +7,7 @@ import polars as pl
 import os
 import numpy as np
 import extern
+from binchicken.binchicken import SUFFIX_RE
 
 def trimmed_mean(data, trim=0.1):
     cut = int(np.floor(len(data) * trim))
@@ -23,7 +24,7 @@ def pipeline(appraise_binned, appraise_unbinned, sample, MIN_APPRAISED=0.1, TRIM
         appraise_binned
         .with_columns(
             pl.col("sample").cast(str),
-            sample_remove_suffix = pl.col("sample").str.replace(r"(_|\.)R?1$", ""),
+            sample_remove_suffix = pl.col("sample").str.replace(SUFFIX_RE, ""),
             )
         .filter((pl.col("sample") == sample) | (pl.col("sample_remove_suffix") == sample))
     )
@@ -32,7 +33,7 @@ def pipeline(appraise_binned, appraise_unbinned, sample, MIN_APPRAISED=0.1, TRIM
         appraise_unbinned
         .with_columns(
             pl.col("sample").cast(str),
-            sample_remove_suffix = pl.col("sample").str.replace(r"(_|\.)R?1$", ""),
+            sample_remove_suffix = pl.col("sample").str.replace(SUFFIX_RE, ""),
             )
         .filter((pl.col("sample") == sample) | (pl.col("sample_remove_suffix") == sample))
     )

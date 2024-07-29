@@ -9,6 +9,7 @@ import logging
 import numpy as np
 import scipy.sparse as sp
 import itertools
+from binchicken.binchicken import SUFFIX_RE
 
 EDGES_COLUMNS={
     "style": str,
@@ -130,7 +131,7 @@ def streaming_pipeline(
         .with_columns(
             pl.when(pl.col("sample").is_in(samples))
             .then(pl.col("sample"))
-            .otherwise(pl.col("sample").str.replace(r"(_|\.)R?1$", ""))
+            .otherwise(pl.col("sample").str.replace(SUFFIX_RE, ""))
             )
         .filter(pl.col("sample").is_in(samples))
         .drop("found_in")
@@ -216,7 +217,7 @@ def pipeline(
         .with_columns(
             pl.when(pl.col("sample").is_in(samples))
             .then(pl.col("sample"))
-            .otherwise(pl.col("sample").str.replace(r"(_|\.)R?1$", ""))
+            .otherwise(pl.col("sample").str.replace(SUFFIX_RE, ""))
             )
         .filter(pl.col("sample").is_in(samples))
         .drop("found_in")

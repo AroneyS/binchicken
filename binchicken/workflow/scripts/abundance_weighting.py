@@ -6,6 +6,7 @@
 import os
 import polars as pl
 import logging
+from binchicken.binchicken import SUFFIX_RE
 
 APPRAISE_COLUMNS = {
     "gene": str,
@@ -39,15 +40,39 @@ def pipeline(unbinned, binned, samples=None):
     if samples:
         total_coverage = (
             total_coverage
+            .with_columns(
+                pl.when(pl.col("sample").is_in(samples))
+                .then(pl.col("sample"))
+                .otherwise(pl.col("sample").str.replace(SUFFIX_RE, ""))
+                )
             .filter(pl.col("sample").is_in(samples))
         )
 
-    weighted = (
+        unbinned = (
+            unbinned
+            .with_columns(
+                pl.when(pl.col("sample").is_in(samples))
+                .then(pl.col("sample"))
+                .otherwise(pl.col("sample").str.replace(SUFFIX_RE, ""))
+                )
+        )
+
+    gene_sequences = (
         unbinned
-        .join(total_coverage, on=["sample", "gene"])
+        .select("gene", "sequence")
+        .unique()
+    )
+
+    weighted = (
+        total_coverage
+        .join(gene_sequences, on=["gene"])
+        .join(unbinned, on=["sample", "gene", "sequence"], how="full")
+        .filter(pl.col("sample").is_not_null())
+        .with_columns(pl.col("coverage").fill_null(0))
         .with_columns(weight = pl.col("coverage") / pl.col("total_coverage"))
         .group_by("gene", "sequence")
         .agg(pl.mean("weight"))
+        .filter(pl.col("weight") > 0)
     )
 
     return weighted
@@ -68,8 +93,8 @@ if __name__ == "__main__":
     weighted_path = snakemake.output.weighted
     samples = snakemake.params.samples
 
-    unbinned = pl.read_csv(unbinned_path, separator="\t", dtypes=APPRAISE_COLUMNS)
-    binned = pl.read_csv(binned_path, separator="\t", dtypes=APPRAISE_COLUMNS)
+    unbinned = pl.read_csv(unbinned_path, separator="\t", schema_overrides=APPRAISE_COLUMNS)
+    binned = pl.read_csv(binned_path, separator="\t", schema_overrides=APPRAISE_COLUMNS)
 
     weighted = pipeline(unbinned, binned, samples)
     weighted.write_csv(weighted_path, separator="\t")
