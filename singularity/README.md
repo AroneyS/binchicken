@@ -4,7 +4,7 @@ singularity build singularity/binchicken.sif singularity/binchicken.def
 singularity run singularity/binchicken.sif binchicken -h
 singularity shell -C singularity/binchicken.sif
 
-singularity run -B /work/microbiome/ibis/SRA/results/benchmarking/20240129/binchicken_co195/single_sample/coassemble,$(pwd) singularity/binchicken5.sif \
+singularity run -B /work/microbiome/ibis/SRA/results/benchmarking/20240129/binchicken_co195/single_sample/coassemble,$(pwd) singularity/binchicken.sif \
     binchicken coassemble \
     --assemble-unmapped \
     --forward \
