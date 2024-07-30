@@ -10,7 +10,7 @@ from binchicken.workflow.scripts.aviary_commands import pipeline
 ELUSIVE_CLUSTERS_COLUMNS={
     "samples": str,
     "length": int,
-    "total_targets": int,
+    "total_targets": float,
     "total_size": int,
     "recover_samples": str,
     "coassembly": str,
@@ -39,7 +39,7 @@ reads_2 = {
 
 class Tests(unittest.TestCase):
     def assertDataFrameEqual(self, a, b):
-        assert_frame_equal(a, b, check_dtype=False)
+        assert_frame_equal(a, b, check_dtypes=False)
 
     def test_aviary_commands(self):
         elusive_clusters = pl.DataFrame([
@@ -114,9 +114,7 @@ class Tests(unittest.TestCase):
                 f"-1 1_1.fq.gz 2_1.fq.gz 3_1.fq.gz 4_1.fq.gz 5_1.fq.gz 6_1.fq.gz "
                 f"-2 1_2.fq.gz 2_2.fq.gz 3_2.fq.gz 4_2.fq.gz 5_2.fq.gz 6_2.fq.gz "
                 f"--output {output_dir}/coassemble/coassembly_0/recover "
-                f"--workflow recover_mags_no_singlem "
-                f"--skip-binners maxbin concoct rosella "
-                f"--skip-abundances "
+                f"--binning-only "
                 f"--refinery-max-iterations 0 "
                 f"-n {recover_threads} -t {recover_threads} -m {recover_memory} --skip-qc "
                 f"&> {output_dir}/coassemble/logs/coassembly_0_recover.log ",
@@ -133,9 +131,7 @@ class Tests(unittest.TestCase):
                 f"-1 4_1.fq.gz 5_1.fq.gz 6_1.fq.gz "
                 f"-2 4_2.fq.gz 5_2.fq.gz 6_2.fq.gz "
                 f"--output {output_dir}/coassemble/coassembly_2/recover "
-                f"--workflow recover_mags_no_singlem "
-                f"--skip-binners maxbin concoct rosella "
-                f"--skip-abundances "
+                f"--binning-only "
                 f"--refinery-max-iterations 0 "
                 f"-n {recover_threads} -t {recover_threads} -m {recover_memory} --skip-qc "
                 f"&> {output_dir}/coassemble/logs/coassembly_2_recover.log ",

@@ -11,11 +11,16 @@ import logging
 OUTPUT_COLUMNS={
     "samples": str,
     "length": int,
-    "total_targets": int,
+    "total_targets": float,
     "total_size": int,
     "recover_samples": str,
     "coassembly": str,
     }
+
+TARGET_WEIGHTING_COLUMNS = {
+    "target": str,
+    "weight": float,
+}
 
 def join_list_subsets(df1, df2):
     """
@@ -40,6 +45,7 @@ def join_list_subsets(df1, df2):
             df2,
             on=["length"],
             how="left",
+            coalesce=True,
         )
         .filter(pl.col("right_samples").is_not_null())
         .filter(pl.col("samples").list.set_intersection("right_samples").list.len() >= pl.col("length"))
@@ -53,7 +59,7 @@ def join_list_subsets(df1, df2):
 
     return (
         df1
-        .join(output, on="samples_hash", how="left")
+        .join(output, on="samples_hash", how="left", coalesce=True)
         .with_columns(pl.col("extra_targets").fill_null([]))
         )
 
@@ -79,7 +85,7 @@ def find_recover_candidates(df, samples_df, MAX_RECOVERY_SAMPLES=20):
         df
         .select("samples_hash", "target_ids")
         .explode("target_ids")
-        .join(samples_df, on="target_ids", how="left")
+        .join(samples_df, on="target_ids", how="left", coalesce=True)
         .group_by("samples_hash", "recover_candidates")
         .agg(pl.len().alias("count"))
         .sort("count", descending=True)
@@ -89,11 +95,12 @@ def find_recover_candidates(df, samples_df, MAX_RECOVERY_SAMPLES=20):
         .agg("recover_candidates")
     )
 
-    return df.join(output, on="samples_hash", how="left")
+    return df.join(output, on="samples_hash", how="left", coalesce=True)
 
 def pipeline(
         elusive_edges,
         read_size,
+        weightings=None,
         MAX_COASSEMBLY_SIZE=None,
         MAX_COASSEMBLY_SAMPLES=2,
         MIN_COASSEMBLY_SAMPLES=2,
@@ -128,6 +135,20 @@ def pipeline(
                 length = pl.col("samples").list.len()
                 )
         )
+
+        if weightings is not None:
+            if weightings.height == 0:
+                logging.error("No target weightings found")
+                return pl.DataFrame(schema=OUTPUT_COLUMNS)
+
+            weightings = (
+                weightings
+                .lazy()
+                .select(target_ids = pl.col("target").cast(pl.UInt32), weight = "weight")
+            )
+            weightings_dict = dict(weightings.collect().iter_rows())
+        else:
+            weightings_dict = {}
 
         if COASSEMBLY_SAMPLES:
             coassembly_edges = (
@@ -236,7 +257,7 @@ def pipeline(
             .join(excluded_coassemblies, on="samples_hash", how="anti")
             .with_columns(length = pl.col("samples").list.len())
             .explode("samples")
-            .join(read_size, on="samples", how="left")
+            .join(read_size, on="samples", how="left", coalesce=True)
             .group_by("samples_hash")
             .agg(
                 pl.col("samples"),
@@ -248,8 +269,11 @@ def pipeline(
                 filter_max_coassembly_size,
                 MAX_COASSEMBLY_SIZE=MAX_COASSEMBLY_SIZE,
                 )
+            .with_columns(weighting = pl.lit(weightings is not None))
             .with_columns(
-                total_targets = pl.col("target_ids").list.len(),
+                total_targets = pl.when(pl.col("weighting"))
+                .then(pl.col("target_ids").list.eval(pl.element().replace(weightings_dict, default=0)).list.sum())
+                .otherwise(pl.col("target_ids").list.len()),
             )
             .sort("total_targets", "total_size", descending=[True, False])
             .with_columns(
@@ -281,7 +305,9 @@ def pipeline(
                 .cast(pl.List(pl.Utf8))
                 .list.sort()
                 .list.join(","),
-                total_targets = pl.col("target_ids").list.len(),
+                total_targets = pl.when(pl.col("weighting"))
+                    .then(pl.col("total_targets"))
+                    .otherwise(pl.col("target_ids").list.len()),
                 )
             .sort("total_targets", "total_size", descending=[True, False])
             .with_row_index("coassembly")
@@ -314,10 +340,16 @@ if __name__ == "__main__":
     EXCLUDE_COASSEMBLIES = snakemake.params.exclude_coassemblies
     elusive_edges_path = snakemake.input.elusive_edges
     read_size_path = snakemake.input.read_size
+    weightings_path = snakemake.input.targets_weighted
     elusive_clusters_path = snakemake.output.elusive_clusters
 
-    elusive_edges = pl.read_csv(elusive_edges_path, separator="\t", dtypes={"target_ids": str})
+    elusive_edges = pl.read_csv(elusive_edges_path, separator="\t", schema_overrides={"target_ids": str})
     read_size = pl.read_csv(read_size_path, has_header=False, new_columns=["sample", "read_size"])
+
+    if weightings_path:
+        weightings = pl.read_csv(weightings_path, separator="\t", schema_overrides=TARGET_WEIGHTING_COLUMNS)
+    else:
+        weightings = None
 
     if elusive_edges.height > 10**4:
         min_cluster_targets = 10
@@ -327,6 +359,7 @@ if __name__ == "__main__":
     clusters = pipeline(
         elusive_edges,
         read_size,
+        weightings,
         MAX_COASSEMBLY_SIZE=MAX_COASSEMBLY_SIZE,
         MAX_COASSEMBLY_SAMPLES=MAX_COASSEMBLY_SAMPLES,
         MIN_COASSEMBLY_SAMPLES=MIN_COASSEMBLY_SAMPLES,

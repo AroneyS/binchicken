@@ -302,6 +302,42 @@ Automatically excludes previous coassemblies.
 
 <!-- -->
 
+**\--abundance-weighted**
+
+  Weight sequences by mean sample abundance when ranking clusters
+    [default: False]
+
+<!-- -->
+
+**\--abundance-weighted-samples** *ABUNDANCE_WEIGHTED_SAMPLES* [*ABUNDANCE_WEIGHTED_SAMPLES* \...]
+
+  Restrict sequence weighting to these samples. Remaining samples will
+    still be used for coassembly [default: use all samples]
+
+<!-- -->
+
+**\--abundance-weighted-samples-list** *ABUNDANCE_WEIGHTED_SAMPLES_LIST*
+
+  Restrict sequence weighting to these samples, newline separated.
+    Remaining samples will still be used for coassembly [default: use
+    all samples]
+
+<!-- -->
+
+**\--kmer-precluster** {never,large,always}
+
+  Run kmer preclustering using unbinned window sequences as kmers.
+    [default: large; perform preclustering when given \>1000 samples]
+
+<!-- -->
+
+**\--precluster-size** *PRECLUSTER_SIZE*
+
+  \# of samples within each sample\'s precluster [default: 5 \*
+    max-recovery- samples]
+
+<!-- -->
+
 **\--prodigal-meta**
 
   Use prodigal \"-p meta\" argument (for testing)

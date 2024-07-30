@@ -17,7 +17,7 @@ READ_SIZE_COLUMNS=["sample", "read_size"]
 ELUSIVE_CLUSTERS_COLUMNS={
     "samples": str,
     "length": int,
-    "total_targets": int,
+    "total_targets": float,
     "total_size": int,
     "recover_samples": str,
     "coassembly": str,
@@ -28,7 +28,7 @@ CAT_CLUSTERS_COLUMNS={
     "samples": pl.List(pl.Utf8),
     "length": int,
     "target_ids": pl.List(pl.UInt32),
-    "total_targets": int,
+    "total_targets": float,
     "total_size": int,
     }
 SAMPLE_TARGETS_COLUMNS={
@@ -40,17 +40,22 @@ CAT_RECOVERY_COLUMNS={
     "samples": pl.List(pl.Utf8),
     "length": int,
     "target_ids": pl.List(pl.UInt32),
-    "total_targets": int,
+    "total_targets": float,
     "total_size": int,
     "recover_candidates": pl.List(pl.Utf8),
     }
 
+TARGET_WEIGHTING_COLUMNS = {
+    "target": str,
+    "weight": float,
+}
+
 class Tests(unittest.TestCase):
     def assertDataFrameEqual(self, a, b):
-        assert_frame_equal(a, b, check_dtype=False)
+        assert_frame_equal(a, b, check_dtypes=False)
 
     def assertSeriesEqual(self, a, b):
-        assert_series_equal(a, b, check_dtype=False)
+        assert_series_equal(a, b, check_dtypes=False)
 
     def test_cluster_graph(self):
         elusive_edges = pl.DataFrame([
@@ -295,6 +300,63 @@ class Tests(unittest.TestCase):
         expected = pl.DataFrame([
         ], schema=ELUSIVE_CLUSTERS_COLUMNS)
         observed = pipeline(elusive_edges, read_size, MAX_COASSEMBLY_SIZE=2000)
+        self.assertDataFrameEqual(expected, observed)
+
+    def test_cluster_larger_match(self):
+        elusive_edges = pl.DataFrame([
+            ["match", 2, "3,4", "1,4"],
+            ["match", 3, "1,2,3", "1"],
+            ["match", 3, "4,5,6", "4,5,6"],
+        ], schema = ELUSIVE_EDGES_COLUMNS)
+        read_size = pl.DataFrame([
+            ["1", 1000],
+            ["2", 1000],
+            ["3", 1000],
+            ["4", 1000],
+            ["5", 1000],
+            ["6", 1000],
+        ], schema=READ_SIZE_COLUMNS)
+
+        expected = pl.DataFrame([
+            ["4,5,6", 3, 3, 3000, "3,4,5,6", "coassembly_0"],
+            ["1,2,3", 3, 1, 3000, "1,2,3,4", "coassembly_1"],
+        ], schema=ELUSIVE_CLUSTERS_COLUMNS)
+        observed = pipeline(
+            elusive_edges,
+            read_size,
+            MAX_RECOVERY_SAMPLES=4,
+            MIN_COASSEMBLY_SAMPLES=3,
+            MAX_COASSEMBLY_SAMPLES=3
+            )
+        self.assertDataFrameEqual(expected, observed)
+
+    def test_cluster_larger_match_options(self):
+        elusive_edges = pl.DataFrame([
+            ["match", 2, "3,4", "1,4,5"],
+            ["match", 3, "1,2,3", "1,2,3,4"],
+            ["match", 3, "2,3,4", "1,4"],
+            ["match", 3, "4,5,6", "4,5,6"],
+        ], schema = ELUSIVE_EDGES_COLUMNS)
+        read_size = pl.DataFrame([
+            ["1", 1000],
+            ["2", 1000],
+            ["3", 1000],
+            ["4", 1000],
+            ["5", 1000],
+            ["6", 1000],
+        ], schema=READ_SIZE_COLUMNS)
+
+        expected = pl.DataFrame([
+            ["1,2,3", 3, 4, 3000, "1,2,3,4", "coassembly_0"],
+            ["4,5,6", 3, 3, 3000, "3,4,5,6", "coassembly_1"],
+        ], schema=ELUSIVE_CLUSTERS_COLUMNS)
+        observed = pipeline(
+            elusive_edges,
+            read_size,
+            MAX_RECOVERY_SAMPLES=4,
+            MIN_COASSEMBLY_SAMPLES=3,
+            MAX_COASSEMBLY_SAMPLES=3
+            )
         self.assertDataFrameEqual(expected, observed)
 
     def test_cluster_three_samples(self):
@@ -609,6 +671,47 @@ class Tests(unittest.TestCase):
             MAX_RECOVERY_SAMPLES=4,
             COASSEMBLY_SAMPLES=["1", "2", "3", "4"],
             )
+        self.assertDataFrameEqual(expected, observed)
+
+    def test_cluster_graph_weightings(self):
+        elusive_edges = pl.DataFrame([
+            ["match", 2, "sample_2,sample_1", "0,1,2"],
+            ["match", 2, "sample_1,sample_3", "1,3"],
+        ], schema=ELUSIVE_EDGES_COLUMNS)
+        read_size = pl.DataFrame([
+            ["sample_1", 1000],
+            ["sample_2", 2000],
+            ["sample_3", 1000],
+        ], schema=READ_SIZE_COLUMNS)
+        weightings = pl.DataFrame([
+            ["0", 0.01],
+            ["1", 0.01],
+            ["2", 0.01],
+            ["3", 0.5],
+        ], schema=TARGET_WEIGHTING_COLUMNS)
+
+        expected = pl.DataFrame([
+            ["sample_1,sample_3", 2, 0.51, 2000, "sample_1,sample_2,sample_3", "coassembly_0"],
+        ], schema=ELUSIVE_CLUSTERS_COLUMNS)
+        observed = pipeline(elusive_edges, read_size, weightings)
+        self.assertDataFrameEqual(expected, observed)
+
+    def test_cluster_graph_weightings_empty(self):
+        elusive_edges = pl.DataFrame([
+            ["match", 2, "sample_2,sample_1", "0,1,2"],
+            ["match", 2, "sample_1,sample_3", "1,3"],
+        ], schema=ELUSIVE_EDGES_COLUMNS)
+        read_size = pl.DataFrame([
+            ["sample_1", 1000],
+            ["sample_2", 2000],
+            ["sample_3", 1000],
+        ], schema=READ_SIZE_COLUMNS)
+        weightings = pl.DataFrame([
+        ], schema=TARGET_WEIGHTING_COLUMNS)
+
+        expected = pl.DataFrame([
+        ], schema=ELUSIVE_CLUSTERS_COLUMNS)
+        observed = pipeline(elusive_edges, read_size, weightings)
         self.assertDataFrameEqual(expected, observed)
 
     def test_join_list_subsets(self):

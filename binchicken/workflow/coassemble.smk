@@ -22,6 +22,11 @@ qc_reads_2 = {read: output_dir + f"/qc/{read}_2.fastq.gz" for read in config["re
 def get_mem_mb(wildcards, threads, attempt):
     return 8 * 1000 * threads * attempt
 
+def get_runtime(base_hours):
+    def runtime_func(wildcards, attempt):
+        return f"{attempt * base_hours}h"
+    return runtime_func
+
 def get_genomes(wildcards, version=None):
     version = version if version else wildcards.version
     if version == "":
@@ -119,7 +124,7 @@ rule singlem_pipe_reads:
     threads: 1
     resources:
         mem_mb=get_mem_mb,
-        runtime = lambda wildcards, attempt: 24*60*attempt,
+        runtime = get_runtime(base_hours = 24),
     conda:
         "env/singlem.yml"
     shell:
@@ -147,7 +152,7 @@ rule genome_transcripts:
     threads: 1
     resources:
         mem_mb=get_mem_mb,
-        runtime = lambda wildcards, attempt: 1*60*attempt,
+        runtime = get_runtime(base_hours = 1),
     group: "singlem_bins"
     conda:
         "env/prodigal.yml"
@@ -172,7 +177,7 @@ rule singlem_pipe_genomes:
     threads: 1
     resources:
         mem_mb=get_mem_mb,
-        runtime = lambda wildcards, attempt: 1*60*attempt,
+        runtime = get_runtime(base_hours = 1),
     group: "singlem_bins"
     conda:
         "env/singlem.yml"
@@ -225,7 +230,7 @@ rule singlem_appraise:
     threads: 1
     resources:
         mem_mb=get_mem_mb,
-        runtime = lambda wildcards, attempt: 24*60*attempt,
+        runtime = get_runtime(base_hours = 24),
     conda:
         "env/singlem.yml"
     shell:
@@ -276,7 +281,7 @@ rule update_appraise:
     threads: 1
     resources:
         mem_mb=get_mem_mb,
-        runtime = lambda wildcards, attempt: 24*60*attempt,
+        runtime = get_runtime(base_hours = 24),
     conda:
         "env/singlem.yml"
     shell:
@@ -309,11 +314,10 @@ rule query_processing:
     params:
         sequence_identity = config["appraise_sequence_identity"],
         window_size = 60,
-        taxa_of_interest = config["taxa_of_interest"],
     threads: 1
     resources:
         mem_mb=get_mem_mb,
-        runtime = lambda wildcards, attempt: 24*60*attempt,
+        runtime = get_runtime(base_hours = 24),
     script:
         "scripts/query_processing.py"
 
@@ -347,7 +351,7 @@ rule count_bp_reads:
     threads: 8
     resources:
         mem_mb=get_mem_mb,
-        runtime = lambda wildcards, attempt: 24*60*attempt,
+        runtime = get_runtime(base_hours = 24),
     shell:
         "parallel -k -j {threads} "
         "echo -n {{1}}, '&&' "
@@ -355,9 +359,69 @@ rule count_bp_reads:
         "::: {params.names} :::+ {input.reads_1} :::+ {input.reads_2} "
         "> {output}"
 
+rule abundance_weighting:
+    input:
+        unbinned = output_dir + "/appraise/unbinned.otu_table.tsv",
+        binned = output_dir + "/appraise/binned.otu_table.tsv",
+    output:
+        weighted = output_dir + "/appraise/weighted.otu_table.tsv"
+    threads: 64
+    params:
+        samples = config["abundance_weighted_samples"]
+    resources:
+        mem_mb=get_mem_mb,
+        runtime = get_runtime(base_hours = 24),
+    log:
+        logs_dir + "/appraise/abundance_weighting.log"
+    benchmark:
+        benchmarks_dir + "/appraise/abundance_weighting.tsv"
+    script:
+        "scripts/abundance_weighting.py"
+
+rule sketch_samples:
+    input:
+        unbinned = output_dir + "/appraise/unbinned.otu_table.tsv",
+    output:
+        sketch = output_dir + "/sketch/samples.sig"
+    params:
+        taxa_of_interest = config["taxa_of_interest"],
+    threads: 64
+    resources:
+        mem_mb=get_mem_mb,
+        runtime = get_runtime(base_hours = 96),
+    log:
+        logs_dir + "/precluster/sketching.log"
+    benchmark:
+        benchmarks_dir + "/precluster/sketching.tsv"
+    script:
+        "scripts/sketch_samples.py"
+
+rule distance_samples:
+    input:
+        sketch = output_dir + "/sketch/samples.sig",
+    output:
+        distance = output_dir + "/sketch/samples.csv"
+    threads: 64
+    resources:
+        mem_mb=get_mem_mb,
+        runtime = get_runtime(base_hours = 48),
+    log:
+        logs_dir + "/precluster/distance.log"
+    benchmark:
+        benchmarks_dir + "/precluster/distance.tsv"
+    shell:
+        "sourmash scripts pairwise "
+        "{input.sketch} "
+        "-o {output.distance} "
+        "-k 60 "
+        "-s 1 "
+        "-c {threads} "
+        "&> {log} "
+
 rule target_elusive:
     input:
-        unbinned = output_dir + "/appraise/unbinned.otu_table.tsv"
+        unbinned = output_dir + "/appraise/unbinned.otu_table.tsv",
+        distances = output_dir + "/sketch/samples.csv" if config["kmer_precluster"] else [],
     output:
         output_edges = output_dir + "/target/elusive_edges.tsv",
         output_targets = output_dir + "/target/targets.tsv",
@@ -366,10 +430,11 @@ rule target_elusive:
         max_coassembly_samples = config["max_coassembly_samples"],
         taxa_of_interest = config["taxa_of_interest"],
         samples = config["reads_1"],
-    threads: 32
+        precluster_size = config["precluster_size"],
+    threads: 64
     resources:
         mem_mb=get_mem_mb,
-        runtime = lambda wildcards, attempt: 24*60*attempt,
+        runtime = get_runtime(base_hours = 24),
     log:
         logs_dir + "/target/target_elusive.log"
     benchmark:
@@ -377,10 +442,28 @@ rule target_elusive:
     script:
         "scripts/target_elusive.py"
 
+rule target_weighting:
+    input:
+        targets = output_dir + "/target/targets.tsv",
+        weighting = output_dir + "/appraise/weighted.otu_table.tsv" if config["abundance_weighted"] else [],
+    output:
+        targets_weighted = output_dir + "/target/targets_weighted.tsv",
+    threads: 64
+    resources:
+        mem_mb=get_mem_mb,
+        runtime = get_runtime(base_hours = 24),
+    log:
+        logs_dir + "/target/target_weighting.log"
+    benchmark:
+        benchmarks_dir + "/target/target_weighting.tsv"
+    script:
+        "scripts/target_weighting.py"
+
 checkpoint cluster_graph:
     input:
         elusive_edges = output_dir + "/target/elusive_edges.tsv",
         read_size = output_dir + "/read_size.csv",
+        targets_weighted = output_dir + "/target/targets_weighted.tsv" if config["abundance_weighted"] else [],
     output:
         elusive_clusters = output_dir + "/target/elusive_clusters.tsv"
     params:
@@ -393,7 +476,7 @@ checkpoint cluster_graph:
     threads: 64
     resources:
         mem_mb=get_mem_mb,
-        runtime = lambda wildcards, attempt: 48*60*attempt,
+        runtime = get_runtime(base_hours = 48),
     log:
         logs_dir + "/target/cluster_graph.log"
     benchmark:
@@ -410,10 +493,10 @@ rule download_read:
     params:
         dir = output_dir + "/sra",
         name = "{read}",
-    threads: 4
+    threads: 1
     resources:
         mem_mb=get_mem_mb,
-        runtime = lambda wildcards, attempt: 4*60*attempt,
+        runtime = get_runtime(base_hours = 16),
         downloading = 1,
     conda:
         "env/kingfisher.yml"
@@ -427,6 +510,7 @@ rule download_read:
         "-f fastq.gz "
         "-m ena-ftp prefetch ena-ascp aws-http aws-cp "
         "-t {threads} "
+        "--download_threads {threads} "
         "&> {log} "
         "&& touch {output.done}"
 
@@ -472,11 +556,11 @@ rule qc_reads:
     params:
         quality_cutoff = 15,
         unqualified_percent_limit = 40,
-        min_length = 80,
+        min_length = 70,
     threads: 32
     resources:
         mem_mb=get_mem_mb,
-        runtime = lambda wildcards, attempt: 4*60*attempt,
+        runtime = get_runtime(base_hours = 4),
     log:
         logs_dir + "/mapping/{read}_qc.log"
     benchmark:
@@ -523,7 +607,7 @@ rule map_reads:
     threads: 32
     resources:
         mem_mb=get_mem_mb,
-        runtime = lambda wildcards, attempt: 12*60*attempt,
+        runtime = get_runtime(base_hours = 12),
     log:
         logs_dir + "/mapping/{read}_coverm.log",
     benchmark:
@@ -553,7 +637,7 @@ rule filter_bam_files:
     threads: 32
     resources:
         mem_mb=get_mem_mb,
-        runtime = lambda wildcards, attempt: 4*60*attempt,
+        runtime = get_runtime(base_hours = 4),
     log:
         logs_dir + "/mapping/{read}_filter.log",
     benchmark:
@@ -580,7 +664,7 @@ rule bam_to_fastq:
     threads: 32
     resources:
         mem_mb=get_mem_mb,
-        runtime = lambda wildcards, attempt: 4*60*attempt,
+        runtime = get_runtime(base_hours = 4),
     log:
         logs_dir + "/mapping/{read}_fastq.log",
     conda:
@@ -700,7 +784,7 @@ rule aviary_assemble:
     resources:
         mem_mb = lambda wildcards, attempt: get_assemble_memory(wildcards, attempt, unit="MB"),
         mem_gb = get_assemble_memory,
-        runtime = lambda wildcards, attempt: 96*60*attempt,
+        runtime = get_runtime(base_hours = 96),
         assembler = get_assemble_assembler,
     log:
         logs_dir + "/aviary/{coassembly}_assemble.log"

@@ -7,6 +7,7 @@ import polars as pl
 import os
 import numpy as np
 import extern
+from binchicken.binchicken import SUFFIX_RE
 
 def trimmed_mean(data, trim=0.1):
     cut = int(np.floor(len(data) * trim))
@@ -19,20 +20,22 @@ def trimmed_mean(data, trim=0.1):
 def pipeline(appraise_binned, appraise_unbinned, sample, MIN_APPRAISED=0.1, TRIM_FRACTION=0.1):
     print(f"Polars using {str(pl.thread_pool_size())} threads")
 
-    appraise_binned = appraise_binned.with_columns(
-        pl.col("sample").cast(str),
-        sample_remove_suffix1 = pl.col("sample").str.replace(r"\.1$", ""),
-        sample_remove_suffix2 = pl.col("sample").str.replace(r"_1$", ""),
-    ).filter(
-        (pl.col("sample") == sample) | (pl.col("sample_remove_suffix1") == sample) | (pl.col("sample_remove_suffix2") == sample)
+    appraise_binned = (
+        appraise_binned
+        .with_columns(
+            pl.col("sample").cast(str),
+            sample_remove_suffix = pl.col("sample").str.replace(SUFFIX_RE, ""),
+            )
+        .filter((pl.col("sample") == sample) | (pl.col("sample_remove_suffix") == sample))
     )
 
-    appraise_unbinned = appraise_unbinned.with_columns(
-        pl.col("sample").cast(str),
-        sample_remove_suffix1 = pl.col("sample").str.replace(r"\.1$", ""),
-        sample_remove_suffix2 = pl.col("sample").str.replace(r"_1$", ""),
-    ).filter(
-        (pl.col("sample") == sample) | (pl.col("sample_remove_suffix1") == sample) | (pl.col("sample_remove_suffix2") == sample)
+    appraise_unbinned = (
+        appraise_unbinned
+        .with_columns(
+            pl.col("sample").cast(str),
+            sample_remove_suffix = pl.col("sample").str.replace(SUFFIX_RE, ""),
+            )
+        .filter((pl.col("sample") == sample) | (pl.col("sample_remove_suffix") == sample))
     )
 
     num_binned = sum(appraise_binned.get_column("num_hits").to_list())
@@ -45,34 +48,31 @@ def pipeline(appraise_binned, appraise_unbinned, sample, MIN_APPRAISED=0.1, TRIM
     if perc_binned < MIN_APPRAISED:
         return set()
 
-    reference_bins = appraise_binned.with_columns(
-        pl.col("found_in").str.split(",")
-    ).explode(
-        "found_in"
-    ).with_columns(
-        pl.col("found_in").str.replace("_protein$", "")
-    ).group_by(
-        ["gene", "found_in"]
-    ).agg(
-        pl.col("coverage").sum()
-    ).pivot(
-        values="coverage", index="gene", columns="found_in", aggregate_function=None
-    ).melt(
-        id_vars="gene", variable_name="found_in", value_name="coverage"
-    ).fill_null(0
-    ).group_by(
-        "found_in"
-    ).agg(
-        (pl.col("coverage").len() * TRIM_FRACTION).floor().cast(int).alias("cut"),
-        pl.col("coverage")
-    ).with_columns(
-        pl.col("coverage").list.sort().list.slice(
-            pl.col("cut"), pl.col("coverage").list.len() - 2 * pl.col("cut")
-            ).list.mean()
-    ).filter(
-        pl.col("coverage") > 0
-    ).get_column("found_in"
-    ).to_list()
+    reference_bins = (
+        appraise_binned
+        .with_columns(pl.col("found_in").str.split(","))
+        .explode("found_in")
+        .with_columns(pl.col("found_in").str.replace("_protein$", ""))
+        .group_by(["gene", "found_in"])
+        .agg(pl.col("coverage").sum())
+        .pivot(values="coverage", index="gene", columns="found_in", aggregate_function=None)
+        .melt(id_vars="gene", variable_name="found_in", value_name="coverage")
+        .fill_null(0)
+        .group_by("found_in")
+        .agg(
+            (pl.col("coverage").len() * TRIM_FRACTION).floor().cast(int).alias("cut"),
+            pl.col("coverage")
+            )
+        .with_columns(
+            pl.col("coverage")
+                .list.sort()
+                .list.slice(pl.col("cut"), pl.col("coverage").list.len() - 2 * pl.col("cut"))
+                .list.mean()
+            )
+        .filter(pl.col("coverage") > 0)
+        .get_column("found_in")
+        .to_list()
+    )
 
     return set(reference_bins)
 

@@ -11,7 +11,7 @@ ELUSIVE_CLUSTERS_COLUMNS={
     "coassembly": str,
     "samples": str,
     "length": int,
-    "total_targets": int,
+    "total_targets": float,
     "total_size": int,
     }
 
@@ -24,14 +24,14 @@ SUMMARY_COLUMNS={
     "coassembly": str,
     "samples": str,
     "length": int,
-    "total_targets": int,
+    "total_targets": float,
     "total_size": int,
     "unmapped_size": int,
     }
 
 class Tests(unittest.TestCase):
     def assertDataFrameEqual(self, a, b):
-        assert_frame_equal(a, b, check_dtype=False, check_row_order=False)
+        assert_frame_equal(a, b, check_dtypes=False, check_row_order=False)
 
     def test_summarise_coassemblies(self):
         elusive_clusters = pl.DataFrame([

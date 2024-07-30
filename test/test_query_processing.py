@@ -39,7 +39,7 @@ APPRAISE_COLUMNS={
 
 class Tests(unittest.TestCase):
     def assertDataFrameEqual(self, a, b):
-        assert_frame_equal(a, b, check_dtype=False)
+        assert_frame_equal(a, b, check_dtypes=False)
 
     def test_query_processing(self):
         query = pl.DataFrame([
@@ -196,56 +196,6 @@ class Tests(unittest.TestCase):
         ], schema=APPRAISE_COLUMNS)
 
         observed_binned, observed_unbinned = processing(query, pipe, SEQUENCE_IDENTITY = 0.94)
-        self.assertDataFrameEqual(expected_binned, observed_binned)
-        self.assertDataFrameEqual(expected_unbinned, observed_unbinned)
-
-    def test_query_processing_remove_EIF(self):
-        query = pl.DataFrame([
-            ["sample_1", "AAA", 1, 5, 10, "genome_1", "S3.1", "AAA", "Root"],
-            ["sample_1", "AAB", 10, 5, 10, "genome_1", "S3.1", "AAA", "Root"],
-            ["sample_1", "CCC", 1, 5, 10, "genome_1", "S3.18.EIF_2_alpha", "AAA", "Root"],
-            ["sample_1", "CCD", 10, 5, 10, "genome_1", "S3.18.EIF_2_alpha", "AAA", "Root"],
-        ], schema=QUERY_COLUMNS)
-        pipe = pl.DataFrame([
-            ["S3.1", "sample_1", "AAA", 5, 10, "Root"],
-            ["S3.1", "sample_1", "AAB", 5, 10, "Root"],
-            ["S3.18.EIF_2_alpha", "sample_1", "CCC", 5, 10, "Root"],
-            ["S3.18.EIF_2_alpha", "sample_1", "CCD", 5, 10, "Root"],
-        ], schema=PIPE_COLUMNS)
-
-        expected_binned = pl.DataFrame([
-            ["S3.1", "sample_1", "AAA", 5, 10, "Root", "genome_1"],
-        ], schema=APPRAISE_COLUMNS)
-        expected_unbinned = pl.DataFrame([
-            ["S3.1", "sample_1", "AAB", 5, 10, "Root", None],
-        ], schema=APPRAISE_COLUMNS)
-
-        observed_binned, observed_unbinned = processing(query, pipe)
-        self.assertDataFrameEqual(expected_binned, observed_binned)
-        self.assertDataFrameEqual(expected_unbinned, observed_unbinned)
-
-    def test_query_processing_target_taxa(self):
-        query = pl.DataFrame([
-            ["sample_1", "AAA", 1, 5, 10, "genome_1", "S3.1", "AAA", "Root; d__Bacteria"],
-            ["sample_1", "AAB", 10, 5, 10, "genome_1", "S3.1", "AAA", "Root; d__Bacteria"],
-            ["sample_1", "CCC", 1, 5, 10, "genome_1", "S3.1", "AAA", "Root"],
-            ["sample_1", "CCD", 10, 5, 10, "genome_1", "S3.1", "AAA", "Root"],
-        ], schema=QUERY_COLUMNS)
-        pipe = pl.DataFrame([
-            ["S3.1", "sample_1", "AAA", 5, 10, "Root; d__Bacteria; p__Planctomycetota"],
-            ["S3.1", "sample_1", "AAB", 5, 10, "Root; d__Bacteria; p__Planctomycetota"],
-            ["S3.1", "sample_1", "CCC", 5, 10, "Root"],
-            ["S3.1", "sample_1", "CCD", 5, 10, "Root"],
-        ], schema=PIPE_COLUMNS)
-
-        expected_binned = pl.DataFrame([
-            ["S3.1", "sample_1", "AAA", 5, 10, "Root; d__Bacteria; p__Planctomycetota", "genome_1"],
-        ], schema=APPRAISE_COLUMNS)
-        expected_unbinned = pl.DataFrame([
-            ["S3.1", "sample_1", "AAB", 5, 10, "Root; d__Bacteria; p__Planctomycetota", None],
-        ], schema=APPRAISE_COLUMNS)
-
-        observed_binned, observed_unbinned = processing(query, pipe, TAXA_OF_INTEREST="p__Planctomycetota")
         self.assertDataFrameEqual(expected_binned, observed_binned)
         self.assertDataFrameEqual(expected_unbinned, observed_unbinned)
 

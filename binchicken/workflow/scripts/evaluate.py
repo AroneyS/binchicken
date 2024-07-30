@@ -25,7 +25,7 @@ APPRAISE_COLUMNS = SINGLEM_COLUMNS | {
 CLUSTER_COLUMNS = {
     "samples": str,
     "length": int,
-    "total_targets": int,
+    "total_targets": float,
     "total_size": float,
     "recover_samples": str,
     "coassembly": str,
@@ -146,7 +146,7 @@ def evaluate(target_otu_table, binned_otu_table, elusive_clusters, elusive_edges
             pl.col("sample").str.replace(r"_1$", "").str.replace(r"\.1$", ""),
             "gene", "sequence", "taxonomy", "found_in", "num_hits", "coverage", "target"
             ])
-        .join(sample_coassemblies, left_on="sample", right_on="samples", how="left")
+        .join(sample_coassemblies, left_on="sample", right_on="samples", how="left", coalesce=True)
         .drop_nulls("coassembly")
         .group_by(["gene", "sequence", "coassembly"])
         .agg([
@@ -296,7 +296,7 @@ def summarise_stats(matches, combined_otu_table, recovered_bins):
             pl.lit("match").alias("status"),
             pl.lit("bins").alias("statistic"),
             )
-        .join(summary.rename({"value": "match"}), on=["coassembly", "status", "statistic"], how="left")
+        .join(summary.rename({"value": "match"}), on=["coassembly", "status", "statistic"], how="left", coalesce=True)
         .select(
             "coassembly",
             pl.lit("nonmatch").alias("status"),
@@ -337,11 +337,11 @@ if __name__ == "__main__":
     novel_hits_path = snakemake.output.novel_hits
     summary_stats_path = snakemake.output.summary_stats
 
-    target_otu_table = pl.read_csv(target_path, separator="\t", dtypes=TARGET_COLUMNS)
-    binned_otu_table = pl.read_csv(binned_path, separator="\t", dtypes=APPRAISE_COLUMNS)
-    elusive_clusters = pl.read_csv(elusive_clusters_path, separator="\t", dtypes=CLUSTER_COLUMNS)
-    elusive_edges = pl.read_csv(elusive_edges_path, separator="\t", dtypes=EDGE_COLUMNS)
-    recovered_otu_table = pl.read_csv(recovered_otu_table_path, separator="\t", dtypes=SINGLEM_COLUMNS)
+    target_otu_table = pl.read_csv(target_path, separator="\t", schema_overrides=TARGET_COLUMNS)
+    binned_otu_table = pl.read_csv(binned_path, separator="\t", schema_overrides=APPRAISE_COLUMNS)
+    elusive_clusters = pl.read_csv(elusive_clusters_path, separator="\t", schema_overrides=CLUSTER_COLUMNS)
+    elusive_edges = pl.read_csv(elusive_edges_path, separator="\t", schema_overrides=EDGE_COLUMNS)
+    recovered_otu_table = pl.read_csv(recovered_otu_table_path, separator="\t", schema_overrides=SINGLEM_COLUMNS)
 
     matches, unmatched, summary = evaluate(target_otu_table, binned_otu_table, elusive_clusters, elusive_edges, recovered_otu_table, recovered_bins)
     # Export hits matching elusive targets

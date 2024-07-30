@@ -23,6 +23,10 @@ COMPREHENSIVE_AVIARY_MODE = "comprehensive"
 DYNAMIC_ASSEMBLY_STRATEGY = "dynamic"
 METASPADES_ASSEMBLY = "metaspades"
 MEGAHIT_ASSEMBLY = "megahit"
+PRECLUSTER_NEVER_MODE = "never"
+PRECLUSTER_SIZE_DEP_MODE = "large"
+PRECLUSTER_ALWAYS_MODE = "always"
+SUFFIX_RE = r"(_|\.)R?1$"
 
 def build_reads_list(forward, reverse):
     if reverse:
@@ -145,7 +149,7 @@ def download_sra(args):
     if "mock_sra=True" in args.snakemake_args:
         target_rule = "mock_download_sra --resources downloading=1"
     else:
-        target_rule = "download_sra --resources downloading=3"
+        target_rule = f"download_sra --resources downloading={args.download_limit}"
 
     run_workflow(
         config = config_path,
@@ -316,6 +320,11 @@ def set_standard_args(args):
     args.max_coassembly_samples = None
     args.max_coassembly_size = None
     args.max_recovery_samples = 1
+    args.abundance_weighted = False
+    args.abundance_weighted_samples_list = None
+    args.abundance_weighted_samples = []
+    args.kmer_precluster = PRECLUSTER_NEVER_MODE
+    args.precluster_size = 100
     args.prodigal_meta = False
 
     return(args)
@@ -405,6 +414,9 @@ def coassemble(args):
     if args.exclude_coassemblies_list:
         args.exclude_coassemblies = read_list(args.exclude_coassemblies_list)
 
+    if args.abundance_weighted_samples_list:
+        args.abundance_weighted_samples = read_list(args.abundance_weighted_samples_list)
+
     logging.info("Loading genome info")
     if args.genomes_list:
         args.genomes = read_list(args.genomes_list)
@@ -445,6 +457,21 @@ def coassemble(args):
         args.max_coassembly_samples = 1
         args.max_coassembly_size = None
 
+    if args.kmer_precluster == PRECLUSTER_NEVER_MODE:
+        kmer_precluster = False
+    elif args.kmer_precluster == PRECLUSTER_SIZE_DEP_MODE:
+        if len(forward_reads) > 1000:
+            kmer_precluster = True
+        else:
+            kmer_precluster = False
+    elif args.kmer_precluster == PRECLUSTER_ALWAYS_MODE:
+        kmer_precluster = True
+    else:
+        raise ValueError(f"Invalid kmer precluster mode: {args.kmer_precluster}")
+
+    if not args.precluster_size:
+        args.precluster_size = args.max_recovery_samples * 5
+
     try:
         build_status = args.build
     except AttributeError:
@@ -469,6 +496,10 @@ def coassemble(args):
         "max_coassembly_samples": args.max_coassembly_samples if args.max_coassembly_samples else args.num_coassembly_samples,
         "max_coassembly_size": args.max_coassembly_size,
         "max_recovery_samples": args.max_recovery_samples,
+        "abundance_weighted": args.abundance_weighted,
+        "abundance_weighted_samples": args.abundance_weighted_samples,
+        "kmer_precluster": kmer_precluster,
+        "precluster_size": args.precluster_size,
         "prodigal_meta": args.prodigal_meta,
         # Coassembly config
         "assemble_unmapped": args.assemble_unmapped,
@@ -524,8 +555,11 @@ def coassemble(args):
         )
         unused_samples = [s for s in forward_reads.keys() if s not in edge_samples]
         if unused_samples:
-            logging.warning(f"Some samples had no targets with sufficient combined coverage for coassembly prediction")
-            logging.warning(f"These were: {' '.join(unused_samples)}")
+            unused_samples_file = os.path.join(args.output, "coassemble", "target", "unused_samples.tsv")
+            with open(unused_samples_file, "w") as f:
+                f.write("\n".join(unused_samples))
+            logging.warning(f"{len(unused_samples)} samples had no targets with sufficient combined coverage for coassembly prediction")
+            logging.warning(f"These are recorded at {unused_samples_file}")
     except (FileNotFoundError, NoDataError):
         pass
 
@@ -626,8 +660,12 @@ def update(args):
             args.genomes = [os.path.normpath(os.path.join(args.coassemble_output, "..", v)) for _,v in old_config["genomes"].items()]
             args.no_genomes = False
         if not (args.forward or args.forward_list):
-            args.forward = [os.path.normpath(os.path.join(args.coassemble_output, "..", v)) for _,v in old_config["reads_1"].items()]
-            args.reverse = [os.path.normpath(os.path.join(args.coassemble_output, "..", v)) for _,v in old_config["reads_2"].items()]
+            if args.sra:
+                args.forward = [k for k,_ in old_config["reads_1"].items()]
+                args.reverse = [k for k,_ in old_config["reads_2"].items()]
+            else:
+                args.forward = [os.path.normpath(os.path.join(args.coassemble_output, "..", v)) for _,v in old_config["reads_1"].items()]
+                args.reverse = [os.path.normpath(os.path.join(args.coassemble_output, "..", v)) for _,v in old_config["reads_2"].items()]
 
     logging.info("Loading Bin Chicken coassemble info")
     if args.coassemble_output:
@@ -642,6 +680,9 @@ def update(args):
         args.coassemble_elusive_clusters = os.path.join(coassemble_target_dir, "elusive_clusters.tsv")
         args.sample_read_size = os.path.join(coassemble_dir, "read_size.csv")
 
+    if args.coassemblies_list:
+        args.coassemblies = read_list(args.coassemblies_list)
+
     if args.coassemble_elusive_clusters and not args.coassemblies:
         copy_input(
             os.path.abspath(args.coassemble_elusive_clusters),
@@ -652,7 +693,28 @@ def update(args):
         elusive_clusters = elusive_clusters.filter(pl.col("coassembly").is_in(args.coassemblies))
 
         os.makedirs(os.path.join(args.output, "coassemble", "target"), exist_ok=True)
-        elusive_clusters.write_csv(os.path.join(args.output, "coassemble", "target", "elusive_clusters.tsv"), separator="\t")
+        # remove file before writing
+        elusive_clusters_path = os.path.join(args.output, "coassemble", "target", "elusive_clusters.tsv")
+        try:
+            os.remove(elusive_clusters_path)
+        except FileNotFoundError:
+            pass
+        elusive_clusters.write_csv(elusive_clusters_path, separator="\t")
+
+    if args.sra and args.coassemble_elusive_clusters:
+        if not args.coassemblies:
+            elusive_clusters = pl.read_csv(os.path.abspath(args.coassemble_elusive_clusters), separator="\t")
+
+        sra_samples = (
+            elusive_clusters
+            .select(pl.col("recover_samples").str.split(","))
+            .explode("recover_samples")
+            .unique()
+            .get_column("recover_samples")
+            .to_list()
+        )
+        args.forward = [f for f in args.forward if f in sra_samples]
+        args.reverse = args.forward
 
     copy_input(
         os.path.abspath(args.coassemble_unbinned),
@@ -884,7 +946,10 @@ def iterate(args):
     logging.info(f"Bin Chicken iterate complete.")
     logging.info(f"Cluster summary at {os.path.join(args.output, 'coassemble', 'summary.tsv')}")
     logging.info(f"More details at {os.path.join(args.output, 'coassemble', 'target', 'elusive_clusters.tsv')}")
-    logging.info(f"Aviary commands for coassembly and recovery in shell scripts at {os.path.join(args.output, 'coassemble', 'commands')}")
+    if args.run_aviary:
+        logging.info(f"Aviary outputs at {os.path.join(args.output, 'coassemble', 'coassemble')}")
+    else:
+        logging.info(f"Aviary commands for coassembly and recovery in shell scripts at {os.path.join(args.output, 'coassemble', 'commands')}")
 
 def configure_variable(variable, value):
     os.environ[variable] = value
@@ -939,7 +1004,12 @@ def build(args):
     args.assemble_unmapped = True
     args.run_qc = True
     args.coassemblies = None
+    args.coassemblies_list = None
     args.singlem_metapackage = "."
+    args.abundance_weighted = False
+    args.abundance_weighted_samples_list = None
+    args.kmer_precluster = PRECLUSTER_NEVER_MODE
+    args.download_limit = 1
 
     # Create mock input files
     forward_reads = [os.path.join(args.output, "sample_" + s + ".1.fq") for s in ["1", "2", "3"]]
@@ -1001,6 +1071,8 @@ def build(args):
         args.output = os.path.join(output_dir, "build_aviary")
         mapping_files = [os.path.join(args.output, "coassemble", "mapping", "sample_" + s + "_unmapped." + n + ".fq.gz") for s in ["1", "2", "3"] for n in ["1", "2"]]
         mapping_done = os.path.join(args.output, "coassemble", "mapping", "done")
+        elusive_edges = os.path.join(args.output, "coassemble", "target", "elusive_edges.tsv")
+        targets = os.path.join(args.output, "coassemble", "target", "targets.tsv")
         elusive_clusters = os.path.join(args.output, "coassemble", "target", "elusive_clusters.tsv")
         summary_file = os.path.join(args.output, "coassemble", "summary.tsv")
 
@@ -1010,7 +1082,7 @@ def build(args):
         with open(clusters_path, "w") as f:
             f.write(clusters_text)
 
-        for item in mapping_files + [mapping_done, elusive_clusters, summary_file]:
+        for item in mapping_files + [mapping_done, elusive_edges, targets, elusive_clusters, summary_file]:
             os.makedirs(os.path.dirname(item), exist_ok=True)
             subprocess.check_call(f"touch {item}", shell=True)
 
@@ -1209,6 +1281,12 @@ def main():
         max_coassembly_size_default = 50
         coassemble_clustering.add_argument("--max-coassembly-size", type=int, help=f"Maximum size (Gbp) of coassembly cluster [default: {max_coassembly_size_default}Gbp]", default=max_coassembly_size_default)
         coassemble_clustering.add_argument("--max-recovery-samples", type=int, help="Upper bound for number of related samples to use for differential abundance binning [default: 20]", default=20)
+        coassemble_clustering.add_argument("--abundance-weighted", action="store_true", help="Weight sequences by mean sample abundance when ranking clusters [default: False]")
+        coassemble_clustering.add_argument("--abundance-weighted-samples", nargs='+', help="Restrict sequence weighting to these samples. Remaining samples will still be used for coassembly [default: use all samples]", default=[])
+        coassemble_clustering.add_argument("--abundance-weighted-samples-list", help="Restrict sequence weighting to these samples, newline separated. Remaining samples will still be used for coassembly [default: use all samples]", default=[])
+        coassemble_clustering.add_argument("--kmer-precluster", help="Run kmer preclustering using unbinned window sequences as kmers. [default: large; perform preclustering when given >1000 samples]",
+                                    default=PRECLUSTER_SIZE_DEP_MODE, choices=[PRECLUSTER_NEVER_MODE, PRECLUSTER_SIZE_DEP_MODE, PRECLUSTER_ALWAYS_MODE])
+        coassemble_clustering.add_argument("--precluster-size", type=int, help="# of samples within each sample's precluster [default: 5 * max-recovery-samples]")
         coassemble_clustering.add_argument("--prodigal-meta", action="store_true", help="Use prodigal \"-p meta\" argument (for testing)")
         # Coassembly options
         coassemble_coassembly = parser.add_argument_group("Coassembly options")
@@ -1259,10 +1337,13 @@ def main():
     update_base = update_parser.add_argument_group("Input arguments")
     add_base_arguments(update_base)
     update_base.add_argument("--sra", action="store_true", help="Download reads from SRA (read argument still required). Also sets --run-qc.")
+    default_download_limit = 3
+    update_base.add_argument("--download-limit", type=int, help=f"Parallel download limit [default: {default_download_limit}]", default=default_download_limit)
     # Coassembly options
     update_coassembly = update_parser.add_argument_group("Coassembly options")
     add_coassemble_output_arguments(update_coassembly)
     update_coassembly.add_argument("--coassemblies", nargs='+', help="Choose specific coassemblies from elusive clusters (e.g. coassembly_0)")
+    update_coassembly.add_argument("--coassemblies-list", help="Choose specific coassemblies from elusive clusters newline separated (e.g. coassembly_0)")
     update_coassembly.add_argument("--assemble-unmapped", action="store_true", help="Only assemble reads that do not map to reference genomes")
     update_coassembly.add_argument("--run-qc", action="store_true", help="Run Fastp QC on reads")
     unmapping_min_appraised_default = 0.1
@@ -1371,7 +1452,8 @@ def main():
         if not args.singlem_metapackage and not os.environ['SINGLEM_METAPACKAGE_PATH'] and not args.sample_query and not args.sample_query_list:
             raise Exception("SingleM metapackage (--singlem-metapackage or SINGLEM_METAPACKAGE_PATH environment variable, see SingleM data) must be provided when SingleM query otu tables are not provided")
         if (args.sample_singlem and args.sample_singlem_list) or (args.sample_singlem_dir and args.sample_singlem_list) or (args.sample_singlem and args.sample_singlem_dir) or \
-            (args.sample_query and args.sample_query_list) or (args.sample_query_dir and args.sample_query_list) or (args.sample_query and args.sample_query_dir):
+            (args.sample_query and args.sample_query_list) or (args.sample_query_dir and args.sample_query_list) or (args.sample_query and args.sample_query_dir) or \
+            (args.coassembly_samples and args.coassembly_samples_list) or (args.abundance_weighted_samples and args.abundance_weighted_samples_list):
             raise Exception("General, list and directory arguments are mutually exclusive")
         if args.single_assembly:
             if 1 > args.max_recovery_samples:
@@ -1389,8 +1471,6 @@ def main():
                 raise Exception("Run Aviary (--run-aviary) comprehensive mode requires paths to GTDB-Tk and CheckM2 databases to be provided (--aviary-gtdbtk-db or GTDBTK_DATA_PATH and --aviary-checkm2-db or CHECKM2DB)")
         if args.cluster_submission and not args.snakemake_profile:
                 logging.warning("The arg `--cluster-submission` is only a flag and cannot activate cluster submission alone. Please see `--snakemake-profile` for cluster submission.")
-        if (args.sample_query or args.sample_query_list or args.sample_query_dir) and args.taxa_of_interest and args.assemble_unmapped:
-            raise Exception("Unmapping is incompatible with the combination of sample query and taxa of interest")
 
     def coassemble_output_argument_verification(args, evaluate=False):
         summary_flag = args.coassemble_summary if evaluate else True
