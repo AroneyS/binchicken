@@ -680,6 +680,9 @@ def update(args):
         args.coassemble_elusive_clusters = os.path.join(coassemble_target_dir, "elusive_clusters.tsv")
         args.sample_read_size = os.path.join(coassemble_dir, "read_size.csv")
 
+    if args.coassemblies_list:
+        args.coassemblies = read_list(args.coassemblies_list)
+
     if args.coassemble_elusive_clusters and not args.coassemblies:
         copy_input(
             os.path.abspath(args.coassemble_elusive_clusters),
@@ -1001,6 +1004,7 @@ def build(args):
     args.assemble_unmapped = True
     args.run_qc = True
     args.coassemblies = None
+    args.coassemblies_list = None
     args.singlem_metapackage = "."
     args.abundance_weighted = False
     args.abundance_weighted_samples_list = None
@@ -1339,6 +1343,7 @@ def main():
     update_coassembly = update_parser.add_argument_group("Coassembly options")
     add_coassemble_output_arguments(update_coassembly)
     update_coassembly.add_argument("--coassemblies", nargs='+', help="Choose specific coassemblies from elusive clusters (e.g. coassembly_0)")
+    update_coassembly.add_argument("--coassemblies-list", help="Choose specific coassemblies from elusive clusters newline separated (e.g. coassembly_0)")
     update_coassembly.add_argument("--assemble-unmapped", action="store_true", help="Only assemble reads that do not map to reference genomes")
     update_coassembly.add_argument("--run-qc", action="store_true", help="Run Fastp QC on reads")
     unmapping_min_appraised_default = 0.1
