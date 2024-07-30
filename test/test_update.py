@@ -49,6 +49,10 @@ MOCK_ELUSIVE_CLUSTERS_SRA_MOCK = os.path.join(MOCK_COASSEMBLE, "coassemble", "ta
 MOCK_ELUSIVE_CLUSTERS_SRA_MOCK2 = os.path.join(MOCK_COASSEMBLE, "coassemble", "target", "elusive_clusters_sra_mock2.tsv")
 MOCK_ELUSIVE_CLUSTERS_SRA_MOCK3 = os.path.join(MOCK_COASSEMBLE, "coassemble", "target", "elusive_clusters_sra_mock3.tsv")
 
+def write_string_to_file(string, filename):
+    with open(filename, "w") as f:
+        f.write("\n".join(string.split(" ")))
+
 class Tests(unittest.TestCase):
     def test_update(self):
         with in_tempdir():
@@ -247,6 +251,29 @@ class Tests(unittest.TestCase):
                 f"--assemble-unmapped "
                 f"--coassemble-output {MOCK_COASSEMBLE_SRA} "
                 f"--coassemblies coassembly_0 "
+                f"--sra "
+                f"--output test "
+                f"--conda-prefix {path_to_conda} "
+                f"--dryrun "
+            )
+            output_comb = extern.run(cmd)
+
+            output_sra = output_comb.split("Building DAG of jobs...")[1]
+            self.assertTrue("download_sra" in output_sra)
+            self.assertTrue("aviary_commands" not in output_sra)
+            self.assertTrue("test/coassemble/sra/SRR8334323.done" in output_sra)
+            self.assertTrue("test/coassemble/sra/SRR8334324.done" in output_sra)
+            self.assertTrue("test/coassemble/sra/SRR8334325.done" not in output_sra)
+            self.assertTrue("test/coassemble/sra/SRR8334326.done" not in output_sra)
+
+    def test_update_minimal_sra_coassemblies_list(self):
+        with in_tempdir():
+            write_string_to_file("coassembly_0", "coassemblies")
+            cmd = (
+                f"binchicken update "
+                f"--assemble-unmapped "
+                f"--coassemble-output {MOCK_COASSEMBLE_SRA} "
+                f"--coassemblies-list coassemblies "
                 f"--sra "
                 f"--output test "
                 f"--conda-prefix {path_to_conda} "
