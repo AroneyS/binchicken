@@ -121,7 +121,6 @@ def pipeline(
     with pl.StringCache():
         elusive_edges = (
             elusive_edges
-            .lazy()
             .with_columns(
                 pl.col("samples")
                     .str.split(",")
@@ -143,10 +142,9 @@ def pipeline(
 
             weightings = (
                 weightings
-                .lazy()
                 .select(target_ids = pl.col("target").cast(pl.UInt32), weight = "weight")
             )
-            weightings_dict = dict(weightings.collect().iter_rows())
+            weightings_dict = dict(weightings.iter_rows())
         else:
             weightings_dict = {}
 
@@ -164,7 +162,6 @@ def pipeline(
 
         read_size = (
             read_size
-            .lazy()
             .select(
                 "read_size",
                 samples = pl.col("sample").cast(pl.Categorical),
@@ -173,7 +170,7 @@ def pipeline(
 
         if EXCLUDE_COASSEMBLIES:
             excluded_coassemblies = (
-                pl.LazyFrame({"samples": EXCLUDE_COASSEMBLIES})
+                pl.DataFrame({"samples": EXCLUDE_COASSEMBLIES})
                 .with_columns(
                     samples_hash = pl.col("samples")
                         .str.split(",")
@@ -182,7 +179,7 @@ def pipeline(
                     )
             )
         else:
-            excluded_coassemblies = pl.LazyFrame(schema={"samples_hash": pl.UInt64})
+            excluded_coassemblies = pl.DataFrame(schema={"samples_hash": pl.UInt64})
 
         if MAX_COASSEMBLY_SAMPLES == 1:
             logging.info("Skipping clustering, using single-sample clusters")
@@ -283,18 +280,16 @@ def pipeline(
                 )
             .filter(pl.col("unique_samples"))
             .drop("unique_samples")
-            .collect()
             .pipe(
                 join_list_subsets,
                 df2=coassembly_edges
-                    .collect()
                     .filter(pl.col("style") == "pool")
                     .filter(pl.col("samples").list.len() >= MAX_SAMPLES_COMBINATIONS),
                 )
             .with_columns(pl.concat_list("target_ids", "extra_targets").list.unique())
             .pipe(
                 find_recover_candidates,
-                sample_targets.collect(),
+                sample_targets,
                 MAX_RECOVERY_SAMPLES=MAX_RECOVERY_SAMPLES,
                 )
             .with_columns(
