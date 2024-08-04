@@ -20,8 +20,8 @@ conda create -n binchicken -c bioconda -c conda-forge binchicken
 Install container from dockerhub.
 
 ```bash
-singularity pull docker:://samuelaroney/binchicken:0.10.5
-singularity run binchicken_0.10.5.sif binchicken -h
+singularity pull docker:://samuelaroney/binchicken:0.12.1
+singularity run binchicken_0.12.1.sif binchicken -h
 ```
 
 If your data and desired output are in the current working directory,
