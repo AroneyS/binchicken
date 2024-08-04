@@ -33,4 +33,4 @@ From: continuumio/miniconda3:24.4.0-0
 
 %labels
     Author Samuel Aroney
-    Version v0.10.5
+    Version v0.12.1
