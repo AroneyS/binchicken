@@ -25,16 +25,16 @@ def process_groups(groups, output_path):
         for group in groups:
             sample, sequences = group
             mh = MinHash(n=0, ksize=60, scaled=1, track_abundance=False)
-            for seq in sequences.iter_rows():
-                mh.add_sequence(seq[1].replace("-", "A").replace("N", "A"))
-            signature = SourmashSignature(mh, name=sample[0])
+            for seq in sequences:
+                mh.add_sequence(seq.replace("-", "A").replace("N", "A"))
+            signature = SourmashSignature(mh, name=sample)
             save_sigs.add(signature)
 
 def processing(unbinned, output_path, threads=1):
     output_dir = os.path.dirname(output_path)
 
     logging.info("Grouping samples")
-    groups = [g for g in unbinned.set_sorted("sample").select("sample", "sequence").group_by(["sample"])]
+    groups = [(s[0], d.get_column("sequence").to_list()) for s,d in unbinned.set_sorted("sample").select("sample", "sequence").group_by(["sample"])]
     threads = min(threads, len(groups))
 
     # Distribute groups among threads more evenly
