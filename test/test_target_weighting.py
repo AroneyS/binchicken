@@ -38,30 +38,30 @@ class Tests(unittest.TestCase):
             ["S3.1", "sample_1", "AAA", 9, 10, "Root", "", "0"],
             ["S3.1", "sample_2", "AAA", 9, 10, "Root", "", "0"],
             ["S3.1", "sample_2", "BBB", 9, 10, "Root", "", "1"],
-        ], schema=TARGET_COLUMNS)
+        ], orient="row", schema=TARGET_COLUMNS)
         weighting = pl.DataFrame([
             ["S3.1", "AAA", 0.5],
             ["S3.2", "AAA", 0.9],
             ["S3.1", "BBB", 0.9],
-        ], schema=WEIGHTING_COLUMNS)
+        ], orient="row", schema=WEIGHTING_COLUMNS)
 
         expected = pl.DataFrame([
             ["0", 0.5],
             ["1", 0.9],
-        ], schema=TARGET_WEIGHTING_COLUMNS)
+        ], orient="row", schema=TARGET_WEIGHTING_COLUMNS)
 
         observed = pipeline(targets, weighting)
         self.assertDataFrameEqual(expected, observed)
 
     def test_target_weighting_empty_input(self):
         targets = pl.DataFrame([
-        ], schema=TARGET_COLUMNS)
+        ], orient="row", schema=TARGET_COLUMNS)
         weighting = pl.DataFrame([
             ["S3.1", "AAA", 0.5],
-        ], schema=WEIGHTING_COLUMNS)
+        ], orient="row", schema=WEIGHTING_COLUMNS)
 
         expected = pl.DataFrame([
-        ], schema=TARGET_WEIGHTING_COLUMNS)
+        ], orient="row", schema=TARGET_WEIGHTING_COLUMNS)
 
         observed = pipeline(targets, weighting)
         self.assertDataFrameEqual(expected, observed)

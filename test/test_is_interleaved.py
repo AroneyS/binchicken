@@ -52,7 +52,7 @@ class Tests(unittest.TestCase):
             ["@SRR3309137.104315998 HISEQ06:195:D1DRHACXX:5:2308:21283:200652/1", 104315998],
             ["@SRR3309137.104315999 HISEQ06:195:D1DRHACXX:5:2308:15935:200751/1", 104315999],
             ["@SRR3309137.104316000 HISEQ06:195:D1DRHACXX:5:2308:15935:200751/1", 104316000],
-        ], schema=READS_COLUMNS)
+        ], orient="row", schema=READS_COLUMNS)
         total_count = 104316000
 
         observed_outcome, observed_reason = is_interleaved(reads, total_count)
@@ -81,7 +81,7 @@ class Tests(unittest.TestCase):
             ["@SRR3309137.104315998 HISEQ06:195:D1DRHACXX:5:2308:21283:200652/1", 104315998],
             ["@SRR3309137.104315999 HISEQ06:195:D1DRHACXX:5:2308:15935:200751/1", 104315999],
             ["@SRR3309137.104316000 HISEQ06:195:D1DRHACXX:5:2308:15935:200751/1", 104316000],
-        ], schema=READS_COLUMNS)
+        ], orient="row", schema=READS_COLUMNS)
         total_count = 104316001
 
         observed_outcome, observed_reason = is_interleaved(reads, total_count)
@@ -110,7 +110,7 @@ class Tests(unittest.TestCase):
             ["@SRR3309137.104315998 HISEQ06:195:D1DRHACXX:5:2308:99999:999999/1", 104315998],
             ["@SRR3309137.104315999 HISEQ06:195:D1DRHACXX:5:2308:15935:200751/1", 104315999],
             ["@SRR3309137.104316000 HISEQ06:195:D1DRHACXX:5:2308:99999:999999/1", 104316000],
-        ], schema=READS_COLUMNS)
+        ], orient="row", schema=READS_COLUMNS)
         total_count = 104316000
 
         observed_outcome, observed_reason = is_interleaved(reads, total_count)
@@ -139,7 +139,7 @@ class Tests(unittest.TestCase):
             ["@SRR3309137.104315998 HISEQ06:195:D1DRHACXX:5:2308:21283:200652/1", 104315998],
             ["@SRR3309137.104315999 HISEQ06:195:D1DRHACXX:5:2308:15935:200751/1", 104315999],
             ["@SRR3309137.104316000 HISEQ06:195:D1DRHACXX:5:2308:99999:999999/1", 104316000],
-        ], schema=READS_COLUMNS)
+        ], orient="row", schema=READS_COLUMNS)
         total_count = 104316000
 
         observed_outcome, observed_reason = is_interleaved(reads, total_count)

@@ -45,7 +45,7 @@ class Tests(unittest.TestCase):
         elusive_clusters = pl.DataFrame([
             ["1,2,3", 3, 2, 2000, "1,2,3,4,5,6", "coassembly_0"],
             ["4,5,6", 3, 1, 3000, "4,5,6", "coassembly_2"],
-        ], schema=ELUSIVE_CLUSTERS_COLUMNS)
+        ], orient="row", schema=ELUSIVE_CLUSTERS_COLUMNS)
         output_dir = "test_output_dir"
         assemble_threads = 10
         assemble_memory = 50
@@ -84,7 +84,7 @@ class Tests(unittest.TestCase):
                 f"-n {recover_threads} -t {recover_threads} -m {recover_memory} --skip-qc "
                 f"&> {output_dir}/coassemble/logs/coassembly_2_recover.log ",
             ],
-        ], schema=COMMANDS_COLUMNS, orient="row")
+        ], orient="row", schema=COMMANDS_COLUMNS)
 
         observed_commands = pipeline(elusive_clusters, reads_1, reads_2, output_dir, assemble_threads, assemble_memory, recover_threads, recover_memory)
         self.assertDataFrameEqual(expected_commands, observed_commands)
@@ -93,7 +93,7 @@ class Tests(unittest.TestCase):
         elusive_clusters = pl.DataFrame([
             ["1,2,3", 3, 2, 2000, "1,2,3,4,5,6", "coassembly_0"],
             ["4,5,6", 3, 1, 3000, "4,5,6", "coassembly_2"],
-        ], schema=ELUSIVE_CLUSTERS_COLUMNS)
+        ], orient="row", schema=ELUSIVE_CLUSTERS_COLUMNS)
         output_dir = "test_output_dir"
         assemble_threads = 10
         assemble_memory = 50
@@ -136,7 +136,7 @@ class Tests(unittest.TestCase):
                 f"-n {recover_threads} -t {recover_threads} -m {recover_memory} --skip-qc "
                 f"&> {output_dir}/coassemble/logs/coassembly_2_recover.log ",
             ],
-        ], schema=COMMANDS_COLUMNS, orient="row")
+        ], orient="row", schema=COMMANDS_COLUMNS)
 
         observed_commands = pipeline(elusive_clusters, reads_1, reads_2, output_dir, assemble_threads, assemble_memory, recover_threads, recover_memory, fast=True)
         self.assertDataFrameEqual(expected_commands, observed_commands)

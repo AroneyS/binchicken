@@ -34,14 +34,14 @@ class Tests(unittest.TestCase):
         reads = pl.DataFrame([
             ["S3.1", "sample_1", "AAA", 5, 10, "Root"],
             ["S3.1", "sample_1", "AAB", 5, 10, "Root"],
-        ], schema=READ_COLUMNS)
+        ], orient="row", schema=READ_COLUMNS)
 
         expected_binned = pl.DataFrame([
-        ], schema=APPRAISE_COLUMNS)
+        ], orient="row", schema=APPRAISE_COLUMNS)
         expected_unbinned = pl.DataFrame([
             ["S3.1", "sample_1", "AAA", 5, 10, "Root", ""],
             ["S3.1", "sample_1", "AAB", 5, 10, "Root", ""],
-        ], schema=APPRAISE_COLUMNS)
+        ], orient="row", schema=APPRAISE_COLUMNS)
 
         observed_binned, observed_unbinned = processing(reads)
         self.assertDataFrameEqual(expected_binned, observed_binned)
@@ -49,12 +49,12 @@ class Tests(unittest.TestCase):
 
     def test_no_genomes_empty_input(self):
         reads = pl.DataFrame([
-        ], schema=READ_COLUMNS)
+        ], orient="row", schema=READ_COLUMNS)
 
         expected_binned = pl.DataFrame([
-        ], schema=APPRAISE_COLUMNS)
+        ], orient="row", schema=APPRAISE_COLUMNS)
         expected_unbinned = pl.DataFrame([
-        ], schema=APPRAISE_COLUMNS)
+        ], orient="row", schema=APPRAISE_COLUMNS)
 
         observed_binned, observed_unbinned = processing(reads)
         self.assertDataFrameEqual(expected_binned, observed_binned)
@@ -65,14 +65,14 @@ class Tests(unittest.TestCase):
             ["S3.1", "sample_1", "AAA", 5, 10, "Root"],
             ["S3.1", "sample_1", "AAB", 5, 10, "Root"],
             ["S3.18.EIF_2_alpha", "sample_1", "NNN", 5, 10, "Root"],
-        ], schema=READ_COLUMNS)
+        ], orient="row", schema=READ_COLUMNS)
 
         expected_binned = pl.DataFrame([
-        ], schema=APPRAISE_COLUMNS)
+        ], orient="row", schema=APPRAISE_COLUMNS)
         expected_unbinned = pl.DataFrame([
             ["S3.1", "sample_1", "AAA", 5, 10, "Root", ""],
             ["S3.1", "sample_1", "AAB", 5, 10, "Root", ""],
-        ], schema=APPRAISE_COLUMNS)
+        ], orient="row", schema=APPRAISE_COLUMNS)
 
         observed_binned, observed_unbinned = processing(reads)
         self.assertDataFrameEqual(expected_binned, observed_binned)

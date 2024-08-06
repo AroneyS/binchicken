@@ -176,7 +176,7 @@ def evaluate(target_otu_table, binned_otu_table, elusive_clusters, elusive_edges
     combined_otu_table = (
         recovered_otu_table
         .join(
-            haystack_otu_table, on=["coassembly", "gene", "sequence"], how="outer_coalesce", suffix="old"
+            haystack_otu_table, on=["coassembly", "gene", "sequence"], how="full", coalesce=True, suffix="old"
             )
         .select(
             "coassembly", "gene", "sequence", "genome", "target", "found_in",
@@ -253,7 +253,7 @@ def summarise_stats(matches, combined_otu_table, recovered_bins):
                     )
                 .group_by(["coassembly", "status"])
                 .agg(pl.col("sequence").len().alias("nontarget_bin_sequences")),
-            on=["coassembly", "status"], how="outer_coalesce"
+            on=["coassembly", "status"], how="full", coalesce=True
             )
         .join(
             # Duplicate sequences are counted multiple times to give a proportion at bin level
@@ -265,7 +265,7 @@ def summarise_stats(matches, combined_otu_table, recovered_bins):
                     )
                 .group_by(["coassembly", "status"])
                 .agg(pl.col("sequence").len().alias("nontarget_unbin_sequences")),
-            on=["coassembly", "status"], how="outer_coalesce"
+            on=["coassembly", "status"], how="full", coalesce=True
             )
         .join(
             # Duplicate sequences are counted multiple times to give a proportion at bin level
@@ -277,15 +277,15 @@ def summarise_stats(matches, combined_otu_table, recovered_bins):
                     )
                 .group_by(["coassembly", "status"])
                 .agg(pl.col("sequence").len().alias("novel_sequences")),
-            on=["coassembly", "status"], how="outer_coalesce"
+            on=["coassembly", "status"], how="full", coalesce=True
             )
-        .melt(id_vars=["coassembly", "status"], variable_name="statistic", value_name="value")
+        .unpivot(index=["coassembly", "status"], variable_name="statistic", value_name="value")
         .fill_null(0)
     )
 
     recovered_counts = (
         pl.from_dict(recovered_bins)
-        .melt(variable_name="name")
+        .unpivot(variable_name="name")
         .with_columns(
             pl.col("name").str.split("-").list.to_struct(upper_bound=2, fields=["coassembly", "genome"])
             )
@@ -310,7 +310,7 @@ def summarise_stats(matches, combined_otu_table, recovered_bins):
             summary.filter((pl.col("statistic") != "bins") | (pl.col("status") != "nonmatch")),
             recovered_counts
             ])
-        .pivot(index=["coassembly", "statistic"], values="value", columns="status", aggregate_function=None)
+        .pivot(index=["coassembly", "statistic"], values="value", on="status", aggregate_function=None)
         .select(
             "coassembly", "statistic",
             pl.when(pl.col("statistic").is_in(["sequences", "taxonomy"])).then(pl.lit("targets")).otherwise(pl.lit("recovery")).alias("within"),
