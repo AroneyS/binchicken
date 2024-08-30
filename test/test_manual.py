@@ -6,6 +6,8 @@ import shutil
 import gzip
 import subprocess
 from ruamel.yaml import YAML
+import extern
+from bird_tool_utils import in_tempdir
 
 path_to_data = os.path.join(os.path.dirname(os.path.realpath(__file__)),'data')
 path_to_conda = os.path.join(path_to_data,'.conda')
@@ -32,6 +34,7 @@ APPRAISE_UNBINNED = os.path.join(MOCK_COASSEMBLE, "coassemble", "appraise", "unb
 ELUSIVE_CLUSTERS = os.path.join(MOCK_COASSEMBLE, "coassemble", "target", "elusive_clusters.tsv")
 ELUSIVE_CLUSTERS_TWO = os.path.join(MOCK_COASSEMBLE, "coassemble", 'target', 'elusive_clusters_two.tsv')
 
+MOCK_COASSEMBLIES = ' '.join([os.path.join(MOCK_COASSEMBLE, "coassemble", "coassemble", "coassembly_0")])
 
 class Tests(unittest.TestCase):
     def setup_output_dir(self, output_dir):
@@ -199,6 +202,39 @@ class Tests(unittest.TestCase):
         self.assertFalse(os.path.exists(os.path.join(output_dir, "coassemble", "sra", "SRR8334320_2.fastq.gz")))
         self.assertFalse(os.path.exists(os.path.join(output_dir, "coassemble", "sra", "SRR8334321_1.fastq.gz")))
         self.assertFalse(os.path.exists(os.path.join(output_dir, "coassemble", "sra", "SRR8334321_2.fastq.gz")))
+
+    def test_build_with_downloads(self):
+        with in_tempdir():
+            # path_to_conda = os.path.abspath(".conda")
+            path_to_metapackage = os.path.abspath("metapackage.smpkg")
+            path_to_checkm2_db = os.path.abspath("checkm2_db")
+            path_to_gtdbtk_db = os.path.abspath("gtdb_release")
+
+            cmd = (
+                f"binchicken build "
+                f"--conda-prefix {path_to_conda} "
+                f"--singlem-metapackage {path_to_metapackage} "
+                # f"--gtdbtk-db {path_to_gtdbtk_db} "
+                f"--checkm2-db {path_to_checkm2_db} "
+                f"--download-databases "
+            )
+            subprocess.run(cmd, shell=True, check=True)
+
+            # Check ENV variables
+            cmd = "conda env config vars list"
+            output = extern.run(cmd).strip().split("\n")
+
+            self.assertTrue(f"SNAKEMAKE_CONDA_PREFIX = {path_to_conda}" in output)
+            self.assertTrue(f"CONDA_ENV_PATH = {path_to_conda}" in output)
+            self.assertTrue(f"SINGLEM_METAPACKAGE_PATH = {path_to_metapackage}" in output)
+            # self.assertTrue(f"GTDBTK_DATA_PATH = {path_to_gtdbtk_db}" in output)
+            self.assertTrue(f"CHECKM2DB = {path_to_checkm2_db}" in output)
+            self.assertTrue(f"TMPDIR = /tmp" in output)
+
+            # Check databases downloaded
+            self.assertTrue(os.path.exists(path_to_metapackage))
+            # self.assertTrue(os.path.exists(path_to_gtdbtk_db))
+            self.assertTrue(os.path.exists(path_to_checkm2_db))
 
 
 if __name__ == '__main__':

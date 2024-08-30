@@ -14,7 +14,8 @@ SingleM metapackage is the metapackage downloaded by SingleM using `singlem data
 The latter databases are required only if you want to run Aviary directly using the `--run-aviary` argument.
 GTDB-Tk database is the directory containing the GTDB-Tk release (see <https://github.com/Ecogenomics/GTDBTk>).
 CheckM2 database is the directory containing the CheckM2 database (see <https://github.com/chklovski/CheckM2>).
-These can also be downloaded automatically by Aviary using `aviary configure --download gtdb singlem checkm2` (see <https://github.com/rhysnewell/aviary>).
+These can also be downloaded automatically with `--download-databases` flag, which uses Aviary (`aviary configure --download gtdb singlem checkm2`, see <https://github.com/rhysnewell/aviary>).
+Note that the databases are very large.
 
 ```bash
 binchicken build \

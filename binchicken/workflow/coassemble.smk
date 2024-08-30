@@ -823,7 +823,7 @@ rule aviary_recover:
         reads_1 = lambda wildcards: get_reads_coassembly(wildcards, recover=True),
         reads_2 = lambda wildcards: get_reads_coassembly(wildcards, forward=False, recover=True),
         dryrun = "--build" if config["build"] else "--dryrun" if config["aviary_dryrun"] else "",
-        gtdbtk = config["aviary_gtdbtk"],
+        gtdbtk = config["aviary_gtdbtk"] if config["aviary_gtdbtk"] else ".",
         checkm2 = config["aviary_checkm2"],
         conda_prefix = config["conda_prefix"] if config["conda_prefix"] else ".",
         singlem_metapackage = config["singlem_metapackage"],
