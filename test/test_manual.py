@@ -214,7 +214,7 @@ class Tests(unittest.TestCase):
                 f"binchicken build "
                 f"--conda-prefix {path_to_conda} "
                 f"--singlem-metapackage {path_to_metapackage} "
-                f"--gtdbtk-db {path_to_gtdbtk_db} "
+                # f"--gtdbtk-db {path_to_gtdbtk_db} "
                 f"--checkm2-db {path_to_checkm2_db} "
                 f"--download-databases "
             )
@@ -227,7 +227,7 @@ class Tests(unittest.TestCase):
             self.assertTrue(f"SNAKEMAKE_CONDA_PREFIX = {path_to_conda}" in output)
             self.assertTrue(f"CONDA_ENV_PATH = {path_to_conda}" in output)
             self.assertTrue(f"SINGLEM_METAPACKAGE_PATH = {path_to_metapackage}" in output)
-            self.assertTrue(f"GTDBTK_DATA_PATH = {path_to_gtdbtk_db}" in output)
+            # self.assertTrue(f"GTDBTK_DATA_PATH = {path_to_gtdbtk_db}" in output)
             self.assertTrue(f"CHECKM2DB = {path_to_checkm2_db}" in output)
             self.assertTrue(f"TMPDIR = /tmp" in output)
 

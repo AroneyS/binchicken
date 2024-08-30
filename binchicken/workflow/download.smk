@@ -34,15 +34,15 @@ def get_runtime(base_hours):
 #############
 rule all:
     input:
-        output_dir + "aviary_downloads.done",
+        output_dir + "/aviary_downloads.done",
     localrule: True
 
 rule aviary_download:
     output:
-        output_dir + "aviary_downloads.done",
+        output_dir + "/aviary_downloads.done",
     params:
         singlem_metapackage = "--singlem-metapackage-path " + singlem_metapackage if singlem_metapackage else "",
-        checkm2_db = "--checkm2-db-path" + checkm2_db if checkm2_db else "",
+        checkm2_db = "--checkm2-db-path " + checkm2_db if checkm2_db else "",
         gtdbtk_db = "--gtdb-path " + gtdbtk_db if gtdbtk_db else "",
         download_arg = download_arg,
     threads: 16
@@ -54,6 +54,7 @@ rule aviary_download:
     conda:
         "env/aviary.yml"
     shell:
+        "EGGNOG_DATA_DIR=. "
         "aviary configure "
         "{params.singlem_metapackage} "
         "{params.checkm2_db} "

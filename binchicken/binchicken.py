@@ -969,13 +969,15 @@ def build(args):
             "gtdbtk_db": False,
         }
 
-        if not os.path.exists(args.singlem_metapackage):
+        if args.singlem_metapackage and not os.path.exists(args.singlem_metapackage):
             download_config["singlem_metapackage"] = args.singlem_metapackage
 
-        if not os.path.exists(args.checkm2_db):
+        if args.checkm2_db and not os.path.exists(args.checkm2_db):
             download_config["checkm2_db"] = args.checkm2_db
 
-        if not os.path.exists(args.gtdbtk_db):
+        if args.gtdbtk_db and not os.path.exists(args.gtdbtk_db):
+            logging.error("GTDBtk download not yet implemented")
+            raise NotImplementedError("GTDBtk download not yet implemented")
             download_config["gtdbtk_db"] = args.gtdbtk_db
 
         if not any(download_config.values()):
