@@ -206,9 +206,9 @@ class Tests(unittest.TestCase):
     def test_build_with_downloads(self):
         with in_tempdir():
             # path_to_conda = os.path.abspath(".conda")
-            path_to_metapackage = "metapackage.smpkg"
-            path_to_checkm2_db = "checkm2_db"
-            path_to_gtdbtk_db = "gtdb_release"
+            path_to_metapackage = os.path.abspath("metapackage.smpkg")
+            path_to_checkm2_db = os.path.abspath("checkm2_db")
+            path_to_gtdbtk_db = os.path.abspath("gtdb_release")
 
             cmd = (
                 f"binchicken build "
