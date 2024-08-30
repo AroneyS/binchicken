@@ -965,6 +965,13 @@ def build(args):
     os.makedirs(output_dir, exist_ok=True)
     conda_prefix = args.conda_prefix
 
+    # Setup env variables
+    configure_variable("SNAKEMAKE_CONDA_PREFIX", conda_prefix)
+    configure_variable("CONDA_ENV_PATH", conda_prefix)
+
+    if args.set_tmp_dir:
+        configure_variable("TMPDIR", args.set_tmp_dir)
+
     # Download databases
     if args.download_databases:
         download_config = {
@@ -1009,10 +1016,6 @@ def build(args):
                 snakemake_args = args.snakemake_args,
             )
 
-    # Setup env variables
-    configure_variable("SNAKEMAKE_CONDA_PREFIX", conda_prefix)
-    configure_variable("CONDA_ENV_PATH", conda_prefix)
-
     if args.singlem_metapackage:
         configure_variable("SINGLEM_METAPACKAGE_PATH", args.singlem_metapackage)
 
@@ -1021,10 +1024,6 @@ def build(args):
 
     if args.checkm2_db:
         configure_variable("CHECKM2DB", args.checkm2_db)
-
-    if args.set_tmp_dir:
-        configure_variable("TMPDIR", args.set_tmp_dir)
-
 
     # Set args
     args = set_standard_args(args)
