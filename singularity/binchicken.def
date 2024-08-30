@@ -1,10 +1,6 @@
 Bootstrap: docker
 From: continuumio/miniconda3:24.4.0-0
 
-%files
-    /root/db/singlem/20240531/S4.3.0.GTDB_r220.metapackage_20240523.smpkg.zb /singlem_metapackage
-    /root/db/checkm2/20240531/CheckM2_database /CheckM2_database
-
 %environment
     export SINGLEM_METAPACKAGE_PATH=/singlem_metapackage
     export CHECKM2DB=/CheckM2_database
@@ -14,7 +10,7 @@ From: continuumio/miniconda3:24.4.0-0
     /opt/conda/bin/conda create -n binchicken -c conda-forge -c bioconda binchicken>=0.11.*
     . $(conda info --base)/etc/profile.d/conda.sh
     conda activate binchicken
-    binchicken build --conda-prefix /opt/conda/envs/ --singlem-metapackage /singlem_metapackage --checkm2-db /CheckM2_database
+    binchicken build --conda-prefix /opt/conda/envs/ --singlem-metapackage /singlem_metapackage --checkm2-db /CheckM2_database --download-databases
     find /singlem_metapackage /CheckM2_database -type d -print0 | xargs -0 chmod 755
     find /singlem_metapackage /CheckM2_database -type f -print0 | xargs -0 chmod +r
     rm -rf build genome_1.fna sample_*
