@@ -972,6 +972,15 @@ def build(args):
     if args.set_tmp_dir:
         configure_variable("TMPDIR", args.set_tmp_dir)
 
+    if args.singlem_metapackage:
+        configure_variable("SINGLEM_METAPACKAGE_PATH", args.singlem_metapackage)
+
+    if args.gtdbtk_db:
+        configure_variable("GTDBTK_DATA_PATH", args.gtdbtk_db)
+
+    if args.checkm2_db:
+        configure_variable("CHECKM2DB", args.checkm2_db)
+
     # Download databases
     if args.download_databases:
         download_config = {
@@ -1015,15 +1024,6 @@ def build(args):
                 conda_prefix = args.conda_prefix,
                 snakemake_args = args.snakemake_args,
             )
-
-    if args.singlem_metapackage:
-        configure_variable("SINGLEM_METAPACKAGE_PATH", args.singlem_metapackage)
-
-    if args.gtdbtk_db:
-        configure_variable("GTDBTK_DATA_PATH", args.gtdbtk_db)
-
-    if args.checkm2_db:
-        configure_variable("CHECKM2DB", args.checkm2_db)
 
     # Set args
     args = set_standard_args(args)
