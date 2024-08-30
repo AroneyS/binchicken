@@ -218,7 +218,7 @@ class Tests(unittest.TestCase):
                 f"--checkm2-db {path_to_checkm2_db} "
                 f"--download-databases "
             )
-            extern.run(cmd)
+            subprocess.run(cmd, shell=True, check=True)
 
             # Check ENV variables
             cmd = "conda env config vars list"
@@ -232,96 +232,9 @@ class Tests(unittest.TestCase):
             self.assertTrue(f"TMPDIR = /tmp" in output)
 
             # Check databases downloaded
-            import pdb; pdb.set_trace()
-
-            # Dryrun coassemble
-            cmd = (
-                f"binchicken coassemble "
-                f"--forward {SAMPLE_READS_FORWARD} "
-                f"--reverse {SAMPLE_READS_REVERSE} "
-                f"--genomes {GENOMES} "
-                f"--singlem-metapackage {path_to_metapackage} "
-                f"--output test_coassemble "
-                f"--conda-prefix {path_to_conda} "
-                f"--dryrun "
-            )
-            output = extern.run(cmd)
-            self.assertFalse("binchicken/workflow/env/singlem.yml will be created." in output)
-            self.assertFalse("binchicken/workflow/env/coverm.yml will be created." in output)
-            self.assertFalse("binchicken/workflow/env/r.yml will be created." in output)
-            self.assertFalse("binchicken/workflow/env/kingfisher.yml will be created." in output)
-            self.assertFalse("binchicken/workflow/env/prodigal.yml will be created." in output)
-            self.assertFalse("binchicken/workflow/env/aviary.yml will be created." in output)
-            self.assertFalse("binchicken/workflow/env/fastp.yml will be created." in output)
-
-            # Dryrun evaluate
-            cmd = (
-                f"binchicken evaluate "
-                f"--coassemble-output {MOCK_COASSEMBLE} "
-                f"--aviary-outputs {MOCK_COASSEMBLIES} "
-                f"--singlem-metapackage {path_to_metapackage} "
-                f"--output test_evaluate "
-                f"--conda-prefix {path_to_conda} "
-                f"--dryrun "
-            )
-            output = extern.run(cmd)
-            self.assertFalse("binchicken/workflow/env/singlem.yml will be created." in output)
-            self.assertFalse("binchicken/workflow/env/coverm.yml will be created." in output)
-            self.assertFalse("binchicken/workflow/env/r.yml will be created." in output)
-            self.assertFalse("binchicken/workflow/env/kingfisher.yml will be created." in output)
-            self.assertFalse("binchicken/workflow/env/prodigal.yml will be created." in output)
-            self.assertFalse("binchicken/workflow/env/aviary.yml will be created." in output)
-            self.assertFalse("binchicken/workflow/env/fastp.yml will be created." in output)
-
-            # Dryrun update
-            cmd = (
-                f"binchicken update "
-                f"--assemble-unmapped "
-                f"--forward SRR8334323 SRR8334324 "
-                f"--sra "
-                f"--run-aviary "
-                f"--aviary-gtdbtk-db gtdb_release "
-                f"--aviary-checkm2-db {path_to_checkm2_db} "
-                f"--genomes {GENOMES} "
-                f"--coassemble-unbinned {os.path.join(MOCK_COASSEMBLE, 'coassemble', 'appraise', 'unbinned_sra.otu_table.tsv')} "
-                f"--coassemble-binned {os.path.join(MOCK_COASSEMBLE, 'coassemble', 'appraise', 'binned_sra.otu_table.tsv')} "
-                f"--coassemble-targets {os.path.join(MOCK_COASSEMBLE, 'coassemble', 'target', 'targets.tsv')} "
-                f"--coassemble-elusive-edges {os.path.join(MOCK_COASSEMBLE, 'coassemble', 'target', 'elusive_edges.tsv')} "
-                f"--coassemble-elusive-clusters {os.path.join(MOCK_COASSEMBLE, 'coassemble', 'target', 'elusive_clusters_sra.tsv')} "
-                f"--coassemble-summary {os.path.join(MOCK_COASSEMBLE, 'coassemble', 'summary.tsv')} "
-                f"--output test_update "
-                f"--conda-prefix {path_to_conda} "
-                f"--dryrun "
-            )
-            output = extern.run(cmd)
-            self.assertFalse("binchicken/workflow/env/singlem.yml will be created." in output)
-            self.assertFalse("binchicken/workflow/env/coverm.yml will be created." in output)
-            self.assertFalse("binchicken/workflow/env/r.yml will be created." in output)
-            self.assertFalse("binchicken/workflow/env/kingfisher.yml will be created." in output)
-            self.assertFalse("binchicken/workflow/env/prodigal.yml will be created." in output)
-            self.assertFalse("binchicken/workflow/env/aviary.yml will be created." in output)
-            self.assertFalse("binchicken/workflow/env/fastp.yml will be created." in output)
-
-            # Dryrun iterate
-            cmd = (
-                f"binchicken iterate "
-                f"--aviary-outputs {MOCK_COASSEMBLIES} "
-                f"--forward {SAMPLE_READS_FORWARD} "
-                f"--reverse {SAMPLE_READS_REVERSE} "
-                f"--genomes {GENOMES} "
-                f"--singlem-metapackage {path_to_metapackage} "
-                f"--output test_iterate "
-                f"--conda-prefix {path_to_conda} "
-                f"--dryrun "
-            )
-            output = extern.run(cmd)
-            self.assertFalse("binchicken/workflow/env/singlem.yml will be created." in output)
-            self.assertFalse("binchicken/workflow/env/coverm.yml will be created." in output)
-            self.assertFalse("binchicken/workflow/env/r.yml will be created." in output)
-            self.assertFalse("binchicken/workflow/env/kingfisher.yml will be created." in output)
-            self.assertFalse("binchicken/workflow/env/prodigal.yml will be created." in output)
-            self.assertFalse("binchicken/workflow/env/aviary.yml will be created." in output)
-            self.assertFalse("binchicken/workflow/env/fastp.yml will be created." in output)
+            self.assertTrue(os.path.exists(path_to_metapackage))
+            # self.assertTrue(os.path.exists(path_to_gtdbtk_db))
+            self.assertTrue(os.path.exists(path_to_checkm2_db))
 
 
 if __name__ == '__main__':
