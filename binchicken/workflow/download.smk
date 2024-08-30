@@ -41,6 +41,9 @@ rule aviary_download:
     output:
         output_dir + "/aviary_downloads.done",
     params:
+        singlem_metapackage_env = "SINGLEM_METAPACKAGE_PATH=. " if not singlem_metapackage else "",
+        checkm2_db_env = "CHECKM2DB=. " if not checkm2_db else "",
+        gtdbtk_db_env = "GTDBTK_DATA_PATH=. " if not gtdbtk_db else "",
         singlem_metapackage = "--singlem-metapackage-path " + singlem_metapackage if singlem_metapackage else "",
         checkm2_db = "--checkm2-db-path " + checkm2_db if checkm2_db else "",
         gtdbtk_db = "--gtdb-path " + gtdbtk_db if gtdbtk_db else "",
@@ -54,6 +57,9 @@ rule aviary_download:
     conda:
         "env/aviary.yml"
     shell:
+        "{params.singlem_metapackage_env} "
+        "{params.checkm2_db_env} "
+        "{params.gtdbtk_db_env} "
         "EGGNOG_DATA_DIR=. "
         "aviary configure "
         "{params.singlem_metapackage} "
