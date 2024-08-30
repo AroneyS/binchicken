@@ -15,6 +15,50 @@ Install latest release via bioconda.
 conda create -n binchicken -c bioconda -c conda-forge binchicken
 ```
 
+## Installation via DockerHub
+
+A docker image generated from the conda package is [available](https://hub.docker.com/r/wwood/singlem) on DockerHub. After installing Docker, run the following:
+
+```bash
+docker pull samuelaroney/binchicken:0.12.2
+docker run samuelaroney/binchicken:0.12.2 -h
+```
+
+If your data and desired output are in the current working directory,
+Bin Chicken `coassemble` can be run like so:
+
+```bash
+docker run -v $(pwd):$(pwd) samuelaroney/binchicken:0.12.2 coassemble \
+    --forward $(pwd)/reads_1.1.fq ... \
+    --reverse $(pwd)/reads_1.2.fq ...
+```
+
+Note: Bin Chicken `build` is unnecessary for this method since the conda
+environments, the SingleM metapackage and CheckM2 database are included
+in the container.
+
+## Install via Singularity / Apptainer
+
+Install container from dockerhub.
+
+```bash
+singularity pull docker:://samuelaroney/binchicken:0.12.2
+singularity run binchicken_0.12.1.sif -h
+```
+
+If your data and desired output are in the current working directory,
+Bin Chicken `coassemble` can be run like so:
+
+```bash
+singularity run -B $(pwd) binchicken_0.10.5.sif coassemble \
+    --forward $(pwd)/reads_1.1.fq ... \
+    --reverse $(pwd)/reads_1.2.fq ...
+```
+
+Note: Bin Chicken `build` is unnecessary for this method since the conda
+environments, the SingleM metapackage and CheckM2 database are included
+in the container.
+
 ## Install from pip
 
 Install latest release via pip.
