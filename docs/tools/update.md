@@ -151,6 +151,13 @@ binchicken update --coassemble-output coassemble_dir --sra \
 
 <!-- -->
 
+**\--coassemblies-list** *COASSEMBLIES_LIST*
+
+  Choose specific coassemblies from elusive clusters newline separated
+    (e.g. coassembly_0)
+
+<!-- -->
+
 **\--assemble-unmapped**
 
   Only assemble reads that do not map to reference genomes
