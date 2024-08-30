@@ -49,6 +49,8 @@ MOCK_ELUSIVE_CLUSTERS_SRA_MOCK = os.path.join(MOCK_COASSEMBLE, "coassemble", "ta
 MOCK_ELUSIVE_CLUSTERS_SRA_MOCK2 = os.path.join(MOCK_COASSEMBLE, "coassemble", "target", "elusive_clusters_sra_mock2.tsv")
 MOCK_ELUSIVE_CLUSTERS_SRA_MOCK3 = os.path.join(MOCK_COASSEMBLE, "coassemble", "target", "elusive_clusters_sra_mock3.tsv")
 
+MOCK_COASSEMBLE_MINIMAL = os.path.join(path_to_data, "mock_coassemble_minimal")
+
 def write_string_to_file(string, filename):
     with open(filename, "w") as f:
         f.write("\n".join(string.split(" ")))
@@ -713,6 +715,61 @@ class Tests(unittest.TestCase):
                 self.assertTrue(">GB_GCA_013286235.3~JABDGE010000038.1_13" in file)
                 self.assertTrue(">GB_GCA_013286235.3~JABDGE010000038.1_14" in file)
 
+    def test_update_minimal_coassembly(self):
+        with in_tempdir():
+            cmd = (
+                f"binchicken update "
+                f"--coassemble-output {MOCK_COASSEMBLE_MINIMAL} "
+                f"--output test "
+                f"--conda-prefix {path_to_conda} "
+            )
+            extern.run(cmd)
+
+            config_path = os.path.join("test", "config.yaml")
+            self.assertTrue(os.path.exists(config_path))
+
+            coassemble_path = os.path.join("test", "coassemble", "commands", "coassemble_commands.sh")
+            self.assertTrue(os.path.exists(coassemble_path))
+            test_dir = os.path.abspath("test")
+            expected = "\n".join(
+                [
+                    " ".join([
+                        "aviary assemble --coassemble -1",
+                        " ".join(SAMPLE_READS_FORWARD.split(" ")[0:2]),
+                        "-2",
+                        " ".join(SAMPLE_READS_REVERSE.split(" ")[0:2]),
+                        "--output", os.path.join(test_dir, "coassemble", "coassemble", "coassembly_0", "assemble"),
+                        "-n 64 -t 64 -m 500 --skip-qc &>",
+                        os.path.join(test_dir, "coassemble", "coassemble", "logs", "coassembly_0_assemble.log"),
+                        ""
+                    ]),
+                    ""
+                ]
+            )
+            with open(coassemble_path) as f:
+                self.assertEqual(expected, f.read())
+
+            recover_path = os.path.join("test", "coassemble", "commands", "recover_commands.sh")
+            self.assertTrue(os.path.exists(recover_path))
+            expected = "\n".join(
+                [
+                    " ".join([
+                        "aviary recover --assembly", os.path.join(test_dir, "coassemble", "coassemble", "coassembly_0", "assemble", "assembly", "final_contigs.fasta"),
+                        "-1",
+                        SAMPLE_READS_FORWARD,
+                        "-2",
+                        SAMPLE_READS_REVERSE,
+                        "--output", os.path.join(test_dir, "coassemble", "coassemble", "coassembly_0", "recover"),
+                        "--binning-only --refinery-max-iterations 0 "
+                        "-n 32 -t 32 -m 250 --skip-qc &>",
+                        os.path.join(test_dir, "coassemble", "coassemble", "logs", "coassembly_0_recover.log"),
+                        ""
+                    ]),
+                    ""
+                ]
+            )
+            with open(recover_path) as f:
+                self.assertEqual(expected, f.read())
 
 if __name__ == '__main__':
     unittest.main()

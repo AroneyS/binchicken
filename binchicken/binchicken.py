@@ -657,8 +657,12 @@ def update(args):
         old_config = load_config(config_path)
 
         if not (args.genomes or args.genomes_list):
-            args.genomes = [os.path.normpath(os.path.join(args.coassemble_output, "..", v)) for _,v in old_config["genomes"].items()]
-            args.no_genomes = False
+            try:
+                args.genomes = [os.path.normpath(os.path.join(args.coassemble_output, "..", v)) for _,v in old_config["genomes"].items()]
+                args.no_genomes = False
+            except TypeError:
+                args.no_genomes = True
+
         if not (args.forward or args.forward_list):
             if args.sra:
                 args.forward = [k for k,_ in old_config["reads_1"].items()]

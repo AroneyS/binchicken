@@ -31,15 +31,15 @@ class Tests(unittest.TestCase):
         unbinned = pl.DataFrame([
             ["S3.1", "sample_1", "AAA", 9, 10, "Root", ""],
             ["S3.1", "sample_2", "AAA", 9, 10, "Root", ""],
-        ], schema=APPRAISE_COLUMNS)
+        ], orient="row", schema=APPRAISE_COLUMNS)
         binned = pl.DataFrame([
             ["S3.1", "sample_1", "AAB", 5, 10, "Root", ""],
             ["S3.1", "sample_2", "AAB", 5, 10, "Root", ""],
-        ], schema=APPRAISE_COLUMNS)
+        ], orient="row", schema=APPRAISE_COLUMNS)
 
         expected = pl.DataFrame([
             ["S3.1", "AAA", 0.5],
-        ], schema=WEIGHTING_COLUMNS)
+        ], orient="row", schema=WEIGHTING_COLUMNS)
 
         observed = pipeline(unbinned, binned)
         self.assertDataFrameEqual(expected, observed)
@@ -50,18 +50,18 @@ class Tests(unittest.TestCase):
             ["S3.1", "sample_2", "AAA", 9, 10, "Root", ""],
             ["S3.2", "sample_1", "AAA", 9, 10, "Root", ""],
             ["S3.2", "sample_2", "AAA", 9, 10, "Root", ""],
-        ], schema=APPRAISE_COLUMNS)
+        ], orient="row", schema=APPRAISE_COLUMNS)
         binned = pl.DataFrame([
             ["S3.1", "sample_1", "AAB", 5, 10, "Root", ""],
             ["S3.1", "sample_2", "AAB", 5, 10, "Root", ""],
             ["S3.2", "sample_1", "AAB", 5, 10, "Root", ""],
             ["S3.2", "sample_2", "AAB", 5, 10, "Root", ""],
-        ], schema=APPRAISE_COLUMNS)
+        ], orient="row", schema=APPRAISE_COLUMNS)
 
         expected = pl.DataFrame([
             ["S3.1", "AAA", 0.5],
             ["S3.2", "AAA", 0.5],
-        ], schema=WEIGHTING_COLUMNS)
+        ], orient="row", schema=WEIGHTING_COLUMNS)
 
         observed = pipeline(unbinned, binned)
         self.assertDataFrameEqual(expected, observed)
@@ -71,15 +71,15 @@ class Tests(unittest.TestCase):
             ["S3.1", "sample_1", "AAA", 9, 10, "Root", ""],
             ["S3.1", "sample_2", "AAA", 9, 10, "Root", ""],
             ["S3.1", "sample_2", "AAB", 9, 10, "Root", ""],
-        ], schema=APPRAISE_COLUMNS)
+        ], orient="row", schema=APPRAISE_COLUMNS)
         binned = pl.DataFrame([
             ["S3.1", "sample_1", "AAC", 5, 10, "Root", ""],
-        ], schema=APPRAISE_COLUMNS)
+        ], orient="row", schema=APPRAISE_COLUMNS)
 
         expected = pl.DataFrame([
             ["S3.1", "AAA", 0.5],
             ["S3.1", "AAB", 0.25],
-        ], schema=WEIGHTING_COLUMNS)
+        ], orient="row", schema=WEIGHTING_COLUMNS)
 
         observed = pipeline(unbinned, binned)
         self.assertDataFrameEqual(expected, observed)
@@ -90,40 +90,40 @@ class Tests(unittest.TestCase):
             ["S3.1", "sample_2", "AAA", 9, 10, "Root", ""],
             ["S3.1", "sample_1", "AAB", 5, 10, "Root", ""],
             ["S3.1", "sample_2", "AAB", 5, 10, "Root", ""],
-        ], schema=APPRAISE_COLUMNS)
+        ], orient="row", schema=APPRAISE_COLUMNS)
         binned = pl.DataFrame([
-        ], schema=APPRAISE_COLUMNS)
+        ], orient="row", schema=APPRAISE_COLUMNS)
 
         expected = pl.DataFrame([
             ["S3.1", "AAA", 0.5],
             ["S3.1", "AAB", 0.5],
-        ], schema=WEIGHTING_COLUMNS)
+        ], orient="row", schema=WEIGHTING_COLUMNS)
 
         observed = pipeline(unbinned, binned)
         self.assertDataFrameEqual(expected, observed)
 
     def test_abundance_weighting_no_unbinned(self):
         unbinned = pl.DataFrame([
-        ], schema=APPRAISE_COLUMNS)
+        ], orient="row", schema=APPRAISE_COLUMNS)
         binned = pl.DataFrame([
             ["S3.1", "sample_1", "AAB", 5, 10, "Root", ""],
             ["S3.1", "sample_2", "AAB", 5, 10, "Root", ""],
-        ], schema=APPRAISE_COLUMNS)
+        ], orient="row", schema=APPRAISE_COLUMNS)
 
         expected = pl.DataFrame([
-        ], schema=WEIGHTING_COLUMNS)
+        ], orient="row", schema=WEIGHTING_COLUMNS)
 
         observed = pipeline(unbinned, binned)
         self.assertDataFrameEqual(expected, observed)
 
     def test_abundance_weighting_empty_input(self):
         unbinned = pl.DataFrame([
-        ], schema=APPRAISE_COLUMNS)
+        ], orient="row", schema=APPRAISE_COLUMNS)
         binned = pl.DataFrame([
-        ], schema=APPRAISE_COLUMNS)
+        ], orient="row", schema=APPRAISE_COLUMNS)
 
         expected = pl.DataFrame([
-        ], schema=WEIGHTING_COLUMNS)
+        ], orient="row", schema=WEIGHTING_COLUMNS)
 
         observed = pipeline(unbinned, binned)
         self.assertDataFrameEqual(expected, observed)
@@ -134,16 +134,16 @@ class Tests(unittest.TestCase):
             ["S3.1", "sample_2", "AAA", 9, 10, "Root", ""],
             ["S3.1", "sample_3", "AAA", 9, 10, "Root", ""],
             ["S3.1", "sample_3", "AAB", 5, 10, "Root", ""],
-        ], schema=APPRAISE_COLUMNS)
+        ], orient="row", schema=APPRAISE_COLUMNS)
         binned = pl.DataFrame([
             ["S3.1", "sample_1", "AAB", 5, 10, "Root", ""],
             ["S3.1", "sample_2", "AAB", 5, 10, "Root", ""],
-        ], schema=APPRAISE_COLUMNS)
+        ], orient="row", schema=APPRAISE_COLUMNS)
         samples = ["sample_1", "sample_2"]
 
         expected = pl.DataFrame([
             ["S3.1", "AAA", 0.5],
-        ], schema=WEIGHTING_COLUMNS)
+        ], orient="row", schema=WEIGHTING_COLUMNS)
 
         observed = pipeline(unbinned, binned, samples)
         self.assertDataFrameEqual(expected, observed)
@@ -154,16 +154,16 @@ class Tests(unittest.TestCase):
             ["S3.1", "sample_2.1", "AAA", 9, 10, "Root", ""],
             ["S3.1", "sample_3.1", "AAA", 9, 10, "Root", ""],
             ["S3.1", "sample_3.1", "AAB", 5, 10, "Root", ""],
-        ], schema=APPRAISE_COLUMNS)
+        ], orient="row", schema=APPRAISE_COLUMNS)
         binned = pl.DataFrame([
             ["S3.1", "sample_1.1", "AAB", 5, 10, "Root", ""],
             ["S3.1", "sample_2.1", "AAB", 5, 10, "Root", ""],
-        ], schema=APPRAISE_COLUMNS)
+        ], orient="row", schema=APPRAISE_COLUMNS)
         samples = ["sample_1", "sample_2"]
 
         expected = pl.DataFrame([
             ["S3.1", "AAA", 0.5],
-        ], schema=WEIGHTING_COLUMNS)
+        ], orient="row", schema=WEIGHTING_COLUMNS)
 
         observed = pipeline(unbinned, binned, samples)
         self.assertDataFrameEqual(expected, observed)
@@ -174,16 +174,16 @@ class Tests(unittest.TestCase):
             ["S3.1", "sample_2_1", "AAA", 9, 10, "Root", ""],
             ["S3.1", "sample_3_1", "AAA", 9, 10, "Root", ""],
             ["S3.1", "sample_3_1", "AAB", 5, 10, "Root", ""],
-        ], schema=APPRAISE_COLUMNS)
+        ], orient="row", schema=APPRAISE_COLUMNS)
         binned = pl.DataFrame([
             ["S3.1", "sample_1_1", "AAB", 5, 10, "Root", ""],
             ["S3.1", "sample_2_1", "AAB", 5, 10, "Root", ""],
-        ], schema=APPRAISE_COLUMNS)
+        ], orient="row", schema=APPRAISE_COLUMNS)
         samples = ["sample_1", "sample_2"]
 
         expected = pl.DataFrame([
             ["S3.1", "AAA", 0.5],
-        ], schema=WEIGHTING_COLUMNS)
+        ], orient="row", schema=WEIGHTING_COLUMNS)
 
         observed = pipeline(unbinned, binned, samples)
         self.assertDataFrameEqual(expected, observed)
@@ -194,16 +194,16 @@ class Tests(unittest.TestCase):
             ["S3.1", "sample_2_R1", "AAA", 9, 10, "Root", ""],
             ["S3.1", "sample_3_R1", "AAA", 9, 10, "Root", ""],
             ["S3.1", "sample_3_R1", "AAB", 5, 10, "Root", ""],
-        ], schema=APPRAISE_COLUMNS)
+        ], orient="row", schema=APPRAISE_COLUMNS)
         binned = pl.DataFrame([
             ["S3.1", "sample_1_R1", "AAB", 5, 10, "Root", ""],
             ["S3.1", "sample_2_R1", "AAB", 5, 10, "Root", ""],
-        ], schema=APPRAISE_COLUMNS)
+        ], orient="row", schema=APPRAISE_COLUMNS)
         samples = ["sample_1", "sample_2"]
 
         expected = pl.DataFrame([
             ["S3.1", "AAA", 0.5],
-        ], schema=WEIGHTING_COLUMNS)
+        ], orient="row", schema=WEIGHTING_COLUMNS)
 
         observed = pipeline(unbinned, binned, samples)
         self.assertDataFrameEqual(expected, observed)
@@ -214,16 +214,16 @@ class Tests(unittest.TestCase):
             ["S3.1", "sample_2", "AAA", 9, 10, "Root", ""],
             ["S3.1", "sample_3", "AAA", 9, 10, "Root", ""],
             ["S3.1", "sample_3", "AAB", 5, 10, "Root", ""],
-        ], schema=APPRAISE_COLUMNS)
+        ], orient="row", schema=APPRAISE_COLUMNS)
         binned = pl.DataFrame([
             ["S3.1", "sample_1", "AAC", 5, 10, "Root", ""],
             ["S3.1", "sample_2", "AAC", 5, 10, "Root", ""],
-        ], schema=APPRAISE_COLUMNS)
+        ], orient="row", schema=APPRAISE_COLUMNS)
 
         expected = pl.DataFrame([
             ["S3.1", "AAA", 0.5],
             ["S3.1", "AAB", 0.5 / 3],
-        ], schema=WEIGHTING_COLUMNS)
+        ], orient="row", schema=WEIGHTING_COLUMNS)
 
         observed = pipeline(unbinned, binned)
         self.assertDataFrameEqual(expected, observed)
@@ -236,18 +236,18 @@ class Tests(unittest.TestCase):
             ["S3.1", "sample_3", "AAB", 5, 10, "Root", ""],
             ["S3.1", "sample_4", "AAA", 9, 10, "Root", ""],
             ["S3.1", "sample_4", "AAB", 5, 10, "Root", ""],
-        ], schema=APPRAISE_COLUMNS)
+        ], orient="row", schema=APPRAISE_COLUMNS)
         binned = pl.DataFrame([
             ["S3.1", "sample_1", "AAB", 5, 10, "Root", ""],
             ["S3.1", "sample_2", "AAB", 5, 10, "Root", ""],
             ["S3.1", "sample_4", "AAC", 5, 20, "Root", ""],
-        ], schema=APPRAISE_COLUMNS)
+        ], orient="row", schema=APPRAISE_COLUMNS)
         samples = ["sample_3", "sample_4"]
 
         expected = pl.DataFrame([
             ["S3.1", "AAA", 0.375],
             ["S3.1", "AAB", 0.375],
-        ], schema=WEIGHTING_COLUMNS)
+        ], orient="row", schema=WEIGHTING_COLUMNS)
 
         observed = pipeline(unbinned, binned, samples)
         self.assertDataFrameEqual(expected, observed)

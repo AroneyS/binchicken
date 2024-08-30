@@ -33,7 +33,7 @@ def is_interleaved(reads, total_count):
             pl.col("number").mod(2).alias("rank"),
             pl.col("read").str.extract(READ_METADATA_REGEX)
             )
-        .pivot(values="read", index="index", columns="rank", aggregate_function=None)
+        .pivot(values="read", index="index", on="rank", aggregate_function=None)
         .filter(pl.col("0") != pl.col("1"))
     )
 
@@ -71,7 +71,7 @@ def pipeline(fastq_reads, START_CHECK_PAIRS, END_CHECK_PAIRS):
     except UnboundLocalError:
         return False, "Empty file"
 
-    reads = pl.DataFrame(start_list + end_list, schema=READS_COLUMNS)
+    reads = pl.DataFrame(start_list + end_list, orient="row", schema=READS_COLUMNS)
 
     return is_interleaved(reads, read_count)
 
