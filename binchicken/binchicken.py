@@ -961,6 +961,48 @@ def build(args):
     os.makedirs(output_dir, exist_ok=True)
     conda_prefix = args.conda_prefix
 
+    # Download databases
+    if args.download_databases:
+        download_config = {
+            "singlem_metapackage": False,
+            "checkm2_db": False,
+            "gtdbtk_db": False,
+        }
+
+        if not os.path.exists(args.singlem_metapackage):
+            download_config["singlem_metapackage"] = args.singlem_metapackage
+
+        if not os.path.exists(args.checkm2_db):
+            download_config["checkm2_db"] = args.checkm2_db
+
+        if not os.path.exists(args.gtdbtk_db):
+            download_config["gtdbtk_db"] = args.gtdbtk_db
+
+        if not any(download_config.values()):
+            logging.info("All databases already present")
+        else:
+            logging.info("Downloading databases")
+            yaml = YAML()
+            yaml.version = (1, 1)
+            yaml.default_flow_style = False
+
+            download_config_file = os.path.join(output_dir, "download_config.yaml")
+            with open(download_config_file, 'w') as f:
+                yaml.dump(download_config, f)
+
+            run_workflow(
+                config = download_config_file,
+                workflow = "download.smk",
+                output_dir = os.path.abspath(os.path.join(output_dir, "download")),
+                cores = args.cores,
+                dryrun = args.dryrun,
+                profile = args.snakemake_profile,
+                local_cores = args.local_cores,
+                cluster_retries = args.cluster_retries,
+                conda_prefix = args.conda_prefix,
+                snakemake_args = args.snakemake_args,
+            )
+
     # Setup env variables
     configure_variable("SNAKEMAKE_CONDA_PREFIX", conda_prefix)
     configure_variable("CONDA_ENV_PATH", conda_prefix)
@@ -1166,8 +1208,12 @@ def main():
                     "binchicken build --conda-prefix path_to_conda_envs"
                 ),
                 btu.Example(
-                    "create dependency conda environments and setup environment variables for Aviary",
-                    "binchicken build --conda-prefix path_to_conda_envs --singlem-metapackage metapackage --gtdbtk-db GTDBtk --checkm2-db CheckM2"
+                    "create dependency conda environments and setup environment variables for databases",
+                    "binchicken build --conda-prefix path_to_conda_envs --singlem-metapackage metapackage --checkm2-db CheckM2 --gtdbtk-db GTDBtk"
+                ),
+                btu.Example(
+                    "create dependency conda environments and download databases",
+                    "binchicken build --conda-prefix path_to_conda_envs --singlem-metapackage metapackage --checkm2-db CheckM2 --download-databases"
                 ),
             ],
         }
@@ -1383,6 +1429,7 @@ def main():
     tmp_default = "/tmp"
     build_parser.add_argument("--set-tmp-dir", help=f"Set temporary directory [default: {tmp_default}]", default=tmp_default)
     build_parser.add_argument("--skip-aviary-envs", help="Do not install Aviary subworkflow environments", action="store_true")
+    build_parser.add_argument("--download-databases", help="Download databases if provided paths do not exist", action="store_true")
     add_general_snakemake_options(build_parser, required_conda_prefix=True)
 
     ###########################################################################
