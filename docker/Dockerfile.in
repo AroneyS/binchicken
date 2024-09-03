@@ -19,21 +19,23 @@ RUN pip install -e .
 RUN rm -rfv binchicken/.git binchicken/test
 
 # Run binchicken build
-# RUN binchicken build \
-#     --conda-prefix /opt/conda/envs/ \
-#     --singlem-metapackage /singlem_metapackage \
-#     --checkm2-db /CheckM2_database \
-#     --download-databases
+RUN binchicken build \
+    --conda-prefix /opt/conda/envs/ \
+    --singlem-metapackage /binchicken/singlem_metapackage \
+    --checkm2-db /binchicken/CheckM2_database \
+    --download-databases
+ENV SINGLEM_METAPACKAGE_PATH=/binchicken/singlem_metapackage
+ENV CHECKM2DB=/binchicken/CheckM2_database
 
-# RUN find /singlem_metapackage /CheckM2_database -type d -print0 | xargs -0 chmod 755
-# RUN find /singlem_metapackage /CheckM2_database -type f -print0 | xargs -0 chmod +r
-# RUN rm -rf build genome_1.fna sample_*
-# RUN conda clean -af
-# RUN rm -rf /opt/conda/envs/*/pkgs
+RUN find /binchicken/singlem_metapackage /binchicken/CheckM2_database -type d -print0 | xargs -0 chmod 755
+RUN find /binchicken/singlem_metapackage /binchicken/CheckM2_database -type f -print0 | xargs -0 chmod +r
+RUN rm -rf /binchicken/build /binchicken/genome_1.fna /binchicken/sample_*
+RUN conda clean -af
+RUN rm -rf /opt/conda/envs/*/pkgs
 
-# # Run some tests
-# RUN binchicken --version
-# RUN binchicken coassemble --full-help 
+# Run some tests
+RUN binchicken --version
+# RUN binchicken coassemble -h
 
 # Remove ~/.mamba as it is just taking up space
 # RUN rm -rf ~/.mamba
@@ -82,4 +84,4 @@ USER $MAMBA_USER
 SHELL ["/usr/local/bin/_dockerfile_shell.sh"]
 
 WORKDIR /data
-# ENTRYPOINT ["/usr/local/bin/_entrypoint.sh","binchicken"]
+ENTRYPOINT ["/usr/local/bin/_entrypoint.sh","binchicken"]
