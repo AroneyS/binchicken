@@ -20,15 +20,15 @@ conda create -n binchicken -c bioconda -c conda-forge binchicken
 A docker image generated from the conda package is [available](https://hub.docker.com/r/wwood/singlem) on DockerHub. After installing Docker, run the following:
 
 ```bash
-docker pull samuelaroney/binchicken:0.12.2
-docker run samuelaroney/binchicken:0.12.2 -h
+docker pull samuelaroney/binchicken:0.12.4
+docker run samuelaroney/binchicken:0.12.4 -h
 ```
 
 If your data and desired output are in the current working directory,
 Bin Chicken `coassemble` can be run like so:
 
 ```bash
-docker run -v $(pwd):$(pwd) samuelaroney/binchicken:0.12.2 coassemble \
+docker run -v $(pwd):$(pwd) samuelaroney/binchicken:0.12.4 coassemble \
     --forward $(pwd)/reads_1.1.fq ... \
     --reverse $(pwd)/reads_1.2.fq ...
 ```
@@ -42,15 +42,15 @@ in the container.
 Install container from dockerhub.
 
 ```bash
-singularity pull docker:://samuelaroney/binchicken:0.12.2
-singularity run binchicken_0.12.1.sif -h
+singularity pull docker:://samuelaroney/binchicken:0.12.4
+singularity run binchicken_0.12.4.sif -h
 ```
 
 If your data and desired output are in the current working directory,
 Bin Chicken `coassemble` can be run like so:
 
 ```bash
-singularity run -B $(pwd) binchicken_0.10.5.sif coassemble \
+singularity run -B $(pwd) binchicken_0.12.4.sif coassemble \
     --forward $(pwd)/reads_1.1.fq ... \
     --reverse $(pwd)/reads_1.2.fq ...
 ```

@@ -41,7 +41,7 @@ RUN rm -rf /opt/conda/envs/*/pkgs
 
 # Run some tests
 RUN binchicken --version
-# RUN binchicken coassemble -h
+RUN binchicken coassemble -h
 
 # Remove ~/.mamba as it is just taking up space
 # RUN rm -rf ~/.mamba
