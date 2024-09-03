@@ -5,6 +5,12 @@ FROM mambaorg/micromamba:1.5.6
 
 WORKDIR /binchicken
 
+# Install man-db. We cannot use conda because man-db doesn't appear to be
+# available in any conda repo
+USER root
+RUN apt update && apt install -y man-db
+USER $MAMBA_USER
+
 ADD binchicken.yml /binchicken.yml
 RUN --mount=type=cache,target=/opt/conda/pkgs micromamba install -c conda-forge -c bioconda -n base git -f /binchicken.yml
 RUN --mount=type=cache,target=/opt/conda/pkgs micromamba clean --all --yes
