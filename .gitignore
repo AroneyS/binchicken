@@ -7,3 +7,5 @@ example/
 dist/
 site/
 *.sif
+docker/binchicken.yml
+docker/Dockerfile
