@@ -30,7 +30,8 @@ Bin Chicken `coassemble` can be run like so:
 ```bash
 docker run -v $(pwd):$(pwd) samuelaroney/binchicken:0.12.4 coassemble \
     --forward $(pwd)/reads_1.1.fq ... \
-    --reverse $(pwd)/reads_1.2.fq ...
+    --reverse $(pwd)/reads_1.2.fq ... \
+    --output $(pwd)/output
 ```
 
 Note: Bin Chicken `build` is unnecessary for this method since the conda
@@ -52,7 +53,8 @@ Bin Chicken `coassemble` can be run like so:
 ```bash
 singularity run -B $(pwd) binchicken_0.12.4.sif coassemble \
     --forward $(pwd)/reads_1.1.fq ... \
-    --reverse $(pwd)/reads_1.2.fq ...
+    --reverse $(pwd)/reads_1.2.fq ... \
+    --output $(pwd)/output
 ```
 
 Note: Bin Chicken `build` is unnecessary for this method since the conda
