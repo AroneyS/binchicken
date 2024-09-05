@@ -68,7 +68,7 @@ class Tests(unittest.TestCase):
                         "4",
                         "4832",
                         "sample_1,sample_2,sample_3",
-                        "coassembly_0"
+                        "sample_1"
                     ]),
                     "\t".join([
                         "sample_2",
@@ -76,7 +76,7 @@ class Tests(unittest.TestCase):
                         "3",
                         "3926",
                         "sample_1,sample_2,sample_3",
-                        "coassembly_1"
+                        "sample_2"
                     ]),
                     ""
                 ]
@@ -94,9 +94,9 @@ class Tests(unittest.TestCase):
                         SAMPLE_READS_FORWARD.split(" ")[0],
                         "-2",
                         SAMPLE_READS_REVERSE.split(" ")[0],
-                        "--output", os.path.join(test_dir, "coassemble", "coassemble", "coassembly_0", "assemble"),
+                        "--output", os.path.join(test_dir, "coassemble", "coassemble", "sample_1", "assemble"),
                         "-n 64 -t 64 -m 500 --skip-qc &>",
-                        os.path.join(test_dir, "coassemble", "coassemble", "logs", "coassembly_0_assemble.log"),
+                        os.path.join(test_dir, "coassemble", "coassemble", "logs", "sample_1_assemble.log"),
                         ""
                     ]),
                     " ".join([
@@ -104,9 +104,9 @@ class Tests(unittest.TestCase):
                         SAMPLE_READS_FORWARD.split(" ")[1],
                         "-2",
                         SAMPLE_READS_REVERSE.split(" ")[1],
-                        "--output", os.path.join(test_dir, "coassemble", "coassemble", "coassembly_1", "assemble"),
+                        "--output", os.path.join(test_dir, "coassemble", "coassemble", "sample_2", "assemble"),
                         "-n 64 -t 64 -m 500 --skip-qc &>",
-                        os.path.join(test_dir, "coassemble", "coassemble", "logs", "coassembly_1_assemble.log"),
+                        os.path.join(test_dir, "coassemble", "coassemble", "logs", "sample_2_assemble.log"),
                         ""
                     ]),
                     ""
@@ -120,27 +120,27 @@ class Tests(unittest.TestCase):
             expected = "\n".join(
                 [
                     " ".join([
-                        "aviary recover --assembly", os.path.join(test_dir, "coassemble", "coassemble", "coassembly_0", "assemble", "assembly", "final_contigs.fasta"),
+                        "aviary recover --assembly", os.path.join(test_dir, "coassemble", "coassemble", "sample_1", "assemble", "assembly", "final_contigs.fasta"),
                         "-1",
                         SAMPLE_READS_FORWARD,
                         "-2",
                         SAMPLE_READS_REVERSE,
-                        "--output", os.path.join(test_dir, "coassemble", "coassemble", "coassembly_0", "recover"),
+                        "--output", os.path.join(test_dir, "coassemble", "coassemble", "sample_1", "recover"),
                         "--binning-only --refinery-max-iterations 0 "
                         "-n 32 -t 32 -m 250 --skip-qc &>",
-                        os.path.join(test_dir, "coassemble", "coassemble", "logs", "coassembly_0_recover.log"),
+                        os.path.join(test_dir, "coassemble", "coassemble", "logs", "sample_1_recover.log"),
                         ""
                     ]),
                     " ".join([
-                        "aviary recover --assembly", os.path.join(test_dir, "coassemble", "coassemble", "coassembly_1", "assemble", "assembly", "final_contigs.fasta"),
+                        "aviary recover --assembly", os.path.join(test_dir, "coassemble", "coassemble", "sample_2", "assemble", "assembly", "final_contigs.fasta"),
                         "-1",
                         SAMPLE_READS_FORWARD,
                         "-2",
                         SAMPLE_READS_REVERSE,
-                        "--output", os.path.join(test_dir, "coassemble", "coassemble", "coassembly_1", "recover"),
+                        "--output", os.path.join(test_dir, "coassemble", "coassemble", "sample_2", "recover"),
                         "--binning-only --refinery-max-iterations 0 "
                         "-n 32 -t 32 -m 250 --skip-qc &>",
-                        os.path.join(test_dir, "coassemble", "coassemble", "logs", "coassembly_1_recover.log"),
+                        os.path.join(test_dir, "coassemble", "coassemble", "logs", "sample_2_recover.log"),
                         ""
                     ]),
                     ""
@@ -161,14 +161,14 @@ class Tests(unittest.TestCase):
                         "total_size",
                     ]),
                     "\t".join([
-                        "coassembly_0",
+                        "sample_1",
                         "sample_1",
                         "1",
                         "4",
                         "4832",
                     ]),
                     "\t".join([
-                        "coassembly_1",
+                        "sample_2",
                         "sample_2",
                         "1",
                         "3",
@@ -231,7 +231,7 @@ class Tests(unittest.TestCase):
                         "3",
                         "3624",
                         "sample_3,sample_5",
-                        "coassembly_0"
+                        "sample_5"
                     ]),
                     "\t".join([
                         "sample_3",
@@ -239,7 +239,7 @@ class Tests(unittest.TestCase):
                         "2",
                         "3624",
                         "sample_3,sample_5",
-                        "coassembly_1"
+                        "sample_3"
                     ]),
                     "\t".join([
                         "sample_2",
@@ -247,7 +247,7 @@ class Tests(unittest.TestCase):
                         "2",
                         "3926",
                         "sample_1,sample_2",
-                        "coassembly_2"
+                        "sample_2"
                     ]),
                     "\t".join([
                         "sample_1",
@@ -255,7 +255,7 @@ class Tests(unittest.TestCase):
                         "2",
                         "4832",
                         "sample_1,sample_2",
-                        "coassembly_3"
+                        "sample_1"
                     ]),
                     ""
                 ]

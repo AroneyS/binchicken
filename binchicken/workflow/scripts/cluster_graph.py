@@ -108,7 +108,8 @@ def pipeline(
         MIN_CLUSTER_TARGETS=1,
         MAX_SAMPLES_COMBINATIONS=100,
         COASSEMBLY_SAMPLES=[],
-        EXCLUDE_COASSEMBLIES=[]):
+        EXCLUDE_COASSEMBLIES=[],
+        single_assembly=False):
 
     logging.info(f"Polars using {str(pl.thread_pool_size())} threads")
 
@@ -308,7 +309,9 @@ def pipeline(
             .with_row_index("coassembly")
             .select(
                 "samples", "length", "total_targets", "total_size", "recover_samples",
-                coassembly = pl.lit("coassembly_") + pl.col("coassembly").cast(pl.Utf8)
+                coassembly = pl.when(single_assembly)
+                    .then(pl.col("samples"))
+                    .otherwise(pl.lit("coassembly_") + pl.col("coassembly").cast(pl.Utf8))
                 )
         )
 
@@ -333,6 +336,7 @@ if __name__ == "__main__":
     MAX_RECOVERY_SAMPLES = snakemake.params.max_recovery_samples
     COASSEMBLY_SAMPLES = snakemake.params.coassembly_samples
     EXCLUDE_COASSEMBLIES = snakemake.params.exclude_coassemblies
+    single_assembly = snakemake.params.single_assembly
     elusive_edges_path = snakemake.input.elusive_edges
     read_size_path = snakemake.input.read_size
     weightings_path = snakemake.input.targets_weighted
@@ -363,5 +367,6 @@ if __name__ == "__main__":
         EXCLUDE_COASSEMBLIES=EXCLUDE_COASSEMBLIES,
         MIN_CLUSTER_TARGETS=min_cluster_targets,
         MAX_SAMPLES_COMBINATIONS=100,
+        single_assembly=single_assembly,
         )
     clusters.write_csv(elusive_clusters_path, separator="\t")
