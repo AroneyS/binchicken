@@ -855,6 +855,7 @@ rule aviary_recover:
         "-1 {params.reads_1} "
         "-2 {params.reads_2} "
         "--output {params.output} "
+        "--checkm2-db-path {params.checkm2} "
         "{params.fast} "
         "-n {params.threads} "
         "-t {params.threads} "
