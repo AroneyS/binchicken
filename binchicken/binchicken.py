@@ -1169,6 +1169,12 @@ def main():
                     "binchicken coassemble --forward reads_1.1.fq ... --reverse reads_1.2.fq ... --single-assembly"
                 ),
             ],
+            "single": [
+                btu.Example(
+                    "find relevant samples for differential coverage binning (no coassembly)",
+                    "binchicken single --forward reads_1.1.fq ... --reverse reads_1.2.fq ..."
+                ),
+            ],
             "evaluate": [
                 btu.Example(
                     "evaluate a completed coassembly",
@@ -1358,6 +1364,11 @@ def main():
 
     ###########################################################################
 
+    single_parser = main_parser.new_subparser("single", "Single-assembly of reads with binning samples chosen by unbinned single-copy marker genes")
+    add_coassemble_arguments(single_parser)
+
+    ###########################################################################
+
     evaluate_parser = main_parser.new_subparser("evaluate", "Evaluate coassembled bins")
     # Base arguments
     evaluate_base = evaluate_parser.add_argument_group("Base input arguments")
@@ -1531,6 +1542,11 @@ def main():
             raise Exception("Either Bin Chicken coassemble output (--coassemble-output) or specific input files must be provided")
 
     if args.subparser_name == "coassemble":
+        coassemble_argument_verification(args)
+        coassemble(args)
+
+    if args.subparser_name == "single":
+        args.single_assembly = True
         coassemble_argument_verification(args)
         coassemble(args)
 
