@@ -473,6 +473,7 @@ checkpoint cluster_graph:
         max_recovery_samples = config["max_recovery_samples"],
         coassembly_samples = config["coassembly_samples"],
         exclude_coassemblies = config["exclude_coassemblies"],
+        single_assembly = config["single_assembly"],
     threads: 64
     resources:
         mem_mb=get_mem_mb,
