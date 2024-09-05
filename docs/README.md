@@ -10,9 +10,9 @@ Bin Chicken is a tool that performs targeted recovery of low abundance metagenom
 ```bash
 # Assemble and recover from each sample individually
 # 20 samples used for differential abundance binning
-binchicken coassemble \
+binchicken single \
   --forward-list samples_forward.txt --reverse-list samples_reverse.txt \
-  --run-aviary --single-assembly \
+  --run-aviary \
   --cores 64 --output binchicken_single_assembly
 
 # Assemble and recover from 2-sample coassemblies

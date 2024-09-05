@@ -42,7 +42,7 @@ if __name__ == '__main__':
     logging.basicConfig(level=loglevel, format='%(asctime)s %(levelname)s: %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
 
     subdir_and_commands = [
-        ["tools", ["coassemble", "evaluate", "iterate", "update"]],
+        ["tools", ["coassemble", "single", "evaluate", "iterate", "update"]],
     ]
 
     for subdir, commands in subdir_and_commands:
@@ -56,6 +56,7 @@ if __name__ == '__main__':
                 # Remove everything before the options section
                 splitters = {
                     "coassemble": "OPTIONS",
+                    "single": "OPTIONS",
                     "evaluate": "OPTIONS",
                     "iterate": "OPTIONS",
                     "update": "OPTIONS",
