@@ -4,11 +4,12 @@ title: Bin Chicken update
 # binchicken update
 
 Applies further processing to a previous Bin Chicken coassemble run.
+Note that all coassemblies can be run by rerunning the `coassemble` command unchanged except for adding `--run-aviary`.
 
 Any combinations of the following:
 
 - Generating unmapped reads files (`--assemble-unmapped`)
-- Running assembly/recovery through Aviary (`--run-aviary`)
+- Running assembly/recovery for all/specific coassemblies through Aviary (`--run-aviary`, `--coassemblies`)
 - Downloading SRA reads (`--sra`)
 
 ```bash
