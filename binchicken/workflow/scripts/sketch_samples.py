@@ -83,7 +83,7 @@ if __name__ == "__main__":
     if TAXA_OF_INTEREST:
         logging.info(f"Filtering for taxa of interest: {TAXA_OF_INTEREST}")
         unbinned = unbinned.filter(
-            pl.col("taxonomy").str.contains(TAXA_OF_INTEREST, literal=True)
+            pl.col("taxonomy").str.contains(TAXA_OF_INTEREST)
         )
 
     signatures = processing(unbinned, output_path, threads=threads)

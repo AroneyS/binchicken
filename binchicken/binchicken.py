@@ -1324,7 +1324,7 @@ def main():
         coassemble_midpoint.add_argument("--genome-singlem", help="Combined SingleM otu tables for genome transcripts. If provided, genome SingleM is skipped")
         # Clustering options
         coassemble_clustering = parser.add_argument_group("Clustering options")
-        coassemble_clustering.add_argument("--taxa-of-interest", help="Only consider sequences from this GTDB taxa (e.g. p__Planctomycetota) [default: all]")
+        coassemble_clustering.add_argument("--taxa-of-interest", help="Only consider sequences from this GTDB taxa (e.g. p__Planctomycetota, or 'p__Bacillota|p__Bacteroidota') [default: all]")
         appraise_sequence_identity_default = 0.96
         coassemble_clustering.add_argument("--appraise-sequence-identity", type=int, help=f"Minimum sequence identity for SingleM appraise against reference database. e.g. 96% for Species-level or 86% Genus-level [default: {appraise_sequence_identity_default}]", default=appraise_sequence_identity_default)
         min_sequence_coverage_default = 10
