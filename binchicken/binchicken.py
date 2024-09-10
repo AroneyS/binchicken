@@ -1325,8 +1325,8 @@ def main():
         # Clustering options
         coassemble_clustering = parser.add_argument_group("Clustering options")
         coassemble_clustering.add_argument("--taxa-of-interest", help="Only consider sequences from this GTDB taxa (e.g. p__Planctomycetota) [default: all]")
-        appraise_sequence_identity_default = 0.95
-        coassemble_clustering.add_argument("--appraise-sequence-identity", type=int, help=f"Minimum sequence identity for SingleM appraise against reference database. e.g. 95% for Species-level or 86% Genus-level [default: {appraise_sequence_identity_default}]", default=appraise_sequence_identity_default)
+        appraise_sequence_identity_default = 0.96
+        coassemble_clustering.add_argument("--appraise-sequence-identity", type=int, help=f"Minimum sequence identity for SingleM appraise against reference database. e.g. 96% for Species-level or 86% Genus-level [default: {appraise_sequence_identity_default}]", default=appraise_sequence_identity_default)
         min_sequence_coverage_default = 10
         coassemble_clustering.add_argument("--min-sequence-coverage", type=int, help=f"Minimum combined coverage for sequence inclusion [default: {min_sequence_coverage_default}]", default=min_sequence_coverage_default)
         coassemble_clustering.add_argument("--single-assembly", action="store_true", help="Skip appraise to discover samples to differential abundance binning. Forces --num-coassembly-samples and --max-coassembly-samples to 1 and sets --max-coassembly-size to None")
