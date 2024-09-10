@@ -679,6 +679,27 @@ class Tests(unittest.TestCase):
         self.assertDataFrameEqual(expected_targets, observed_targets)
         self.assertDataFrameEqual(expected_edges, observed_edges)
 
+    def test_target_elusive_target_taxa_multiple(self):
+        unbinned = pl.DataFrame([
+            ["S3.1", "sample_1", "AAA", 5, 10, "Root; d__Bacteria; p__Planctomycetota", ""],
+            ["S3.1", "sample_1", "AAB", 5, 10, "Root", ""],
+            ["S3.1", "sample_2", "AAA", 5, 10, "Root; d__Bacteria; p__Pseudomonadota", ""],
+            ["S3.1", "sample_2", "AAB", 5, 10, "Root", ""],
+        ], orient="row", schema=APPRAISE_COLUMNS)
+        samples = set(["sample_1", "sample_2"])
+
+        expected_targets = pl.DataFrame([
+            ["S3.1", "sample_1", "AAA", 5, 10, "Root; d__Bacteria; p__Planctomycetota", "0"],
+            ["S3.1", "sample_2", "AAA", 5, 10, "Root; d__Bacteria; p__Pseudomonadota", "0"],
+        ], orient="row", schema=TARGETS_COLUMNS)
+        expected_edges = pl.DataFrame([
+            ["match", 2, "sample_1,sample_2", "0"],
+        ], orient="row", schema=EDGES_COLUMNS)
+
+        observed_targets, observed_edges = pipeline(unbinned, samples, TAXA_OF_INTEREST="p__Planctomycetota|p__Pseudomonadota")
+        self.assertDataFrameEqual(expected_targets, observed_targets)
+        self.assertDataFrameEqual(expected_edges, observed_edges)
+
     def test_target_elusive_single_assembly(self):
         unbinned = pl.DataFrame([
             ["S3.1", "sample_1", "AAA", 5, 10, "Root", ""],
