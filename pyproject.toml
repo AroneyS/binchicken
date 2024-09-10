@@ -18,7 +18,7 @@ dependencies = ["snakemake>=6.0.5",
   "bird_tool_utils",
   "extern",
   "ruamel.yaml>=0.15.99",
-  "polars=1.2.1",
+  "polars",
   "pyarrow"]
 classifiers = [
     "Topic :: Scientific/Engineering :: Bio-Informatics",
