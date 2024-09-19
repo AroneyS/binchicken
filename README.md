@@ -9,6 +9,6 @@
 
 [<img src="docs/_include/binchicken_logo.png" width="50%" />](binchicken_logo.png)
 
-Bin Chicken - targeted recovery of low abundance metagenome assembled genomes through intelligent coassembly.
+Bin Chicken - recovery of low abundance and taxonomically targeted metagenome assembled genomes (MAGs) through strategic coassembly.
 
 Documentation can be found at https://AroneyS.github.io/binchicken/
