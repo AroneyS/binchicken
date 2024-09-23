@@ -558,7 +558,7 @@ rule qc_reads:
         quality_cutoff = 15,
         unqualified_percent_limit = 40,
         min_length = 70,
-    threads: 32
+    threads: 16
     resources:
         mem_mb=get_mem_mb,
         runtime = get_runtime(base_hours = 4),
