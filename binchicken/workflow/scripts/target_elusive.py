@@ -68,7 +68,7 @@ def get_clusters(
         # Choose top N clusters for each cluster size where N is PRECLUSTER_SIZE
         .with_columns(
             sample_combinations = pl.col("cluster_size").map_elements(
-                lambda x: [[0] + list(i) for i in itertools.combinations(range(1, PRECLUSTER_SIZE), x)][:PRECLUSTER_SIZE],
+                lambda x: [[0] + list(i) for i in itertools.islice(itertools.combinations(range(1, PRECLUSTER_SIZE), x), PRECLUSTER_SIZE)],
                 return_dtype=pl.List(pl.List(pl.Int64)),
                 )
             )
