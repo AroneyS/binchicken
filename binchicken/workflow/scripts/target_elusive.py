@@ -20,6 +20,7 @@ EDGES_COLUMNS={
 
 def get_clusters(
         sample_distances,
+        samples,
         PRECLUSTER_SIZE=2,
         MAX_COASSEMBLY_SAMPLES=2):
     logging.info(f"Polars using {str(pl.thread_pool_size())} threads")
@@ -30,6 +31,18 @@ def get_clusters(
     if MAX_COASSEMBLY_SAMPLES < 2:
         # Set to 2 to produce paired edges
         MAX_COASSEMBLY_SAMPLES = 2
+
+    sample_distances = (
+        sample_distances
+        .with_columns(
+            pl.when(pl.col("query_name").is_in(samples))
+                .then(pl.col("query_name"))
+                .otherwise(pl.col("query_name").str.replace(SUFFIX_RE, "")),
+            pl.when(pl.col("match_name").is_in(samples))
+                .then(pl.col("match_name"))
+                .otherwise(pl.col("match_name").str.replace(SUFFIX_RE, "")),
+            )
+    )
 
     logging.info("Converting to sparse array")
     samples = np.unique(np.concatenate([
@@ -185,6 +198,8 @@ def streaming_pipeline(
                 processed_chunk = process_chunk(chunk)
                 processed_chunk.write_csv(f, separator="\t", include_header=i==0)
 
+    logging.info("Done")
+
     return
 
 def pipeline(
@@ -325,6 +340,7 @@ if __name__ == "__main__":
         )
         sample_preclusters = get_clusters(
             sample_distances,
+            samples,
             PRECLUSTER_SIZE=PRECLUSTER_SIZE,
             MAX_COASSEMBLY_SAMPLES=MAX_COASSEMBLY_SAMPLES,
             )
@@ -349,3 +365,5 @@ if __name__ == "__main__":
             )
         targets.write_csv(targets_path, separator="\t")
         edges.sort("style", "cluster_size", "samples").write_csv(edges_path, separator="\t")
+
+        logging.info("Done")
