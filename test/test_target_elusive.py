@@ -56,13 +56,62 @@ class Tests(unittest.TestCase):
             ["sample_1", "sample_3", 1-1],
             ["sample_2", "sample_3", 1-0.9],
         ], orient="row", schema=SAMPLE_DISTANCES_COLUMNS)
+        samples = set(["sample_1", "sample_2", "sample_3"])
 
         expected_clusters = pl.DataFrame([
             ["sample_1,sample_2"],
             ["sample_2,sample_3"],
         ], orient="row", schema=CLUSTERS_COLUMNS)
 
-        observed_clusters = get_clusters(sample_distances)
+        observed_clusters = get_clusters(sample_distances, samples)
+        self.assertDataFrameEqual(expected_clusters, observed_clusters)
+
+    def test_get_clusters_suffix(self):
+        sample_distances = pl.DataFrame([
+            ["sample_1.1", "sample_2.1", 1-0.5],
+            ["sample_1.1", "sample_3.1", 1-1],
+            ["sample_2.1", "sample_3.1", 1-0.9],
+        ], orient="row", schema=SAMPLE_DISTANCES_COLUMNS)
+        samples = set(["sample_1", "sample_2", "sample_3"])
+
+        expected_clusters = pl.DataFrame([
+            ["sample_1,sample_2"],
+            ["sample_2,sample_3"],
+        ], orient="row", schema=CLUSTERS_COLUMNS)
+
+        observed_clusters = get_clusters(sample_distances, samples)
+        self.assertDataFrameEqual(expected_clusters, observed_clusters)
+
+    def test_get_clusters_suffix_underscore(self):
+        sample_distances = pl.DataFrame([
+            ["sample_1_1", "sample_2_1", 1-0.5],
+            ["sample_1_1", "sample_3_1", 1-1],
+            ["sample_2_1", "sample_3_1", 1-0.9],
+        ], orient="row", schema=SAMPLE_DISTANCES_COLUMNS)
+        samples = set(["sample_1", "sample_2", "sample_3"])
+
+        expected_clusters = pl.DataFrame([
+            ["sample_1,sample_2"],
+            ["sample_2,sample_3"],
+        ], orient="row", schema=CLUSTERS_COLUMNS)
+
+        observed_clusters = get_clusters(sample_distances, samples)
+        self.assertDataFrameEqual(expected_clusters, observed_clusters)
+
+    def test_get_clusters_suffix_R(self):
+        sample_distances = pl.DataFrame([
+            ["sample_1_R1", "sample_2_R1", 1-0.5],
+            ["sample_1_R1", "sample_3_R1", 1-1],
+            ["sample_2_R1", "sample_3_R1", 1-0.9],
+        ], orient="row", schema=SAMPLE_DISTANCES_COLUMNS)
+        samples = set(["sample_1", "sample_2", "sample_3"])
+
+        expected_clusters = pl.DataFrame([
+            ["sample_1,sample_2"],
+            ["sample_2,sample_3"],
+        ], orient="row", schema=CLUSTERS_COLUMNS)
+
+        observed_clusters = get_clusters(sample_distances, samples)
         self.assertDataFrameEqual(expected_clusters, observed_clusters)
 
     def test_get_clusters_size_three(self):
@@ -71,6 +120,7 @@ class Tests(unittest.TestCase):
             ["1", "3", 1-1],
             ["2", "3", 1-0.9],
         ], orient="row", schema=SAMPLE_DISTANCES_COLUMNS)
+        samples = set(["1", "2", "3"])
 
         expected_clusters = pl.DataFrame([
             ["1,2"],
@@ -81,6 +131,7 @@ class Tests(unittest.TestCase):
 
         observed_clusters = get_clusters(
             sample_distances,
+            samples,
             PRECLUSTER_SIZE=3,
             MAX_COASSEMBLY_SAMPLES=3,
             )
@@ -95,6 +146,7 @@ class Tests(unittest.TestCase):
             ["2", "4", 1-0.4],
             ["3", "4", 1-1],
         ], orient="row", schema=SAMPLE_DISTANCES_COLUMNS)
+        samples = set(["1", "2", "3", "4"])
 
         expected_clusters = pl.DataFrame([
             ["1,2"],
@@ -111,6 +163,7 @@ class Tests(unittest.TestCase):
 
         observed_clusters = get_clusters(
             sample_distances,
+            samples,
             PRECLUSTER_SIZE=3,
             MAX_COASSEMBLY_SAMPLES=3,
             )
@@ -122,6 +175,7 @@ class Tests(unittest.TestCase):
             ["1", "3", 1-0.2],
             ["2", "3", 1-0.2],
         ], orient="row", schema=SAMPLE_DISTANCES_COLUMNS)
+        samples = set(["1", "2", "3"])
 
         expected_clusters = pl.DataFrame([
             ["1,2"],
@@ -138,6 +192,7 @@ class Tests(unittest.TestCase):
 
         observed_clusters = get_clusters(
             sample_distances,
+            samples,
             PRECLUSTER_SIZE=3,
             MAX_COASSEMBLY_SAMPLES=3,
             )
@@ -152,6 +207,7 @@ class Tests(unittest.TestCase):
             ["2", "4", 1-0.2],
             ["3", "4", 1-0.1],
         ], orient="row", schema=SAMPLE_DISTANCES_COLUMNS)
+        samples = set(["1", "2", "3", "4"])
 
         expected_clusters = pl.DataFrame([
             ["1,2"],
@@ -168,6 +224,7 @@ class Tests(unittest.TestCase):
 
         observed_clusters = get_clusters(
             sample_distances,
+            samples,
             PRECLUSTER_SIZE=3,
             MAX_COASSEMBLY_SAMPLES=3,
             )
@@ -181,6 +238,7 @@ class Tests(unittest.TestCase):
             ["2", "4", 1-0.2],
             ["3", "4", 1-0.1],
         ], orient="row", schema=SAMPLE_DISTANCES_COLUMNS)
+        samples = set(["1", "2", "3", "4"])
 
         expected_clusters = pl.DataFrame([
             ["1,2"],
@@ -197,6 +255,7 @@ class Tests(unittest.TestCase):
 
         observed_clusters = get_clusters(
             sample_distances,
+            samples,
             PRECLUSTER_SIZE=3,
             MAX_COASSEMBLY_SAMPLES=3,
             )
@@ -215,6 +274,7 @@ class Tests(unittest.TestCase):
             ["3", "5", 1-0.3],
             ["4", "5", 1-0.1],
         ], orient="row", schema=SAMPLE_DISTANCES_COLUMNS)
+        samples = set(["1", "2", "3", "4", "5"])
 
         expected_clusters = pl.DataFrame([
             ["1,2"],
@@ -241,6 +301,7 @@ class Tests(unittest.TestCase):
 
         observed_clusters = get_clusters(
             sample_distances,
+            samples,
             PRECLUSTER_SIZE=4,
             MAX_COASSEMBLY_SAMPLES=3,
             )
@@ -258,6 +319,7 @@ class Tests(unittest.TestCase):
             ["3", "5", 1-0.3],
             ["4", "5", 1-0.1],
         ], orient="row", schema=SAMPLE_DISTANCES_COLUMNS)
+        samples = set(["1", "2", "3", "4", "5"])
 
         expected_clusters = pl.DataFrame([
             ["1,2"],
@@ -284,6 +346,7 @@ class Tests(unittest.TestCase):
 
         observed_clusters = get_clusters(
             sample_distances,
+            samples,
             PRECLUSTER_SIZE=4,
             MAX_COASSEMBLY_SAMPLES=3,
             )
@@ -301,6 +364,17 @@ class Tests(unittest.TestCase):
             ["SRR4249921", "SRR5207344", 1-0.15],
             ["SRR6979552", "SRR6980357", 1-0.25],
         ], orient="row", schema=SAMPLE_DISTANCES_COLUMNS)
+        samples = set([
+            "SRR12149290", "SRR10571243",
+            "ERR3201415", "ERR3220216",
+            "ERR1414209", "ERR4804028",
+            "SRR6979552", "SRR15213103",
+            "SRR12149290", "SRR12352217",
+            "SRR6979552", "SRR4831657",
+            "ERR3201415", "SRR11784293",
+            "SRR4249921", "SRR5207344",
+            "SRR6979552", "SRR6980357",
+        ])
 
         expected_clusters = pl.DataFrame([
             ["SRR10571243,SRR12149290"],
@@ -314,17 +388,18 @@ class Tests(unittest.TestCase):
             ["SRR6979552,SRR6980357"],
         ], orient="row", schema=CLUSTERS_COLUMNS)
 
-        observed_clusters = get_clusters(sample_distances)
+        observed_clusters = get_clusters(sample_distances, samples)
         self.assertDataFrameEqual(expected_clusters, observed_clusters)
 
     def test_get_clusters_empty_inputs(self):
         sample_distances = pl.DataFrame([
         ], orient="row", schema=SAMPLE_DISTANCES_COLUMNS)
+        samples = set(["sample_1", "sample_2"])
 
         expected_clusters = pl.DataFrame([
         ], orient="row", schema=CLUSTERS_COLUMNS)
 
-        observed_clusters = get_clusters(sample_distances)
+        observed_clusters = get_clusters(sample_distances, samples)
         self.assertDataFrameEqual(expected_clusters, observed_clusters)
 
     def test_target_elusive(self):
