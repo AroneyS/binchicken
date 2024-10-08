@@ -472,6 +472,36 @@ def coassemble(args):
     if not args.precluster_size:
         args.precluster_size = args.max_recovery_samples * 5
 
+    if args.prior_assemblies:
+        logging.info("Preparing prior assemblies")
+        prior_assemblies = pl.read_csv(args.prior_assemblies, separator="\t")
+
+        if args.single_assembly:
+            input_samples = args.coassembly_samples if args.coassembly_samples else forward_reads.keys()
+            mismatched_samples = (
+                prior_assemblies
+                .join(pl.DataFrame({"sample": input_samples}), on="sample", how="full", suffix="_input")
+            )
+
+            missing_assemblies = mismatched_samples.filter(pl.col("sample").is_null())
+            extra_assemblies = mismatched_samples.filter(pl.col("sample_input").is_null())
+            if missing_assemblies.height > 0:
+                missing_assemblies = " ".join(missing_assemblies.sort("sample_input").get_column("sample_input").to_list())
+                raise ValueError(f"Samples missing assemblies in prior assemblies: {missing_assemblies}")
+            elif extra_assemblies.height > 0:
+                extra_assemblies = " ".join(extra_assemblies.sort("sample").get_column("sample").to_list())
+                raise ValueError(f"Extra assemblies not matching any samples in prior assemblies: {extra_assemblies}")
+
+            for row in prior_assemblies.iter_rows():
+                sample = row[0]
+                assembly = row[1]
+                copy_input(
+                    os.path.join(os.path.dirname(args.prior_assemblies), assembly),
+                    os.path.join(args.output, "coassemble", "coassemble", sample, "assemble", "assembly", "final_contigs.fasta"),
+                )
+
+
+
     try:
         build_status = args.build
     except AttributeError:
@@ -1267,6 +1297,7 @@ def main():
 
     def add_aviary_options(argument_group):
         argument_group.add_argument("--run-aviary", action="store_true", help="Run Aviary commands for all identified coassemblies (unless specific coassemblies are chosen with --coassemblies) [default: do not]")
+        argument_group.add_argument("--prior-assemblies", help="Prior assemblies to use for Aviary recovery. tsv file with header sample [tab] assembly for single-sample or coassembly [tab] assembly for update. [default: generate assemblies through Aviary assemble]")
         argument_group.add_argument("--cluster-submission", action="store_true", help="Flag that cluster submission will occur through `--snakemake-profile`. This sets the local threads of Aviary recover to 1, allowing parallel job submission [default: do not]")
         default_aviary_speed = FAST_AVIARY_MODE
         argument_group.add_argument("--aviary-speed", help=f"Run Aviary recover in 'fast' or 'comprehensive' mode. Fast mode skips slow binners and refinement steps. [default: {default_aviary_speed}]",
@@ -1533,6 +1564,8 @@ def main():
                 raise Exception("Run Aviary (--run-aviary) fast mode requires path to CheckM2 databases to be provided (--aviary-checkm2-db or CHECKM2DB)")
             if args.aviary_speed != FAST_AVIARY_MODE and not (args.aviary_gtdbtk_db and args.aviary_checkm2_db):
                 raise Exception("Run Aviary (--run-aviary) comprehensive mode requires paths to GTDB-Tk and CheckM2 databases to be provided (--aviary-gtdbtk-db or GTDBTK_DATA_PATH and --aviary-checkm2-db or CHECKM2DB)")
+        if args.prior_assemblies and not args.single_assembly:
+            raise Exception("Prior assemblies requires `update` or `single`-assembly modes")
         if args.cluster_submission and not args.snakemake_profile:
                 logging.warning("The arg `--cluster-submission` is only a flag and cannot activate cluster submission alone. Please see `--snakemake-profile` for cluster submission.")
 
