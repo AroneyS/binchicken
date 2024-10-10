@@ -492,13 +492,8 @@ def coassemble(args):
                 extra_assemblies = " ".join(extra_assemblies.sort("sample").get_column("sample").to_list())
                 raise ValueError(f"Extra assemblies not matching any samples in prior assemblies: {extra_assemblies}")
 
-            for row in prior_assemblies.iter_rows():
-                sample = row[0]
-                assembly = row[1]
-                copy_input(
-                    os.path.join(os.path.dirname(args.prior_assemblies), assembly),
-                    os.path.join(args.output, "coassemble", "coassemble", sample, "assemble", "assembly", "final_contigs.fasta"),
-                )
+            prior_assemblies = {row[0]: os.path.join(os.path.dirname(args.prior_assemblies), row[1]) for row in prior_assemblies.iter_rows()}
+
 
 
 
@@ -540,6 +535,7 @@ def coassemble(args):
         "aviary_speed": args.aviary_speed,
         "assembly_strategy": args.assembly_strategy,
         "run_aviary": args.run_aviary,
+        "prior_assemblies": prior_assemblies if args.prior_assemblies else {},
         "cluster_submission": args.cluster_submission,
         "aviary_gtdbtk": args.aviary_gtdbtk_db,
         "aviary_checkm2": args.aviary_checkm2_db,

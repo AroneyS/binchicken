@@ -22,11 +22,24 @@ SAMPLE_READS_REVERSE = " ".join([
     os.path.join(path_to_data, "sample_2.2.fq"),
     os.path.join(path_to_data, "sample_3.2.fq"),
 ])
+SAMPLE_READS_FORWARD_EMPTY = " ".join([SAMPLE_READS_FORWARD, os.path.join(path_to_data, "sample_4.1.fq")])
+SAMPLE_READS_REVERSE_EMPTY = " ".join([SAMPLE_READS_REVERSE, os.path.join(path_to_data, "sample_4.2.fq")])
+
+MOCK_COASSEMBLE = os.path.join(path_to_data, "mock_coassemble")
+SAMPLE_READ_SIZE = os.path.join(MOCK_COASSEMBLE, "coassemble", "read_size2.csv")
+SAMPLE_SINGLEM = ' '.join([
+    os.path.join(MOCK_COASSEMBLE, "coassemble", "pipe", "sample_1_read.otu_table.tsv"),
+    os.path.join(MOCK_COASSEMBLE, "coassemble", "pipe", "sample_2_read.otu_table.tsv"),
+    os.path.join(MOCK_COASSEMBLE, "coassemble", "pipe", "sample_3_read.otu_table.tsv"),
+    ])
+
 GENOMES = " ".join([os.path.join(path_to_data, "GB_GCA_013286235.1.fna")])
 TWO_GENOMES = " ".join([
     os.path.join(path_to_data, "GB_GCA_013286235.1.fna"),
     os.path.join(path_to_data, "GB_GCA_013286235.2.fna"),
     ])
+GENOME_TRANSCRIPTS = ' '.join([os.path.join(path_to_data, "GB_GCA_013286235.1_protein.fna")])
+GENOME_SINGLEM = os.path.join(MOCK_COASSEMBLE, "coassemble", "summarise", "bins_summarised.otu_table2.tsv")
 
 MOCK_COASSEMBLE = os.path.join(path_to_data, "mock_coassemble", "coassemble")
 APPRAISE_BINNED = os.path.join(MOCK_COASSEMBLE, "coassemble", "appraise", "binned.otu_table.tsv")
@@ -35,6 +48,10 @@ ELUSIVE_CLUSTERS = os.path.join(MOCK_COASSEMBLE, "coassemble", "target", "elusiv
 ELUSIVE_CLUSTERS_TWO = os.path.join(MOCK_COASSEMBLE, "coassemble", 'target', 'elusive_clusters_two.tsv')
 
 MOCK_COASSEMBLIES = ' '.join([os.path.join(MOCK_COASSEMBLE, "coassemble", "coassemble", "coassembly_0")])
+
+METAPACKAGE = os.path.join(path_to_data, "singlem_metapackage.smpkg")
+PRIOR_ASSEMBLY = os.path.join(path_to_data, "prior_assembly.tsv")
+PRIOR_COASSEMBLY = os.path.join(path_to_data, "prior_coassembly.tsv")
 
 class Tests(unittest.TestCase):
     def setup_output_dir(self, output_dir):
@@ -235,6 +252,99 @@ class Tests(unittest.TestCase):
             self.assertTrue(os.path.exists(path_to_metapackage))
             # self.assertTrue(os.path.exists(path_to_gtdbtk_db))
             self.assertTrue(os.path.exists(path_to_checkm2_db))
+
+    def test_single_assembly_provided(self):
+        output_dir = os.path.join("example", "test_single_assembly_provided")
+        self.setup_output_dir(output_dir)
+
+        cmd = (
+            f"binchicken single "
+            f"--forward {SAMPLE_READS_FORWARD} "
+            f"--reverse {SAMPLE_READS_REVERSE} "
+            f"--singlem-metapackage {METAPACKAGE} "
+            f"--coassembly-samples sample_1 sample_2 "
+            f"--prior-assemblies {PRIOR_ASSEMBLY} "
+            f"--output {output_dir} "
+            f"--conda-prefix {path_to_conda} "
+        )
+        subprocess.run(cmd, shell=True, check=True)
+
+        config_path = os.path.join(output_dir, "config.yaml")
+        self.assertTrue(os.path.exists(config_path))
+
+        cluster_path = os.path.join(output_dir, "coassemble", "target", "elusive_clusters.tsv")
+        self.assertTrue(os.path.exists(cluster_path))
+        expected = "\n".join(
+            [
+                "\t".join([
+                    "samples",
+                    "length",
+                    "total_targets",
+                    "total_size",
+                    "recover_samples",
+                    "coassembly",
+                ]),
+                "\t".join([
+                    "sample_1",
+                    "1",
+                    "4",
+                    "4832",
+                    "sample_1,sample_2,sample_3",
+                    "sample_1"
+                ]),
+                "\t".join([
+                    "sample_2",
+                    "1",
+                    "3",
+                    "3926",
+                    "sample_1,sample_2,sample_3",
+                    "sample_2"
+                ]),
+                ""
+            ]
+        )
+        with open(cluster_path) as f:
+            self.assertEqual(expected, f.read())
+
+        cmd = (
+            f"binchicken single "
+            f"--forward {SAMPLE_READS_FORWARD} "
+            f"--reverse {SAMPLE_READS_REVERSE} "
+            f"--singlem-metapackage {METAPACKAGE} "
+            f"--coassembly-samples sample_1 sample_2 "
+            f"--prior-assemblies {PRIOR_ASSEMBLY} "
+            f"--output {output_dir} "
+            f"--conda-prefix {path_to_conda} "
+            f"--run-aviary "
+            f"--aviary-gtdbtk-db /work/microbiome/db/gtdb/gtdb_release207_v2 "
+            f"--aviary-checkm2-db /work/microbiome/db/CheckM2_database "
+        )
+        output_raw = subprocess.run(cmd, shell=True, check=True, capture_output=True)
+        output = output_raw.stderr.decode('ascii')
+
+        config_path = os.path.join(output_dir, "config.yaml")
+        self.assertTrue(os.path.exists(config_path))
+
+        assembly_1_path = os.path.join(output_dir, "coassemble", "coassemble", "sample_1", "assemble", "assembly", "final_contigs.fasta")
+        self.assertTrue(os.path.exists(assembly_1_path))
+        with open(assembly_1_path) as f:
+            lines = f.readlines()
+            self.assertEqual(">NODE_1_length_138944_cov_12.417585\n", lines[0])
+            self.assertEqual(9700, len(lines))
+
+        assembly_2_path = os.path.join(output_dir, "coassemble", "coassemble", "sample_2", "assemble", "assembly", "final_contigs.fasta")
+        self.assertTrue(os.path.exists(assembly_2_path))
+        with open(assembly_2_path) as f:
+            lines = f.readlines()
+            self.assertEqual(">NODE_1_length_138944_cov_12.417585\n", lines[0])
+            self.assertEqual(9693, len(lines))
+
+        self.assertTrue("aviary_assemble" not in output)
+        self.assertTrue("prior_assemble" in output)
+        self.assertTrue("aviary_recover" in output)
+        self.assertTrue("aviary_combine" in output)
+
+        print(output)
 
 
 if __name__ == '__main__':
