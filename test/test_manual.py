@@ -346,6 +346,84 @@ class Tests(unittest.TestCase):
 
         print(output)
 
+    def test_update_assembly_provided(self):
+        output_dir = os.path.join("example", "test_update_assembly_provided")
+        self.setup_output_dir(output_dir)
+        update_dir = os.path.join("example", "test_update_assembly_provided_update")
+        self.setup_output_dir(update_dir)
+
+        cmd = (
+            f"binchicken coassemble "
+            f"--forward {SAMPLE_READS_FORWARD_EMPTY} "
+            f"--reverse {SAMPLE_READS_REVERSE_EMPTY} "
+            f"--genomes {GENOMES} "
+            f"--prodigal-meta "
+            f"--singlem-metapackage {METAPACKAGE} "
+            f"--output {output_dir} "
+            f"--conda-prefix {path_to_conda} "
+        )
+        subprocess.run(cmd, shell=True, check=True)
+
+        config_path = os.path.join(output_dir, "config.yaml")
+        self.assertTrue(os.path.exists(config_path))
+
+        cluster_path = os.path.join(output_dir, "coassemble", "target", "elusive_clusters.tsv")
+        self.assertTrue(os.path.exists(cluster_path))
+        expected = "\n".join(
+            [
+                "\t".join([
+                    "samples",
+                    "length",
+                    "total_targets",
+                    "total_size",
+                    "recover_samples",
+                    "coassembly",
+                ]),
+                "\t".join([
+                    "sample_1,sample_2",
+                    "2",
+                    "3",
+                    "8758",
+                    "sample_1,sample_2,sample_3",
+                    "coassembly_0"
+                ]),
+                ""
+            ]
+        )
+        with open(cluster_path) as f:
+            self.assertEqual(expected, f.read())
+
+        cmd = (
+            f"binchicken update "
+            f"--coassemble-output {output_dir} "
+            f"--coassemblies coassembly_0 "
+            f"--prior-assemblies {PRIOR_COASSEMBLY} "
+            f"--output {update_dir} "
+            f"--conda-prefix {path_to_conda} "
+            f"--run-aviary "
+            f"--aviary-gtdbtk-db /work/microbiome/db/gtdb/gtdb_release207_v2 "
+            f"--aviary-checkm2-db /work/microbiome/db/CheckM2_database "
+        )
+        output_raw = subprocess.run(cmd, shell=True, check=True, capture_output=True)
+        output = output_raw.stderr.decode('ascii')
+
+        config_path = os.path.join(update_dir, "config.yaml")
+        self.assertTrue(os.path.exists(config_path))
+
+        assembly_1_path = os.path.join(update_dir, "coassemble", "coassemble", "coassembly_0", "assemble", "assembly", "final_contigs.fasta")
+        self.assertTrue(os.path.exists(assembly_1_path))
+        with open(assembly_1_path) as f:
+            lines = f.readlines()
+            self.assertEqual(">NODE_1_length_138944_cov_12.417585\n", lines[0])
+            self.assertEqual(9700, len(lines))
+
+        self.assertTrue("aviary_assemble" not in output)
+        self.assertTrue("prior_assemble" in output)
+        self.assertTrue("aviary_recover" in output)
+        self.assertTrue("aviary_combine" in output)
+
+        print(output)
+
 
 if __name__ == '__main__':
     unittest.main()

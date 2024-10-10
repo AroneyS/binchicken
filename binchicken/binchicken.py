@@ -473,10 +473,10 @@ def coassemble(args):
         args.precluster_size = args.max_recovery_samples * 5
 
     if args.prior_assemblies:
-        logging.info("Preparing prior assemblies")
-        prior_assemblies = pl.read_csv(args.prior_assemblies, separator="\t")
-
         if args.single_assembly:
+            logging.info("Preparing prior assemblies")
+            prior_assemblies = pl.read_csv(args.prior_assemblies, separator="\t")
+
             input_samples = args.coassembly_samples if args.coassembly_samples else forward_reads.keys()
             mismatched_samples = (
                 prior_assemblies
@@ -493,9 +493,8 @@ def coassemble(args):
                 raise ValueError(f"Extra assemblies not matching any samples in prior assemblies: {extra_assemblies}")
 
             prior_assemblies = {row[0]: os.path.join(os.path.dirname(args.prior_assemblies), row[1]) for row in prior_assemblies.iter_rows()}
-
-
-
+        else:
+            prior_assemblies = args.prior_assemblies
 
     try:
         build_status = args.build
@@ -745,6 +744,34 @@ def update(args):
         )
         args.forward = [f for f in args.forward if f in sra_samples]
         args.reverse = args.forward
+
+    if args.prior_assemblies:
+        if args.coassemble_elusive_clusters:
+            if not args.coassemblies:
+                elusive_clusters = pl.read_csv(os.path.abspath(args.coassemble_elusive_clusters), separator="\t")
+
+            logging.info("Preparing prior assemblies")
+            prior_assemblies = pl.read_csv(args.prior_assemblies, separator="\t")
+
+            input_samples = args.coassemblies if args.coassemblies else elusive_clusters.get_column("coassembly").to_list()
+            mismatched_samples = (
+                prior_assemblies
+                .join(pl.DataFrame({"sample": input_samples}), on="sample", how="full", suffix="_input")
+            )
+
+            missing_assemblies = mismatched_samples.filter(pl.col("sample").is_null())
+            extra_assemblies = mismatched_samples.filter(pl.col("sample_input").is_null())
+            if missing_assemblies.height > 0:
+                missing_assemblies = " ".join(missing_assemblies.sort("sample_input").get_column("sample_input").to_list())
+                raise ValueError(f"Samples missing assemblies in prior assemblies: {missing_assemblies}")
+            elif extra_assemblies.height > 0:
+                extra_assemblies = " ".join(extra_assemblies.sort("sample").get_column("sample").to_list())
+                raise ValueError(f"Extra assemblies not matching any samples in prior assemblies: {extra_assemblies}")
+
+            prior_assemblies = {row[0]: os.path.join(os.path.dirname(args.prior_assemblies), row[1]) for row in prior_assemblies.iter_rows()}
+            args.prior_assemblies = prior_assemblies
+        else:
+            raise ValueError("Prior assemblies require elusive clusters")
 
     copy_input(
         os.path.abspath(args.coassemble_unbinned),
