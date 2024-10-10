@@ -368,20 +368,20 @@ def evaluate_bins(aviary_outputs, checkm_version, min_completeness, max_contamin
     else:
         return {"-".join([c, str(i)]): os.path.join(recovered_bins[c], b + ".fna") for c in coassembly_bins for i, b in enumerate(coassembly_bins[c])}
 
-def check_prior_assemblies(prior_assemblies, input_samples, prior_dir):
-    mismatched_samples = (
+def check_prior_assemblies(prior_assemblies, inputs, prior_dir):
+    mismatched_groups = (
         prior_assemblies
-        .join(pl.DataFrame({"sample": input_samples}), on="sample", how="full", suffix="_input")
+        .join(pl.DataFrame({"name": inputs}), on="name", how="full", suffix="_input")
     )
 
-    missing_assemblies = mismatched_samples.filter(pl.col("sample").is_null())
-    extra_assemblies = mismatched_samples.filter(pl.col("sample_input").is_null())
+    missing_assemblies = mismatched_groups.filter(pl.col("name").is_null())
+    extra_assemblies = mismatched_groups.filter(pl.col("name_input").is_null())
     if missing_assemblies.height > 0:
-        missing_assemblies = " ".join(missing_assemblies.sort("sample_input").get_column("sample_input").to_list())
-        raise ValueError(f"Samples missing assemblies in prior assemblies: {missing_assemblies}")
+        missing_assemblies = " ".join(missing_assemblies.sort("name_input").get_column("name_input").to_list())
+        raise ValueError(f"Samples/coassemblies missing assemblies in prior assemblies: {missing_assemblies}")
     elif extra_assemblies.height > 0:
-        extra_assemblies = " ".join(extra_assemblies.sort("sample").get_column("sample").to_list())
-        raise ValueError(f"Extra assemblies not matching any samples in prior assemblies: {extra_assemblies}")
+        extra_assemblies = " ".join(extra_assemblies.sort("name").get_column("name").to_list())
+        raise ValueError(f"Extra assemblies not matching any samples/coassemblies in prior assemblies: {extra_assemblies}")
 
     return {row[0]: os.path.join(os.path.dirname(prior_dir), row[1]) for row in prior_assemblies.iter_rows()}
 
@@ -755,9 +755,9 @@ def update(args):
 
             logging.info("Preparing prior assemblies")
             prior_assemblies = pl.read_csv(args.prior_assemblies, separator="\t")
-            input_samples = args.coassemblies if args.coassemblies else elusive_clusters.get_column("coassembly").to_list()
+            input_coassemblies = args.coassemblies if args.coassemblies else elusive_clusters.get_column("coassembly").to_list()
 
-            prior_assemblies = check_prior_assemblies(prior_assemblies, input_samples, args.prior_assemblies)
+            prior_assemblies = check_prior_assemblies(prior_assemblies, input_coassemblies, args.prior_assemblies)
             args.prior_assemblies = prior_assemblies
         else:
             raise ValueError("Prior assemblies require elusive clusters")
@@ -1309,7 +1309,7 @@ def main():
 
     def add_aviary_options(argument_group):
         argument_group.add_argument("--run-aviary", action="store_true", help="Run Aviary commands for all identified coassemblies (unless specific coassemblies are chosen with --coassemblies) [default: do not]")
-        argument_group.add_argument("--prior-assemblies", help="Prior assemblies to use for Aviary recovery. tsv file with header sample [tab] assembly for single-sample or coassembly [tab] assembly for update. [default: generate assemblies through Aviary assemble]")
+        argument_group.add_argument("--prior-assemblies", help="Prior assemblies to use for Aviary recovery. tsv file with header: name [tab] assembly. Only possible with single-sample or update. [default: generate assemblies through Aviary assemble]")
         argument_group.add_argument("--cluster-submission", action="store_true", help="Flag that cluster submission will occur through `--snakemake-profile`. This sets the local threads of Aviary recover to 1, allowing parallel job submission [default: do not]")
         default_aviary_speed = FAST_AVIARY_MODE
         argument_group.add_argument("--aviary-speed", help=f"Run Aviary recover in 'fast' or 'comprehensive' mode. Fast mode skips slow binners and refinement steps. [default: {default_aviary_speed}]",
