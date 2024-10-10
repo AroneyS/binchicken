@@ -3,6 +3,7 @@
 #############
 ruleorder: no_genomes > query_processing > update_appraise > singlem_appraise
 ruleorder: mock_download_sra > download_sra
+ruleorder: prior_assemble > aviary_assemble
 
 import os
 import polars as pl
@@ -765,6 +766,20 @@ def get_assemble_assembler(wildcards, attempt):
         return ""
     elif config["assembly_strategy"] == MEGAHIT_ASSEMBLY:
         return "--use-megahit"
+
+rule prior_assemble:
+    input:
+        elusive_clusters = output_dir + "/target/elusive_clusters.tsv",
+    output:
+        dir = directory(output_dir + "/coassemble/{coassembly}/assemble") if config["prior_assemblies"] else [],
+        assembly = output_dir + "/coassemble/{coassembly}/assemble/assembly/final_contigs.fasta" if config["prior_assemblies"] else [],
+    params:
+        prior_assembly = lambda wildcards: config["prior_assemblies"][wildcards.coassembly],
+    threads: 1
+    localrule: True
+    shell:
+        "mkdir -p {output.dir} && "
+        "cp {params.prior_assembly} {output.assembly}"
 
 rule aviary_assemble:
     input:
