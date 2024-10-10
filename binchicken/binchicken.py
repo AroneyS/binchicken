@@ -368,6 +368,23 @@ def evaluate_bins(aviary_outputs, checkm_version, min_completeness, max_contamin
     else:
         return {"-".join([c, str(i)]): os.path.join(recovered_bins[c], b + ".fna") for c in coassembly_bins for i, b in enumerate(coassembly_bins[c])}
 
+def check_prior_assemblies(prior_assemblies, input_samples, prior_dir):
+    mismatched_samples = (
+        prior_assemblies
+        .join(pl.DataFrame({"sample": input_samples}), on="sample", how="full", suffix="_input")
+    )
+
+    missing_assemblies = mismatched_samples.filter(pl.col("sample").is_null())
+    extra_assemblies = mismatched_samples.filter(pl.col("sample_input").is_null())
+    if missing_assemblies.height > 0:
+        missing_assemblies = " ".join(missing_assemblies.sort("sample_input").get_column("sample_input").to_list())
+        raise ValueError(f"Samples missing assemblies in prior assemblies: {missing_assemblies}")
+    elif extra_assemblies.height > 0:
+        extra_assemblies = " ".join(extra_assemblies.sort("sample").get_column("sample").to_list())
+        raise ValueError(f"Extra assemblies not matching any samples in prior assemblies: {extra_assemblies}")
+
+    return {row[0]: os.path.join(os.path.dirname(prior_dir), row[1]) for row in prior_assemblies.iter_rows()}
+
 def coassemble(args):
     logging.info("Loading sample info")
     if args.forward_list:
@@ -478,21 +495,7 @@ def coassemble(args):
             prior_assemblies = pl.read_csv(args.prior_assemblies, separator="\t")
 
             input_samples = args.coassembly_samples if args.coassembly_samples else forward_reads.keys()
-            mismatched_samples = (
-                prior_assemblies
-                .join(pl.DataFrame({"sample": input_samples}), on="sample", how="full", suffix="_input")
-            )
-
-            missing_assemblies = mismatched_samples.filter(pl.col("sample").is_null())
-            extra_assemblies = mismatched_samples.filter(pl.col("sample_input").is_null())
-            if missing_assemblies.height > 0:
-                missing_assemblies = " ".join(missing_assemblies.sort("sample_input").get_column("sample_input").to_list())
-                raise ValueError(f"Samples missing assemblies in prior assemblies: {missing_assemblies}")
-            elif extra_assemblies.height > 0:
-                extra_assemblies = " ".join(extra_assemblies.sort("sample").get_column("sample").to_list())
-                raise ValueError(f"Extra assemblies not matching any samples in prior assemblies: {extra_assemblies}")
-
-            prior_assemblies = {row[0]: os.path.join(os.path.dirname(args.prior_assemblies), row[1]) for row in prior_assemblies.iter_rows()}
+            prior_assemblies = check_prior_assemblies(prior_assemblies, input_samples, args.prior_assemblies)
         else:
             prior_assemblies = args.prior_assemblies
 
@@ -752,23 +755,9 @@ def update(args):
 
             logging.info("Preparing prior assemblies")
             prior_assemblies = pl.read_csv(args.prior_assemblies, separator="\t")
-
             input_samples = args.coassemblies if args.coassemblies else elusive_clusters.get_column("coassembly").to_list()
-            mismatched_samples = (
-                prior_assemblies
-                .join(pl.DataFrame({"sample": input_samples}), on="sample", how="full", suffix="_input")
-            )
 
-            missing_assemblies = mismatched_samples.filter(pl.col("sample").is_null())
-            extra_assemblies = mismatched_samples.filter(pl.col("sample_input").is_null())
-            if missing_assemblies.height > 0:
-                missing_assemblies = " ".join(missing_assemblies.sort("sample_input").get_column("sample_input").to_list())
-                raise ValueError(f"Samples missing assemblies in prior assemblies: {missing_assemblies}")
-            elif extra_assemblies.height > 0:
-                extra_assemblies = " ".join(extra_assemblies.sort("sample").get_column("sample").to_list())
-                raise ValueError(f"Extra assemblies not matching any samples in prior assemblies: {extra_assemblies}")
-
-            prior_assemblies = {row[0]: os.path.join(os.path.dirname(args.prior_assemblies), row[1]) for row in prior_assemblies.iter_rows()}
+            prior_assemblies = check_prior_assemblies(prior_assemblies, input_samples, args.prior_assemblies)
             args.prior_assemblies = prior_assemblies
         else:
             raise ValueError("Prior assemblies require elusive clusters")
