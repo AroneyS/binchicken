@@ -1,4 +1,4 @@
 name	assembly
-sample_1	coassembly_0.fasta
-sample_2	coassembly_1.fasta
-sample_3	coassembly_1.fasta
+sample_1	test/data/coassembly_0.fasta
+sample_2	test/data/coassembly_1.fasta
+sample_3	test/data/coassembly_1.fasta

@@ -368,7 +368,7 @@ def evaluate_bins(aviary_outputs, checkm_version, min_completeness, max_contamin
     else:
         return {"-".join([c, str(i)]): os.path.join(recovered_bins[c], b + ".fna") for c in coassembly_bins for i, b in enumerate(coassembly_bins[c])}
 
-def check_prior_assemblies(prior_assemblies, inputs, prior_dir):
+def check_prior_assemblies(prior_assemblies, inputs):
     mismatched_groups = (
         prior_assemblies
         .join(pl.DataFrame({"name": inputs}), on="name", how="full", suffix="_input")
@@ -383,7 +383,7 @@ def check_prior_assemblies(prior_assemblies, inputs, prior_dir):
         extra_assemblies = " ".join(extra_assemblies.sort("name").get_column("name").to_list())
         raise ValueError(f"Extra assemblies not matching any samples/coassemblies in prior assemblies: {extra_assemblies}")
 
-    return {row[0]: os.path.join(os.path.dirname(prior_dir), row[1]) for row in prior_assemblies.iter_rows()}
+    return {row[0]: os.path.abspath(row[1]) for row in prior_assemblies.iter_rows()}
 
 def coassemble(args):
     logging.info("Loading sample info")
@@ -495,7 +495,7 @@ def coassemble(args):
             prior_assemblies = pl.read_csv(args.prior_assemblies, separator="\t")
 
             input_samples = args.coassembly_samples if args.coassembly_samples else forward_reads.keys()
-            prior_assemblies = check_prior_assemblies(prior_assemblies, input_samples, args.prior_assemblies)
+            prior_assemblies = check_prior_assemblies(prior_assemblies, input_samples)
         else:
             prior_assemblies = args.prior_assemblies
 
@@ -757,7 +757,7 @@ def update(args):
             prior_assemblies = pl.read_csv(args.prior_assemblies, separator="\t")
             input_coassemblies = args.coassemblies if args.coassemblies else elusive_clusters.get_column("coassembly").to_list()
 
-            prior_assemblies = check_prior_assemblies(prior_assemblies, input_coassemblies, args.prior_assemblies)
+            prior_assemblies = check_prior_assemblies(prior_assemblies, input_coassemblies)
             args.prior_assemblies = prior_assemblies
         else:
             raise ValueError("Prior assemblies require elusive clusters")
