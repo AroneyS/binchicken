@@ -324,6 +324,7 @@ def set_standard_args(args):
     args.abundance_weighted_samples_list = None
     args.abundance_weighted_samples = []
     args.kmer_precluster = PRECLUSTER_NEVER_MODE
+    args.precluster_distances = None
     args.precluster_size = 100
     args.prodigal_meta = False
 
