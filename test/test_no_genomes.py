@@ -78,6 +78,23 @@ class Tests(unittest.TestCase):
         self.assertDataFrameEqual(expected_binned, observed_binned)
         self.assertDataFrameEqual(expected_unbinned, observed_unbinned)
 
+    def test_no_genomes_lazy(self):
+        reads = pl.LazyFrame([
+            ["S3.1", "sample_1", "AAA", 5, 10, "Root"],
+            ["S3.1", "sample_1", "AAB", 5, 10, "Root"],
+        ], orient="row", schema=READ_COLUMNS)
+
+        expected_binned = pl.DataFrame([
+        ], orient="row", schema=APPRAISE_COLUMNS)
+        expected_unbinned = pl.DataFrame([
+            ["S3.1", "sample_1", "AAA", 5, 10, "Root", ""],
+            ["S3.1", "sample_1", "AAB", 5, 10, "Root", ""],
+        ], orient="row", schema=APPRAISE_COLUMNS)
+
+        observed_binned, observed_unbinned = processing(reads)
+        self.assertDataFrameEqual(expected_binned, observed_binned.collect())
+        self.assertDataFrameEqual(expected_unbinned, observed_unbinned.collect())
+
 
 if __name__ == '__main__':
     unittest.main()
