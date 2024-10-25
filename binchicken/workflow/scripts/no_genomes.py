@@ -37,9 +37,9 @@ if __name__ == "__main__":
 
     reads = []
     for read in input_reads:
-        reads.append(pl.read_csv(read, separator="\t", schema_overrides=SINGLEM_OTU_TABLE_SCHEMA))
+        reads.append(pl.scan_csv(read, separator="\t", schema_overrides=SINGLEM_OTU_TABLE_SCHEMA))
 
     binned, unbinned = processing(pl.concat(reads))
 
-    binned.write_csv(output_binned, separator="\t")
-    unbinned.write_csv(output_unbinned, separator="\t")
+    binned.sink_csv(output_binned, separator="\t")
+    unbinned.sink_csv(output_unbinned, separator="\t")
