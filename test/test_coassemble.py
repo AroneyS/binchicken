@@ -78,6 +78,8 @@ SAMPLE_QUERY_SINGLEM = ' '.join([
     os.path.join(path_to_data, "query", "sample_3_read.otu_table.tsv"),
     ])
 
+PRECLUSTER_DISTANCES = os.path.join(path_to_data, "sketch", "sample_distances.csv")
+
 def write_string_to_file(string, filename):
     with open(filename, "w") as f:
         f.write("\n".join(string.split(" ")))
@@ -1615,6 +1617,97 @@ class Tests(unittest.TestCase):
                         "4832",
                         "sample_1,sample_2",
                         "sample_1"
+                    ]),
+                    ""
+                ]
+            )
+            with open(cluster_path) as f:
+                self.assertEqual(expected, f.read())
+
+    def test_coassemble_preclustered_distances_provided(self):
+        with in_tempdir():
+            cmd = (
+                f"binchicken coassemble "
+                f"--forward {SAMPLE_READS_FORWARD_PRE} "
+                f"--reverse {SAMPLE_READS_REVERSE_PRE} "
+                f"--sample-singlem {SAMPLE_SINGLEM_PRE} "
+                f"--singlem-metapackage {METAPACKAGE} "
+                f"--precluster-distances {PRECLUSTER_DISTANCES} "
+                f"--kmer-precluster always "
+                f"--precluster-size 3 "
+                f"--output test "
+                f"--conda-prefix {path_to_conda} "
+            )
+            output_raw = subprocess.run(cmd, shell=True, check=True, capture_output=True)
+            output = output_raw.stderr.decode('ascii')
+
+            self.assertTrue("sketch_samples" not in output)
+            self.assertTrue("distance_samples" not in output)
+
+            config_path = os.path.join("test", "config.yaml")
+            self.assertTrue(os.path.exists(config_path))
+
+            read_size_path = os.path.join("test", "coassemble", "read_size.csv")
+            self.assertTrue(os.path.exists(read_size_path))
+            expected = "\n".join(
+                [
+                    ",".join(["sample_1", "4832"]),
+                    ",".join(["sample_2", "3926"]),
+                    ",".join(["sample_3", "3624"]),
+                    ",".join(["sample_5", "3624"]),
+                    ""
+                ]
+            )
+            with open(read_size_path) as f:
+                self.assertEqual(expected, f.read())
+
+            sketch_path = os.path.join("test", "coassemble", "sketch", "samples.sig")
+            self.assertFalse(os.path.exists(sketch_path))
+
+            distance_path = os.path.join("test", "coassemble", "sketch", "samples.csv")
+            self.assertTrue(os.path.exists(distance_path))
+
+            elusive_edges_path = os.path.join("test", "coassemble", "target", "elusive_edges.tsv")
+            self.assertTrue(os.path.exists(elusive_edges_path))
+            expected = pl.DataFrame([
+                    ["match", 2, "sample_1,sample_2", "0,1"],
+                    ["match", 2, "sample_1,sample_5", "0"],
+                    ["match", 2, "sample_2,sample_5", "0"],
+                    ["match", 2, "sample_3,sample_5", "3,4"],
+                ],
+                schema = ["style", "cluster_size", "samples", "target_ids"],
+                orient="row",
+            )
+            observed = pl.read_csv(elusive_edges_path, separator="\t")
+            assert_frame_equal(expected, observed, check_dtypes=False, check_row_order=False)
+
+            cluster_path = os.path.join("test", "coassemble", "target", "elusive_clusters.tsv")
+            self.assertTrue(os.path.exists(cluster_path))
+            expected = "\n".join(
+                [
+                    "\t".join([
+                        "samples",
+                        "length",
+                        "total_targets",
+                        "total_size",
+                        "recover_samples",
+                        "coassembly",
+                    ]),
+                    "\t".join([
+                        "sample_3,sample_5",
+                        "2",
+                        "2",
+                        "7248",
+                        "sample_3,sample_5",
+                        "coassembly_0"
+                    ]),
+                    "\t".join([
+                        "sample_1,sample_2",
+                        "2",
+                        "2",
+                        "8758",
+                        "sample_1,sample_2,sample_5",
+                        "coassembly_1"
                     ]),
                     ""
                 ]

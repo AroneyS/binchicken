@@ -4,6 +4,7 @@
 ruleorder: no_genomes > query_processing > update_appraise > singlem_appraise
 ruleorder: mock_download_sra > download_sra
 ruleorder: prior_assemble > aviary_assemble
+ruleorder: provided_distances > distance_samples
 
 import os
 import polars as pl
@@ -396,6 +397,18 @@ rule sketch_samples:
         benchmarks_dir + "/precluster/sketching.tsv"
     script:
         "scripts/sketch_samples.py"
+
+rule provided_distances:
+    input:
+        unbinned = output_dir + "/appraise/unbinned.otu_table.tsv",
+    output:
+        distance = output_dir + "/sketch/samples.csv" if config["precluster_distances"] else [],
+    params:
+        precluster_distances = config["precluster_distances"],
+    threads: 1
+    localrule: True
+    shell:
+        "cp {params.precluster_distances} {output.distance}"
 
 rule distance_samples:
     input:

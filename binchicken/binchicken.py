@@ -526,6 +526,7 @@ def coassemble(args):
         "abundance_weighted": args.abundance_weighted,
         "abundance_weighted_samples": args.abundance_weighted_samples,
         "kmer_precluster": kmer_precluster,
+        "precluster_distances": args.precluster_distances,
         "precluster_size": args.precluster_size,
         "prodigal_meta": args.prodigal_meta,
         # Coassembly config
@@ -1387,6 +1388,7 @@ def main():
         coassemble_clustering.add_argument("--abundance-weighted-samples-list", help="Restrict sequence weighting to these samples, newline separated. Remaining samples will still be used for coassembly [default: use all samples]", default=[])
         coassemble_clustering.add_argument("--kmer-precluster", help="Run kmer preclustering using unbinned window sequences as kmers. [default: large; perform preclustering when given >1000 samples]",
                                     default=PRECLUSTER_SIZE_DEP_MODE, choices=[PRECLUSTER_NEVER_MODE, PRECLUSTER_SIZE_DEP_MODE, PRECLUSTER_ALWAYS_MODE])
+        coassemble_clustering.add_argument("--precluster-distances", help="Distance file in the format of `sourmash scripts pairwise`. If provided, kmer sketching and clustering is skipped.")
         coassemble_clustering.add_argument("--precluster-size", type=int, help="# of samples within each sample's precluster [default: 5 * max-recovery-samples]")
         coassemble_clustering.add_argument("--prodigal-meta", action="store_true", help="Use prodigal \"-p meta\" argument (for testing)")
         # Coassembly options

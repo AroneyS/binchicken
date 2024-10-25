@@ -21,6 +21,7 @@ max_recovery_samples: 1
 abundance_weighted: false
 abundance_weighted_samples: []
 kmer_precluster: false
+precluster_distances: false
 precluster_size: 1
 unmapping_min_appraised: 1
 unmapping_max_identity: 1
