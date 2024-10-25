@@ -4,6 +4,7 @@ import unittest
 import os
 from bird_tool_utils import in_tempdir
 import extern
+import subprocess
 import polars as pl
 from polars.testing import assert_frame_equal
 
@@ -32,6 +33,8 @@ SAMPLE_SINGLEM_PRE = ' '.join([
     os.path.join(MOCK_COASSEMBLE, "coassemble", "pipe_precluster", "sample_3_read.otu_table.tsv"),
     os.path.join(MOCK_COASSEMBLE, "coassemble", "pipe_precluster", "sample_5_read.otu_table.tsv"),
     ])
+
+PRECLUSTER_DISTANCES = os.path.join(path_to_data, "sketch", "sample_distances.csv")
 
 PRIOR_MISSING = os.path.join(path_to_data, "prior_missing.tsv")
 PRIOR_EXTRA = os.path.join(path_to_data, "prior_extra.tsv")
@@ -201,6 +204,101 @@ class Tests(unittest.TestCase):
 
             config_path = os.path.join("test", "config.yaml")
             self.assertTrue(os.path.exists(config_path))
+
+            elusive_edges_path = os.path.join("test", "coassemble", "target", "elusive_edges.tsv")
+            self.assertTrue(os.path.exists(elusive_edges_path))
+            expected = pl.DataFrame([
+                    ["match", 2, "sample_1,sample_2", "0,1"],
+                    ["match", 2, "sample_1,sample_5", "0"],
+                    ["match", 2, "sample_2,sample_5", "0"],
+                    ["match", 2, "sample_3,sample_5", "3,4"],
+                ],
+                schema = ["style", "cluster_size", "samples", "target_ids"],
+                orient="row",
+            )
+            observed = pl.read_csv(elusive_edges_path, separator="\t")
+            assert_frame_equal(expected, observed, check_dtypes=False, check_row_order=False)
+
+            cluster_path = os.path.join("test", "coassemble", "target", "elusive_clusters.tsv")
+            self.assertTrue(os.path.exists(cluster_path))
+            expected = "\n".join(
+                [
+                    "\t".join([
+                        "samples",
+                        "length",
+                        "total_targets",
+                        "total_size",
+                        "recover_samples",
+                        "coassembly",
+                    ]),
+                    "\t".join([
+                        "sample_5",
+                        "1",
+                        "3",
+                        "3624",
+                        "sample_3,sample_5",
+                        "sample_5"
+                    ]),
+                    "\t".join([
+                        "sample_3",
+                        "1",
+                        "2",
+                        "3624",
+                        "sample_3,sample_5",
+                        "sample_3"
+                    ]),
+                    "\t".join([
+                        "sample_2",
+                        "1",
+                        "2",
+                        "3926",
+                        "sample_1,sample_2",
+                        "sample_2"
+                    ]),
+                    "\t".join([
+                        "sample_1",
+                        "1",
+                        "2",
+                        "4832",
+                        "sample_1,sample_2",
+                        "sample_1"
+                    ]),
+                    ""
+                ]
+            )
+            with open(cluster_path) as f:
+                self.assertEqual(expected, f.read())
+
+    def test_single_preclustered_distances_provided(self):
+        with in_tempdir():
+            cmd = (
+                f"binchicken single "
+                f"--forward {SAMPLE_READS_FORWARD_PRE} "
+                f"--reverse {SAMPLE_READS_REVERSE_PRE} "
+                f"--sample-singlem {SAMPLE_SINGLEM_PRE} "
+                f"--singlem-metapackage {METAPACKAGE} "
+                f"--precluster-distances {PRECLUSTER_DISTANCES} "
+                f"--kmer-precluster always "
+                f"--precluster-size 3 "
+                f"--max-recovery-samples 2 "
+                f"--output test "
+                f"--conda-prefix {path_to_conda} "
+            )
+            output_raw = subprocess.run(cmd, shell=True, check=True, capture_output=True)
+            output = output_raw.stderr.decode('ascii')
+
+            self.assertTrue("sketch_samples" not in output)
+            self.assertTrue("distance_samples" not in output)
+            self.assertTrue("provided_distances" in output)
+
+            config_path = os.path.join("test", "config.yaml")
+            self.assertTrue(os.path.exists(config_path))
+
+            sketch_path = os.path.join("test", "coassemble", "sketch", "samples.sig")
+            self.assertFalse(os.path.exists(sketch_path))
+
+            distances_path = os.path.join("test", "coassemble", "sketch", "samples.csv")
+            self.assertTrue(os.path.exists(distances_path))
 
             elusive_edges_path = os.path.join("test", "coassemble", "target", "elusive_edges.tsv")
             self.assertTrue(os.path.exists(elusive_edges_path))
