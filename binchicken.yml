@@ -4,7 +4,7 @@ channels:
   - bioconda
   - defaults
 dependencies:
-  - python=3.10.*
+  - python=3.11.*
   - snakemake=8.20.*
   - networkx=3.1
   - bird_tool_utils_python=0.4.*
