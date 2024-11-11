@@ -12,4 +12,5 @@ binchicken iterate --coassemble-output coassemble_dir \
 ```
 
 Defaults to using genomes (from the provided coassemble outputs) with at least 70% complete and at most 10% contamination as estimated by CheckM2.
+Alternatively, selected genomes can be provided directly with `--new-genomes`.
 Automatically excludes previous coassemblies.

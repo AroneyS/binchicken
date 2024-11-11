@@ -32,10 +32,3 @@ Clustering groups of more than 1000 samples quickly leads to memory issues due t
 Kmer preclustering can be used (default if >1000 samples are provided, or use `--kmer-precluster always`) to reduce the number of combinations that are considered.
 This greatly reduces memory usage and allows scaling up to at least 250k samples.
 Kmer preclustering can be disabled with `--kmer-precluster never`.
-
-## Cluster submission
-
-Snakemake profiles can be used to automatically submit jobs to HPC clusters (`--snakemake-profile`).
-Note that Aviary assemble commands are submitted to the cluster, while Aviary recover commands are run locally such that Aviary handles cluster submission.
-The `--cluster-submission` flag sets the local Aviary recover thread usage to 1, to enable multiple runs in parallel by setting `--local-cores` to greater than 1.
-This is required to prevent `--local-cores` from limiting the number of threads per submitted job.
