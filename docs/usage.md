@@ -19,6 +19,13 @@ If you encounter memory issues with target_elusive or cluster_graph, you can try
 - **Precluster size**: The `--precluster-size` option sets the maximum number of samples to use for preclustering. The default value is 5 x the number of recovery samples. Reducing this value will reduce memory usage by reducing the number of combinations that are considered. However, this reduces the samples combinations that are considered for both coassembly and differential-abundance binning (co-binning), so may result in sub-optimal coassembly suggestions.
 - **Target taxa**: The `--taxa-of-interest` option can be used to filter the taxa of the considered sequences to target a specific taxon. This can reduce memory usage.
 
+## Cluster submission
+
+Snakemake profiles can be used to automatically submit jobs to HPC clusters (`--snakemake-profile`).
+Note that Aviary assemble commands are submitted to the cluster, while Aviary recover commands are run locally such that Aviary handles cluster submission.
+The `--cluster-submission` flag sets the local Aviary recover thread usage to 1, to enable multiple runs in parallel by setting `--local-cores` to greater than 1.
+This is required to prevent `--local-cores` from limiting the number of threads per submitted job.
+
 ## Aviary Assemble
 
 - **Maximum number of cores**: The `--aviary-assemble-cores` option sets the maximum number of cores for Aviary assemble to use. The default value is 64.
