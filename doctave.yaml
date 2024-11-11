@@ -7,6 +7,7 @@ colors:
 navigation:
   - path: docs/installation.md
   - path: docs/setup.md
+  - path: docs/usage.md
   - path: docs/tools
     children:
     - path: docs/tools/coassemble.md
