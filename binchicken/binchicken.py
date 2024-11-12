@@ -13,7 +13,7 @@ import bird_tool_utils as btu
 import polars as pl
 import polars.selectors as cs
 from polars.exceptions import NoDataError
-from snakemake.io import load_configfile
+from snakemake.common.configfile import load_configfile
 from ruamel.yaml import YAML
 import copy
 import shutil
