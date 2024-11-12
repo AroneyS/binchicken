@@ -153,7 +153,6 @@ class Tests(unittest.TestCase):
                 f"--output test "
                 f"--conda-prefix {path_to_conda} "
                 f"--dryrun "
-                f"--snakemake-args \" --quiet\" "
             )
             output = extern.run(cmd)
 
@@ -283,7 +282,6 @@ class Tests(unittest.TestCase):
                 f"--output test "
                 f"--conda-prefix {path_to_conda} "
                 f"--dryrun "
-                f"--snakemake-args \" --quiet\" "
             )
             output = extern.run(cmd)
 
