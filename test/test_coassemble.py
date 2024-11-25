@@ -102,7 +102,6 @@ class Tests(unittest.TestCase):
             )
             output_raw = subprocess.run(cmd, shell=True, check=True, capture_output=True)
             output = output_raw.stderr.decode('ascii')
-            import pdb; pdb.set_trace()
 
             self.assertTrue("1 samples had no targets with sufficient combined coverage for coassembly prediction" in output)
             self.assertTrue("These are recorded at " in output)
