@@ -60,6 +60,7 @@ class Tests(unittest.TestCase):
                 f"--output test_coassemble "
                 f"--conda-prefix {path_to_conda} "
                 f"--dryrun "
+                f"--snakemake-args \" --quiet rules \" "
             )
             output = extern.run(cmd)
             self.assertFalse("binchicken/workflow/env/singlem.yml will be created." in output)
@@ -80,6 +81,7 @@ class Tests(unittest.TestCase):
                 f"--output test_evaluate "
                 f"--conda-prefix {path_to_conda} "
                 f"--dryrun "
+                f"--snakemake-args \" --quiet rules \" "
             )
             output = extern.run(cmd)
             self.assertFalse("binchicken/workflow/env/singlem.yml will be created." in output)
@@ -110,6 +112,7 @@ class Tests(unittest.TestCase):
                 f"--output test_update "
                 f"--conda-prefix {path_to_conda} "
                 f"--dryrun "
+                f"--snakemake-args \" --quiet rules \" "
             )
             output = extern.run(cmd)
             self.assertFalse("binchicken/workflow/env/singlem.yml will be created." in output)
@@ -132,6 +135,7 @@ class Tests(unittest.TestCase):
                 f"--output test_iterate "
                 f"--conda-prefix {path_to_conda} "
                 f"--dryrun "
+                f"--snakemake-args \" --quiet rules \" "
             )
             output = extern.run(cmd)
             self.assertFalse("binchicken/workflow/env/singlem.yml will be created." in output)
