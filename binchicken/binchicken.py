@@ -104,7 +104,7 @@ def read_list(path):
 
 def run_workflow(config, workflow, output_dir, cores=16, dryrun=False,
                  profile=None, local_cores=1, cluster_retries=None,
-                 snakemake_args="", conda_frontend="mamba", conda_prefix=None):
+                 snakemake_args="", conda_frontend=None, conda_prefix=None):
     load_configfile(config)
 
     cmd = (
