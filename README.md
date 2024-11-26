@@ -12,3 +12,5 @@
 Bin Chicken - recovery of low abundance and taxonomically targeted metagenome assembled genomes (MAGs) through strategic coassembly.
 
 Documentation can be found at https://AroneyS.github.io/binchicken/
+
+Logo by Georgina H. Joyce | www.georginajoyce.com
