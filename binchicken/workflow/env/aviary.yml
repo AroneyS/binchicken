@@ -3,3 +3,4 @@ channels:
   - bioconda
 dependencies:
   - aviary=0.10.*
+  - mamba=1.4.*

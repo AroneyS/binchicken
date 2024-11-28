@@ -834,7 +834,6 @@ rule aviary_assemble:
         "-n {threads} "
         "-t {threads} "
         "-m {resources.mem_gb} "
-        "--conda-frontend conda " # Mamba is causing errors: libmamba Non-conda folder exists at prefix
         "--skip-qc "
         "{resources.assembler} "
         "{params.dryrun} "
@@ -890,7 +889,6 @@ rule aviary_recover:
         "-n {params.threads} "
         "-t {params.threads} "
         "-m {resources.mem_gb} "
-        "--conda-frontend conda " # Mamba is causing errors: libmamba Non-conda folder exists at prefix
         "--skip-qc "
         "{params.snakemake_profile} "
         "{params.cluster_retries} "
