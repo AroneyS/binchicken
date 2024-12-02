@@ -14,3 +14,9 @@ Bin Chicken - recovery of low abundance and taxonomically targeted metagenome as
 Documentation can be found at https://AroneyS.github.io/binchicken/
 
 Logo by Georgina H. Joyce | www.georginajoyce.com
+
+## Citation
+
+Samuel T. N. Aroney, Rhys J. P. Newell, Gene W. Tyson and Ben J. Woodcroft.
+Bin Chicken: targeted metagenomic coassembly for the efficient recovery of novel genomes.
+bioRxiv (2024): 2024-11. https://doi.org/10.1101/2024.11.24.625082

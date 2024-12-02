@@ -199,6 +199,14 @@ binchicken update --coassemble-output coassemble_dir --sra \
 
 <!-- -->
 
+**\--prior-assemblies** *PRIOR_ASSEMBLIES*
+
+  Prior assemblies to use for Aviary recovery. tsv file with header:
+    name [tab] assembly. Only possible with single-sample or update.
+    [default: generate assemblies through Aviary assemble]
+
+<!-- -->
+
 **\--cluster-submission**
 
   Flag that cluster submission will occur through

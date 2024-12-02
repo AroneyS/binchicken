@@ -16,6 +16,7 @@ binchicken iterate --coassemble-output coassemble_dir \
 ```
 
 Defaults to using genomes (from the provided coassemble outputs) with at least 70% complete and at most 10% contamination as estimated by CheckM2.
+Alternatively, selected genomes can be provided directly with `--new-genomes`.
 Automatically excludes previous coassemblies.
 
 # OPTIONS
@@ -237,14 +238,15 @@ Automatically excludes previous coassemblies.
 **\--taxa-of-interest** *TAXA_OF_INTEREST*
 
   Only consider sequences from this GTDB taxa (e.g.
-    p\_\_Planctomycetota) [default: all]
+    p\_\_Planctomycetota, or
 
 <!-- -->
 
 **\--appraise-sequence-identity** *APPRAISE_SEQUENCE_IDENTITY*
 
   Minimum sequence identity for SingleM appraise against reference
-    database [default: 86%, Genus-level]
+    database. e.g. 96% for Species-level or 86% Genus-level [default:
+    0.96]
 
 <!-- -->
 
@@ -331,6 +333,13 @@ Automatically excludes previous coassemblies.
 
 <!-- -->
 
+**\--precluster-distances** *PRECLUSTER_DISTANCES*
+
+  Distance file in the format of \`sourmash scripts pairwise\`. If
+    provided, kmer sketching and clustering is skipped.
+
+<!-- -->
+
 **\--precluster-size** *PRECLUSTER_SIZE*
 
   \# of samples within each sample\'s precluster [default: 5 \*
@@ -381,6 +390,14 @@ Automatically excludes previous coassemblies.
 
   Run Aviary commands for all identified coassemblies (unless specific
     coassemblies are chosen with \--coassemblies) [default: do not]
+
+<!-- -->
+
+**\--prior-assemblies** *PRIOR_ASSEMBLIES*
+
+  Prior assemblies to use for Aviary recovery. tsv file with header:
+    name [tab] assembly. Only possible with single-sample or update.
+    [default: generate assemblies through Aviary assemble]
 
 <!-- -->
 

@@ -41,10 +41,10 @@ Important options:
 - The taxa of the considered sequences can be filtered to target a specific taxon (e.g. `--taxa-of-interest "p__Planctomycetota"`).
 - Differential-abundance binning samples for single-assembly can also be found (`--single-assembly`)
 
-Paired end reads of form reads_1.1.fq, reads_1_1.fq and reads_1_R1.fq, where reads_1 is the sample name are automatically detected and matched to their basename.
+Paired end reads of form \*.1.fq, \*_1.fq and \*_R1.fq, where \* represents the sample name are automatically detected and matched to their basename.
 Most intermediate files can be provided to skip intermediate steps (e.g. SingleM otu tables, read sizes or genome transcripts; see `binchicken coassemble --full-help`).
 
-## Abundance weighting
+## Abundance weighting (experimental)
 
 By default, coassemblies are ranked by the number of feasibly-recovered target sequences they contain.
 Instead, `--abundance-weighted` can be used to weight target sequences by their average abundance across samples.
@@ -57,13 +57,6 @@ Clustering groups of more than 1000 samples quickly leads to memory issues due t
 Kmer preclustering can be used (default if >1000 samples are provided, or use `--kmer-precluster always`) to reduce the number of combinations that are considered.
 This greatly reduces memory usage and allows scaling up to at least 250k samples.
 Kmer preclustering can be disabled with `--kmer-precluster never`.
-
-## Cluster submission
-
-Snakemake profiles can be used to automatically submit jobs to HPC clusters (`--snakemake-profile`).
-Note that Aviary assemble commands are submitted to the cluster, while Aviary recover commands are run locally such that Aviary handles cluster submission.
-The `--cluster-submission` flag sets the local Aviary recover thread usage to 1, to enable multiple runs in parallel by setting `--local-cores` to greater than 1.
-This is required to prevent `--local-cores` from limiting the number of threads per submitted job.
 
 # OPTIONS
 
@@ -206,14 +199,15 @@ This is required to prevent `--local-cores` from limiting the number of threads 
 **\--taxa-of-interest** *TAXA_OF_INTEREST*
 
   Only consider sequences from this GTDB taxa (e.g.
-    p\_\_Planctomycetota) [default: all]
+    p\_\_Planctomycetota, or
 
 <!-- -->
 
 **\--appraise-sequence-identity** *APPRAISE_SEQUENCE_IDENTITY*
 
   Minimum sequence identity for SingleM appraise against reference
-    database [default: 86%, Genus-level]
+    database. e.g. 96% for Species-level or 86% Genus-level [default:
+    0.96]
 
 <!-- -->
 
@@ -300,6 +294,13 @@ This is required to prevent `--local-cores` from limiting the number of threads 
 
 <!-- -->
 
+**\--precluster-distances** *PRECLUSTER_DISTANCES*
+
+  Distance file in the format of \`sourmash scripts pairwise\`. If
+    provided, kmer sketching and clustering is skipped.
+
+<!-- -->
+
 **\--precluster-size** *PRECLUSTER_SIZE*
 
   \# of samples within each sample\'s precluster [default: 5 \*
@@ -350,6 +351,14 @@ This is required to prevent `--local-cores` from limiting the number of threads 
 
   Run Aviary commands for all identified coassemblies (unless specific
     coassemblies are chosen with \--coassemblies) [default: do not]
+
+<!-- -->
+
+**\--prior-assemblies** *PRIOR_ASSEMBLIES*
+
+  Prior assemblies to use for Aviary recovery. tsv file with header:
+    name [tab] assembly. Only possible with single-sample or update.
+    [default: generate assemblies through Aviary assemble]
 
 <!-- -->
 

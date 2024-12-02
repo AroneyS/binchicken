@@ -16,7 +16,7 @@ authors:
   - family-names: Woodcroft
     given-names: Ben J.
     orcid: https://orcid.org/0000-0003-0670-7480
-title: "Bin Chicken: targeted recovery of low abundance metagenome assembled genomes through intelligent coassembly"
-version: 0.12.5
-doi: 10.5281/zenodo.10511708
-date-released: 2024-09-06
+title: "Bin Chicken: targeted metagenomic coassembly for the efficient recovery of novel genomes"
+version: 0.12.6
+doi: 10.1101/2024.11.24.625082
+date-released: 2024-12-02
