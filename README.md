@@ -15,6 +15,8 @@ Documentation can be found at https://AroneyS.github.io/binchicken/
 
 Logo by Georgina H. Joyce | www.georginajoyce.com
 
+Not to be confused with https://gitlab.com/andreassh/binchicken
+
 ## Citation
 
 Samuel T. N. Aroney, Rhys J. P. Newell, Gene W. Tyson and Ben J. Woodcroft.
