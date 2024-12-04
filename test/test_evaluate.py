@@ -4,7 +4,7 @@ import unittest
 import os
 from bird_tool_utils import in_tempdir
 import extern
-from snakemake.io import load_configfile
+from snakemake.common.configfile import load_configfile
 
 path_to_data = os.path.join(os.path.dirname(os.path.realpath(__file__)),'data')
 path_to_conda = os.path.join(path_to_data,'.conda')
@@ -153,7 +153,7 @@ class Tests(unittest.TestCase):
                 f"--output test "
                 f"--conda-prefix {path_to_conda} "
                 f"--dryrun "
-                f"--snakemake-args \" --quiet\" "
+                f"--snakemake-args \" --quiet rules \" "
             )
             output = extern.run(cmd)
 
@@ -283,7 +283,7 @@ class Tests(unittest.TestCase):
                 f"--output test "
                 f"--conda-prefix {path_to_conda} "
                 f"--dryrun "
-                f"--snakemake-args \" --quiet\" "
+                f"--snakemake-args \" --quiet rules \" "
             )
             output = extern.run(cmd)
 
@@ -306,6 +306,7 @@ class Tests(unittest.TestCase):
                 f"--output test "
                 f"--conda-prefix {path_to_conda} "
                 f"--dryrun "
+                f"--snakemake-args \" --quiet rules \" "
             )
             extern.run(cmd)
 

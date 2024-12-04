@@ -13,7 +13,7 @@ import bird_tool_utils as btu
 import polars as pl
 import polars.selectors as cs
 from polars.exceptions import NoDataError
-from snakemake.io import load_configfile
+from snakemake.common.configfile import load_configfile
 from ruamel.yaml import YAML
 import copy
 import shutil
@@ -104,7 +104,7 @@ def read_list(path):
 
 def run_workflow(config, workflow, output_dir, cores=16, dryrun=False,
                  profile=None, local_cores=1, cluster_retries=None,
-                 snakemake_args="", conda_frontend="mamba", conda_prefix=None):
+                 snakemake_args="", conda_frontend=None, conda_prefix=None):
     load_configfile(config)
 
     cmd = (
