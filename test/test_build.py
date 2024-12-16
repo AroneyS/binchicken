@@ -69,6 +69,7 @@ class Tests(unittest.TestCase):
             self.assertFalse("binchicken/workflow/env/prodigal.yml will be created." in output)
             self.assertFalse("binchicken/workflow/env/aviary.yml will be created." in output)
             self.assertFalse("binchicken/workflow/env/fastp.yml will be created." in output)
+            self.assertFalse("binchicken/workflow/env/general.yml will be created." in output)
 
             # Dryrun evaluate
             cmd = (
@@ -88,6 +89,7 @@ class Tests(unittest.TestCase):
             self.assertFalse("binchicken/workflow/env/prodigal.yml will be created." in output)
             self.assertFalse("binchicken/workflow/env/aviary.yml will be created." in output)
             self.assertFalse("binchicken/workflow/env/fastp.yml will be created." in output)
+            self.assertFalse("binchicken/workflow/env/general.yml will be created." in output)
 
             # Dryrun update
             cmd = (
@@ -117,6 +119,7 @@ class Tests(unittest.TestCase):
             self.assertFalse("binchicken/workflow/env/prodigal.yml will be created." in output)
             self.assertFalse("binchicken/workflow/env/aviary.yml will be created." in output)
             self.assertFalse("binchicken/workflow/env/fastp.yml will be created." in output)
+            self.assertFalse("binchicken/workflow/env/general.yml will be created." in output)
 
             # Dryrun iterate
             cmd = (
@@ -138,6 +141,7 @@ class Tests(unittest.TestCase):
             self.assertFalse("binchicken/workflow/env/prodigal.yml will be created." in output)
             self.assertFalse("binchicken/workflow/env/aviary.yml will be created." in output)
             self.assertFalse("binchicken/workflow/env/fastp.yml will be created." in output)
+            self.assertFalse("binchicken/workflow/env/general.yml will be created." in output)
 
 
 if __name__ == '__main__':
