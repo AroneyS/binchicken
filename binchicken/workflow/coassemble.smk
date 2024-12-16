@@ -354,6 +354,8 @@ rule count_bp_reads:
     resources:
         mem_mb=get_mem_mb,
         runtime = get_runtime(base_hours = 24),
+    conda:
+        "env/general.yml"
     shell:
         "parallel -k -j {threads} "
         "echo -n {{1}}, '&&' "
