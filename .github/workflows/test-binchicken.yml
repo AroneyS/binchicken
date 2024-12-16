@@ -49,8 +49,8 @@ jobs:
           python test/test_aviary_commands.py
           python test/test_is_interleaved.py
           python test/test_build.py
+          python test/test_coassemble.py
           python test/test_update.py
+          python test/test_iterate.py
           python test/test_evaluate.py
           python test/test_evaluate_script.py -b
-          python test/test_coassemble.py
-          python test/test_iterate.py
