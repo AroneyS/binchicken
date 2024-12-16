@@ -6,6 +6,7 @@
 test <- !is.null(snakemake@config$test)
 if (test) sink(file("/dev/null", "w"), type = "message")
 
+Sys.setenv(OPENSSL_CONF = "/dev/null")
 library(gt)
 library(cowplot)
 library(tidyverse)
