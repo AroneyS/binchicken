@@ -7,6 +7,7 @@ Environment setup
 
 Bin Chicken uses separate conda environments for each subprocess.
 Run `binchicken build` to create those subprocess conda environments and setup environment variables.
+This can take upwards of 30 minutes to complete, depending on the speed of your internet connection.
 
 Conda prefix is the directory you want to contain the subprocess conda environments.
 SingleM metapackage is the metapackage downloaded by SingleM using `singlem data` (see <https://github.com/wwood/singlem>).
