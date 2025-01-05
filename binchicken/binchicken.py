@@ -1096,6 +1096,7 @@ def build(args):
     args.aviary_assemble_cores = None
     args.aviary_recover_cores = None
     args.assemble_unmapped = True
+    args.sra = False
     args.run_qc = True
     args.coassemblies = None
     args.coassemblies_list = None
