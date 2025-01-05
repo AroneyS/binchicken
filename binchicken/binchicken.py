@@ -388,6 +388,9 @@ def check_prior_assemblies(prior_assemblies, inputs):
 
 def coassemble(args):
     logging.info("Loading sample info")
+    if args.sra:
+        args.forward, args.reverse = download_sra(args)
+        args.run_qc = True
     if args.forward_list:
         args.forward = read_list(args.forward_list)
     if args.reverse_list:
@@ -1395,6 +1398,9 @@ def main():
         # Coassembly options
         coassemble_coassembly = parser.add_argument_group("Coassembly options")
         coassemble_coassembly.add_argument("--assemble-unmapped", action="store_true", help="Only assemble reads that do not map to reference genomes")
+        coassemble_coassembly.add_argument("--sra", action="store_true", help="Download reads from SRA (forward read argument intepreted as SRA IDs). Also sets --run-qc.")
+        default_download_limit = 3
+        coassemble_coassembly.add_argument("--download-limit", type=int, help=f"Parallel download limit [default: {default_download_limit}]", default=default_download_limit)
         coassemble_coassembly.add_argument("--run-qc", action="store_true", help="Run Fastp QC on reads")
         unmapping_min_appraised_default = 0.1
         coassemble_coassembly.add_argument("--unmapping-min-appraised", type=float, help=f"Minimum fraction of sequences binned to justify unmapping [default: {unmapping_min_appraised_default}]", default=unmapping_min_appraised_default)
@@ -1445,7 +1451,7 @@ def main():
     # Base arguments
     update_base = update_parser.add_argument_group("Input arguments")
     add_base_arguments(update_base)
-    update_base.add_argument("--sra", action="store_true", help="Download reads from SRA (read argument still required). Also sets --run-qc.")
+    update_base.add_argument("--sra", action="store_true", help="Download reads from SRA (forward read argument intepreted as SRA IDs). Also sets --run-qc.")
     default_download_limit = 3
     update_base.add_argument("--download-limit", type=int, help=f"Parallel download limit [default: {default_download_limit}]", default=default_download_limit)
     # Coassembly options

@@ -1926,5 +1926,90 @@ class Tests(unittest.TestCase):
             observed = pl.read_csv(cluster_path, separator="\t")
             assert_frame_equal(expected, observed, check_dtypes=False, check_row_order=False, atol=1e-5)
 
+    def test_coassemble_sra_download(self):
+        with in_tempdir():
+            cmd = (
+                f"binchicken coassemble "
+                f"--forward SRR8334323 SRR8334324 "
+                f"--sra "
+                f"--genomes {GENOMES} "
+                f"--output test "
+                f"--conda-prefix {path_to_conda} "
+                f"--dryrun "
+                f"--snakemake-args \" --quiet\" "
+            )
+            output_comb = extern.run(cmd)
+
+            output_sra = output_comb.split("Building DAG of jobs...")[1]
+            self.assertTrue("download_sra" in output_sra)
+            self.assertTrue("aviary_commands" not in output_sra)
+
+            output = output_comb.split("Building DAG of jobs...")[2]
+            self.assertTrue("singlem_pipe_reads" in output)
+            self.assertTrue("genome_transcripts" in output)
+            self.assertTrue("singlem_pipe_genomes" in output)
+            self.assertTrue("singlem_summarise_genomes" in output)
+            self.assertTrue("singlem_appraise" in output)
+            self.assertTrue("query_processing" not in output)
+            self.assertTrue("single_assembly" not in output)
+            self.assertTrue("count_bp_reads" in output)
+            self.assertTrue("abundance_weighting" not in output)
+            self.assertTrue("sketch_samples" not in output)
+            self.assertTrue("distance_samples" not in output)
+            self.assertTrue("target_elusive" in output)
+            self.assertTrue("target_weighting" not in output)
+            self.assertTrue("cluster_graph" in output)
+            self.assertTrue("qc_reads" in output)
+            self.assertTrue("collect_genomes" not in output)
+            self.assertTrue("map_reads" not in output)
+            self.assertTrue("finish_mapping" not in output)
+            self.assertTrue("aviary_commands" in output)
+
+    def test_coassemble_sra_download_mock(self):
+        with in_tempdir():
+            cmd = (
+                f"binchicken coassemble "
+                f"--forward SRR3309137 SRR8334323 SRR8334324 "
+                f"--sra "
+                f"--output test "
+                f"--conda-prefix {path_to_conda} "
+                f"--snakemake-args \" --config mock_sra=True\" "
+            )
+            extern.run(cmd)
+
+            sra_f0_path = os.path.join("test", "coassemble", "sra", "SRR3309137_1.fastq.gz")
+            self.assertTrue(os.path.exists(sra_f0_path))
+            with gzip.open(sra_f0_path) as f:
+                file = f.readline().decode()
+                self.assertTrue("@SRR3309137.1 HISEQ06:195:D1DRHACXX:5:1101:1597:2236/1" in file)
+                self.assertTrue("@SRR3309137.2 HISEQ06:195:D1DRHACXX:5:1101:1597:2236/1" not in file)
+
+            sra_r0_path = os.path.join("test", "coassemble", "sra", "SRR3309137_2.fastq.gz")
+            self.assertTrue(os.path.exists(sra_r0_path))
+            with gzip.open(sra_r0_path) as f:
+                file = f.readline().decode()
+                self.assertTrue("@SRR3309137.2 HISEQ06:195:D1DRHACXX:5:1101:1597:2236/1" in file)
+                self.assertTrue("@SRR3309137.1 HISEQ06:195:D1DRHACXX:5:1101:1597:2236/1" not in file)
+
+            sra_f1_path = os.path.join("test", "coassemble", "sra", "SRR8334323_1.fastq.gz")
+            self.assertTrue(os.path.exists(sra_f1_path))
+            with gzip.open(sra_f1_path) as f:
+                file = f.readline().decode()
+                self.assertTrue("@SEQ_ID.1" in file)
+
+            sra_f2_path = os.path.join("test", "coassemble", "qc", "SRR8334323_1.fastq.gz")
+            self.assertTrue(os.path.exists(sra_f2_path))
+            with gzip.open(sra_f2_path) as f:
+                file = f.readline().decode()
+                self.assertTrue("@SEQ_ID.1" not in file)
+
+            recover_path = os.path.join("test", "coassemble", "target", "unused_samples.tsv")
+            self.assertTrue(os.path.exists(recover_path))
+            with open(recover_path) as f:
+                file = [l.strip() for l in f.readlines()]
+                self.assertTrue("SRR3309137" in file)
+                self.assertTrue("SRR8334323" in file)
+                self.assertTrue("SRR8334324" in file)
+
 if __name__ == '__main__':
     unittest.main()
