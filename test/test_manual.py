@@ -61,6 +61,35 @@ class Tests(unittest.TestCase):
             pass
         os.makedirs(output_dir)
 
+    def test_coassemble_sra_download_real(self):
+        output_dir = os.path.join("example", "test_coassemble_sra_download_real")
+        self.setup_output_dir(output_dir)
+
+        cmd = (
+            f"binchicken coassemble "
+            f"--assemble-unmapped "
+            f"--forward SRR8334323 SRR8334324 SRR7039260 "
+            f"--sra "
+            f"--genomes {GENOMES} "
+            f"--output {output_dir} "
+            f"--conda-prefix {path_to_conda} "
+        )
+        subprocess.run(cmd, shell=True, check=True)
+
+        config_path = os.path.join(output_dir, "config.yaml")
+        self.assertTrue(os.path.exists(config_path))
+
+        sra_1_path = os.path.join(output_dir, "coassemble", "sra", "SRR8334323_1.fastq.gz")
+        self.assertTrue(os.path.exists(sra_1_path))
+        with gzip.open(sra_1_path) as f:
+            file = f.readline().decode()
+            self.assertTrue("@SRR8334323.1 HS2:487:H80UEADXX:1:1101:1148:1986/1" in file)
+            self.assertTrue("@SRR8334323.2 HS2:487:H80UEADXX:1:1101:1148:1986/2" not in file)
+
+        self.assertTrue(os.path.exists(os.path.join(output_dir, "coassemble", "sra", "SRR8334323_2.fastq.gz")))
+        self.assertTrue(os.path.exists(os.path.join(output_dir, "coassemble", "sra", "SRR8334324_1.fastq.gz")))
+        self.assertTrue(os.path.exists(os.path.join(output_dir, "coassemble", "sra", "SRR8334324_2.fastq.gz")))
+
     def test_update_sra_download_real(self):
         output_dir = os.path.join("example", "test_update_sra_download_real")
         self.setup_output_dir(output_dir)
