@@ -11,7 +11,7 @@ Download 4 SRA samples and run single-sample assembly with co-binning.
 
 ```bash
 binchicken single \
-  --forward SRR8334323 SRR8334324 DRR001455 DRR001459 --sra \
+  --forward SRR8334323 SRR8334324 SRR6797127 SRR6797128 --sra \
   --cores 16 --output binchicken_single_assembly
 ```
 
@@ -23,7 +23,7 @@ This will produce metagenome-assembled genomes (MAGs) from each sample.
 
 ```bash
 binchicken single \
-  --forward SRR8334323 SRR8334324 DRR001455 DRR001459 --sra \
+  --forward SRR8334323 SRR8334324 SRR6797127 SRR6797128 --sra \
   --run-aviary --cores 64 --output binchicken_single_assembly
 ```
 
@@ -48,7 +48,7 @@ binchicken iterate \
 ```
 
 As you might expect from checking the sample sources (e.g. [SRR8334323](https://sandpiper.qut.edu.au/run/SRR8334323)),
-the SRR8334323/SRR8334324 and DRR001455/DRR001459 pairs are suggested for coassembly.
+the SRR8334323/SRR8334324 and SRR6797127/SRR6797128 pairs are suggested for coassembly.
 
 ## Coassembly with co-binning
 
@@ -56,7 +56,7 @@ Alternatively, you can start with coassembly, optionally providing your own geno
 
 ```bash
 binchicken coassemble \
-  --forward SRR8334323 SRR8334324 DRR001455 DRR001459 --sra \
+  --forward SRR8334323 SRR8334324 SRR6797127 SRR6797128 --sra \
   --genomes-list genomes.txt \
   --run-aviary --cores 64 --output binchicken_coassembly
 ```
