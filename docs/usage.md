@@ -33,6 +33,7 @@ This is required to prevent `--local-cores` from limiting the number of threads 
 - **Dynamic assembly strategy**: The `--assembly-strategy dynamic` (default) option means that assembly is initially attempted using metaSPAdes with 32 CPUs, 250 GB RAM. If this fails, metaSPAdes is attempted again with 64 CPUs, 500 GB RAM. If this also fails, MEGAHIT is attempted with 32 CPUs, 250 GB RAM.
 - **MetaSPAdes assembly strategy**: The `--assembly-strategy metaspades` option means that assembly is attempted using metaSPAdes with 32 CPUs, 250 GB RAM, with CPUs and RAM increasing with each attempt.
 - **MEGAHIT assembly strategy**: The `--assembly-strategy megahit` option means that assembly is attempted using MEGAHIT with 32 CPUs, 250 GB RAM, with CPUs and RAM increasing with each attempt.
+- **Assemble unmapped**: The `--assemble-unmapped` option means that reads are first mapped to reference genomes, and only unmapped reads are assembled. This can reduce the complexity of the assembly, thus reducing computational requirements. Note that will likely reduce the number of recovered novel genomes, possibly due to overlap of reads from conserved sequences of different species.
 
 ## Aviary Recover
 

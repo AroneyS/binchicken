@@ -25,15 +25,15 @@ binchicken single \
 # Prioritising samples with genomes not previously recovered
 binchicken iterate \
   --coassemble-output binchicken_single_assembly \
-  --run-aviary --assemble-unmapped \
-  --cores 64 --output binchicken_2_coassembly
+  --run-aviary --cores 64 \
+  --output binchicken_2_coassembly
 
 # Perform another iteration of coassembly, with 3-samples this time
 binchicken iterate \
   --coassembly-samples 3 \
   --coassemble-output binchicken_2_coassembly \
-  --run-aviary --assemble-unmapped \
-  --cores 64 --output binchicken_3_coassembly
+  --run-aviary --cores 64 \
+  --output binchicken_3_coassembly
 ```
 
 ## Help

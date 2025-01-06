@@ -41,21 +41,3 @@ conda env create -f binchicken.yml
 conda activate binchicken
 pip install -e .
 ```
-
-### Testing and demo
-
-Tests can be run if installed from source to ensure Bin Chicken is installed correctly.
-The subcommand tests can take upwards of 30 minutes to complete using a single thread.
-The manual tests can take multiple days to complete, using 64 threads.
-
-```bash
-# Test single subcommand
-python test/test_single.py
-# Test coassemble subcommand
-python test/test_coassemble.py
-# Test iterate subcommand
-python test/test_iterate.py
-
-# Test downloading and coassembly/recovery with Aviary. Results stored in example/test_* directories.
-python test/test_manual.py
-```
