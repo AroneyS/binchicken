@@ -67,10 +67,9 @@ class Tests(unittest.TestCase):
 
         cmd = (
             f"binchicken coassemble "
-            f"--assemble-unmapped "
-            f"--forward SRR8334323 SRR8334324 SRR7039260 "
+            f"--forward SRR8334323 SRR8334324 SRR6797127 SRR6797128 "
             f"--sra "
-            f"--genomes {GENOMES} "
+            f"--cores 32 "
             f"--output {output_dir} "
             f"--conda-prefix {path_to_conda} "
         )
@@ -79,16 +78,48 @@ class Tests(unittest.TestCase):
         config_path = os.path.join(output_dir, "config.yaml")
         self.assertTrue(os.path.exists(config_path))
 
-        sra_1_path = os.path.join(output_dir, "coassemble", "sra", "SRR8334323_1.fastq.gz")
-        self.assertTrue(os.path.exists(sra_1_path))
-        with gzip.open(sra_1_path) as f:
-            file = f.readline().decode()
-            self.assertTrue("@SRR8334323.1 HS2:487:H80UEADXX:1:1101:1148:1986/1" in file)
-            self.assertTrue("@SRR8334323.2 HS2:487:H80UEADXX:1:1101:1148:1986/2" not in file)
-
+        self.assertTrue(os.path.exists(os.path.join(output_dir, "coassemble", "sra", "SRR8334323_1.fastq.gz")))
         self.assertTrue(os.path.exists(os.path.join(output_dir, "coassemble", "sra", "SRR8334323_2.fastq.gz")))
         self.assertTrue(os.path.exists(os.path.join(output_dir, "coassemble", "sra", "SRR8334324_1.fastq.gz")))
         self.assertTrue(os.path.exists(os.path.join(output_dir, "coassemble", "sra", "SRR8334324_2.fastq.gz")))
+        self.assertTrue(os.path.exists(os.path.join(output_dir, "coassemble", "sra", "SRR6797127_1.fastq.gz")))
+        self.assertTrue(os.path.exists(os.path.join(output_dir, "coassemble", "sra", "SRR6797127_2.fastq.gz")))
+        self.assertTrue(os.path.exists(os.path.join(output_dir, "coassemble", "sra", "SRR6797128_1.fastq.gz")))
+        self.assertTrue(os.path.exists(os.path.join(output_dir, "coassemble", "sra", "SRR6797128_2.fastq.gz")))
+
+        cluster_path = os.path.join(output_dir, "coassemble", "target", "elusive_clusters.tsv")
+        self.assertTrue(os.path.exists(cluster_path))
+        expected = "\n".join(
+            [
+                "\t".join([
+                    "samples",
+                    "length",
+                    "total_targets",
+                    "total_size",
+                    "recover_samples",
+                    "coassembly",
+                ]),
+                "\t".join([
+                    "SRR8334323,SRR8334324",
+                    "2",
+                    "39",
+                    "5046179100",
+                    "SRR8334323,SRR8334324",
+                    "coassembly_0"
+                ]),
+                "\t".join([
+                    "SRR6797127,SRR6797128",
+                    "2",
+                    "12",
+                    "7675876600",
+                    "SRR6797127,SRR6797128",
+                    "coassembly_1"
+                ]),
+                ""
+            ]
+        )
+        with open(cluster_path) as f:
+            self.assertEqual(expected, f.read())
 
     def test_update_sra_download_real(self):
         output_dir = os.path.join("example", "test_update_sra_download_real")
