@@ -789,6 +789,11 @@ def update(args):
     else:
         sample_read_size = None
 
+    if args.sra:
+        args.forward, args.reverse = download_sra(args)
+        args.run_qc = True
+        args.sra = False
+
     if args.run_aviary:
         args.snakemake_args = "aviary_combine summary --rerun-triggers mtime " + args.snakemake_args if args.snakemake_args else "aviary_combine summary --rerun-triggers mtime"
     else:
@@ -1092,6 +1097,7 @@ def build(args):
     args.aviary_assemble_cores = None
     args.aviary_recover_cores = None
     args.assemble_unmapped = True
+    args.sra = False
     args.run_qc = True
     args.coassemblies = None
     args.coassemblies_list = None
