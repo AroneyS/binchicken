@@ -432,6 +432,9 @@ def coassemble(args):
     if args.coassembly_samples_list:
         args.coassembly_samples = read_list(args.coassembly_samples_list)
 
+    if args.anchor_samples_list:
+        args.anchor_samples = read_list(args.anchor_samples_list)
+
     if args.exclude_coassemblies_list:
         args.exclude_coassemblies = read_list(args.exclude_coassemblies_list)
 
@@ -515,6 +518,7 @@ def coassemble(args):
         "genomes": genomes if args.genomes else None,
         "singlem_metapackage": metapackage,
         "coassembly_samples": args.coassembly_samples,
+        "anchor_samples": args.anchor_samples,
         # Clustering config
         "taxa_of_interest": args.taxa_of_interest if args.taxa_of_interest else None,
         "appraise_sequence_identity": args.appraise_sequence_identity / 100 if args.appraise_sequence_identity > 1 else args.appraise_sequence_identity,
@@ -1090,6 +1094,7 @@ def build(args):
     args.genomes_list = None
     args.new_genomes_list = None
     args.coassembly_samples_list = None
+    args.anchor_samples_list = None
     args.sample_read_size = None
     args.cluster_submission = False
     args.aviary_gtdbtk_db = "."
@@ -1305,6 +1310,8 @@ def main():
         argument_group.add_argument("--genomes-list", help="Reference genomes for read mapping newline separated")
         argument_group.add_argument("--coassembly-samples", nargs='+', help="Restrict coassembly to these samples. Remaining samples will still be used for recovery [default: use all samples]", default=[])
         argument_group.add_argument("--coassembly-samples-list", help="Restrict coassembly to these samples, newline separated. Remaining samples will still be used for recovery [default: use all samples]", default=[])
+        argument_group.add_argument("--anchor-samples", nargs='+', help="Samples to use as anchors for coassembly, all coassemblies will contain at least one anchor sample. [default: no restriction]", default=[])
+        argument_group.add_argument("--anchor-samples-list", help="Samples to use as anchors for coassembly, all coassemblies will contain at least one anchor sample, newline separated. [default: no restriction]", default=[])
 
     def add_evaluation_options(argument_group):
         checkm_version_default = 2
@@ -1571,7 +1578,8 @@ def main():
             raise Exception("SingleM metapackage (--singlem-metapackage or SINGLEM_METAPACKAGE_PATH environment variable, see SingleM data) must be provided when SingleM query otu tables are not provided")
         if (args.sample_singlem and args.sample_singlem_list) or (args.sample_singlem_dir and args.sample_singlem_list) or (args.sample_singlem and args.sample_singlem_dir) or \
             (args.sample_query and args.sample_query_list) or (args.sample_query_dir and args.sample_query_list) or (args.sample_query and args.sample_query_dir) or \
-            (args.coassembly_samples and args.coassembly_samples_list) or (args.abundance_weighted_samples and args.abundance_weighted_samples_list):
+            (args.coassembly_samples and args.coassembly_samples_list) or (args.abundance_weighted_samples and args.abundance_weighted_samples_list) or \
+            (args.anchor_samples and args.anchor_samples_list):
             raise Exception("General, list and directory arguments are mutually exclusive")
         if args.single_assembly:
             if 1 > args.max_recovery_samples:

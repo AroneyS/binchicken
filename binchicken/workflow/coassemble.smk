@@ -446,6 +446,7 @@ rule target_elusive:
         max_coassembly_samples = config["max_coassembly_samples"],
         taxa_of_interest = config["taxa_of_interest"],
         samples = config["reads_1"],
+        anchor_samples = config["anchor_samples"],
         precluster_size = config["precluster_size"],
     threads: 64
     resources:
@@ -488,6 +489,7 @@ checkpoint cluster_graph:
         max_coassembly_samples = config["max_coassembly_samples"],
         max_recovery_samples = config["max_recovery_samples"],
         coassembly_samples = config["coassembly_samples"],
+        anchor_samples = config["anchor_samples"],
         exclude_coassemblies = config["exclude_coassemblies"],
         single_assembly = config["single_assembly"],
     threads: 64

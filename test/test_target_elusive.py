@@ -402,6 +402,114 @@ class Tests(unittest.TestCase):
         observed_clusters = get_clusters(sample_distances, samples)
         self.assertDataFrameEqual(expected_clusters, observed_clusters)
 
+    def test_get_clusters_anchored(self):
+        sample_distances = pl.DataFrame([
+            ["sample_1", "sample_2", 1-0.5],
+            ["sample_1", "sample_3", 1-1],
+            ["sample_2", "sample_3", 1-0.9],
+        ], orient="row", schema=SAMPLE_DISTANCES_COLUMNS)
+        samples = set(["sample_1", "sample_2", "sample_3"])
+        anchor_samples = set(["sample_1"])
+
+        expected_clusters = pl.DataFrame([
+            ["sample_1,sample_2"],
+        ], orient="row", schema=CLUSTERS_COLUMNS)
+
+        observed_clusters = get_clusters(sample_distances, samples, anchor_samples=anchor_samples)
+        self.assertDataFrameEqual(expected_clusters, observed_clusters)
+
+    def test_get_clusters_anchored_size_four_of_five(self):
+        sample_distances = pl.DataFrame([
+            ["1", "2", 1-0.2],
+            ["1", "3", 1-0.3],
+            ["1", "4", 1-0.4],
+            ["1", "5", 1-0.5],
+            ["2", "3", 1-0.2],
+            ["2", "4", 1-0.3],
+            ["2", "5", 1-0.4],
+            ["3", "4", 1-0.3],
+            ["3", "5", 1-0.3],
+            ["4", "5", 1-0.1],
+        ], orient="row", schema=SAMPLE_DISTANCES_COLUMNS)
+        samples = set(["1", "2", "3", "4", "5"])
+        anchor_samples = set(["1"])
+
+        expected_clusters = pl.DataFrame([
+            ["1,2"],
+            ["1,3"],
+            ["1,4"],
+            # ["1,5"],
+            # ["2,3"],
+            # ["2,4"],
+            # ["2,5"],
+            # ["3,4"],
+            # ["3,5"],
+            # ["4,5"],
+            ["1,2,3"],
+            ["1,2,4"],
+            ["1,3,4"],
+            # ["2,3,4"],
+            # ["1,2,5"],
+            # ["1,3,5"],
+            # ["2,3,5"],
+            # ["1,4,5"],
+            # ["2,4,5"],
+            # ["3,4,5"],
+        ], orient="row", schema=CLUSTERS_COLUMNS)
+
+        observed_clusters = get_clusters(
+            sample_distances,
+            samples,
+            anchor_samples=anchor_samples,
+            PRECLUSTER_SIZE=4,
+            MAX_COASSEMBLY_SAMPLES=3,
+            )
+        self.assertDataFrameEqual(expected_clusters, observed_clusters)
+
+    def test_get_clusters_anchored_real_world(self):
+        sample_distances = pl.DataFrame([
+            ["SRR12149290", "SRR10571243", 1-0.16],
+            ["ERR3201415", "ERR3220216", 1-0.16],
+            ["ERR1414209", "ERR4804028", 1-0.16],
+            ["SRR6979552", "SRR15213103", 1-0.07],
+            ["SRR12149290", "SRR12352217", 1-0.16],
+            ["SRR6979552", "SRR4831657", 1-0.09],
+            ["ERR3201415", "SRR11784293", 1-0.09],
+            ["SRR4249921", "SRR5207344", 1-0.15],
+            ["SRR6979552", "SRR6980357", 1-0.25],
+        ], orient="row", schema=SAMPLE_DISTANCES_COLUMNS)
+        samples = set([
+            "SRR12149290", "SRR10571243",
+            "ERR3201415", "ERR3220216",
+            "ERR1414209", "ERR4804028",
+            "SRR6979552", "SRR15213103",
+            "SRR12149290", "SRR12352217",
+            "SRR6979552", "SRR4831657",
+            "ERR3201415", "SRR11784293",
+            "SRR4249921", "SRR5207344",
+            "SRR6979552", "SRR6980357",
+        ])
+        anchor_samples = set(["SRR10571243", "SRR11784293", "SRR6979552"])
+
+        expected_clusters = pl.DataFrame([
+            ["SRR10571243,SRR12149290"],
+            # ["ERR3201415,ERR3220216"],
+            # ["ERR1414209,ERR4804028"],
+            ["SRR15213103,SRR6979552"],
+            # ["SRR12149290,SRR12352217"],
+            # ["SRR4831657,SRR6979552"],
+            ["ERR3201415,SRR11784293"],
+            # ["SRR4249921,SRR5207344"],
+            # ["SRR6979552,SRR6980357"],
+        ], orient="row", schema=CLUSTERS_COLUMNS)
+
+        observed_clusters = get_clusters(
+            sample_distances,
+            samples,
+            anchor_samples=anchor_samples,
+            )
+        self.assertDataFrameEqual(expected_clusters, observed_clusters)
+
     def test_target_elusive(self):
         unbinned = pl.DataFrame([
             ["S3.1", "sample_1", "AAA", 5, 10, "Root", ""],

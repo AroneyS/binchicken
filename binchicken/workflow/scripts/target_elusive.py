@@ -21,6 +21,7 @@ EDGES_COLUMNS={
 def get_clusters(
         sample_distances,
         samples,
+        anchor_samples=set(),
         PRECLUSTER_SIZE=2,
         MAX_COASSEMBLY_SAMPLES=2):
     logging.info(f"Polars using {str(pl.thread_pool_size())} threads")
@@ -93,6 +94,7 @@ def get_clusters(
     with pl.StringCache():
         preclusters = (
             pl.LazyFrame(chosen_samples, schema={"samples": pl.List(pl.Categorical)}, orient="row")
+            .filter((not anchor_samples) | (pl.col("samples").list.get(0).is_in(anchor_samples)))
             .join(sample_combinations, how="cross")
             .select(
                 pl.col("samples")
@@ -328,6 +330,7 @@ if __name__ == "__main__":
     targets_path = snakemake.output.output_targets
     edges_path = snakemake.output.output_edges
     samples = set(snakemake.params.samples)
+    anchor_samples = set(snakemake.params.anchor_samples)
 
     unbinned = pl.read_csv(unbinned_path, separator="\t")
 
@@ -341,6 +344,7 @@ if __name__ == "__main__":
         sample_preclusters = get_clusters(
             sample_distances,
             samples,
+            anchor_samples=anchor_samples,
             PRECLUSTER_SIZE=PRECLUSTER_SIZE,
             MAX_COASSEMBLY_SAMPLES=MAX_COASSEMBLY_SAMPLES,
             )

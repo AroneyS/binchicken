@@ -101,6 +101,7 @@ def pipeline(
         elusive_edges,
         read_size,
         weightings=None,
+        anchor_samples=set(),
         MAX_COASSEMBLY_SIZE=None,
         MAX_COASSEMBLY_SAMPLES=2,
         MIN_COASSEMBLY_SAMPLES=2,
@@ -253,6 +254,7 @@ def pipeline(
         clusters = (
             pl.concat(clusters)
             .join(excluded_coassemblies, on="samples_hash", how="anti")
+            .filter((not anchor_samples) | (pl.col("samples").list.eval(pl.element().is_in(anchor_samples)).list.any()))
             .with_columns(length = pl.col("samples").list.len())
             .explode("samples")
             .join(read_size, on="samples", how="left", coalesce=True)
@@ -341,6 +343,7 @@ if __name__ == "__main__":
     read_size_path = snakemake.input.read_size
     weightings_path = snakemake.input.targets_weighted
     elusive_clusters_path = snakemake.output.elusive_clusters
+    anchor_samples = set(snakemake.params.anchor_samples)
 
     elusive_edges = pl.read_csv(elusive_edges_path, separator="\t", schema_overrides={"target_ids": str})
     read_size = pl.read_csv(read_size_path, has_header=False, new_columns=["sample", "read_size"])
@@ -359,6 +362,7 @@ if __name__ == "__main__":
         elusive_edges,
         read_size,
         weightings,
+        anchor_samples=anchor_samples,
         MAX_COASSEMBLY_SIZE=MAX_COASSEMBLY_SIZE,
         MAX_COASSEMBLY_SAMPLES=MAX_COASSEMBLY_SAMPLES,
         MIN_COASSEMBLY_SAMPLES=MIN_COASSEMBLY_SAMPLES,
