@@ -754,6 +754,166 @@ class Tests(unittest.TestCase):
         observed = pipeline(elusive_edges, read_size, weightings)
         self.assertDataFrameEqual(expected, observed)
 
+    def test_cluster_graph_anchored(self):
+        elusive_edges = pl.DataFrame([
+            ["match", 2, "sample_2,sample_1", "0,1,2"],
+            ["match", 2, "sample_1,sample_3", "1,2"],
+        ], orient="row", schema=ELUSIVE_EDGES_COLUMNS)
+        read_size = pl.DataFrame([
+            ["sample_1", 1000],
+            ["sample_2", 2000],
+            ["sample_3", 1000],
+        ], orient="row", schema=READ_SIZE_COLUMNS)
+        anchor_samples = set(["sample_3"])
+
+        expected = pl.DataFrame([
+            ["sample_1,sample_3", 2, 2, 2000, "sample_1,sample_2,sample_3", "coassembly_0"],
+        ], orient="row", schema=ELUSIVE_CLUSTERS_COLUMNS)
+        observed = pipeline(elusive_edges, read_size, anchor_samples=anchor_samples)
+        self.assertDataFrameEqual(expected, observed)
+
+    def test_cluster_anchored_single_bud_choice(self):
+        elusive_edges = pl.DataFrame([
+            ["match", 2, "1,2", "1,2,3,4"],
+            ["match", 2, "3,1", "5"],
+            ["match", 2, "3,2", "6,7"],
+        ], orient="row", schema=ELUSIVE_EDGES_COLUMNS)
+        read_size = pl.DataFrame([
+            ["1", 1000],
+            ["2", 1000],
+            ["3", 1000],
+        ], orient="row", schema=READ_SIZE_COLUMNS)
+        anchor_samples = set(["3"])
+
+        expected = pl.DataFrame([
+            ["3", 1, 3, 1000, "2,3", "coassembly_0"],
+        ], orient="row", schema=ELUSIVE_CLUSTERS_COLUMNS)
+        observed = pipeline(
+            elusive_edges,
+            read_size,
+            anchor_samples=anchor_samples,
+            MAX_COASSEMBLY_SAMPLES=1,
+            MIN_COASSEMBLY_SAMPLES=1,
+            MAX_RECOVERY_SAMPLES=2,
+            )
+        self.assertDataFrameEqual(expected, observed)
+
+    def test_cluster_anchored_three_samples(self):
+        # 1: 1 2 3 4
+        # 2: 1 2 3
+        # 3: 1   3   5
+        # 4:       4 5 6 7 8 9
+        # 5:           6 7     10 11 12
+        # 6:           6   8 9 10 11 12
+
+        elusive_edges = pl.DataFrame([
+            ["match", 2, "1,2", "1,2,3"],
+            ["match", 2, "1,3", "1,3"],
+            ["match", 2, "2,3", "1,3"],
+            ["match", 2, "4,1", "4"],
+            ["match", 2, "4,3", "5"],
+            ["match", 2, "4,5", "6,7"],
+            ["match", 2, "4,6", "8,9"],
+            ["match", 2, "5,6", "10,11,12"],
+            ["pool", 3, "1,2,3", "1,3"],
+            ["pool", 3, "4,5,6", "6"],
+        ], orient="row", schema=ELUSIVE_EDGES_COLUMNS)
+        read_size = pl.DataFrame([
+            ["1", 1000],
+            ["2", 2000],
+            ["3", 3000],
+            ["4", 4000],
+            ["5", 5000],
+            ["6", 6000],
+        ], orient="row", schema=READ_SIZE_COLUMNS)
+        anchor_samples = set(["5"])
+
+        expected = pl.DataFrame([
+            ["4,5,6", 3, 1, 15000, "4,5,6", "coassembly_0"],
+        ], orient="row", schema=ELUSIVE_CLUSTERS_COLUMNS)
+        observed = pipeline(
+            elusive_edges,
+            read_size,
+            anchor_samples=anchor_samples,
+            MAX_RECOVERY_SAMPLES=3,
+            MIN_COASSEMBLY_SAMPLES=3,
+            MAX_COASSEMBLY_SAMPLES=3,
+            )
+        self.assertDataFrameEqual(expected, observed)
+
+    def test_cluster_anchored_four_samples(self):
+        # 1: 0   2 3 4
+        # 2: 0 1   3 4
+        # 3: 0 1 2   4
+        # 4: 0 1 2 3 4
+
+        # 5:   1         6 7 8 9 10
+        # 6:           5   7 8
+        # 7:           5 6   8
+        # 8:                 8 9 10
+
+        elusive_edges = pl.DataFrame([
+            # pairs of 1,2,3,4
+            ["match", 2, "1,2", "0,3,4"],
+            ["match", 2, "1,3", "0,2,4"],
+            ["match", 2, "1,4", "0,2,3,4"],
+            ["match", 2, "2,3", "0,1,4"],
+            ["match", 2, "2,4", "0,1,3,4"],
+            ["match", 2, "3,4", "0,1,2,4"],
+            # pairs of 5,6,7,8
+            ["match", 2, "5,6", "7,8"],
+            ["match", 2, "5,7", "6,8"],
+            ["match", 2, "5,8", "8,9,10"],
+            ["match", 2, "6,7", "5,8"],
+            ["match", 2, "6,8", "8"],
+            ["match", 2, "7,8", "8"],
+            # joint pairs
+            ["match", 2, "2,5", "1"],
+            ["match", 2, "3,5", "1"],
+            ["match", 2, "4,5", "1"],
+            # triplets
+            ["pool", 3, "2,3,4,5", "1"],
+            ["pool", 3, "1,3,4", "0,2"],
+            ["pool", 3, "1,2,4", "0,3"],
+            ["pool", 3, "1,2,3,4", "0,4"],
+            ["pool", 3, "5,6,7,8", "8"],
+            # quads
+            ["pool", 4, "2,3,4,5", "1"],
+            ["pool", 4, "1,2,3,4", "0,4"],
+            ["pool", 4, "5,6,7,8", "8"],
+        ], orient="row", schema=ELUSIVE_EDGES_COLUMNS)
+        read_size = pl.DataFrame([
+            ["1", 1000],
+            ["2", 2000],
+            ["3", 3000],
+            ["4", 4000],
+            ["5", 5000],
+            ["6", 6000],
+            ["7", 7000],
+            ["8", 8000],
+        ], orient="row", schema=READ_SIZE_COLUMNS)
+        anchor_samples = set(["1", "2", "5"])
+
+        expected = pl.DataFrame([
+            ["1,4", 2, 4, 5000, "1,2,3,4", "coassembly_0"],
+            ["2,3", 2, 3, 5000, "1,2,3,4", "coassembly_1"],
+            ["1,2,4", 3, 3, 7000, "1,2,3,4", "coassembly_2"],
+            ["5,8", 2, 3, 13000, "5,6,7,8", "coassembly_3"],
+            ["1,2,3,4", 4, 2, 10000, "1,2,3,4", "coassembly_4"],
+            # ["6,7", 2, 2, 13000, "5,6,7,8", "coassembly_5"],
+            ["5,6,7", 3, 1, 18000, "5,6,7,8", "coassembly_5"],
+            ["5,6,7,8", 4, 1, 26000, "5,6,7,8", "coassembly_6"],
+        ], orient="row", schema=ELUSIVE_CLUSTERS_COLUMNS)
+        observed = pipeline(
+            elusive_edges,
+            read_size,
+            anchor_samples=anchor_samples,
+            MAX_RECOVERY_SAMPLES=4,
+            MIN_COASSEMBLY_SAMPLES=2,
+            MAX_COASSEMBLY_SAMPLES=4,
+            )
+        self.assertDataFrameEqual(expected, observed)
+
     def test_join_list_subsets(self):
         with pl.StringCache():
             df1 = (

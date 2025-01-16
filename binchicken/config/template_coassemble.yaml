@@ -1,5 +1,6 @@
 max_threads: 8
 coassembly_samples: []
+anchor_samples: []
 singlem_metapackage: 
 genomes:
   genome: 
