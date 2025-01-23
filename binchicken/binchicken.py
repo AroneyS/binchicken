@@ -550,10 +550,12 @@ def coassemble(args):
         "cluster_submission": args.cluster_submission,
         "aviary_gtdbtk": args.aviary_gtdbtk_db,
         "aviary_checkm2": args.aviary_checkm2_db,
+        "aviary_metabuli": args.aviary_metabuli_db,
         "aviary_assemble_threads": args.aviary_assemble_cores,
         "aviary_assemble_memory": args.aviary_assemble_memory,
         "aviary_recover_threads": args.aviary_recover_cores,
         "aviary_recover_memory": args.aviary_recover_memory,
+        "aviary_extra_binners": args.aviary_extra_binners,
         "conda_prefix": args.conda_prefix,
         "snakemake_profile": args.snakemake_profile,
         "cluster_retries": args.cluster_retries,
@@ -1033,12 +1035,16 @@ def build(args):
     if args.checkm2_db:
         configure_variable("CHECKM2DB", args.checkm2_db)
 
+    if args.metabuli_db:
+        configure_variable("METABULI_DB_PATH", args.metabuli_db)
+
     # Download databases
     if args.download_databases:
         download_config = {
             "singlem_metapackage": False,
             "checkm2_db": False,
             "gtdbtk_db": False,
+            "metabuli_db": False,
         }
 
         if args.singlem_metapackage and not os.path.exists(args.singlem_metapackage):
@@ -1051,6 +1057,10 @@ def build(args):
             logging.error("GTDBtk download not yet implemented")
             raise NotImplementedError("GTDBtk download not yet implemented")
             download_config["gtdbtk_db"] = args.gtdbtk_db
+
+        if args.metabuli_db and not os.path.exists(args.metabuli_db):
+            logging.error("Metabuli download not yet implemented")
+            raise NotImplementedError("Metabuli download not yet implemented")
 
         if not any(download_config.values()):
             logging.info("All databases already present")
@@ -1099,6 +1109,7 @@ def build(args):
     args.cluster_submission = False
     args.aviary_gtdbtk_db = "."
     args.aviary_checkm2_db = "."
+    args.aviary_metabuli_db = "."
     args.aviary_assemble_cores = None
     args.aviary_recover_cores = None
     args.assemble_unmapped = True
@@ -1333,6 +1344,7 @@ def main():
                                     default=default_assembly_strategy, choices=[DYNAMIC_ASSEMBLY_STRATEGY, METASPADES_ASSEMBLY, MEGAHIT_ASSEMBLY])
         argument_group.add_argument("--aviary-gtdbtk-db", help=f"Path to GTDB-Tk database directory for Aviary. Only required if --aviary-speed is set to {COMPREHENSIVE_AVIARY_MODE} [default: use path from GTDBTK_DATA_PATH env variable]")
         argument_group.add_argument("--aviary-checkm2-db", help="Path to CheckM2 database directory for Aviary. [default: use path from CHECKM2DB env variable]")
+        argument_group.add_argument("--aviary-metabuli-db", help="Path to MetaBuli database directory for Aviary, specifically for TaxVAMB. [default: use path from METABULI_DB_PATH env variable]")
         aviary_assemble_default_cores = 64
         argument_group.add_argument("--aviary-assemble-cores", type=int, help=f"Maximum number of cores for Aviary assemble to use. [default: {aviary_assemble_default_cores}]",
                                     default=aviary_assemble_default_cores)
@@ -1345,6 +1357,7 @@ def main():
         aviary_recover_default_memory = 250
         argument_group.add_argument("--aviary-recover-memory", type=int, help=f"Maximum amount of memory for Aviary recover to use (Gigabytes). [default: {aviary_recover_default_memory}]",
                                     default=aviary_recover_default_memory)
+        argument_group.add_argument("--aviary-extra-binners", nargs='*', choices=["maxbin", "maxbin2", "concoct", "comebin", "taxvamb"], help="Optional list of extra binning algorithms to run. Can be any combination of: maxbin, maxbin2, concoct, comebin, taxvamb")
 
     def add_main_coassemble_output_arguments(argument_group):
         argument_group.add_argument("--coassemble-output", help="Output dir from coassemble subcommand")
@@ -1504,6 +1517,7 @@ def main():
     build_parser.add_argument("--singlem-metapackage", help="SingleM metapackage")
     build_parser.add_argument("--checkm2-db", help="CheckM2 database")
     build_parser.add_argument(f"--gtdbtk-db", help="GTDBtk release database (Only required if --aviary-speed is set to {COMPREHENSIVE_AVIARY_MODE})")
+    build_parser.add_argument("--metabuli-db", help="MetaBuli database (Only required with TaxVAMB extra binner)")
     tmp_default = "/tmp"
     build_parser.add_argument("--set-tmp-dir", help=f"Set temporary directory [default: {tmp_default}]", default=tmp_default)
     build_parser.add_argument("--skip-aviary-envs", help="Do not install Aviary subworkflow environments", action="store_true")
@@ -1540,6 +1554,8 @@ def main():
         args.aviary_gtdbtk_db = load_variable("GTDBTK_DATA_PATH")
     if not hasattr(args, "aviary_checkm2_db") or not args.aviary_checkm2_db:
         args.aviary_checkm2_db = load_variable("CHECKM2DB")
+    if not hasattr(args, "aviary_metabuli_db") or not args.aviary_metabuli_db:
+        args.aviary_metabuli_db = load_variable("METABULI_DB_PATH")
 
     if hasattr(args, "genomes"):
         if not (args.genomes or args.genomes_list):
@@ -1595,6 +1611,8 @@ def main():
                 raise Exception("Run Aviary (--run-aviary) fast mode requires path to CheckM2 databases to be provided (--aviary-checkm2-db or CHECKM2DB)")
             if args.aviary_speed != FAST_AVIARY_MODE and not (args.aviary_gtdbtk_db and args.aviary_checkm2_db):
                 raise Exception("Run Aviary (--run-aviary) comprehensive mode requires paths to GTDB-Tk and CheckM2 databases to be provided (--aviary-gtdbtk-db or GTDBTK_DATA_PATH and --aviary-checkm2-db or CHECKM2DB)")
+            if "taxvamb" in args.aviary_extra_binners and not args.aviary_metabuli_db:
+                raise Exception("Run Aviary (--run-aviary) taxvamb requires path to MetaBuli databases to be provided (--aviary-metabuli-db or METABULI_DB_PATH)")
         if args.prior_assemblies and not args.single_assembly:
             raise Exception("Prior assemblies requires `update` or `single`-assembly modes")
         if args.cluster_submission and not args.snakemake_profile:
