@@ -827,6 +827,7 @@ rule aviary_assemble:
         "GTDBTK_DATA_PATH=. "
         "CHECKM2DB=. "
         "EGGNOG_DATA_DIR=. "
+        "METABULI_DB_PATH=. "
         "CONDA_ENV_PATH={params.conda_prefix} "
         "SINGLEM_METAPACKAGE_PATH=. "
         "{params.tmpdir} "
@@ -858,9 +859,11 @@ rule aviary_recover:
         dryrun = "--build" if config["build"] else "--dryrun" if config["aviary_dryrun"] else "",
         gtdbtk = config["aviary_gtdbtk"] if config["aviary_gtdbtk"] else ".",
         checkm2 = config["aviary_checkm2"],
+        metabuli = config["aviary_metabuli"] if config["aviary_metabuli"] else ".",
         conda_prefix = config["conda_prefix"] if config["conda_prefix"] else ".",
         singlem_metapackage = config["singlem_metapackage"],
         fast = "--binning-only --refinery-max-iterations 0" if config["aviary_speed"] == FAST_AVIARY_MODE else "",
+        extra_binners = "--extra-binners " + " ".join(config["extra_binners"]) if config["extra_binners"] else "",
         snakemake_profile = f"--snakemake-profile {config['snakemake_profile']}" if config["snakemake_profile"] else "",
         cluster_retries = f"--cluster-retries {config['cluster_retries']}" if config["cluster_retries"] else "",
         tmpdir = f"TMPDIR={config['tmpdir']}" if config["tmpdir"] else "",
@@ -880,6 +883,7 @@ rule aviary_recover:
         "GTDBTK_DATA_PATH={params.gtdbtk} "
         "CHECKM2DB={params.checkm2} "
         "EGGNOG_DATA_DIR=. "
+        "METABULI_DB_PATH={params.metabuli} "
         "CONDA_ENV_PATH={params.conda_prefix} "
         "SINGLEM_METAPACKAGE_PATH={params.singlem_metapackage} "
         "{params.tmpdir} "
@@ -890,6 +894,7 @@ rule aviary_recover:
         "--output {params.output} "
         "--checkm2-db-path {params.checkm2} "
         "{params.fast} "
+        "{params.extra_binners} "
         "-n {params.threads} "
         "-t {params.threads} "
         "-m {resources.mem_gb} "
