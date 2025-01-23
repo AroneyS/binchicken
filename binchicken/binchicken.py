@@ -1611,8 +1611,9 @@ def main():
                 raise Exception("Run Aviary (--run-aviary) fast mode requires path to CheckM2 databases to be provided (--aviary-checkm2-db or CHECKM2DB)")
             if args.aviary_speed != FAST_AVIARY_MODE and not (args.aviary_gtdbtk_db and args.aviary_checkm2_db):
                 raise Exception("Run Aviary (--run-aviary) comprehensive mode requires paths to GTDB-Tk and CheckM2 databases to be provided (--aviary-gtdbtk-db or GTDBTK_DATA_PATH and --aviary-checkm2-db or CHECKM2DB)")
-            if "taxvamb" in args.aviary_extra_binners and not args.aviary_metabuli_db:
-                raise Exception("Run Aviary (--run-aviary) taxvamb requires path to MetaBuli databases to be provided (--aviary-metabuli-db or METABULI_DB_PATH)")
+            if args.aviary_extra_binners:
+                if "taxvamb" in args.aviary_extra_binners and not args.aviary_metabuli_db:
+                    raise Exception("Run Aviary (--run-aviary) taxvamb requires path to MetaBuli databases to be provided (--aviary-metabuli-db or METABULI_DB_PATH)")
         if args.prior_assemblies and not args.single_assembly:
             raise Exception("Prior assemblies requires `update` or `single`-assembly modes")
         if args.cluster_submission and not args.snakemake_profile:
