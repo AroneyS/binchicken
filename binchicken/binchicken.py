@@ -1112,6 +1112,7 @@ def build(args):
     args.aviary_metabuli_db = "."
     args.aviary_assemble_cores = None
     args.aviary_recover_cores = None
+    args.aviary_extra_binners = ["taxvamb"] if args.metabuli_db else None
     args.assemble_unmapped = True
     args.sra = False
     args.run_qc = True
