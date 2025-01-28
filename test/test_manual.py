@@ -170,6 +170,8 @@ class Tests(unittest.TestCase):
             f"--cores 32 "
             f"--aviary-gtdbtk-db /work/microbiome/db/gtdb/gtdb_release207_v2 "
             f"--aviary-checkm2-db /work/microbiome/db/CheckM2_database "
+            f"--aviary-metabuli-db /work/microbiome/abisko/aroneys/db/metabuli "
+            f"--aviary-extra-binners taxvamb "
             f"--genomes {GENOMES} "
             f"--coassemble-unbinned {os.path.join(MOCK_COASSEMBLE, 'appraise', 'unbinned_sra.otu_table.tsv')} "
             f"--coassemble-binned {os.path.join(MOCK_COASSEMBLE, 'appraise', 'binned_sra.otu_table.tsv')} "
