@@ -4,3 +4,4 @@ channels:
 dependencies:
   - python>=3.7,<3.13
   - singlem=0.18.*
+  - diamond<2.1.11
