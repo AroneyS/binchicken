@@ -723,6 +723,12 @@ def update(args):
         args.coassemble_elusive_clusters = os.path.join(coassemble_target_dir, "elusive_clusters.tsv")
         args.sample_read_size = os.path.join(coassemble_dir, "read_size.csv")
 
+        if args.run_qc:
+            coassemble_qc = os.path.join(coassemble_dir, "qc")
+            if os.path.exists(coassemble_qc):
+                os.makedirs(os.path.join(args.output, "coassemble"), exist_ok=True)
+                os.symlink(coassemble_qc, os.path.join(args.output, "coassemble", "qc"))
+
     if args.coassemblies_list:
         args.coassemblies = read_list(args.coassemblies_list)
 
