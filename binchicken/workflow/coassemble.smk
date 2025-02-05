@@ -201,7 +201,10 @@ rule singlem_summarise_genomes:
         benchmarks_dir + "/summarise/{version,.*}genomes.tsv"
     params:
         singlem_metapackage = config["singlem_metapackage"]
-    localrule: True
+    threads: 1
+    resources:
+        mem_mb=get_mem_mb,
+        runtime = get_runtime(base_hours = 24),
     conda:
         "env/singlem.yml"
     shell:
@@ -332,7 +335,10 @@ rule no_genomes:
     output:
         unbinned = temp(output_dir + "/appraise/unbinned_raw.otu_table.tsv") if config["no_genomes"] else [],
         binned = temp(output_dir + "/appraise/binned_raw.otu_table.tsv") if config["no_genomes"] else [],
-    localrule: True
+    threads: 1
+    resources:
+        mem_mb=get_mem_mb,
+        runtime = get_runtime(base_hours = 24),
     log:
         logs_dir + "/appraise/appraise.log"
     script:
@@ -607,11 +613,13 @@ rule collect_genomes:
     output:
         temp(output_dir + "/mapping/{read}_reference.fna"),
     threads: 1
+    resources:
+        mem_mb=get_mem_mb,
+        runtime = get_runtime(base_hours = 24),
     params:
         genomes = config["genomes"],
         sample = "{read}",
         min_appraised = config["unmapping_min_appraised"],
-    localrule: True
     script:
         "scripts/collect_reference_bins.py"
 
