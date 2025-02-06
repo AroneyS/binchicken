@@ -726,8 +726,10 @@ def update(args):
         if args.run_qc:
             coassemble_qc = os.path.join(coassemble_dir, "qc")
             if os.path.exists(coassemble_qc):
-                os.makedirs(os.path.join(args.output, "coassemble"), exist_ok=True)
-                os.symlink(coassemble_qc, os.path.join(args.output, "coassemble", "qc"))
+                copy_input(
+                    coassemble_qc,
+                    os.path.join(args.output, "coassemble", "qc")
+                )
 
     if args.coassemblies_list:
         args.coassemblies = read_list(args.coassemblies_list)
