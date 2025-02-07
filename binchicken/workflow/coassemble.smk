@@ -799,7 +799,9 @@ rule prior_assemble:
     params:
         prior_assembly = lambda wildcards: config["prior_assemblies"][wildcards.coassembly],
     threads: 1
-    localrule: True
+    resources:
+        mem_mb=get_mem_mb,
+        runtime = get_runtime(base_hours = 4),
     shell:
         "mkdir -p {output.dir} && "
         "cp {params.prior_assembly} {output.assembly}"
