@@ -793,8 +793,6 @@ def get_assemble_assembler(wildcards, attempt):
         return "--use-megahit"
 
 rule prior_assemble:
-    input:
-        elusive_clusters = output_dir + "/target/elusive_clusters.tsv",
     output:
         dir = directory(output_dir + "/coassemble/{coassembly}/assemble") if config["prior_assemblies"] else [],
         assembly = output_dir + "/coassemble/{coassembly}/assemble/assembly/final_contigs.fasta" if config["prior_assemblies"] else [],
