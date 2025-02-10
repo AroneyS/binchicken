@@ -35,6 +35,8 @@ class Tests(unittest.TestCase):
                 ["S3.1", "sample_4", "TACGAGCGGATCGTGCACGTAGTCAGTCGTTATATATCGAAAGCTCATGCGGCCATATCG", 5, 10, "Root"], # 4
                 ["S3.1", "sample_4", "TACGAGCGGATCG---------------GTTATATATCGAAAGCTCATGCGGCCATATCG", 5, 10, "Root"], # 5
             ], orient="row", schema=OTU_TABLE_COLUMNS)
+            unbinned_path = "unbinned.otu_table.tsv"
+            unbinned.write_csv(unbinned_path, separator="\t")
 
             expected_names = [
                 "sample_1",
@@ -43,7 +45,53 @@ class Tests(unittest.TestCase):
                 "sample_4",
             ]
 
-            signatures_path = processing(unbinned, output_path="./signatures.sig", threads=1)
+            signatures_path = processing(unbinned_path, output_path="./signatures.sig", threads=1)
+            signatures = [s for s in load_file_as_signatures(signatures_path)]
+            observed_names = [s.name for s in signatures]
+            self.assertEqual(sorted(expected_names), sorted(observed_names))
+
+            sample_1_sig = signatures[observed_names.index("sample_1")]
+            sample_2_sig = signatures[observed_names.index("sample_2")]
+            sample_3_sig = signatures[observed_names.index("sample_3")]
+            sample_4_sig = signatures[observed_names.index("sample_4")]
+
+            self.assertEqual(sample_1_sig.jaccard(sample_2_sig), 1.0)
+            self.assertEqual(sample_1_sig.jaccard(sample_3_sig), 0.0)
+            self.assertEqual(sample_1_sig.jaccard(sample_4_sig), 0.25)
+            self.assertEqual(sample_2_sig.jaccard(sample_3_sig), 0.0)
+            self.assertEqual(sample_2_sig.jaccard(sample_4_sig), 0.25)
+            self.assertEqual(sample_3_sig.jaccard(sample_4_sig), 0.5)
+
+    def test_sketch_samples_taxa_of_interest(self):
+        with in_tempdir():
+            unbinned = pl.DataFrame([
+                ["S3.1", "sample_1", "ATGACTAGTCATAGCTAGATTTGAGGCAGCAGGAGTTAGGAAAGCCCCCGGAGTTAGCTA", 5, 10, "Root;d__Bacteria;p__Actinobacteriota"], # 1
+                ["S3.1", "sample_1", "TGACTAGCTGGGCTAGCTATATTCTTTTTACGAGCGCGAGGAAAGCGACAGCGGCCAGGC", 5, 10, "Root;d__Bacteria;p__Actinobacteriota"], # 2
+
+                ["S3.1", "sample_2", "ATGACTAGTCATAGCTAGATTTGAGGCAGCAGGAGTTAGGAAAGCCCCCGGAGTTAGCTA", 5, 10, "Root;d__Bacteria;p__Actinobacteriota"], # 1
+                ["S3.1", "sample_2", "TGACTAGCTGGGCTAGCTATATTCTTTTTACGAGCGCGAGGAAAGCGACAGCGGCCAGGC", 5, 10, "Root;d__Bacteria;p__Actinobacteriota"], # 2
+
+                ["S3.1", "sample_3", "ATCGACTGACTTGATCGATCTTTGACGACGAGAGAGAGAGCGACGCGCCGAGAGGTTTCA", 5, 10, "Root;d__Bacteria;p__Actinobacteriota"], # 3
+                ["S3.1", "sample_3", "TACGAGCGGATCGTGCACGTAGTCAGTCGTTATATATCGAAAGCTCATGCGGCCATATCG", 5, 10, "Root;d__Bacteria;p__Actinobacteriota"], # 4
+                ["S3.1", "sample_3", "TACGAGCGGATCG---------------GTTATATATCGAAAGCTCATGCGGCCATATCG", 5, 10, "Root;d__Bacteria;p__Actinobacteriota"], # 5
+                ["S3.1", "sample_3", "TGACTAGCTGGGCTAGCTATATTCTTTTTACGAGCGCGAGGAAAGCGACAGCGGCCAGGC", 5, 10, "Root;d__Archaea;p__Nanoarchaeota"], # 2
+
+                ["S3.1", "sample_4", "ATGACTAGTCATAGCTAGATTTGAGGCAGCAGGAGTTAGGAAAGCCCCCGGAGTTAGCTA", 5, 10, "Root;d__Bacteria;p__Actinobacteriota"], # 1
+                ["S3.1", "sample_4", "TACGAGCGGATCGTGCACGTAGTCAGTCGTTATATATCGAAAGCTCATGCGGCCATATCG", 5, 10, "Root;d__Bacteria;p__Actinobacteriota"], # 4
+                ["S3.1", "sample_4", "TACGAGCGGATCG---------------GTTATATATCGAAAGCTCATGCGGCCATATCG", 5, 10, "Root;d__Bacteria;p__Actinobacteriota"], # 5
+                ["S3.1", "sample_4", "TGACTAGCTGGGCTAGCTATATTCTTTTTACGAGCGCGAGGAAAGCGACAGCGGCCAGGC", 5, 10, "Root;d__Archaea;p__Nanoarchaeota"], # 2
+            ], orient="row", schema=OTU_TABLE_COLUMNS)
+            unbinned_path = "unbinned.otu_table.tsv"
+            unbinned.write_csv(unbinned_path, separator="\t")
+
+            expected_names = [
+                "sample_1",
+                "sample_2",
+                "sample_3",
+                "sample_4",
+            ]
+
+            signatures_path = processing(unbinned_path, output_path="./signatures.sig", taxa_of_interest="p__Actinobacteriota", threads=1)
             signatures = [s for s in load_file_as_signatures(signatures_path)]
             observed_names = [s.name for s in signatures]
             self.assertEqual(sorted(expected_names), sorted(observed_names))

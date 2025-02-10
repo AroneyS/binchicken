@@ -30,7 +30,15 @@ def process_groups(groups, output_path):
             signature = SourmashSignature(mh, name=sample)
             save_sigs.add(signature)
 
-def processing(unbinned, output_path, threads=1):
+def processing(unbinned_path, output_path, taxa_of_interest=None, threads=1):
+    unbinned = pl.read_csv(unbinned_path, separator="\t", schema_overrides=SINGLEM_OTU_TABLE_SCHEMA)
+
+    if taxa_of_interest:
+        logging.info(f"Filtering for taxa of interest: {taxa_of_interest}")
+        unbinned = unbinned.filter(
+            pl.col("taxonomy").str.contains(taxa_of_interest)
+        )
+
     output_dir = os.path.dirname(output_path)
 
     logging.info("Grouping samples")
@@ -78,12 +86,9 @@ if __name__ == "__main__":
     output_path = snakemake.output.sketch
     threads = snakemake.threads
 
-    unbinned = pl.read_csv(unbinned_path, separator="\t", schema_overrides=SINGLEM_OTU_TABLE_SCHEMA)
-
-    if TAXA_OF_INTEREST:
-        logging.info(f"Filtering for taxa of interest: {TAXA_OF_INTEREST}")
-        unbinned = unbinned.filter(
-            pl.col("taxonomy").str.contains(TAXA_OF_INTEREST)
+    signatures = processing(
+        unbinned_path,
+        output_path,
+        taxa_of_interest=TAXA_OF_INTEREST,
+        threads=threads
         )
-
-    signatures = processing(unbinned, output_path, threads=threads)
