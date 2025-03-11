@@ -432,6 +432,9 @@ def coassemble(args):
     if args.coassembly_samples_list:
         args.coassembly_samples = read_list(args.coassembly_samples_list)
 
+    if args.anchor_samples_list:
+        args.anchor_samples = read_list(args.anchor_samples_list)
+
     if args.exclude_coassemblies_list:
         args.exclude_coassemblies = read_list(args.exclude_coassemblies_list)
 
@@ -515,6 +518,7 @@ def coassemble(args):
         "genomes": genomes if args.genomes else None,
         "singlem_metapackage": metapackage,
         "coassembly_samples": args.coassembly_samples,
+        "anchor_samples": args.anchor_samples,
         # Clustering config
         "taxa_of_interest": args.taxa_of_interest if args.taxa_of_interest else None,
         "appraise_sequence_identity": args.appraise_sequence_identity / 100 if args.appraise_sequence_identity > 1 else args.appraise_sequence_identity,
@@ -546,12 +550,15 @@ def coassemble(args):
         "cluster_submission": args.cluster_submission,
         "aviary_gtdbtk": args.aviary_gtdbtk_db,
         "aviary_checkm2": args.aviary_checkm2_db,
+        "aviary_metabuli": args.aviary_metabuli_db,
         "aviary_assemble_threads": args.aviary_assemble_cores,
         "aviary_assemble_memory": args.aviary_assemble_memory,
         "aviary_recover_threads": args.aviary_recover_cores,
         "aviary_recover_memory": args.aviary_recover_memory,
+        "aviary_extra_binners": args.aviary_extra_binners,
         "conda_prefix": args.conda_prefix,
         "snakemake_profile": args.snakemake_profile,
+        "aviary_snakemake_profile": args.aviary_snakemake_profile,
         "cluster_retries": args.cluster_retries,
         "tmpdir": args.tmp_dir,
         "build": build_status,
@@ -716,6 +723,14 @@ def update(args):
         args.coassemble_elusive_edges = os.path.join(coassemble_target_dir, "elusive_edges.tsv")
         args.coassemble_elusive_clusters = os.path.join(coassemble_target_dir, "elusive_clusters.tsv")
         args.sample_read_size = os.path.join(coassemble_dir, "read_size.csv")
+
+        if args.run_qc:
+            coassemble_qc = os.path.join(coassemble_dir, "qc")
+            if os.path.exists(coassemble_qc):
+                copy_input(
+                    coassemble_qc,
+                    os.path.join(args.output, "coassemble", "qc")
+                )
 
     if args.coassemblies_list:
         args.coassemblies = read_list(args.coassemblies_list)
@@ -1029,12 +1044,16 @@ def build(args):
     if args.checkm2_db:
         configure_variable("CHECKM2DB", args.checkm2_db)
 
+    if args.metabuli_db:
+        configure_variable("METABULI_DB_PATH", args.metabuli_db)
+
     # Download databases
     if args.download_databases:
         download_config = {
             "singlem_metapackage": False,
             "checkm2_db": False,
             "gtdbtk_db": False,
+            "metabuli_db": False,
         }
 
         if args.singlem_metapackage and not os.path.exists(args.singlem_metapackage):
@@ -1047,6 +1066,10 @@ def build(args):
             logging.error("GTDBtk download not yet implemented")
             raise NotImplementedError("GTDBtk download not yet implemented")
             download_config["gtdbtk_db"] = args.gtdbtk_db
+
+        if args.metabuli_db and not os.path.exists(args.metabuli_db):
+            logging.error("Metabuli download not yet implemented")
+            raise NotImplementedError("Metabuli download not yet implemented")
 
         if not any(download_config.values()):
             logging.info("All databases already present")
@@ -1090,12 +1113,15 @@ def build(args):
     args.genomes_list = None
     args.new_genomes_list = None
     args.coassembly_samples_list = None
+    args.anchor_samples_list = None
     args.sample_read_size = None
     args.cluster_submission = False
     args.aviary_gtdbtk_db = "."
     args.aviary_checkm2_db = "."
+    args.aviary_metabuli_db = "."
     args.aviary_assemble_cores = None
     args.aviary_recover_cores = None
+    args.aviary_extra_binners = ["taxvamb"] if args.metabuli_db else None
     args.assemble_unmapped = True
     args.sra = False
     args.run_qc = True
@@ -1305,6 +1331,8 @@ def main():
         argument_group.add_argument("--genomes-list", help="Reference genomes for read mapping newline separated")
         argument_group.add_argument("--coassembly-samples", nargs='+', help="Restrict coassembly to these samples. Remaining samples will still be used for recovery [default: use all samples]", default=[])
         argument_group.add_argument("--coassembly-samples-list", help="Restrict coassembly to these samples, newline separated. Remaining samples will still be used for recovery [default: use all samples]", default=[])
+        argument_group.add_argument("--anchor-samples", nargs='+', help="Samples to use as anchors for coassembly, all coassemblies will contain at least one anchor sample. [default: no restriction]", default=[])
+        argument_group.add_argument("--anchor-samples-list", help="Samples to use as anchors for coassembly, all coassemblies will contain at least one anchor sample, newline separated. [default: no restriction]", default=[])
 
     def add_evaluation_options(argument_group):
         checkm_version_default = 2
@@ -1326,6 +1354,11 @@ def main():
                                     default=default_assembly_strategy, choices=[DYNAMIC_ASSEMBLY_STRATEGY, METASPADES_ASSEMBLY, MEGAHIT_ASSEMBLY])
         argument_group.add_argument("--aviary-gtdbtk-db", help=f"Path to GTDB-Tk database directory for Aviary. Only required if --aviary-speed is set to {COMPREHENSIVE_AVIARY_MODE} [default: use path from GTDBTK_DATA_PATH env variable]")
         argument_group.add_argument("--aviary-checkm2-db", help="Path to CheckM2 database directory for Aviary. [default: use path from CHECKM2DB env variable]")
+        argument_group.add_argument("--aviary-metabuli-db", help="Path to MetaBuli database directory for Aviary, specifically for TaxVAMB. [default: use path from METABULI_DB_PATH env variable]")
+        argument_group.add_argument("--aviary-snakemake-profile", default="",
+                                    help="Snakemake profile (see https://snakemake.readthedocs.io/en/v7.32.3/executing/cli.html#profiles).\n"
+                                         "Can be used to submit rules as jobs to cluster engine (see https://snakemake.readthedocs.io/en/v7.32.3/executing/cluster.html).\n"
+                                         "[default: same as `--snakemake-profile`]")
         aviary_assemble_default_cores = 64
         argument_group.add_argument("--aviary-assemble-cores", type=int, help=f"Maximum number of cores for Aviary assemble to use. [default: {aviary_assemble_default_cores}]",
                                     default=aviary_assemble_default_cores)
@@ -1338,6 +1371,7 @@ def main():
         aviary_recover_default_memory = 250
         argument_group.add_argument("--aviary-recover-memory", type=int, help=f"Maximum amount of memory for Aviary recover to use (Gigabytes). [default: {aviary_recover_default_memory}]",
                                     default=aviary_recover_default_memory)
+        argument_group.add_argument("--aviary-extra-binners", nargs='*', choices=["maxbin", "maxbin2", "concoct", "comebin", "taxvamb"], help="Optional list of extra binning algorithms to run. Can be any combination of: maxbin, maxbin2, concoct, comebin, taxvamb")
 
     def add_main_coassemble_output_arguments(argument_group):
         argument_group.add_argument("--coassemble-output", help="Output dir from coassemble subcommand")
@@ -1497,6 +1531,7 @@ def main():
     build_parser.add_argument("--singlem-metapackage", help="SingleM metapackage")
     build_parser.add_argument("--checkm2-db", help="CheckM2 database")
     build_parser.add_argument(f"--gtdbtk-db", help="GTDBtk release database (Only required if --aviary-speed is set to {COMPREHENSIVE_AVIARY_MODE})")
+    build_parser.add_argument("--metabuli-db", help="MetaBuli database (Only required with TaxVAMB extra binner)")
     tmp_default = "/tmp"
     build_parser.add_argument("--set-tmp-dir", help=f"Set temporary directory [default: {tmp_default}]", default=tmp_default)
     build_parser.add_argument("--skip-aviary-envs", help="Do not install Aviary subworkflow environments", action="store_true")
@@ -1533,6 +1568,8 @@ def main():
         args.aviary_gtdbtk_db = load_variable("GTDBTK_DATA_PATH")
     if not hasattr(args, "aviary_checkm2_db") or not args.aviary_checkm2_db:
         args.aviary_checkm2_db = load_variable("CHECKM2DB")
+    if not hasattr(args, "aviary_metabuli_db") or not args.aviary_metabuli_db:
+        args.aviary_metabuli_db = load_variable("METABULI_DB_PATH")
 
     if hasattr(args, "genomes"):
         if not (args.genomes or args.genomes_list):
@@ -1543,6 +1580,12 @@ def main():
     if hasattr(args, "coassemble_output"):
         if args.coassemble_output:
             args.coassemble_output = os.path.join(args.coassemble_output, "coassemble")
+
+    if hasattr(args, "snakemake_profile"):
+        if args.snakemake_profile:
+            if hasattr(args, "aviary_snakemake_profile"):
+                if not args.aviary_snakemake_profile:
+                    args.aviary_snakemake_profile = args.snakemake_profile
 
     def base_argument_verification(args):
         if not args.forward and not args.forward_list:
@@ -1571,7 +1614,8 @@ def main():
             raise Exception("SingleM metapackage (--singlem-metapackage or SINGLEM_METAPACKAGE_PATH environment variable, see SingleM data) must be provided when SingleM query otu tables are not provided")
         if (args.sample_singlem and args.sample_singlem_list) or (args.sample_singlem_dir and args.sample_singlem_list) or (args.sample_singlem and args.sample_singlem_dir) or \
             (args.sample_query and args.sample_query_list) or (args.sample_query_dir and args.sample_query_list) or (args.sample_query and args.sample_query_dir) or \
-            (args.coassembly_samples and args.coassembly_samples_list) or (args.abundance_weighted_samples and args.abundance_weighted_samples_list):
+            (args.coassembly_samples and args.coassembly_samples_list) or (args.abundance_weighted_samples and args.abundance_weighted_samples_list) or \
+            (args.anchor_samples and args.anchor_samples_list):
             raise Exception("General, list and directory arguments are mutually exclusive")
         if args.single_assembly:
             if 1 > args.max_recovery_samples:
@@ -1587,6 +1631,9 @@ def main():
                 raise Exception("Run Aviary (--run-aviary) fast mode requires path to CheckM2 databases to be provided (--aviary-checkm2-db or CHECKM2DB)")
             if args.aviary_speed != FAST_AVIARY_MODE and not (args.aviary_gtdbtk_db and args.aviary_checkm2_db):
                 raise Exception("Run Aviary (--run-aviary) comprehensive mode requires paths to GTDB-Tk and CheckM2 databases to be provided (--aviary-gtdbtk-db or GTDBTK_DATA_PATH and --aviary-checkm2-db or CHECKM2DB)")
+            if args.aviary_extra_binners:
+                if "taxvamb" in args.aviary_extra_binners and not args.aviary_metabuli_db:
+                    raise Exception("Run Aviary (--run-aviary) taxvamb requires path to MetaBuli databases to be provided (--aviary-metabuli-db or METABULI_DB_PATH)")
         if args.prior_assemblies and not args.single_assembly:
             raise Exception("Prior assemblies requires `update` or `single`-assembly modes")
         if args.cluster_submission and not args.snakemake_profile:

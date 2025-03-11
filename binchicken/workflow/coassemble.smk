@@ -201,7 +201,10 @@ rule singlem_summarise_genomes:
         benchmarks_dir + "/summarise/{version,.*}genomes.tsv"
     params:
         singlem_metapackage = config["singlem_metapackage"]
-    localrule: True
+    threads: 1
+    resources:
+        mem_mb=get_mem_mb,
+        runtime = get_runtime(base_hours = 24),
     conda:
         "env/singlem.yml"
     shell:
@@ -332,7 +335,10 @@ rule no_genomes:
     output:
         unbinned = temp(output_dir + "/appraise/unbinned_raw.otu_table.tsv") if config["no_genomes"] else [],
         binned = temp(output_dir + "/appraise/binned_raw.otu_table.tsv") if config["no_genomes"] else [],
-    localrule: True
+    threads: 1
+    resources:
+        mem_mb=get_mem_mb,
+        runtime = get_runtime(base_hours = 24),
     log:
         logs_dir + "/appraise/appraise.log"
     script:
@@ -446,6 +452,7 @@ rule target_elusive:
         max_coassembly_samples = config["max_coassembly_samples"],
         taxa_of_interest = config["taxa_of_interest"],
         samples = config["reads_1"],
+        anchor_samples = config["anchor_samples"],
         precluster_size = config["precluster_size"],
     threads: 64
     resources:
@@ -488,6 +495,7 @@ checkpoint cluster_graph:
         max_coassembly_samples = config["max_coassembly_samples"],
         max_recovery_samples = config["max_recovery_samples"],
         coassembly_samples = config["coassembly_samples"],
+        anchor_samples = config["anchor_samples"],
         exclude_coassemblies = config["exclude_coassemblies"],
         single_assembly = config["single_assembly"],
     threads: 64
@@ -605,11 +613,13 @@ rule collect_genomes:
     output:
         temp(output_dir + "/mapping/{read}_reference.fna"),
     threads: 1
+    resources:
+        mem_mb=get_mem_mb,
+        runtime = get_runtime(base_hours = 24),
     params:
         genomes = config["genomes"],
         sample = "{read}",
         min_appraised = config["unmapping_min_appraised"],
-    localrule: True
     script:
         "scripts/collect_reference_bins.py"
 
@@ -783,15 +793,15 @@ def get_assemble_assembler(wildcards, attempt):
         return "--use-megahit"
 
 rule prior_assemble:
-    input:
-        elusive_clusters = output_dir + "/target/elusive_clusters.tsv",
     output:
         dir = directory(output_dir + "/coassemble/{coassembly}/assemble") if config["prior_assemblies"] else [],
         assembly = output_dir + "/coassemble/{coassembly}/assemble/assembly/final_contigs.fasta" if config["prior_assemblies"] else [],
     params:
         prior_assembly = lambda wildcards: config["prior_assemblies"][wildcards.coassembly],
     threads: 1
-    localrule: True
+    resources:
+        mem_mb=get_mem_mb,
+        runtime = get_runtime(base_hours = 4),
     shell:
         "mkdir -p {output.dir} && "
         "cp {params.prior_assembly} {output.assembly}"
@@ -825,6 +835,7 @@ rule aviary_assemble:
         "GTDBTK_DATA_PATH=. "
         "CHECKM2DB=. "
         "EGGNOG_DATA_DIR=. "
+        "METABULI_DB_PATH=. "
         "CONDA_ENV_PATH={params.conda_prefix} "
         "SINGLEM_METAPACKAGE_PATH=. "
         "{params.tmpdir} "
@@ -856,10 +867,12 @@ rule aviary_recover:
         dryrun = "--build" if config["build"] else "--dryrun" if config["aviary_dryrun"] else "",
         gtdbtk = config["aviary_gtdbtk"] if config["aviary_gtdbtk"] else ".",
         checkm2 = config["aviary_checkm2"],
+        metabuli = config["aviary_metabuli"] if config["aviary_metabuli"] else ".",
         conda_prefix = config["conda_prefix"] if config["conda_prefix"] else ".",
         singlem_metapackage = config["singlem_metapackage"],
         fast = "--binning-only --refinery-max-iterations 0" if config["aviary_speed"] == FAST_AVIARY_MODE else "",
-        snakemake_profile = f"--snakemake-profile {config['snakemake_profile']}" if config["snakemake_profile"] else "",
+        extra_binners = "--extra-binners " + " ".join(config["aviary_extra_binners"]) if config["aviary_extra_binners"] else "",
+        snakemake_profile = f"--snakemake-profile {config['aviary_snakemake_profile']}" if config["aviary_snakemake_profile"] else "",
         cluster_retries = f"--cluster-retries {config['cluster_retries']}" if config["cluster_retries"] else "",
         tmpdir = f"TMPDIR={config['tmpdir']}" if config["tmpdir"] else "",
         threads = int(config["aviary_recover_threads"])
@@ -878,6 +891,7 @@ rule aviary_recover:
         "GTDBTK_DATA_PATH={params.gtdbtk} "
         "CHECKM2DB={params.checkm2} "
         "EGGNOG_DATA_DIR=. "
+        "METABULI_DB_PATH={params.metabuli} "
         "CONDA_ENV_PATH={params.conda_prefix} "
         "SINGLEM_METAPACKAGE_PATH={params.singlem_metapackage} "
         "{params.tmpdir} "
@@ -888,6 +902,7 @@ rule aviary_recover:
         "--output {params.output} "
         "--checkm2-db-path {params.checkm2} "
         "{params.fast} "
+        "{params.extra_binners} "
         "-n {params.threads} "
         "-t {params.threads} "
         "-m {resources.mem_gb} "

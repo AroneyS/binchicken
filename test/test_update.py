@@ -24,12 +24,12 @@ GENOMES = " ".join([os.path.join(path_to_data, "GB_GCA_013286235.1.fna")])
 TWO_GENOMES = " ".join([
     os.path.join(path_to_data, "GB_GCA_013286235.1.fna"),
     os.path.join(path_to_data, "GB_GCA_013286235.2.fna"),
-    ])
+])
 THREE_GENOMES = " ".join([
     os.path.join(path_to_data, "GB_GCA_013286235.1.fna"),
     os.path.join(path_to_data, "GB_GCA_013286235.2.fna"),
     os.path.join(path_to_data, "GB_GCA_013286235.3.fna"),
-    ])
+])
 
 MOCK_COASSEMBLE = os.path.join(path_to_data, "mock_coassemble")
 MOCK_UNBINNED = os.path.join(MOCK_COASSEMBLE, "coassemble", "appraise", "unbinned.otu_table.tsv")
@@ -213,6 +213,72 @@ class Tests(unittest.TestCase):
                         os.path.join(test_dir, "coassemble", "mapping", "sample_1_unmapped.2.fq.gz"),
                         os.path.join(test_dir, "coassemble", "mapping", "sample_2_unmapped.2.fq.gz"),
                         os.path.join(test_dir, "coassemble", "mapping", "sample_3_unmapped.2.fq.gz"),
+                        "--output", os.path.join(test_dir, "coassemble", "coassemble", "coassembly_0", "recover"),
+                        "--binning-only --refinery-max-iterations 0 "
+                        "-n 32 -t 32 -m 250 --skip-qc &>",
+                        os.path.join(test_dir, "coassemble", "coassemble", "logs", "coassembly_0_recover.log"),
+                        ""
+                    ]),
+                    ""
+                ]
+            )
+            with open(recover_path) as f:
+                self.assertEqual(expected, f.read())
+
+    def test_update_minimal_run_qc(self):
+        with in_tempdir():
+            cmd = (
+                f"binchicken update "
+                f"--run-qc "
+                f"--coassemble-output {MOCK_COASSEMBLE} "
+                f"--output test "
+                f"--conda-prefix {path_to_conda} "
+            )
+            extern.run(cmd)
+
+            config_path = os.path.join("test", "config.yaml")
+            self.assertTrue(os.path.exists(config_path))
+
+            qc_path = os.path.join("test", "coassemble", "qc")
+            self.assertTrue(os.path.islink(qc_path))
+
+            coassemble_path = os.path.join("test", "coassemble", "commands", "coassemble_commands.sh")
+            self.assertTrue(os.path.exists(coassemble_path))
+            test_dir = os.path.abspath("test")
+            expected = "\n".join(
+                [
+                    " ".join([
+                        "aviary assemble --coassemble -1",
+                        os.path.join(test_dir, "coassemble", "qc", "sample_1_1.fastq.gz"),
+                        os.path.join(test_dir, "coassemble", "qc", "sample_2_1.fastq.gz"),
+                        "-2",
+                        os.path.join(test_dir, "coassemble", "qc", "sample_1_2.fastq.gz"),
+                        os.path.join(test_dir, "coassemble", "qc", "sample_2_2.fastq.gz"),
+                        "--output", os.path.join(test_dir, "coassemble", "coassemble", "coassembly_0", "assemble"),
+                        "-n 64 -t 64 -m 500 --skip-qc &>",
+                        os.path.join(test_dir, "coassemble", "coassemble", "logs", "coassembly_0_assemble.log"),
+                        ""
+                    ]),
+                    ""
+                ]
+            )
+            with open(coassemble_path) as f:
+                self.assertEqual(expected, f.read())
+
+            recover_path = os.path.join("test", "coassemble", "commands", "recover_commands.sh")
+            self.assertTrue(os.path.exists(recover_path))
+            expected = "\n".join(
+                [
+                    " ".join([
+                        "aviary recover --assembly", os.path.join(test_dir, "coassemble", "coassemble", "coassembly_0", "assemble", "assembly", "final_contigs.fasta"),
+                        "-1",
+                        os.path.join(test_dir, "coassemble", "qc", "sample_1_1.fastq.gz"),
+                        os.path.join(test_dir, "coassemble", "qc", "sample_2_1.fastq.gz"),
+                        os.path.join(test_dir, "coassemble", "qc", "sample_3_1.fastq.gz"),
+                        "-2",
+                        os.path.join(test_dir, "coassemble", "qc", "sample_1_2.fastq.gz"),
+                        os.path.join(test_dir, "coassemble", "qc", "sample_2_2.fastq.gz"),
+                        os.path.join(test_dir, "coassemble", "qc", "sample_3_2.fastq.gz"),
                         "--output", os.path.join(test_dir, "coassemble", "coassemble", "coassembly_0", "recover"),
                         "--binning-only --refinery-max-iterations 0 "
                         "-n 32 -t 32 -m 250 --skip-qc &>",

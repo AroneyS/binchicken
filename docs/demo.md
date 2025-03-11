@@ -50,6 +50,8 @@ binchicken iterate \
 As you might expect from checking the sample sources (e.g. [SRR14271365](https://sandpiper.qut.edu.au/run/SRR14271365)),
 the SRR14271365/SRR14271372 and ERR2281802/ERR2281803 pairs are suggested for coassembly.
 
+And, since we only have 2 samples from each group with no overlap, there are no suggested 3-sample coassemblies.
+
 ## Coassembly with co-binning
 
 Alternatively, you can start with coassembly, optionally providing your own genomes.
