@@ -857,7 +857,7 @@ rule aviary_assemble:
 rule aviary_recover:
     input:
         assembly = output_dir + "/coassemble/{coassembly}/assemble/assembly/final_contigs.fasta",
-        elusive_clusters = output_dir + "/target/elusive_clusters.tsv",
+        elusive_clusters = output_dir + "/target/elusive_clusters.tsv" if not config["prior_assemblies"] else [],
     output:
         output_dir + "/coassemble/{coassembly}/recover.done",
     params:
