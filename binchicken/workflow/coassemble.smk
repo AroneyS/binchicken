@@ -872,7 +872,7 @@ rule aviary_recover:
         singlem_metapackage = config["singlem_metapackage"],
         fast = "--binning-only --refinery-max-iterations 0" if config["aviary_speed"] == FAST_AVIARY_MODE else "",
         extra_binners = "--extra-binners " + " ".join(config["aviary_extra_binners"]) if config["aviary_extra_binners"] else "",
-        snakemake_profile = f"--snakemake-profile {config['snakemake_profile']}" if config["snakemake_profile"] else "",
+        snakemake_profile = f"--snakemake-profile {config['aviary_snakemake_profile']}" if config["aviary_snakemake_profile"] else "",
         cluster_retries = f"--cluster-retries {config['cluster_retries']}" if config["cluster_retries"] else "",
         tmpdir = f"TMPDIR={config['tmpdir']}" if config["tmpdir"] else "",
         threads = int(config["aviary_recover_threads"])
