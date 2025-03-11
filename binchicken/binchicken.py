@@ -558,6 +558,7 @@ def coassemble(args):
         "aviary_extra_binners": args.aviary_extra_binners,
         "conda_prefix": args.conda_prefix,
         "snakemake_profile": args.snakemake_profile,
+        "aviary_snakemake_profile": args.aviary_snakemake_profile,
         "cluster_retries": args.cluster_retries,
         "tmpdir": args.tmp_dir,
         "build": build_status,
@@ -1354,6 +1355,10 @@ def main():
         argument_group.add_argument("--aviary-gtdbtk-db", help=f"Path to GTDB-Tk database directory for Aviary. Only required if --aviary-speed is set to {COMPREHENSIVE_AVIARY_MODE} [default: use path from GTDBTK_DATA_PATH env variable]")
         argument_group.add_argument("--aviary-checkm2-db", help="Path to CheckM2 database directory for Aviary. [default: use path from CHECKM2DB env variable]")
         argument_group.add_argument("--aviary-metabuli-db", help="Path to MetaBuli database directory for Aviary, specifically for TaxVAMB. [default: use path from METABULI_DB_PATH env variable]")
+        argument_group.add_argument("--aviary-snakemake-profile", default="",
+                                    help="Snakemake profile (see https://snakemake.readthedocs.io/en/v7.32.3/executing/cli.html#profiles).\n"
+                                         "Can be used to submit rules as jobs to cluster engine (see https://snakemake.readthedocs.io/en/v7.32.3/executing/cluster.html).\n"
+                                         "[default: same as `--snakemake-profile`]")
         aviary_assemble_default_cores = 64
         argument_group.add_argument("--aviary-assemble-cores", type=int, help=f"Maximum number of cores for Aviary assemble to use. [default: {aviary_assemble_default_cores}]",
                                     default=aviary_assemble_default_cores)
@@ -1575,6 +1580,12 @@ def main():
     if hasattr(args, "coassemble_output"):
         if args.coassemble_output:
             args.coassemble_output = os.path.join(args.coassemble_output, "coassemble")
+
+    if hasattr(args, "snakemake_profile"):
+        if args.snakemake_profile:
+            if hasattr(args, "aviary_snakemake_profile"):
+                if not args.aviary_snakemake_profile:
+                    args.aviary_snakemake_profile = args.snakemake_profile
 
     def base_argument_verification(args):
         if not args.forward and not args.forward_list:

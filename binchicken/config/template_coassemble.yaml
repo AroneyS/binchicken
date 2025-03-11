@@ -35,6 +35,7 @@ cluster_submission: false
 aviary_gtdbtk: ""
 aviary_checkm2: ""
 aviary_metabuli: ""
+aviary_snakemake_profile: ""
 aviary_assemble_memory: 1
 aviary_assemble_threads: 1
 aviary_recover_memory: 1
