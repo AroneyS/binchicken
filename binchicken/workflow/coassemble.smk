@@ -38,6 +38,15 @@ def get_genomes(wildcards, version=None):
     else:
         raise ValueError("Version should be empty or 'new'")
 
+def get_genomes_list(wildcards, version=None):
+    version = version if version else wildcards.version
+    if version == "":
+        return output_dir + f"/summarise/bins_otu_table_list.tsv"
+    elif version == "new_":
+        return output_dir + f"/summarise/new_bins_otu_table_list.tsv"
+    else:
+        raise ValueError("Version should be empty or 'new'")
+
 def get_reads(wildcards, forward=True, version=None):
     version = version if version else wildcards.version
     if version == "" or version == "whole":
@@ -190,9 +199,23 @@ rule singlem_pipe_genomes:
         "--metapackage {params.singlem_metapackage} "
         "&> {log}"
 
-rule singlem_summarise_genomes:
+rule singlem_genomes_list:
     input:
         lambda wildcards: get_genomes(wildcards)
+    output:
+        output_dir + "/summarise/{version,.*}bins_otu_table_list.tsv"
+    threads: 1
+    resources:
+        mem_mb=get_mem_mb,
+        runtime = get_runtime(base_hours = 5),
+    run:
+        with open(output[0], "w") as f:
+            for genome in input:
+                f.write(f"{genome}\n")
+
+rule singlem_summarise_genomes:
+    input:
+        lambda wildcards: get_genomes_list(wildcards)
     output:
         output_dir + "/summarise/{version,.*}bins_summarised.otu_table.tsv"
     log:
@@ -209,7 +232,7 @@ rule singlem_summarise_genomes:
         "env/singlem.yml"
     shell:
         "singlem summarise "
-        "--input-otu-tables {input} "
+        "--input-otu-tables-list {input} "
         "--output-otu-table {output} "
         "--exclude-off-target-hits "
         "--metapackage {params.singlem_metapackage} "
