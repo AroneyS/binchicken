@@ -10,6 +10,7 @@ import numpy as np
 import scipy.sparse as sp
 import itertools
 from binchicken.binchicken import SUFFIX_RE
+import extern
 
 EDGES_COLUMNS={
     "style": str,
@@ -335,10 +336,11 @@ if __name__ == "__main__":
     unbinned = pl.read_csv(unbinned_path, separator="\t")
 
     if distances_path:
+        extern.run("awk 'BEGIN{FS=OFS=\",\"} $7 >= 0.1' " + distances_path + " > " + distances_path + ".tmp")
         sample_distances = (
-            pl.scan_csv(distances_path)
+            pl.scan_csv(distances_path + ".tmp")
             .select("query_name", "match_name", "jaccard")
-            .filter(pl.col("jaccard") > 0.01)
+            .filter(pl.col("jaccard") > 0.1)
             .collect(streaming=True)
         )
         sample_preclusters = get_clusters(
