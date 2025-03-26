@@ -190,9 +190,23 @@ rule singlem_pipe_genomes:
         "--metapackage {params.singlem_metapackage} "
         "&> {log}"
 
-rule singlem_summarise_genomes:
+rule singlem_genomes_list:
     input:
         lambda wildcards: get_genomes(wildcards)
+    output:
+        output_dir + "/summarise/{version,.*}bins_otu_table_list.tsv"
+    threads: 1
+    resources:
+        mem_mb=get_mem_mb,
+        runtime = get_runtime(base_hours = 5),
+    run:
+        with open(output[0], "w") as f:
+            for genome in input:
+                f.write(f"{genome}\n")
+
+rule singlem_summarise_genomes:
+    input:
+        output_dir + "/summarise/{version,.*}bins_otu_table_list.tsv"
     output:
         output_dir + "/summarise/{version,.*}bins_summarised.otu_table.tsv"
     log:
@@ -209,7 +223,7 @@ rule singlem_summarise_genomes:
         "env/singlem.yml"
     shell:
         "singlem summarise "
-        "--input-otu-tables {input} "
+        "--input-otu-tables-list {input} "
         "--output-otu-table {output} "
         "--exclude-off-target-hits "
         "--metapackage {params.singlem_metapackage} "
