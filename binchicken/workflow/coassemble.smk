@@ -38,6 +38,15 @@ def get_genomes(wildcards, version=None):
     else:
         raise ValueError("Version should be empty or 'new'")
 
+def get_genomes_list(wildcards, version=None):
+    version = version if version else wildcards.version
+    if version == "":
+        return output_dir + f"/summarise/bins_otu_table_list.tsv"
+    elif version == "new_":
+        return output_dir + f"/summarise/new_bins_otu_table_list.tsv"
+    else:
+        raise ValueError("Version should be empty or 'new'")
+
 def get_reads(wildcards, forward=True, version=None):
     version = version if version else wildcards.version
     if version == "" or version == "whole":
@@ -206,7 +215,7 @@ rule singlem_genomes_list:
 
 rule singlem_summarise_genomes:
     input:
-        output_dir + "/summarise/{version,.*}bins_otu_table_list.tsv"
+        lambda wildcards: get_genomes_list(wildcards)
     output:
         output_dir + "/summarise/{version,.*}bins_summarised.otu_table.tsv"
     log:
