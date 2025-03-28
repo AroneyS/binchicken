@@ -5,6 +5,10 @@ title: demo
 Demo
 ========
 
+This demo will guide you through the process of running Bin Chicken on a small set of samples.
+The only prerequisite is that Bin Chicken is fully installed and setup as per the [installation](installation.md) and [setup](setup.md) instructions.
+With 64 CPUs and at least 100GB of RAM, the demo should take around 24 hours of running time to complete.
+
 ## Single-sample assembly with co-binning
 
 Download 4 SRA samples and run single-sample assembly with co-binning.
