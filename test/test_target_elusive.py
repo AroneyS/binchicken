@@ -1137,6 +1137,33 @@ class Tests(unittest.TestCase):
             self.assertDataFrameEqual(expected_targets, observed_targets)
             self.assertDataFrameEqual(expected_edges, observed_edges)
 
+    def test_target_elusive_preclustered_empty_unbinned(self):
+        with in_tempdir():
+            unbinned = pl.DataFrame([
+            ], orient="row", schema=APPRAISE_COLUMNS)
+            samples = set(["sample_1", "sample_2", "sample_3", "sample_4"])
+            preclusters = pl.DataFrame([
+            ], orient="row", schema=CLUSTERS_COLUMNS)
+
+            expected_targets = pl.DataFrame([
+            ], orient="row", schema=TARGETS_COLUMNS)
+            expected_edges = pl.DataFrame([
+            ], orient="row", schema=EDGES_COLUMNS)
+
+            streaming_pipeline(
+                unbinned,
+                samples,
+                sample_preclusters=preclusters,
+                targets_path="targets.tsv",
+                edges_path="edges.tsv",
+                MAX_COASSEMBLY_SAMPLES=2,
+                CHUNK_SIZE=2,
+                )
+            observed_targets = pl.read_csv("targets.tsv", schema_overrides=TARGETS_COLUMNS, separator="\t")
+            observed_edges = pl.read_csv("edges.tsv", schema_overrides=EDGES_COLUMNS, separator="\t")
+            self.assertDataFrameEqual(expected_targets, observed_targets)
+            self.assertDataFrameEqual(expected_edges, observed_edges)
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -124,7 +124,7 @@ def streaming_pipeline(
 
     # logging.info(f"Polars using {str(pl.thread_pool_size())} threads")
 
-    if len(unbinned) == 0:
+    if unbinned.height == 0:
         logging.warning("No unbinned sequences found")
         unbinned.rename({"found_in": "target"}).write_csv(targets_path, separator="\t")
         pl.DataFrame(schema=EDGES_COLUMNS).write_csv(edges_path, separator="\t")
