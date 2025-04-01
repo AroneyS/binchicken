@@ -333,9 +333,8 @@ if __name__ == "__main__":
     samples = set(snakemake.params.samples)
     anchor_samples = set(snakemake.params.anchor_samples)
 
-    unbinned = pl.scan_csv(unbinned_path, separator="\t")
-
     if distances_path:
+        unbinned = pl.scan_csv(unbinned_path, separator="\t")
         extern.run("awk 'BEGIN{FS=OFS=\",\"} $7 >= 0.1' " + distances_path + " > " + distances_path + ".tmp")
         sample_distances = (
             pl.scan_csv(distances_path + ".tmp")
@@ -362,6 +361,7 @@ if __name__ == "__main__":
             CHUNK_SIZE=1000,
             )
     else:
+        unbinned = pl.read_csv(unbinned_path, separator="\t")
         targets, edges = pipeline(
             unbinned,
             samples,
