@@ -914,7 +914,7 @@ class Tests(unittest.TestCase):
 
     def test_target_elusive_preclustered_four_way(self):
         with in_tempdir():
-            unbinned = pl.DataFrame([
+            unbinned = pl.LazyFrame([
                 ["S3.1", "sample_1", "AAA", 2, 4, "Root", ""],
                 ["S3.1", "sample_1", "AAC", 1, 3.5, "Root", ""],
                 ["S3.1", "sample_2", "AAA", 2, 4, "Root", ""],
@@ -967,7 +967,7 @@ class Tests(unittest.TestCase):
 
     def test_target_elusive_preclustered_single_assembly(self):
         with in_tempdir():
-            unbinned = pl.DataFrame([
+            unbinned = pl.LazyFrame([
                 ["S3.1", "sample_1", "AAA", 5, 10, "Root", ""],
                 ["S3.1", "sample_1", "AAB", 5, 10, "Root", ""],
                 ["S3.1", "sample_2", "AAA", 5, 10, "Root", ""],
@@ -1012,7 +1012,7 @@ class Tests(unittest.TestCase):
 
     def test_target_elusive_preclustered_coalesce_target(self):
         with in_tempdir():
-            unbinned = pl.DataFrame([
+            unbinned = pl.LazyFrame([
                 ["S3.1", "sample_1", "AAA", 5, 10, "Root", ""],
                 ["S3.1", "sample_1", "AAB", 5, 10, "Root", ""],
                 ["S3.1", "sample_2", "AAA", 5, 10, "Root", ""],
@@ -1057,7 +1057,7 @@ class Tests(unittest.TestCase):
 
     def test_target_elusive_preclustered_no_targets(self):
         with in_tempdir():
-            unbinned = pl.DataFrame([
+            unbinned = pl.LazyFrame([
                 ["S3.1", "sample_1", "AAA", 1, 3, "Root", ""],
                 ["S3.2", "sample_1", "AAB", 1, 3, "Root", ""],
                 ["S3.1", "sample_2", "AAA", 1, 3, "Root", ""],
@@ -1092,7 +1092,7 @@ class Tests(unittest.TestCase):
 
     def test_target_elusive_preclustered_empty(self):
         with in_tempdir():
-            unbinned = pl.DataFrame([
+            unbinned = pl.LazyFrame([
                 ["S3.1", "sample_1", "AAA", 2, 4, "Root", ""],
                 ["S3.1", "sample_1", "AAC", 1, 3.5, "Root", ""],
                 ["S3.1", "sample_2", "AAA", 2, 4, "Root", ""],
@@ -1139,7 +1139,7 @@ class Tests(unittest.TestCase):
 
     def test_target_elusive_preclustered_empty_unbinned(self):
         with in_tempdir():
-            unbinned = pl.DataFrame([
+            unbinned = pl.LazyFrame([
             ], orient="row", schema=APPRAISE_COLUMNS)
             samples = set(["sample_1", "sample_2", "sample_3", "sample_4"])
             preclusters = pl.DataFrame([

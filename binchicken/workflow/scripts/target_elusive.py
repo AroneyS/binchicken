@@ -124,9 +124,9 @@ def streaming_pipeline(
 
     # logging.info(f"Polars using {str(pl.thread_pool_size())} threads")
 
-    if unbinned.height == 0:
+    if unbinned.limit(1).collect().is_empty():
         logging.warning("No unbinned sequences found")
-        unbinned.rename({"found_in": "target"}).write_csv(targets_path, separator="\t")
+        unbinned.rename({"found_in": "target"}).sink_csv(targets_path, separator="\t")
         pl.DataFrame(schema=EDGES_COLUMNS).write_csv(edges_path, separator="\t")
         return
 
@@ -158,9 +158,9 @@ def streaming_pipeline(
             )
     )
 
-    unbinned.with_columns(pl.col("target").cast(pl.Utf8)).write_csv(targets_path, separator="\t")
+    unbinned.with_columns(pl.col("target").cast(pl.Utf8)).collect(streaming=True).write_csv(targets_path, separator="\t")
 
-    if unbinned.height == 0:
+    if unbinned.limit(1).collect().is_empty():
         logging.warning("No SingleM sequences found for the given samples")
         pl.DataFrame(schema=EDGES_COLUMNS).write_csv(edges_path, separator="\t")
         return
@@ -178,7 +178,7 @@ def streaming_pipeline(
             .with_columns(sample_ids = pl.col("samples").str.split(",").cast(pl.List(pl.Categorical)))
             .with_columns(cluster_size = pl.col("sample_ids").list.len())
             .explode("sample_ids")
-            .join(unbinned.lazy().select("target", "coverage", sample_ids=pl.col("sample").cast(pl.Categorical)), on="sample_ids")
+            .join(unbinned.select("target", "coverage", sample_ids=pl.col("sample").cast(pl.Categorical)), on="sample_ids")
             .group_by("samples", "cluster_size", "target")
             .agg(pl.sum("coverage"), count = pl.len())
             .filter(pl.col("count") == pl.col("cluster_size"))
@@ -333,7 +333,7 @@ if __name__ == "__main__":
     samples = set(snakemake.params.samples)
     anchor_samples = set(snakemake.params.anchor_samples)
 
-    unbinned = pl.read_csv(unbinned_path, separator="\t")
+    unbinned = pl.scan_csv(unbinned_path, separator="\t")
 
     if distances_path:
         extern.run("awk 'BEGIN{FS=OFS=\",\"} $7 >= 0.1' " + distances_path + " > " + distances_path + ".tmp")
