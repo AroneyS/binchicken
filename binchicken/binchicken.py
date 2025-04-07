@@ -26,6 +26,10 @@ MEGAHIT_ASSEMBLY = "megahit"
 PRECLUSTER_NEVER_MODE = "never"
 PRECLUSTER_SIZE_DEP_MODE = "large"
 PRECLUSTER_ALWAYS_MODE = "always"
+HIERARCHY_NEVER_MODE = "never"
+HIERARCHY_SIZE_DEP_MODE = "large"
+HIERARCHY_SIZE_CUTOFF = 10000
+HIERARCHY_ALWAYS_MODE = "always"
 SUFFIX_RE = r"(_|\.)R?1$"
 
 def build_reads_list(forward, reverse):
@@ -326,6 +330,9 @@ def set_standard_args(args):
     args.kmer_precluster = PRECLUSTER_NEVER_MODE
     args.precluster_distances = None
     args.precluster_size = 100
+    args.file_hierarchy = HIERARCHY_NEVER_MODE
+    args.file_hierarchy_depth = 1
+    args.file_hierarchy_chars = 1
     args.prodigal_meta = False
 
     return(args)
@@ -493,6 +500,18 @@ def coassemble(args):
     else:
         raise ValueError(f"Invalid kmer precluster mode: {args.kmer_precluster}")
 
+    if args.file_hierarchy == HIERARCHY_NEVER_MODE:
+        file_hierarchy = False
+    elif args.file_hierarchy == HIERARCHY_SIZE_DEP_MODE:
+        if len(forward_reads) >= HIERARCHY_SIZE_CUTOFF:
+            file_hierarchy = True
+        else:
+            file_hierarchy = False
+    elif args.file_hierarchy == HIERARCHY_ALWAYS_MODE:
+        file_hierarchy = True
+    else:
+        raise ValueError(f"Invalid file hierarchy mode: {args.file_hierarchy}")
+
     if not args.precluster_size:
         args.precluster_size = args.max_recovery_samples * 5
 
@@ -536,6 +555,9 @@ def coassemble(args):
         "kmer_precluster": kmer_precluster,
         "precluster_distances": args.precluster_distances,
         "precluster_size": args.precluster_size,
+        "file_hierarchy": file_hierarchy,
+        "file_hierarchy_depth": args.file_hierarchy_depth,
+        "file_hierarchy_chars": args.file_hierarchy_chars,
         "prodigal_meta": args.prodigal_meta,
         # Coassembly config
         "assemble_unmapped": args.assemble_unmapped,
@@ -1131,6 +1153,7 @@ def build(args):
     args.abundance_weighted = False
     args.abundance_weighted_samples_list = None
     args.kmer_precluster = PRECLUSTER_NEVER_MODE
+    args.file_hierarchy = HIERARCHY_NEVER_MODE
     args.download_limit = 1
 
     # Create mock input files
@@ -1430,6 +1453,12 @@ def main():
                                     default=PRECLUSTER_SIZE_DEP_MODE, choices=[PRECLUSTER_NEVER_MODE, PRECLUSTER_SIZE_DEP_MODE, PRECLUSTER_ALWAYS_MODE])
         coassemble_clustering.add_argument("--precluster-distances", help="Distance file in the format of `sourmash scripts pairwise`. If provided, kmer sketching and clustering is skipped.")
         coassemble_clustering.add_argument("--precluster-size", type=int, help="# of samples within each sample's precluster [default: 5 * max-recovery-samples]")
+        coassemble_clustering.add_argument("--file-hierarchy", help=f"Split sample outputs into subdirectories based on sample name. [default: large; use when given >{HIERARCHY_SIZE_CUTOFF} samples]",
+                                    default=HIERARCHY_SIZE_DEP_MODE, choices=[HIERARCHY_NEVER_MODE, HIERARCHY_SIZE_DEP_MODE, HIERARCHY_ALWAYS_MODE])
+        file_hierarchy_depth_default = 3
+        coassemble_clustering.add_argument("--file-hierarchy-depth", type=int, help=f"Maximum depth of subdirectory hierarchy. [default: {file_hierarchy_depth_default}]", default=file_hierarchy_depth_default)
+        file_hierarchy_chars_default = 4
+        coassemble_clustering.add_argument("--file-hierarchy-chars", type=int, help=f"Number of characters to use for subdirectory hierarchy. [default: {file_hierarchy_chars_default}]", default=file_hierarchy_chars_default)
         coassemble_clustering.add_argument("--prodigal-meta", action="store_true", help="Use prodigal \"-p meta\" argument (for testing)")
         # Coassembly options
         coassemble_coassembly = parser.add_argument_group("Coassembly options")

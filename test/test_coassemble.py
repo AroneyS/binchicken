@@ -2,6 +2,7 @@
 
 import unittest
 import os
+import shutil
 import gzip
 from bird_tool_utils import in_tempdir
 import extern
@@ -2141,6 +2142,110 @@ class Tests(unittest.TestCase):
                 self.assertTrue("SRR3309137" in file)
                 self.assertTrue("SRR8334323" in file)
                 self.assertTrue("SRR8334324" in file)
+
+    def test_coassemble_hierarchy(self):
+        with in_tempdir():
+            local_samples_forward = [
+                os.path.abspath("sample_1.1.fq"),
+                os.path.abspath("different_2.1.fq"),
+                os.path.abspath("simple_3.1.fq"),
+                os.path.abspath("sam_4.1.fq"),
+            ]
+            for old, new in zip(SAMPLE_READS_FORWARD_EMPTY.split(" "), local_samples_forward):
+                shutil.copy(old, new)
+
+            local_samples_reverse = [
+                os.path.abspath("sample_1.2.fq"),
+                os.path.abspath("different_2.2.fq"),
+                os.path.abspath("simple_3.2.fq"),
+                os.path.abspath("sam_4.2.fq"),
+            ]
+            for old, new in zip(SAMPLE_READS_REVERSE_EMPTY.split(" "), local_samples_reverse):
+                shutil.copy(old, new)
+
+            cmd = (
+                f"binchicken coassemble "
+                f"--forward {' '.join(local_samples_forward)} "
+                f"--reverse {' '.join(local_samples_reverse)} "
+                f"--genomes {TWO_GENOMES} "
+                f"--singlem-metapackage {METAPACKAGE} "
+                f"--assemble-unmapped "
+                f"--unmapping-max-identity 99 "
+                f"--unmapping-max-alignment 90 "
+                f"--prodigal-meta "
+                f"--run-qc "
+                f"--file-hierarchy always "
+                f"--file-hierarchy-depth 3 "
+                f"--file-hierarchy-chars 3 "
+                f"--output test "
+                f"--conda-prefix {path_to_conda} "
+            )
+            extern.run(cmd)
+
+            config_path = os.path.join("test", "config.yaml")
+            self.assertTrue(os.path.exists(config_path))
+
+            for sample in local_samples_forward:
+                sample_name = os.path.basename(sample).split(".")[0]
+                if len(sample_name) > 6:
+                    subpath = os.path.join(sample_name[0:3], sample_name[3:6], sample_name[6:9])
+                else:
+                    subpath = os.path.join(sample_name[0:3], sample_name[3:6])
+
+                pipe_path = os.path.join("test", "coassemble", "pipe", subpath, sample_name + "_read.otu_table.tsv")
+                self.assertTrue(os.path.exists(pipe_path))
+
+                qc_for_path = os.path.join("test", "coassemble", "qc", subpath, sample_name + "_1.fastq.gz")
+                self.assertTrue(os.path.exists(qc_for_path))
+
+                qc_rev_path = os.path.join("test", "coassemble", "qc", subpath, sample_name + "_2.fastq.gz")
+                self.assertTrue(os.path.exists(qc_rev_path))
+
+                map_for_path = os.path.join("test", "coassemble", "mapping", subpath, sample_name + "_unmapped.1.fq.gz")
+                self.assertTrue(os.path.exists(map_for_path))
+
+                map_rev_path = os.path.join("test", "coassemble", "mapping", subpath, sample_name + "_unmapped.2.fq.gz")
+                self.assertTrue(os.path.exists(map_rev_path))
+
+            read_size_path = os.path.join("test", "coassemble", "read_size.csv")
+            self.assertTrue(os.path.exists(read_size_path))
+            expected = "\n".join(
+                [
+                    ",".join(["sample_1", "4832"]),
+                    ",".join(["different_2", "3926"]),
+                    ",".join(["simple_3", "3624"]),
+                    ",".join(["sam_4", "604"]),
+                    ""
+                ]
+            )
+            with open(read_size_path) as f:
+                self.assertEqual(expected, f.read())
+
+            cluster_path = os.path.join("test", "coassemble", "target", "elusive_clusters.tsv")
+            self.assertTrue(os.path.exists(cluster_path))
+            expected = "\n".join(
+                [
+                    "\t".join([
+                        "samples",
+                        "length",
+                        "total_targets",
+                        "total_size",
+                        "recover_samples",
+                        "coassembly",
+                    ]),
+                    "\t".join([
+                        "different_2,sample_1",
+                        "2",
+                        "3",
+                        "8758",
+                        "different_2,sample_1,simple_3",
+                        "coassembly_0"
+                    ]),
+                    ""
+                ]
+            )
+            with open(cluster_path) as f:
+                self.assertEqual(expected, f.read())
 
 if __name__ == '__main__':
     unittest.main()
