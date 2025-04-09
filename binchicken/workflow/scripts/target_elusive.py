@@ -105,7 +105,7 @@ def get_clusters(
                     .list.join(",")
                 )
             .unique()
-            .collect(streaming=True)
+            .collect(engine="streaming")
         )
 
     logging.info(f"Found {preclusters.height} preclusters")
@@ -158,7 +158,7 @@ def streaming_pipeline(
             )
     )
 
-    unbinned.with_columns(pl.col("target").cast(pl.Utf8)).collect(streaming=True).write_csv(targets_path, separator="\t")
+    unbinned.with_columns(pl.col("target").cast(pl.Utf8)).sink_csv(targets_path, separator="\t")
 
     if unbinned.limit(1).collect().is_empty():
         logging.warning("No SingleM sequences found for the given samples")
@@ -187,7 +187,7 @@ def streaming_pipeline(
             .agg(target_ids = pl.col("target").cast(pl.Utf8).sort().str.concat(","))
             .with_columns(style = pl.lit("match"))
             .select("style", "cluster_size", "samples", "target_ids")
-            .collect(streaming=True)
+            .collect(engine="streaming")
         )
 
         return(sparse_edges)
