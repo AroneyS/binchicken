@@ -22,8 +22,8 @@ def pipeline(appraise_binned, appraise_unbinned, sample, MIN_APPRAISED=0.1, TRIM
 
     appraise_binned = (
         appraise_binned
+        .with_columns(pl.col("sample").cast(str))
         .with_columns(
-            pl.col("sample").cast(str),
             sample_remove_suffix = pl.col("sample").str.replace(SUFFIX_RE, ""),
             )
         .filter((pl.col("sample") == sample) | (pl.col("sample_remove_suffix") == sample))
@@ -31,8 +31,8 @@ def pipeline(appraise_binned, appraise_unbinned, sample, MIN_APPRAISED=0.1, TRIM
 
     appraise_unbinned = (
         appraise_unbinned
+        .with_columns(pl.col("sample").cast(str))
         .with_columns(
-            pl.col("sample").cast(str),
             sample_remove_suffix = pl.col("sample").str.replace(SUFFIX_RE, ""),
             )
         .filter((pl.col("sample") == sample) | (pl.col("sample_remove_suffix") == sample))
