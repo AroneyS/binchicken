@@ -335,12 +335,10 @@ if __name__ == "__main__":
 
     if distances_path:
         unbinned = pl.scan_csv(unbinned_path, separator="\t")
-        extern.run("awk 'BEGIN{FS=OFS=\",\"} $7 >= 0.1' " + distances_path + " > " + distances_path + ".tmp")
         sample_distances = (
-            pl.scan_csv(distances_path + ".tmp")
+            pl.scan_csv(distances_path)
             .select("query_name", "match_name", "jaccard")
-            .filter(pl.col("jaccard") > 0.1)
-            .collect(streaming=True)
+            .collect()
         )
         sample_preclusters = get_clusters(
             sample_distances,
