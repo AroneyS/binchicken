@@ -10,7 +10,6 @@ import numpy as np
 import scipy.sparse as sp
 import itertools
 from binchicken.binchicken import SUFFIX_RE
-import extern
 
 EDGES_COLUMNS={
     "style": str,
@@ -195,7 +194,10 @@ def streaming_pipeline(
     num_chunks = (sample_preclusters.height + CHUNK_SIZE - 1) // CHUNK_SIZE # Ceiling division to include all rows
     with open(edges_path, "w") as f:
         with pl.StringCache():
+            logging.info("Processing clusters in chunks")
             for i in range(num_chunks):
+                if i % 100 == 0:
+                    logging.info(f"Processing cluster {str(i+1)} of {str(num_chunks)}")
                 start_row = i * CHUNK_SIZE
                 chunk = sample_preclusters.slice(start_row, CHUNK_SIZE)
                 processed_chunk = process_chunk(chunk)
@@ -335,6 +337,7 @@ if __name__ == "__main__":
 
     if distances_path:
         unbinned = pl.scan_csv(unbinned_path, separator="\t")
+        logging.info("Filtering distances to those >= 0.1")
         sample_distances = (
             pl.scan_csv(distances_path)
             .select("query_name", "match_name", "jaccard")
