@@ -452,7 +452,7 @@ rule filter_distances:
     params:
         min_distance = 0.1,
     shell:
-        "awk 'BEGIN{FS=OFS=\",\"} $7 >= {params.min_distance}' "
+        "awk 'BEGIN{{FS=OFS=\",\"}} $7 >= {params.min_distance}' "
         "{input.distance} > {output.distance}"
 
 rule target_elusive:
