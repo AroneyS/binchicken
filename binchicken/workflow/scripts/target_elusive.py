@@ -158,8 +158,9 @@ def streaming_pipeline(
     )
 
     unbinned.with_columns(pl.col("target").cast(pl.Utf8)).sink_csv(targets_path, separator="\t")
+    targets = pl.scan_csv(targets_path, separator="\t")
 
-    if unbinned.limit(1).collect().is_empty():
+    if targets.limit(1).collect().is_empty():
         logging.warning("No SingleM sequences found for the given samples")
         pl.DataFrame(schema=EDGES_COLUMNS).write_csv(edges_path, separator="\t")
         return
@@ -177,7 +178,7 @@ def streaming_pipeline(
             .with_columns(sample_ids = pl.col("samples").str.split(",").cast(pl.List(pl.Categorical)))
             .with_columns(cluster_size = pl.col("sample_ids").list.len())
             .explode("sample_ids")
-            .join(unbinned.select("target", "coverage", sample_ids=pl.col("sample").cast(pl.Categorical)), on="sample_ids")
+            .join(targets.select("target", "coverage", sample_ids=pl.col("sample").cast(pl.Categorical)), on="sample_ids")
             .group_by("samples", "cluster_size", "target")
             .agg(pl.sum("coverage"), count = pl.len())
             .filter(pl.col("count") == pl.col("cluster_size"))
@@ -186,22 +187,30 @@ def streaming_pipeline(
             .agg(target_ids = pl.col("target").cast(pl.Utf8).sort().str.concat(","))
             .with_columns(style = pl.lit("match"))
             .select("style", "cluster_size", "samples", "target_ids")
-            .collect(engine="streaming")
         )
 
         return(sparse_edges)
 
     num_chunks = (sample_preclusters.height + CHUNK_SIZE - 1) // CHUNK_SIZE # Ceiling division to include all rows
-    with open(edges_path, "w") as f:
-        with pl.StringCache():
-            logging.info("Processing clusters in chunks")
-            for i in range(num_chunks):
-                if i % 100 == 0:
-                    logging.info(f"Processing cluster {str(i+1)} of {str(num_chunks)}")
-                start_row = i * CHUNK_SIZE
-                chunk = sample_preclusters.slice(start_row, CHUNK_SIZE)
-                processed_chunk = process_chunk(chunk)
-                processed_chunk.write_csv(f, separator="\t", include_header=i==0)
+    # Check if any edges_path_* files exist and remove them
+    if os.path.exists(edges_path + "_*"):
+        logging.info(f"Removing existing files: {edges_path}_*")
+        os.system(f"rm {edges_path}_*")
+
+    with pl.StringCache():
+        logging.info("Processing clusters in chunks")
+        for i in range(num_chunks):
+            if True: #i % 100 == 0:
+                logging.info(f"Processing cluster {str(i+1)} of {str(num_chunks)}")
+            start_row = i * CHUNK_SIZE
+            chunk = sample_preclusters.slice(start_row, CHUNK_SIZE)
+            processed_chunk = process_chunk(chunk)
+            processed_chunk.sink_csv(edges_path + f"_{i}", separator="\t")
+
+    (
+        pl.scan_csv(edges_path + "_*", separator="\t", schema_overrides=EDGES_COLUMNS)
+        .sink_csv(edges_path, separator="\t")
+    )
 
     logging.info("Done")
 
