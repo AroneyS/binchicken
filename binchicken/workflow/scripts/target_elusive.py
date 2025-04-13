@@ -368,7 +368,7 @@ if __name__ == "__main__":
             MIN_COASSEMBLY_COVERAGE=MIN_COASSEMBLY_COVERAGE,
             TAXA_OF_INTEREST=TAXA_OF_INTEREST,
             MAX_COASSEMBLY_SAMPLES=MAX_COASSEMBLY_SAMPLES,
-            CHUNK_SIZE=1000,
+            CHUNK_SIZE=100000,
             )
     else:
         unbinned = pl.read_csv(unbinned_path, separator="\t")
