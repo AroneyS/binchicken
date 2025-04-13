@@ -104,7 +104,7 @@ def get_clusters(
                     .list.join(",")
                 )
             .unique()
-            .collect(streaming=True)
+            .collect(engine="streaming")
         )
 
     logging.info(f"Found {preclusters.height} preclusters")
@@ -123,9 +123,9 @@ def streaming_pipeline(
 
     # logging.info(f"Polars using {str(pl.thread_pool_size())} threads")
 
-    if len(unbinned) == 0:
+    if unbinned.limit(1).collect().is_empty():
         logging.warning("No unbinned sequences found")
-        unbinned.rename({"found_in": "target"}).write_csv(targets_path, separator="\t")
+        unbinned.rename({"found_in": "target"}).sink_csv(targets_path, separator="\t")
         pl.DataFrame(schema=EDGES_COLUMNS).write_csv(edges_path, separator="\t")
         return
 
@@ -157,9 +157,10 @@ def streaming_pipeline(
             )
     )
 
-    unbinned.with_columns(pl.col("target").cast(pl.Utf8)).write_csv(targets_path, separator="\t")
+    unbinned.with_columns(pl.col("target").cast(pl.Utf8)).sink_csv(targets_path, separator="\t")
+    targets = pl.scan_csv(targets_path, separator="\t")
 
-    if unbinned.height == 0:
+    if targets.limit(1).collect().is_empty():
         logging.warning("No SingleM sequences found for the given samples")
         pl.DataFrame(schema=EDGES_COLUMNS).write_csv(edges_path, separator="\t")
         return
@@ -177,7 +178,7 @@ def streaming_pipeline(
             .with_columns(sample_ids = pl.col("samples").str.split(",").cast(pl.List(pl.Categorical)))
             .with_columns(cluster_size = pl.col("sample_ids").list.len())
             .explode("sample_ids")
-            .join(unbinned.lazy().select("target", "coverage", sample_ids=pl.col("sample").cast(pl.Categorical)), on="sample_ids")
+            .join(targets.select("target", "coverage", sample_ids=pl.col("sample").cast(pl.Categorical)), on="sample_ids")
             .group_by("samples", "cluster_size", "target")
             .agg(pl.sum("coverage"), count = pl.len())
             .filter(pl.col("count") == pl.col("cluster_size"))
@@ -186,19 +187,30 @@ def streaming_pipeline(
             .agg(target_ids = pl.col("target").cast(pl.Utf8).sort().str.concat(","))
             .with_columns(style = pl.lit("match"))
             .select("style", "cluster_size", "samples", "target_ids")
-            .collect(streaming=True)
         )
 
         return(sparse_edges)
 
     num_chunks = (sample_preclusters.height + CHUNK_SIZE - 1) // CHUNK_SIZE # Ceiling division to include all rows
-    with open(edges_path, "w") as f:
-        with pl.StringCache():
-            for i in range(num_chunks):
-                start_row = i * CHUNK_SIZE
-                chunk = sample_preclusters.slice(start_row, CHUNK_SIZE)
-                processed_chunk = process_chunk(chunk)
-                processed_chunk.write_csv(f, separator="\t", include_header=i==0)
+    # Check if any edges_path_* files exist and remove them
+    if os.path.exists(edges_path + "_*"):
+        logging.info(f"Removing existing files: {edges_path}_*")
+        os.system(f"rm {edges_path}_*")
+
+    with pl.StringCache():
+        logging.info("Processing clusters in chunks")
+        for i in range(num_chunks):
+            if True: #i % 100 == 0:
+                logging.info(f"Processing cluster {str(i+1)} of {str(num_chunks)}")
+            start_row = i * CHUNK_SIZE
+            chunk = sample_preclusters.slice(start_row, CHUNK_SIZE)
+            processed_chunk = process_chunk(chunk)
+            processed_chunk.sink_csv(edges_path + f"_{i}", separator="\t")
+
+    (
+        pl.scan_csv(edges_path + "_*", separator="\t", schema_overrides=EDGES_COLUMNS)
+        .sink_csv(edges_path, separator="\t")
+    )
 
     logging.info("Done")
 
@@ -332,14 +344,13 @@ if __name__ == "__main__":
     samples = set(snakemake.params.samples)
     anchor_samples = set(snakemake.params.anchor_samples)
 
-    unbinned = pl.read_csv(unbinned_path, separator="\t")
-
     if distances_path:
+        unbinned = pl.scan_csv(unbinned_path, separator="\t")
+        logging.info("Filtering distances to those >= 0.1")
         sample_distances = (
             pl.scan_csv(distances_path)
             .select("query_name", "match_name", "jaccard")
-            .filter(pl.col("jaccard") > 0.01)
-            .collect(streaming=True)
+            .collect()
         )
         sample_preclusters = get_clusters(
             sample_distances,
@@ -357,9 +368,10 @@ if __name__ == "__main__":
             MIN_COASSEMBLY_COVERAGE=MIN_COASSEMBLY_COVERAGE,
             TAXA_OF_INTEREST=TAXA_OF_INTEREST,
             MAX_COASSEMBLY_SAMPLES=MAX_COASSEMBLY_SAMPLES,
-            CHUNK_SIZE=1000,
+            CHUNK_SIZE=100000,
             )
     else:
+        unbinned = pl.read_csv(unbinned_path, separator="\t")
         targets, edges = pipeline(
             unbinned,
             samples,
