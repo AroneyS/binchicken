@@ -262,7 +262,7 @@ def download_sra(args):
                 .to_list()
             )
             for coassembly in single_ended_sample_coassemblies:
-                logging.warn(f"Single-ended reads detected in assembly samples for coassembly: {coassembly}, skipping.")
+                logging.warning(f"Single-ended reads detected in assembly samples for coassembly: {coassembly}, skipping.")
 
             single_ended_recover_coassemblies = (
                 elusive_clusters
@@ -272,7 +272,7 @@ def download_sra(args):
                 .to_list()
             )
             for coassembly in single_ended_recover_coassemblies:
-                logging.warn(f"Single-ended reads detected in recovery samples for coassembly: {coassembly}. Removing those samples from recovery.")
+                logging.warning(f"Single-ended reads detected in recovery samples for coassembly: {coassembly}. Removing those samples from recovery.")
 
             if elusive_clusters.filter(~pl.col("single_ended_samples")).height == 0:
                 raise Exception("Single-ended reads detected. All coassemblies contain these reads.")
@@ -1026,11 +1026,11 @@ def iterate(args):
 
             if comb_cluster.height > 0:
                 _ = comb_cluster.select(
-                    pl.col("coassembly").map_elements(lambda x: logging.warn(f"{x} has been previously suggested"))
+                    pl.col("coassembly").map_elements(lambda x: logging.warning(f"{x} has been previously suggested"))
                     )
     elif not args.exclude_coassemblies:
-        logging.warn("Suggested coassemblies may match those from previous iterations. To check, use `--elusive-clusters`.")
-        logging.warn("To exclude, provide previous run with `--coassemble-output` or use `--exclude-coassembles`.")
+        logging.warning("Suggested coassemblies may match those from previous iterations. To check, use `--elusive-clusters`.")
+        logging.warning("To exclude, provide previous run with `--coassemble-output` or use `--exclude-coassembles`.")
 
     logging.info(f"Bin Chicken iterate complete.")
     logging.info(f"Cluster summary at {os.path.join(args.output, 'coassemble', 'summary.tsv')}")
