@@ -347,8 +347,8 @@ rule update_appraise:
 ###################################
 ### SingleM query (alternative) ###
 ###################################
-num_query_splits = 100
 num_reads = len(reads_1)
+num_query_splits = 1 if num_reads < 101 else 100
 def get_query_reads(wildcards):
     split = int(wildcards.split)
     start = split * (num_reads // num_query_splits)
