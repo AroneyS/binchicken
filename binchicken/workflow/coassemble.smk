@@ -347,10 +347,41 @@ rule update_appraise:
 ###################################
 ### SingleM query (alternative) ###
 ###################################
-rule query_processing:
+num_query_splits = 100
+num_reads = len(reads_1)
+def get_query_reads(wildcards):
+    split = int(wildcards.split)
+    start = split * (num_reads // num_query_splits)
+    end = (split + 1) * (num_reads // num_query_splits) if split < num_query_splits - 1 else num_reads
+    reads = list(reads_1.keys())[start:end]
+
+    return expand(output_dir + "/pipe/{read}_read.otu_table.tsv", read=reads)
+
+rule query_processing_split:
     input:
         pipe_reads = expand(output_dir + "/pipe/{read}_read.otu_table.tsv", read=reads_1),
         query_reads = expand(output_dir + "/query/{read}_query.otu_table.tsv", read=reads_1),
+    output:
+        unbinned = temp(output_dir + "/appraise/unbinned_{split}.otu_table.tsv"),
+        binned = temp(output_dir + "/appraise/binned_{split}.otu_table.tsv"),
+    log:
+        logs_dir + "/query/processing_{split}.log"
+    benchmark:
+        benchmarks_dir + "/query/processing_{split}.tsv"
+    params:
+        sequence_identity = config["appraise_sequence_identity"],
+        window_size = 60,
+    threads: 1
+    resources:
+        mem_mb=get_mem_mb,
+        runtime = get_runtime(base_hours = 48),
+    script:
+        "scripts/query_processing.py"
+
+rule query_processing:
+    input:
+        unbinned = expand(output_dir + "/appraise/unbinned_{split}.otu_table.tsv", split=range(num_query_splits)),
+        binned = expand(output_dir + "/appraise/binned_{split}.otu_table.tsv", split=range(num_query_splits)),
     output:
         unbinned = temp(output_dir + "/appraise/unbinned_raw.otu_table.tsv"),
         binned = temp(output_dir + "/appraise/binned_raw.otu_table.tsv"),
@@ -358,15 +389,16 @@ rule query_processing:
         logs_dir + "/query/processing.log"
     benchmark:
         benchmarks_dir + "/query/processing.tsv"
-    params:
-        sequence_identity = config["appraise_sequence_identity"],
-        window_size = 60,
     threads: 1
     resources:
         mem_mb=get_mem_mb,
-        runtime = get_runtime(base_hours = 24),
-    script:
-        "scripts/query_processing.py"
+        runtime = get_runtime(base_hours = 48),
+    shell:
+        "echo 'Start' > {log} && "
+        "awk '(NR == 1 || FNR > 1)' {input.unbinned} > {output.unbinned} && "
+        "echo 'Unbinned done' > {log} && "
+        "awk '(NR == 1 || FNR > 1)' {input.binned} > {output.binned} && "
+        "echo 'Binned done' > {log}"
 
 ################################
 ### No genomes (alternative) ###
