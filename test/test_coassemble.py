@@ -485,6 +485,106 @@ class Tests(unittest.TestCase):
             with open(cluster_path) as f:
                 self.assertEqual(expected, f.read())
 
+    def test_coassemble_query_input_split(self):
+        with in_tempdir():
+            write_string_to_file(" ".join([f"sample_{i}.1.fq" for i in range(200)]), "sample_reads_forward")
+            write_string_to_file(" ".join([f"sample_{i}.2.fq" for i in range(200)]), "sample_reads_reverse")
+            write_string_to_file(GENOMES, "genomes")
+            write_string_to_file(GENOME_TRANSCRIPTS, "genome_transcripts")
+            with open("sample_size.csv", "w") as f:
+                f.write("\n".join([",".join([f"sample_{i}", "100"]) for i in range(200)]))
+
+            samples = [f"sample_{i}" for i in range(200)]
+            query_dir = "sample_queries"
+            os.makedirs(query_dir)
+            singlem_dir = "sample_singlem"
+            os.makedirs(singlem_dir)
+            for sample in samples:
+                with open(os.path.join(query_dir, sample + "_query.otu_table.tsv"), "w") as f:
+                    f.write("\t".join(["query_name", "query_sequence", "divergence", "num_hits", "coverage", "sample", "marker", "hit_sequence", "taxonomy"]))
+                    f.write("\n")
+                    f.write("\t".join([
+                        sample,
+                        "TATCAAGTTCCACAAGAAGTTAGAGGAGAAAGAAGAATCTCGTTAGCTATTAGATGGATT",
+                        "10",
+                        "1",
+                        "1.64",
+                        "GB_GCA_013286235.1",
+                        "S3.7.ribosomal_protein_S7",
+                        "TATCAAGTTCCACAAGAAGTTAGAGGAGAAAGAAGAATCTCGTTAGCTATTAGATGGATT",
+                        "Root; d__Bacteria; p__Proteobacteria; c__Gammaproteobacteria; o__Burkholderiales; f__Burkholderiaceae; g__Polynucleobacter; s__Polynucleobacter sp018688335"
+                    ]))
+
+                with open(os.path.join(singlem_dir, sample + "_read.otu_table.tsv"), "w") as f:
+                    f.write("\t".join(["gene", "sample", "sequence", "num_hits", "coverage", "taxonomy"]))
+                    f.write("\n")
+                    f.write("\t".join([
+                        "S3.7.ribosomal_protein_S7",
+                        sample,
+                        "TATCAAGTTCCACAAGAAGTTAGAGGAGAAAGAAGAATCTCGTTAGCTATTAGATGGATT",
+                        "3",
+                        "4.92",
+                        "Root; d__Bacteria; p__Proteobacteria; c__Gammaproteobacteria; o__Burkholderiales; f__Burkholderiaceae; g__Polynucleobacter; s__Polynucleobacter sp018688335"
+                    ]))
+
+            cmd = (
+                f"binchicken coassemble "
+                f"--forward-list sample_reads_forward "
+                f"--reverse-list sample_reads_reverse "
+                f"--genomes-list genomes "
+                f"--genome-transcripts-list genome_transcripts "
+                f"--sample-query-dir {query_dir} "
+                f"--sample-singlem-dir {singlem_dir} "
+                f"--sample-read-size sample_size.csv "
+                f"--singlem-metapackage {METAPACKAGE} "
+                f"--output test "
+                f"--conda-prefix {path_to_conda} "
+                f"--snakemake-args \"cluster_graph\" "
+            )
+            extern.run(cmd)
+
+            config_path = os.path.join("test", "config.yaml")
+            self.assertTrue(os.path.exists(config_path))
+
+            binned_path = os.path.join("test", "coassemble", "appraise", "binned.otu_table.tsv")
+            self.assertTrue(os.path.exists(binned_path))
+            expected = "\n".join(
+                [
+                    "\t".join(["gene", "sample", "sequence", "num_hits", "coverage", "taxonomy", "found_in"]),
+                    ""
+                ]
+            )
+            with open(binned_path) as f:
+                self.assertEqual(expected, f.read())
+
+            unbinned_path = os.path.join("test", "coassemble", "appraise", "unbinned.otu_table.tsv")
+            self.assertTrue(os.path.exists(unbinned_path))
+            expected = "\t".join(["gene", "sample", "sequence", "num_hits", "coverage", "taxonomy", "found_in",]) + "\n" + "\n".join(
+                [
+                    "\t".join([
+                        "S3.7.ribosomal_protein_S7",
+                        sample,
+                        "TATCAAGTTCCACAAGAAGTTAGAGGAGAAAGAAGAATCTCGTTAGCTATTAGATGGATT",
+                        "3",
+                        "4.92",
+                        "Root; d__Bacteria; p__Proteobacteria; c__Gammaproteobacteria; o__Burkholderiales; f__Burkholderiaceae; g__Polynucleobacter; s__Polynucleobacter sp018688335",
+                        "",
+                    ])
+                    for sample in samples
+                ]
+            ) + "\n"
+            with open(unbinned_path) as f:
+                self.assertEqual(expected, f.read())
+
+            edges_path = os.path.join("test", "coassemble", "target", "targets.tsv")
+            self.assertTrue(os.path.exists(edges_path))
+
+            edges_path = os.path.join("test", "coassemble", "target", "elusive_edges.tsv")
+            self.assertTrue(os.path.exists(edges_path))
+
+            cluster_path = os.path.join("test", "coassemble", "target", "elusive_clusters.tsv")
+            self.assertTrue(os.path.exists(cluster_path))
+
     def test_coassemble_query_input_taxa_of_interest(self):
         with in_tempdir():
             cmd = (

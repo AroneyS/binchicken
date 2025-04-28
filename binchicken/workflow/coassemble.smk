@@ -357,10 +357,18 @@ def get_query_reads(wildcards):
 
     return expand(output_dir + "/pipe/{read}_read.otu_table.tsv", read=reads)
 
+def get_query_queries(wildcards):
+    split = int(wildcards.split)
+    start = split * (num_reads // num_query_splits)
+    end = (split + 1) * (num_reads // num_query_splits) if split < num_query_splits - 1 else num_reads
+    reads = list(reads_1.keys())[start:end]
+
+    return expand(output_dir + "/query/{read}_query.otu_table.tsv", read=reads)
+
 rule query_processing_split:
     input:
-        pipe_reads = expand(output_dir + "/pipe/{read}_read.otu_table.tsv", read=reads_1),
-        query_reads = expand(output_dir + "/query/{read}_query.otu_table.tsv", read=reads_1),
+        pipe_reads = get_query_reads,
+        query_reads = get_query_queries,
     output:
         unbinned = temp(output_dir + "/appraise/unbinned_{split}.otu_table.tsv"),
         binned = temp(output_dir + "/appraise/binned_{split}.otu_table.tsv"),
