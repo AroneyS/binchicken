@@ -548,7 +548,7 @@ def coassemble(args):
         "exclude_coassemblies": args.exclude_coassemblies,
         "num_coassembly_samples": args.num_coassembly_samples,
         "max_coassembly_samples": args.max_coassembly_samples if args.max_coassembly_samples else args.num_coassembly_samples,
-        "max_coassembly_size": args.max_coassembly_size,
+        "max_coassembly_size": None if args.max_coassembly_size == "None" else args.max_coassembly_size,
         "max_recovery_samples": args.max_recovery_samples,
         "abundance_weighted": args.abundance_weighted,
         "abundance_weighted_samples": args.abundance_weighted_samples,
