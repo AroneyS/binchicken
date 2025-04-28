@@ -370,12 +370,12 @@ rule query_processing_split:
         pipe_reads = get_query_reads,
         query_reads = get_query_queries,
     output:
-        unbinned = temp(output_dir + "/appraise/unbinned_{split}.otu_table.tsv"),
-        binned = temp(output_dir + "/appraise/binned_{split}.otu_table.tsv"),
+        unbinned = temp(output_dir + "/appraise/unbinned_split_{split}.otu_table.tsv"),
+        binned = temp(output_dir + "/appraise/binned_split_{split}.otu_table.tsv"),
     log:
-        logs_dir + "/query/processing_{split}.log"
+        logs_dir + "/query/processing_split_{split}.log"
     benchmark:
-        benchmarks_dir + "/query/processing_{split}.tsv"
+        benchmarks_dir + "/query/processing_split_{split}.tsv"
     params:
         sequence_identity = config["appraise_sequence_identity"],
         window_size = 60,
@@ -388,8 +388,8 @@ rule query_processing_split:
 
 rule query_processing:
     input:
-        unbinned = expand(output_dir + "/appraise/unbinned_{split}.otu_table.tsv", split=range(num_query_splits)),
-        binned = expand(output_dir + "/appraise/binned_{split}.otu_table.tsv", split=range(num_query_splits)),
+        unbinned = expand(output_dir + "/appraise/unbinned_split_{split}.otu_table.tsv", split=range(num_query_splits)),
+        binned = expand(output_dir + "/appraise/binned_split_{split}.otu_table.tsv", split=range(num_query_splits)),
     output:
         unbinned = temp(output_dir + "/appraise/unbinned_raw.otu_table.tsv"),
         binned = temp(output_dir + "/appraise/binned_raw.otu_table.tsv"),
