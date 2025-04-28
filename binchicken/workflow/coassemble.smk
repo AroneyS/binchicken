@@ -505,7 +505,7 @@ rule distance_samples:
         sketch = output_dir + "/sketch/samples.sig",
     output:
         distance = output_dir + "/sketch/samples.csv"
-    threads: 64
+    threads: 128
     resources:
         mem_mb=get_mem_mb,
         runtime = get_runtime(base_hours = 48),
