@@ -1613,10 +1613,10 @@ class Tests(unittest.TestCase):
             elusive_edges_path = os.path.join("test", "coassemble", "target", "elusive_edges.tsv")
             self.assertTrue(os.path.exists(elusive_edges_path))
             expected = pl.DataFrame([
-                    ["match", 2, "sample_1,sample_2", "0,1"],
-                    ["match", 2, "sample_1,sample_5", "0"],
-                    ["match", 2, "sample_2,sample_5", "0"],
-                    ["match", 2, "sample_3,sample_5", "3,4"],
+                    ["match", 2, "sample_1,sample_2", "1359244014492035223,3314627838873786920"],
+                    ["match", 2, "sample_1,sample_5", "1359244014492035223"],
+                    ["match", 2, "sample_2,sample_5", "1359244014492035223"],
+                    ["match", 2, "sample_3,sample_5", "5802119045849692851,7811645178460805746"],
                 ],
                 schema = ["style", "cluster_size", "samples", "target_ids"],
                 orient="row",
@@ -1688,7 +1688,7 @@ class Tests(unittest.TestCase):
             expected = "\n".join(
                 [
                     "\t".join(["style", "cluster_size", "samples", "target_ids"]),
-                    "\t".join(["match", "2", "sample_2,sample_5", "0"]),
+                    "\t".join(["match", "2", "sample_2,sample_5", "1359244014492035223"]),
                     ""
                 ]
             )
@@ -1718,10 +1718,10 @@ class Tests(unittest.TestCase):
             elusive_edges_path = os.path.join("test", "coassemble", "target", "elusive_edges.tsv")
             self.assertTrue(os.path.exists(elusive_edges_path))
             expected = pl.DataFrame([
-                    ["match", 2, "sample_1,sample_2", "0,1"],
-                    ["match", 2, "sample_1,sample_5", "0"],
-                    ["match", 2, "sample_2,sample_5", "0"],
-                    ["match", 2, "sample_3,sample_5", "3,4"],
+                    ["match", 2, "sample_1,sample_2", "1359244014492035223,3314627838873786920"],
+                    ["match", 2, "sample_1,sample_5", "1359244014492035223"],
+                    ["match", 2, "sample_2,sample_5", "1359244014492035223"],
+                    ["match", 2, "sample_3,sample_5", "5802119045849692851,7811645178460805746"],
                 ],
                 schema = ["style", "cluster_size", "samples", "target_ids"],
                 orient="row",
@@ -1825,10 +1825,10 @@ class Tests(unittest.TestCase):
             elusive_edges_path = os.path.join("test", "coassemble", "target", "elusive_edges.tsv")
             self.assertTrue(os.path.exists(elusive_edges_path))
             expected = pl.DataFrame([
-                    ["match", 2, "sample_1,sample_2", "0,1"],
-                    ["match", 2, "sample_1,sample_5", "0"],
-                    ["match", 2, "sample_2,sample_5", "0"],
-                    ["match", 2, "sample_3,sample_5", "3,4"],
+                    ["match", 2, "sample_1,sample_2", "1359244014492035223,3314627838873786920"],
+                    ["match", 2, "sample_1,sample_5", "1359244014492035223"],
+                    ["match", 2, "sample_2,sample_5", "1359244014492035223"],
+                    ["match", 2, "sample_3,sample_5", "5802119045849692851,7811645178460805746"],
                 ],
                 schema = ["style", "cluster_size", "samples", "target_ids"],
                 orient="row",
@@ -1912,8 +1912,8 @@ class Tests(unittest.TestCase):
             elusive_edges_path = os.path.join("test", "coassemble", "target", "elusive_edges.tsv")
             self.assertTrue(os.path.exists(elusive_edges_path))
             expected = pl.DataFrame([
-                    ["match", 2, "sample_1,sample_2", "0,1"],
-                    ["match", 2, "sample_1,sample_5", "0"],
+                    ["match", 2, "sample_1,sample_2", "1359244014492035223,3314627838873786920"],
+                    ["match", 2, "sample_1,sample_5", "1359244014492035223"],
                 ],
                 schema = ["style", "cluster_size", "samples", "target_ids"],
                 orient="row",
