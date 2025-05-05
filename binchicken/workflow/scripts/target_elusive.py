@@ -153,7 +153,7 @@ def streaming_pipeline(
         .with_row_index("target")
         .select(
             "gene", "sample", "sequence", "num_hits", "coverage", "taxonomy",
-            pl.first("target").over(["gene", "sequence"]).rank("dense") - 1,
+            target = (pl.struct(["gene", "sequence"]).hash(seed=42) % (2**63 - 1)),
             )
     )
 
