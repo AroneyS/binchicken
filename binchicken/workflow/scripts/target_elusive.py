@@ -346,7 +346,6 @@ if __name__ == "__main__":
 
     if distances_path:
         unbinned = pl.scan_csv(unbinned_path, separator="\t")
-        logging.info("Filtering distances to those >= 0.1")
         sample_distances = (
             pl.scan_csv(distances_path)
             .select("query_name", "match_name", "jaccard")
