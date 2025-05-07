@@ -24,6 +24,9 @@ abundance_weighted_samples: []
 kmer_precluster: false
 precluster_distances: false
 precluster_size: 1
+file_hierarchy: false
+file_hierarchy_depth: 1
+file_hierarchy_chars: 1
 unmapping_min_appraised: 1
 unmapping_max_identity: 1
 unmapping_max_alignment: 1

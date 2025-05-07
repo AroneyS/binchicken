@@ -150,10 +150,9 @@ def streaming_pipeline(
             )
         .filter(pl.col("sample").is_in(samples))
         .drop("found_in")
-        .with_row_index("target")
         .select(
             "gene", "sample", "sequence", "num_hits", "coverage", "taxonomy",
-            pl.first("target").over(["gene", "sequence"]).rank("dense") - 1,
+            target = (pl.struct(["gene", "sequence"]).hash(seed=42) % (2**63 - 1)),
             )
     )
 
@@ -346,7 +345,6 @@ if __name__ == "__main__":
 
     if distances_path:
         unbinned = pl.scan_csv(unbinned_path, separator="\t")
-        logging.info("Filtering distances to those >= 0.1")
         sample_distances = (
             pl.scan_csv(distances_path)
             .select("query_name", "match_name", "jaccard")

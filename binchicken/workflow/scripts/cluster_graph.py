@@ -129,7 +129,7 @@ def pipeline(
                     .cast(pl.List(pl.Categorical)),
                 pl.col("target_ids")
                     .str.split(",")
-                    .cast(pl.List(pl.UInt32)),
+                    .cast(pl.List(pl.UInt64)),
                 )
             .with_columns(
                 samples_hash = pl.col("samples").list.sort().hash(),
@@ -144,7 +144,7 @@ def pipeline(
 
             weightings = (
                 weightings
-                .select(target_ids = pl.col("target").cast(pl.UInt32), weight = "weight")
+                .select(target_ids = pl.col("target").cast(pl.UInt64), weight = "weight")
             )
             weightings_dict = dict(weightings.iter_rows())
         else:
