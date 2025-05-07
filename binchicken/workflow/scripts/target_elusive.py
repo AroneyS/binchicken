@@ -150,7 +150,6 @@ def streaming_pipeline(
             )
         .filter(pl.col("sample").is_in(samples))
         .drop("found_in")
-        .with_row_index("target")
         .select(
             "gene", "sample", "sequence", "num_hits", "coverage", "taxonomy",
             target = (pl.struct(["gene", "sequence"]).hash(seed=42) % (2**63 - 1)),
