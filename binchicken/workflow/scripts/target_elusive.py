@@ -141,14 +141,23 @@ def streaming_pipeline(
         )
 
     logging.info("Grouping hits by marker gene sequences to form targets")
+    if len(samples) > 100_000:
+        logging.warning("Skipping sample suffix removal due to having more than 100,000 samples.")
+        logging.warning("This may return no results if query inputs were not used.")
+        logging.warning("To fix, remove suffixes from appraise results (e.g. sample_1 is in the sample list, but sample_1.1 is in the otu_table).")
+    else:
+        unbinned = (
+            unbinned
+            .with_columns(
+                pl.when(pl.col("sample").is_in(samples))
+                .then(pl.col("sample"))
+                .otherwise(pl.col("sample").str.replace(SUFFIX_RE, ""))
+                )
+            .filter(pl.col("sample").is_in(samples))
+        )
+
     unbinned = (
         unbinned
-        .with_columns(
-            pl.when(pl.col("sample").is_in(samples))
-            .then(pl.col("sample"))
-            .otherwise(pl.col("sample").str.replace(SUFFIX_RE, ""))
-            )
-        .filter(pl.col("sample").is_in(samples))
         .drop("found_in")
         .select(
             "gene", "sample", "sequence", "num_hits", "coverage", "taxonomy",
