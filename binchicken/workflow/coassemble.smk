@@ -524,10 +524,25 @@ rule distance_samples:
         "-c {threads} "
         "&> {log} "
 
+rule filter_distances:
+    input:
+        distance = output_dir + "/sketch/samples.csv",
+    output:
+        distance = output_dir + "/sketch/samples_filtered.csv",
+    threads: 1
+    resources:
+        mem_mb=get_mem_mb,
+        runtime = get_runtime(base_hours = 12),
+    params:
+        min_distance = 0.1,
+    shell:
+        "awk 'BEGIN{{FS=OFS=\",\"}} $7 >= {params.min_distance}' "
+        "{input.distance} > {output.distance}"
+
 rule target_elusive:
     input:
         unbinned = output_dir + "/appraise/unbinned.otu_table.tsv",
-        distances = output_dir + "/sketch/samples.csv" if config["kmer_precluster"] else [],
+        distances = output_dir + "/sketch/samples_filtered.csv" if config["kmer_precluster"] else [],
     output:
         output_edges = output_dir + "/target/elusive_edges.tsv",
         output_targets = output_dir + "/target/targets.tsv",
