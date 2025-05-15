@@ -325,14 +325,14 @@ rule update_appraise:
         sequence_identity = config["appraise_sequence_identity"],
         singlem_metapackage = config["singlem_metapackage"],
         new_binned = output_dir + "/appraise/binned_new.otu_table.tsv",
-    threads: 1
+    threads: 64
     resources:
         mem_mb=get_mem_mb,
         runtime = get_runtime(base_hours = 24),
     conda:
         "env/singlem.yml"
     shell:
-        "singlem appraise "
+        "singlem appraise --stream-inputs "
         "--metagenome-otu-tables {input.unbinned} "
         "--genome-otu-tables {input.bins} "
         "--metapackage {params.singlem_metapackage} "
@@ -341,6 +341,7 @@ rule update_appraise:
         "--imperfect "
         "--sequence-identity {params.sequence_identity} "
         "--output-found-in "
+        "--threads {threads} "
         "&> {log} "
         "&& cat {input.binned} <(tail -n+2 {params.new_binned}) > {output.binned} "
 
