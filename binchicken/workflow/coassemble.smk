@@ -432,10 +432,16 @@ rule no_genomes:
     resources:
         mem_mb=get_mem_mb,
         runtime = get_runtime(base_hours = 24),
+    params:
+        script = scripts_dir + "/no_genomes.py",
     log:
         logs_dir + "/appraise/appraise.log"
-    script:
-        "scripts/no_genomes.py"
+    shell:
+        "python3 {params.script} "
+        "--reads {input.reads} "
+        "--binned {output.binned} "
+        "--unbinned {output.unbinned} "
+        "--threads {threads}"
 
 ######################
 ### Target elusive ###
