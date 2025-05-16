@@ -476,7 +476,8 @@ rule abundance_weighting:
         weighted = output_dir + "/appraise/weighted.otu_table.tsv"
     threads: 64
     params:
-        samples = config["abundance_weighted_samples"]
+        script = scripts_dir + "/abundance_weighting.py",
+        samples = config["abundance_weighted_samples"],
     resources:
         mem_mb=get_mem_mb,
         runtime = get_runtime(base_hours = 24),
@@ -484,8 +485,14 @@ rule abundance_weighting:
         logs_dir + "/appraise/abundance_weighting.log"
     benchmark:
         benchmarks_dir + "/appraise/abundance_weighting.tsv"
-    script:
-        "scripts/abundance_weighting.py"
+    shell:
+        "python3 {params.script} "
+        "--unbinned {input.unbinned} "
+        "--binned {input.binned} "
+        "--weighted {output.weighted} "
+        "--samples {params.samples} "
+        "--threads {threads} "
+        "--log {log}"
 
 rule sketch_samples:
     input:
