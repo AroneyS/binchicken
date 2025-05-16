@@ -573,6 +573,32 @@ class Tests(unittest.TestCase):
             )
         self.assertDataFrameEqual(expected, observed)
 
+    def test_cluster_preclustered_input(self):
+        elusive_edges = pl.DataFrame([
+            ["match", 2, "sample_1,sample_2", "1359244014492035223,3314627838873786920"],
+            ["match", 2, "sample_1,sample_5", "1359244014492035223"],
+            ["match", 2, "sample_2,sample_5", "1359244014492035223"],
+            ["match", 2, "sample_3,sample_5", "5802119045849692851,7811645178460805746"],
+        ], orient="row", schema=ELUSIVE_EDGES_COLUMNS)
+        read_size = pl.DataFrame([
+            ["sample_1", 4832],
+            ["sample_2", 3926],
+            ["sample_3", 3624],
+            ["sample_5", 3624],
+        ], orient="row", schema=READ_SIZE_COLUMNS)
+
+        expected = pl.DataFrame([
+            ["sample_3,sample_5", 2, 2, 7248, "sample_3,sample_5", "coassembly_0"],
+            ["sample_1,sample_2", 2, 2, 8758, "sample_1,sample_2,sample_5", "coassembly_1"],
+        ], orient="row", schema=ELUSIVE_CLUSTERS_COLUMNS)
+        observed = pipeline(
+            elusive_edges,
+            read_size,
+            MIN_COASSEMBLY_SAMPLES=2,
+            MAX_COASSEMBLY_SAMPLES=2,
+            )
+        self.assertDataFrameEqual(expected, observed)
+
     def test_cluster_exclude_coassemblies(self):
         elusive_edges = pl.DataFrame([
             ["match", 2, "1,2", "1"],

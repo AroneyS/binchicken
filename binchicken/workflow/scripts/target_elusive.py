@@ -141,19 +141,27 @@ def streaming_pipeline(
         )
 
     logging.info("Grouping hits by marker gene sequences to form targets")
+    if len(samples) > 100_000:
+        logging.warning("Skipping sample suffix removal due to having more than 100,000 samples.")
+        logging.warning("This may return no results if query inputs were not used.")
+        logging.warning("To fix, remove suffixes from appraise results (e.g. sample_1 is in the sample list, but sample_1.1 is in the otu_table).")
+    else:
+        unbinned = (
+            unbinned
+            .with_columns(
+                pl.when(pl.col("sample").is_in(samples))
+                .then(pl.col("sample"))
+                .otherwise(pl.col("sample").str.replace(SUFFIX_RE, ""))
+                )
+            .filter(pl.col("sample").is_in(samples))
+        )
+
     unbinned = (
         unbinned
-        .with_columns(
-            pl.when(pl.col("sample").is_in(samples))
-            .then(pl.col("sample"))
-            .otherwise(pl.col("sample").str.replace(SUFFIX_RE, ""))
-            )
-        .filter(pl.col("sample").is_in(samples))
         .drop("found_in")
-        .with_row_index("target")
         .select(
             "gene", "sample", "sequence", "num_hits", "coverage", "taxonomy",
-            pl.first("target").over(["gene", "sequence"]).rank("dense") - 1,
+            target = (pl.struct(["gene", "sequence"]).hash(seed=42) % (2**63 - 1)),
             )
     )
 
@@ -346,7 +354,6 @@ if __name__ == "__main__":
 
     if distances_path:
         unbinned = pl.scan_csv(unbinned_path, separator="\t")
-        logging.info("Filtering distances to those >= 0.1")
         sample_distances = (
             pl.scan_csv(distances_path)
             .select("query_name", "match_name", "jaccard")

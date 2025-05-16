@@ -2,6 +2,7 @@
 
 import unittest
 import os
+import shutil
 import gzip
 from bird_tool_utils import in_tempdir
 import extern
@@ -483,6 +484,106 @@ class Tests(unittest.TestCase):
             )
             with open(cluster_path) as f:
                 self.assertEqual(expected, f.read())
+
+    def test_coassemble_query_input_split(self):
+        with in_tempdir():
+            write_string_to_file(" ".join([f"sample_{i}.1.fq" for i in range(200)]), "sample_reads_forward")
+            write_string_to_file(" ".join([f"sample_{i}.2.fq" for i in range(200)]), "sample_reads_reverse")
+            write_string_to_file(GENOMES, "genomes")
+            write_string_to_file(GENOME_TRANSCRIPTS, "genome_transcripts")
+            with open("sample_size.csv", "w") as f:
+                f.write("\n".join([",".join([f"sample_{i}", "100"]) for i in range(200)]))
+
+            samples = [f"sample_{i}" for i in range(200)]
+            query_dir = "sample_queries"
+            os.makedirs(query_dir)
+            singlem_dir = "sample_singlem"
+            os.makedirs(singlem_dir)
+            for sample in samples:
+                with open(os.path.join(query_dir, sample + "_query.otu_table.tsv"), "w") as f:
+                    f.write("\t".join(["query_name", "query_sequence", "divergence", "num_hits", "coverage", "sample", "marker", "hit_sequence", "taxonomy"]))
+                    f.write("\n")
+                    f.write("\t".join([
+                        sample,
+                        "TATCAAGTTCCACAAGAAGTTAGAGGAGAAAGAAGAATCTCGTTAGCTATTAGATGGATT",
+                        "10",
+                        "1",
+                        "1.64",
+                        "GB_GCA_013286235.1",
+                        "S3.7.ribosomal_protein_S7",
+                        "TATCAAGTTCCACAAGAAGTTAGAGGAGAAAGAAGAATCTCGTTAGCTATTAGATGGATT",
+                        "Root; d__Bacteria; p__Proteobacteria; c__Gammaproteobacteria; o__Burkholderiales; f__Burkholderiaceae; g__Polynucleobacter; s__Polynucleobacter sp018688335"
+                    ]))
+
+                with open(os.path.join(singlem_dir, sample + "_read.otu_table.tsv"), "w") as f:
+                    f.write("\t".join(["gene", "sample", "sequence", "num_hits", "coverage", "taxonomy"]))
+                    f.write("\n")
+                    f.write("\t".join([
+                        "S3.7.ribosomal_protein_S7",
+                        sample,
+                        "TATCAAGTTCCACAAGAAGTTAGAGGAGAAAGAAGAATCTCGTTAGCTATTAGATGGATT",
+                        "3",
+                        "4.92",
+                        "Root; d__Bacteria; p__Proteobacteria; c__Gammaproteobacteria; o__Burkholderiales; f__Burkholderiaceae; g__Polynucleobacter; s__Polynucleobacter sp018688335"
+                    ]))
+
+            cmd = (
+                f"binchicken coassemble "
+                f"--forward-list sample_reads_forward "
+                f"--reverse-list sample_reads_reverse "
+                f"--genomes-list genomes "
+                f"--genome-transcripts-list genome_transcripts "
+                f"--sample-query-dir {query_dir} "
+                f"--sample-singlem-dir {singlem_dir} "
+                f"--sample-read-size sample_size.csv "
+                f"--singlem-metapackage {METAPACKAGE} "
+                f"--output test "
+                f"--conda-prefix {path_to_conda} "
+                f"--snakemake-args \"cluster_graph\" "
+            )
+            extern.run(cmd)
+
+            config_path = os.path.join("test", "config.yaml")
+            self.assertTrue(os.path.exists(config_path))
+
+            binned_path = os.path.join("test", "coassemble", "appraise", "binned.otu_table.tsv")
+            self.assertTrue(os.path.exists(binned_path))
+            expected = "\n".join(
+                [
+                    "\t".join(["gene", "sample", "sequence", "num_hits", "coverage", "taxonomy", "found_in"]),
+                    ""
+                ]
+            )
+            with open(binned_path) as f:
+                self.assertEqual(expected, f.read())
+
+            unbinned_path = os.path.join("test", "coassemble", "appraise", "unbinned.otu_table.tsv")
+            self.assertTrue(os.path.exists(unbinned_path))
+            expected = "\t".join(["gene", "sample", "sequence", "num_hits", "coverage", "taxonomy", "found_in",]) + "\n" + "\n".join(
+                [
+                    "\t".join([
+                        "S3.7.ribosomal_protein_S7",
+                        sample,
+                        "TATCAAGTTCCACAAGAAGTTAGAGGAGAAAGAAGAATCTCGTTAGCTATTAGATGGATT",
+                        "3",
+                        "4.92",
+                        "Root; d__Bacteria; p__Proteobacteria; c__Gammaproteobacteria; o__Burkholderiales; f__Burkholderiaceae; g__Polynucleobacter; s__Polynucleobacter sp018688335",
+                        "",
+                    ])
+                    for sample in samples
+                ]
+            ) + "\n"
+            with open(unbinned_path) as f:
+                self.assertEqual(expected, f.read())
+
+            edges_path = os.path.join("test", "coassemble", "target", "targets.tsv")
+            self.assertTrue(os.path.exists(edges_path))
+
+            edges_path = os.path.join("test", "coassemble", "target", "elusive_edges.tsv")
+            self.assertTrue(os.path.exists(edges_path))
+
+            cluster_path = os.path.join("test", "coassemble", "target", "elusive_clusters.tsv")
+            self.assertTrue(os.path.exists(cluster_path))
 
     def test_coassemble_query_input_taxa_of_interest(self):
         with in_tempdir():
@@ -1512,10 +1613,10 @@ class Tests(unittest.TestCase):
             elusive_edges_path = os.path.join("test", "coassemble", "target", "elusive_edges.tsv")
             self.assertTrue(os.path.exists(elusive_edges_path))
             expected = pl.DataFrame([
-                    ["match", 2, "sample_1,sample_2", "0,1"],
-                    ["match", 2, "sample_1,sample_5", "0"],
-                    ["match", 2, "sample_2,sample_5", "0"],
-                    ["match", 2, "sample_3,sample_5", "3,4"],
+                    ["match", 2, "sample_1,sample_2", "1359244014492035223,3314627838873786920"],
+                    ["match", 2, "sample_1,sample_5", "1359244014492035223"],
+                    ["match", 2, "sample_2,sample_5", "1359244014492035223"],
+                    ["match", 2, "sample_3,sample_5", "5802119045849692851,7811645178460805746"],
                 ],
                 schema = ["style", "cluster_size", "samples", "target_ids"],
                 orient="row",
@@ -1587,7 +1688,7 @@ class Tests(unittest.TestCase):
             expected = "\n".join(
                 [
                     "\t".join(["style", "cluster_size", "samples", "target_ids"]),
-                    "\t".join(["match", "2", "sample_2,sample_5", "0"]),
+                    "\t".join(["match", "2", "sample_2,sample_5", "1359244014492035223"]),
                     ""
                 ]
             )
@@ -1617,10 +1718,10 @@ class Tests(unittest.TestCase):
             elusive_edges_path = os.path.join("test", "coassemble", "target", "elusive_edges.tsv")
             self.assertTrue(os.path.exists(elusive_edges_path))
             expected = pl.DataFrame([
-                    ["match", 2, "sample_1,sample_2", "0,1"],
-                    ["match", 2, "sample_1,sample_5", "0"],
-                    ["match", 2, "sample_2,sample_5", "0"],
-                    ["match", 2, "sample_3,sample_5", "3,4"],
+                    ["match", 2, "sample_1,sample_2", "1359244014492035223,3314627838873786920"],
+                    ["match", 2, "sample_1,sample_5", "1359244014492035223"],
+                    ["match", 2, "sample_2,sample_5", "1359244014492035223"],
+                    ["match", 2, "sample_3,sample_5", "5802119045849692851,7811645178460805746"],
                 ],
                 schema = ["style", "cluster_size", "samples", "target_ids"],
                 orient="row",
@@ -1724,10 +1825,10 @@ class Tests(unittest.TestCase):
             elusive_edges_path = os.path.join("test", "coassemble", "target", "elusive_edges.tsv")
             self.assertTrue(os.path.exists(elusive_edges_path))
             expected = pl.DataFrame([
-                    ["match", 2, "sample_1,sample_2", "0,1"],
-                    ["match", 2, "sample_1,sample_5", "0"],
-                    ["match", 2, "sample_2,sample_5", "0"],
-                    ["match", 2, "sample_3,sample_5", "3,4"],
+                    ["match", 2, "sample_1,sample_2", "1359244014492035223,3314627838873786920"],
+                    ["match", 2, "sample_1,sample_5", "1359244014492035223"],
+                    ["match", 2, "sample_2,sample_5", "1359244014492035223"],
+                    ["match", 2, "sample_3,sample_5", "5802119045849692851,7811645178460805746"],
                 ],
                 schema = ["style", "cluster_size", "samples", "target_ids"],
                 orient="row",
@@ -1811,8 +1912,8 @@ class Tests(unittest.TestCase):
             elusive_edges_path = os.path.join("test", "coassemble", "target", "elusive_edges.tsv")
             self.assertTrue(os.path.exists(elusive_edges_path))
             expected = pl.DataFrame([
-                    ["match", 2, "sample_1,sample_2", "0,1"],
-                    ["match", 2, "sample_1,sample_5", "0"],
+                    ["match", 2, "sample_1,sample_2", "1359244014492035223,3314627838873786920"],
+                    ["match", 2, "sample_1,sample_5", "1359244014492035223"],
                 ],
                 schema = ["style", "cluster_size", "samples", "target_ids"],
                 orient="row",
@@ -2141,6 +2242,110 @@ class Tests(unittest.TestCase):
                 self.assertTrue("SRR3309137" in file)
                 self.assertTrue("SRR8334323" in file)
                 self.assertTrue("SRR8334324" in file)
+
+    def test_coassemble_hierarchy(self):
+        with in_tempdir():
+            local_samples_forward = [
+                os.path.abspath("sample_1.1.fq"),
+                os.path.abspath("different_2.1.fq"),
+                os.path.abspath("simple_3.1.fq"),
+                os.path.abspath("sam_4.1.fq"),
+            ]
+            for old, new in zip(SAMPLE_READS_FORWARD_EMPTY.split(" "), local_samples_forward):
+                shutil.copy(old, new)
+
+            local_samples_reverse = [
+                os.path.abspath("sample_1.2.fq"),
+                os.path.abspath("different_2.2.fq"),
+                os.path.abspath("simple_3.2.fq"),
+                os.path.abspath("sam_4.2.fq"),
+            ]
+            for old, new in zip(SAMPLE_READS_REVERSE_EMPTY.split(" "), local_samples_reverse):
+                shutil.copy(old, new)
+
+            cmd = (
+                f"binchicken coassemble "
+                f"--forward {' '.join(local_samples_forward)} "
+                f"--reverse {' '.join(local_samples_reverse)} "
+                f"--genomes {TWO_GENOMES} "
+                f"--singlem-metapackage {METAPACKAGE} "
+                f"--assemble-unmapped "
+                f"--unmapping-max-identity 99 "
+                f"--unmapping-max-alignment 90 "
+                f"--prodigal-meta "
+                f"--run-qc "
+                f"--file-hierarchy always "
+                f"--file-hierarchy-depth 3 "
+                f"--file-hierarchy-chars 3 "
+                f"--output test "
+                f"--conda-prefix {path_to_conda} "
+            )
+            extern.run(cmd)
+
+            config_path = os.path.join("test", "config.yaml")
+            self.assertTrue(os.path.exists(config_path))
+
+            for sample in local_samples_forward:
+                sample_name = os.path.basename(sample).split(".")[0]
+                if len(sample_name) > 6:
+                    subpath = os.path.join(sample_name[0:3], sample_name[3:6], sample_name[6:9])
+                else:
+                    subpath = os.path.join(sample_name[0:3], sample_name[3:6])
+
+                pipe_path = os.path.join("test", "coassemble", "pipe", subpath, sample_name + "_read.otu_table.tsv")
+                self.assertTrue(os.path.exists(pipe_path))
+
+                qc_for_path = os.path.join("test", "coassemble", "qc", subpath, sample_name + "_1.fastq.gz")
+                self.assertTrue(os.path.exists(qc_for_path))
+
+                qc_rev_path = os.path.join("test", "coassemble", "qc", subpath, sample_name + "_2.fastq.gz")
+                self.assertTrue(os.path.exists(qc_rev_path))
+
+                map_for_path = os.path.join("test", "coassemble", "mapping", subpath, sample_name + "_unmapped.1.fq.gz")
+                self.assertTrue(os.path.exists(map_for_path))
+
+                map_rev_path = os.path.join("test", "coassemble", "mapping", subpath, sample_name + "_unmapped.2.fq.gz")
+                self.assertTrue(os.path.exists(map_rev_path))
+
+            read_size_path = os.path.join("test", "coassemble", "read_size.csv")
+            self.assertTrue(os.path.exists(read_size_path))
+            expected = "\n".join(
+                [
+                    ",".join(["sample_1", "4832"]),
+                    ",".join(["different_2", "3926"]),
+                    ",".join(["simple_3", "3624"]),
+                    ",".join(["sam_4", "604"]),
+                    ""
+                ]
+            )
+            with open(read_size_path) as f:
+                self.assertEqual(expected, f.read())
+
+            cluster_path = os.path.join("test", "coassemble", "target", "elusive_clusters.tsv")
+            self.assertTrue(os.path.exists(cluster_path))
+            expected = "\n".join(
+                [
+                    "\t".join([
+                        "samples",
+                        "length",
+                        "total_targets",
+                        "total_size",
+                        "recover_samples",
+                        "coassembly",
+                    ]),
+                    "\t".join([
+                        "different_2,sample_1",
+                        "2",
+                        "3",
+                        "8758",
+                        "different_2,sample_1,simple_3",
+                        "coassembly_0"
+                    ]),
+                    ""
+                ]
+            )
+            with open(cluster_path) as f:
+                self.assertEqual(expected, f.read())
 
 if __name__ == '__main__':
     unittest.main()

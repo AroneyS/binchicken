@@ -26,6 +26,10 @@ MEGAHIT_ASSEMBLY = "megahit"
 PRECLUSTER_NEVER_MODE = "never"
 PRECLUSTER_SIZE_DEP_MODE = "large"
 PRECLUSTER_ALWAYS_MODE = "always"
+HIERARCHY_NEVER_MODE = "never"
+HIERARCHY_SIZE_DEP_MODE = "large"
+HIERARCHY_SIZE_CUTOFF = 10000
+HIERARCHY_ALWAYS_MODE = "always"
 SUFFIX_RE = r"(_|\.)R?1$"
 
 def build_reads_list(forward, reverse):
@@ -258,7 +262,7 @@ def download_sra(args):
                 .to_list()
             )
             for coassembly in single_ended_sample_coassemblies:
-                logging.warn(f"Single-ended reads detected in assembly samples for coassembly: {coassembly}, skipping.")
+                logging.warning(f"Single-ended reads detected in assembly samples for coassembly: {coassembly}, skipping.")
 
             single_ended_recover_coassemblies = (
                 elusive_clusters
@@ -268,7 +272,7 @@ def download_sra(args):
                 .to_list()
             )
             for coassembly in single_ended_recover_coassemblies:
-                logging.warn(f"Single-ended reads detected in recovery samples for coassembly: {coassembly}. Removing those samples from recovery.")
+                logging.warning(f"Single-ended reads detected in recovery samples for coassembly: {coassembly}. Removing those samples from recovery.")
 
             if elusive_clusters.filter(~pl.col("single_ended_samples")).height == 0:
                 raise Exception("Single-ended reads detected. All coassemblies contain these reads.")
@@ -326,6 +330,9 @@ def set_standard_args(args):
     args.kmer_precluster = PRECLUSTER_NEVER_MODE
     args.precluster_distances = None
     args.precluster_size = 100
+    args.file_hierarchy = HIERARCHY_NEVER_MODE
+    args.file_hierarchy_depth = 1
+    args.file_hierarchy_chars = 1
     args.prodigal_meta = False
 
     return(args)
@@ -493,6 +500,18 @@ def coassemble(args):
     else:
         raise ValueError(f"Invalid kmer precluster mode: {args.kmer_precluster}")
 
+    if args.file_hierarchy == HIERARCHY_NEVER_MODE:
+        file_hierarchy = False
+    elif args.file_hierarchy == HIERARCHY_SIZE_DEP_MODE:
+        if len(forward_reads) >= HIERARCHY_SIZE_CUTOFF:
+            file_hierarchy = True
+        else:
+            file_hierarchy = False
+    elif args.file_hierarchy == HIERARCHY_ALWAYS_MODE:
+        file_hierarchy = True
+    else:
+        raise ValueError(f"Invalid file hierarchy mode: {args.file_hierarchy}")
+
     if not args.precluster_size:
         args.precluster_size = args.max_recovery_samples * 5
 
@@ -529,13 +548,16 @@ def coassemble(args):
         "exclude_coassemblies": args.exclude_coassemblies,
         "num_coassembly_samples": args.num_coassembly_samples,
         "max_coassembly_samples": args.max_coassembly_samples if args.max_coassembly_samples else args.num_coassembly_samples,
-        "max_coassembly_size": args.max_coassembly_size,
+        "max_coassembly_size": None if args.max_coassembly_size == "None" else args.max_coassembly_size,
         "max_recovery_samples": args.max_recovery_samples,
         "abundance_weighted": args.abundance_weighted,
         "abundance_weighted_samples": args.abundance_weighted_samples,
         "kmer_precluster": kmer_precluster,
         "precluster_distances": args.precluster_distances,
         "precluster_size": args.precluster_size,
+        "file_hierarchy": file_hierarchy,
+        "file_hierarchy_depth": args.file_hierarchy_depth,
+        "file_hierarchy_chars": args.file_hierarchy_chars,
         "prodigal_meta": args.prodigal_meta,
         # Coassembly config
         "assemble_unmapped": args.assemble_unmapped,
@@ -1004,11 +1026,11 @@ def iterate(args):
 
             if comb_cluster.height > 0:
                 _ = comb_cluster.select(
-                    pl.col("coassembly").map_elements(lambda x: logging.warn(f"{x} has been previously suggested"))
+                    pl.col("coassembly").map_elements(lambda x: logging.warning(f"{x} has been previously suggested"))
                     )
     elif not args.exclude_coassemblies:
-        logging.warn("Suggested coassemblies may match those from previous iterations. To check, use `--elusive-clusters`.")
-        logging.warn("To exclude, provide previous run with `--coassemble-output` or use `--exclude-coassembles`.")
+        logging.warning("Suggested coassemblies may match those from previous iterations. To check, use `--elusive-clusters`.")
+        logging.warning("To exclude, provide previous run with `--coassemble-output` or use `--exclude-coassembles`.")
 
     logging.info(f"Bin Chicken iterate complete.")
     logging.info(f"Cluster summary at {os.path.join(args.output, 'coassemble', 'summary.tsv')}")
@@ -1131,6 +1153,7 @@ def build(args):
     args.abundance_weighted = False
     args.abundance_weighted_samples_list = None
     args.kmer_precluster = PRECLUSTER_NEVER_MODE
+    args.file_hierarchy = HIERARCHY_NEVER_MODE
     args.download_limit = 1
 
     # Create mock input files
@@ -1421,7 +1444,7 @@ def main():
         max_coassembly_samples_default = None
         coassemble_clustering.add_argument("--max-coassembly-samples", type=int, help="Upper bound for number of samples per coassembly cluster [default: --num-coassembly-samples]", default=max_coassembly_samples_default)
         max_coassembly_size_default = 50
-        coassemble_clustering.add_argument("--max-coassembly-size", type=int, help=f"Maximum size (Gbp) of coassembly cluster [default: {max_coassembly_size_default}Gbp]", default=max_coassembly_size_default)
+        coassemble_clustering.add_argument("--max-coassembly-size", help=f"Maximum size (Gbp) of coassembly cluster [default: {max_coassembly_size_default}Gbp]", default=max_coassembly_size_default)
         coassemble_clustering.add_argument("--max-recovery-samples", type=int, help="Upper bound for number of related samples to use for differential abundance binning [default: 20]", default=20)
         coassemble_clustering.add_argument("--abundance-weighted", action="store_true", help="Weight sequences by mean sample abundance when ranking clusters [default: False]")
         coassemble_clustering.add_argument("--abundance-weighted-samples", nargs='+', help="Restrict sequence weighting to these samples. Remaining samples will still be used for coassembly [default: use all samples]", default=[])
@@ -1430,6 +1453,12 @@ def main():
                                     default=PRECLUSTER_SIZE_DEP_MODE, choices=[PRECLUSTER_NEVER_MODE, PRECLUSTER_SIZE_DEP_MODE, PRECLUSTER_ALWAYS_MODE])
         coassemble_clustering.add_argument("--precluster-distances", help="Distance file in the format of `sourmash scripts pairwise`. If provided, kmer sketching and clustering is skipped.")
         coassemble_clustering.add_argument("--precluster-size", type=int, help="# of samples within each sample's precluster [default: 5 * max-recovery-samples]")
+        coassemble_clustering.add_argument("--file-hierarchy", help=f"Split sample outputs into subdirectories based on sample name. [default: large; use when given >{HIERARCHY_SIZE_CUTOFF} samples]",
+                                    default=HIERARCHY_SIZE_DEP_MODE, choices=[HIERARCHY_NEVER_MODE, HIERARCHY_SIZE_DEP_MODE, HIERARCHY_ALWAYS_MODE])
+        file_hierarchy_depth_default = 3
+        coassemble_clustering.add_argument("--file-hierarchy-depth", type=int, help=f"Maximum depth of subdirectory hierarchy. [default: {file_hierarchy_depth_default}]", default=file_hierarchy_depth_default)
+        file_hierarchy_chars_default = 4
+        coassemble_clustering.add_argument("--file-hierarchy-chars", type=int, help=f"Number of characters to use for subdirectory hierarchy. [default: {file_hierarchy_chars_default}]", default=file_hierarchy_chars_default)
         coassemble_clustering.add_argument("--prodigal-meta", action="store_true", help="Use prodigal \"-p meta\" argument (for testing)")
         # Coassembly options
         coassemble_coassembly = parser.add_argument_group("Coassembly options")

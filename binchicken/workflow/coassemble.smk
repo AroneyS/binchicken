@@ -15,11 +15,30 @@ output_dir = os.path.abspath("coassemble")
 logs_dir = output_dir + "/logs"
 benchmarks_dir = output_dir + "/benchmarks"
 
-mapped_reads_1 = {read: output_dir + f"/mapping/{read}_unmapped.1.fq.gz" for read in config["reads_1"]}
-mapped_reads_2 = {read: output_dir + f"/mapping/{read}_unmapped.2.fq.gz" for read in config["reads_2"]}
+def apply_hierarchy(read):
+    index = 0
+    read_path = []
+    for _ in range(config["file_hierarchy_depth"]):
+        if index > len(read):
+            break
+        read_path.append(read[index:index + config["file_hierarchy_chars"]])
+        index += config["file_hierarchy_chars"]
+    read_path.append(read)
 
-qc_reads_1 = {read: output_dir + f"/qc/{read}_1.fastq.gz" for read in config["reads_1"]}
-qc_reads_2 = {read: output_dir + f"/qc/{read}_2.fastq.gz" for read in config["reads_2"]}
+    return "/".join(read_path)
+
+if config["file_hierarchy"]:
+    reads_1 = {apply_hierarchy(read): r for read, r in config["reads_1"].items()}
+    reads_2 = {apply_hierarchy(read): r for read, r in config["reads_2"].items()}
+else:
+    reads_1 = config["reads_1"]
+    reads_2 = config["reads_2"]
+
+mapped_reads_1 = {read: output_dir + f"/mapping/{read}_unmapped.1.fq.gz" for read in reads_1}
+mapped_reads_2 = {read: output_dir + f"/mapping/{read}_unmapped.2.fq.gz" for read in reads_2}
+
+qc_reads_1 = {read: output_dir + f"/qc/{read}_1.fastq.gz" for read in reads_1}
+qc_reads_2 = {read: output_dir + f"/qc/{read}_2.fastq.gz" for read in reads_2}
 
 def get_mem_mb(wildcards, threads, attempt):
     return 8 * 1000 * threads * attempt
@@ -51,9 +70,9 @@ def get_reads(wildcards, forward=True, version=None):
     version = version if version else wildcards.version
     if version == "" or version == "whole":
         if forward:
-            return config["reads_1"]
+            return reads_1
         else:
-            return config["reads_2"]
+            return reads_2
     elif version == "unmapped_":
         if forward:
             return mapped_reads_1
@@ -122,8 +141,8 @@ rule summary:
 #####################
 rule singlem_pipe_reads:
     input:
-        reads_1 = lambda wildcards: config["reads_1"][wildcards.read],
-        reads_2 = lambda wildcards: config["reads_2"][wildcards.read],
+        reads_1 = lambda wildcards: reads_1[wildcards.read],
+        reads_2 = lambda wildcards: reads_2[wildcards.read],
     output:
         output_dir + "/pipe/{read}_read.otu_table.tsv"
     log:
@@ -243,7 +262,7 @@ rule singlem_summarise_genomes:
 ########################
 rule singlem_appraise:
     input:
-        reads = expand(output_dir + "/pipe/{read}_read.otu_table.tsv", read=config["reads_1"]),
+        reads = expand(output_dir + "/pipe/{read}_read.otu_table.tsv", read=reads_1),
         bins = output_dir + "/summarise/bins_summarised.otu_table.tsv",
     output:
         unbinned = temp(output_dir + "/appraise/unbinned_raw.otu_table.tsv"),
@@ -306,14 +325,14 @@ rule update_appraise:
         sequence_identity = config["appraise_sequence_identity"],
         singlem_metapackage = config["singlem_metapackage"],
         new_binned = output_dir + "/appraise/binned_new.otu_table.tsv",
-    threads: 1
+    threads: 64
     resources:
         mem_mb=get_mem_mb,
         runtime = get_runtime(base_hours = 24),
     conda:
         "env/singlem.yml"
     shell:
-        "singlem appraise "
+        "singlem appraise --stream-inputs "
         "--metagenome-otu-tables {input.unbinned} "
         "--genome-otu-tables {input.bins} "
         "--metapackage {params.singlem_metapackage} "
@@ -322,16 +341,56 @@ rule update_appraise:
         "--imperfect "
         "--sequence-identity {params.sequence_identity} "
         "--output-found-in "
+        "--threads {threads} "
         "&> {log} "
         "&& cat {input.binned} <(tail -n+2 {params.new_binned}) > {output.binned} "
 
 ###################################
 ### SingleM query (alternative) ###
 ###################################
+num_reads = len(reads_1)
+num_query_splits = 1 if num_reads < 101 else 100
+def get_query_reads(wildcards):
+    split = int(wildcards.split)
+    start = split * (num_reads // num_query_splits)
+    end = (split + 1) * (num_reads // num_query_splits) if split < num_query_splits - 1 else num_reads
+    reads = list(reads_1.keys())[start:end]
+
+    return expand(output_dir + "/pipe/{read}_read.otu_table.tsv", read=reads)
+
+def get_query_queries(wildcards):
+    split = int(wildcards.split)
+    start = split * (num_reads // num_query_splits)
+    end = (split + 1) * (num_reads // num_query_splits) if split < num_query_splits - 1 else num_reads
+    reads = list(reads_1.keys())[start:end]
+
+    return expand(output_dir + "/query/{read}_query.otu_table.tsv", read=reads)
+
+rule query_processing_split:
+    input:
+        pipe_reads = get_query_reads,
+        query_reads = get_query_queries,
+    output:
+        unbinned = temp(output_dir + "/appraise/unbinned_split_{split}.otu_table.tsv"),
+        binned = temp(output_dir + "/appraise/binned_split_{split}.otu_table.tsv"),
+    log:
+        logs_dir + "/query/processing_split_{split}.log"
+    benchmark:
+        benchmarks_dir + "/query/processing_split_{split}.tsv"
+    params:
+        sequence_identity = config["appraise_sequence_identity"],
+        window_size = 60,
+    threads: 1
+    resources:
+        mem_mb=get_mem_mb,
+        runtime = get_runtime(base_hours = 48),
+    script:
+        "scripts/query_processing.py"
+
 rule query_processing:
     input:
-        pipe_reads = expand(output_dir + "/pipe/{read}_read.otu_table.tsv", read=config["reads_1"]),
-        query_reads = expand(output_dir + "/query/{read}_query.otu_table.tsv", read=config["reads_1"]),
+        unbinned = expand(output_dir + "/appraise/unbinned_split_{split}.otu_table.tsv", split=range(num_query_splits)),
+        binned = expand(output_dir + "/appraise/binned_split_{split}.otu_table.tsv", split=range(num_query_splits)),
     output:
         unbinned = temp(output_dir + "/appraise/unbinned_raw.otu_table.tsv"),
         binned = temp(output_dir + "/appraise/binned_raw.otu_table.tsv"),
@@ -339,22 +398,23 @@ rule query_processing:
         logs_dir + "/query/processing.log"
     benchmark:
         benchmarks_dir + "/query/processing.tsv"
-    params:
-        sequence_identity = config["appraise_sequence_identity"],
-        window_size = 60,
     threads: 1
     resources:
         mem_mb=get_mem_mb,
-        runtime = get_runtime(base_hours = 24),
-    script:
-        "scripts/query_processing.py"
+        runtime = get_runtime(base_hours = 48),
+    shell:
+        "echo 'Start' > {log} && "
+        "awk '(NR == 1 || FNR > 1)' {input.unbinned} > {output.unbinned} && "
+        "echo 'Unbinned done' > {log} && "
+        "awk '(NR == 1 || FNR > 1)' {input.binned} > {output.binned} && "
+        "echo 'Binned done' > {log}"
 
 ################################
 ### No genomes (alternative) ###
 ################################
 rule no_genomes:
     input:
-        reads = expand(output_dir + "/pipe/{read}_read.otu_table.tsv", read=config["reads_1"]),
+        reads = expand(output_dir + "/pipe/{read}_read.otu_table.tsv", read=reads_1),
     output:
         unbinned = temp(output_dir + "/appraise/unbinned_raw.otu_table.tsv") if config["no_genomes"] else [],
         binned = temp(output_dir + "/appraise/binned_raw.otu_table.tsv") if config["no_genomes"] else [],
@@ -446,7 +506,7 @@ rule distance_samples:
         sketch = output_dir + "/sketch/samples.sig",
     output:
         distance = output_dir + "/sketch/samples.csv"
-    threads: 64
+    threads: 128
     resources:
         mem_mb=get_mem_mb,
         runtime = get_runtime(base_hours = 48),
@@ -460,6 +520,7 @@ rule distance_samples:
         "-o {output.distance} "
         "-k 60 "
         "-s 1 "
+        "-t 0.1 "
         "-c {threads} "
         "&> {log} "
 
@@ -608,8 +669,8 @@ rule mock_download_sra:
 #####################################
 rule qc_reads:
     input:
-        reads_1 = lambda wildcards: config["reads_1"][wildcards.read],
-        reads_2 = lambda wildcards: config["reads_2"][wildcards.read],
+        reads_1 = lambda wildcards: reads_1[wildcards.read],
+        reads_2 = lambda wildcards: reads_2[wildcards.read],
     output:
         reads_1 = output_dir + "/qc/{read}_1.fastq.gz",
         reads_2 = output_dir + "/qc/{read}_2.fastq.gz",
@@ -663,8 +724,8 @@ rule collect_genomes:
 
 rule map_reads:
     input:
-        reads_1 = lambda wildcards: config["reads_1"][wildcards.read] if not config["run_qc"] else output_dir + "/qc/{read}_1.fastq.gz",
-        reads_2 = lambda wildcards: config["reads_2"][wildcards.read] if not config["run_qc"] else output_dir + "/qc/{read}_2.fastq.gz",
+        reads_1 = lambda wildcards: reads_1[wildcards.read] if not config["run_qc"] else output_dir + "/qc/{read}_1.fastq.gz",
+        reads_2 = lambda wildcards: reads_2[wildcards.read] if not config["run_qc"] else output_dir + "/qc/{read}_2.fastq.gz",
         genomes = output_dir + "/mapping/{read}_reference.fna",
     output:
         dir = temp(directory(output_dir + "/mapping/{read}_coverm")),
@@ -695,8 +756,8 @@ rule filter_bam_files:
         temp(output_dir + "/mapping/{read}_unmapped.bam"),
     group: "unmapping"
     params:
-        genomes = "{read}_reference.fna",
-        reads_1 = lambda wildcards: os.path.basename(config["reads_1"][wildcards.read]) if not config["run_qc"] else wildcards.read + "_1.fastq.gz",
+        genomes = lambda wildcards: os.path.basename(wildcards.read) + "_reference.fna",
+        reads_1 = lambda wildcards: os.path.basename(config["reads_1"][wildcards.read]) if not config["run_qc"] else os.path.basename(wildcards.read) + "_1.fastq.gz",
         sequence_identity = config["unmapping_max_identity"],
         alignment_percent = config["unmapping_max_alignment"],
     threads: 32
