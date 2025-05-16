@@ -616,12 +616,19 @@ rule target_weighting:
     resources:
         mem_mb=get_mem_mb,
         runtime = get_runtime(base_hours = 24),
+    params:
+        script = scripts_dir + "/target_weighting.py",
     log:
         logs_dir + "/target/target_weighting.log"
     benchmark:
         benchmarks_dir + "/target/target_weighting.tsv"
-    script:
-        "scripts/target_weighting.py"
+    shell:
+        "python3 {params.script} "
+        "--targets {input.targets} "
+        "--weighting {input.weighting} "
+        "--targets-weighted {output.targets_weighted} "
+        "--threads {threads} "
+        "--log {log}"
 
 checkpoint cluster_graph:
     input:

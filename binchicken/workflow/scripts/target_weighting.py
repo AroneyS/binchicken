@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 ###########################
 ### target_weighting.py ###
 ###########################
@@ -6,6 +7,7 @@
 import os
 import polars as pl
 import logging
+import argparse
 
 TARGET_COLUMNS = {
     "gene": str,
@@ -29,6 +31,17 @@ TARGET_WEIGHTING_COLUMNS = {
     "weight": float,
 }
 
+# Example shell directive for Snakemake:
+# shell:
+# """
+# python3 binchicken/workflow/scripts/target_weighting.py \
+#   --targets {input.targets} \
+#   --weighting {input.weighting} \
+#   --targets-weighted {output.targets_weighted} \
+#   --threads {threads} \
+#   --log {log}
+# """
+
 def pipeline(targets, weighting):
     logging.info(f"Polars using {str(pl.thread_pool_size())} threads")
 
@@ -46,23 +59,36 @@ def pipeline(targets, weighting):
 
     return weighted
 
-if __name__ == "__main__":
-    os.environ["POLARS_MAX_THREADS"] = str(snakemake.threads)
+def main():
+    parser = argparse.ArgumentParser(description="Target weighting pipeline script.")
+    parser.add_argument("--targets", required=True, help="Path to input targets file")
+    parser.add_argument("--weighting", required=True, help="Path to input weighting file")
+    parser.add_argument("--targets-weighted", required=True, help="Path to output targets weighted file")
+    parser.add_argument("--threads", type=int, default=1, help="Number of threads for Polars")
+    parser.add_argument("--log", default=None, help="Log file path")
+    args = parser.parse_args()
+
+    os.environ["POLARS_MAX_THREADS"] = str(args.threads)
     import polars as pl
 
-    logging.basicConfig(
-        filename=snakemake.log[0],
-        level=logging.INFO,
-        format='%(asctime)s %(levelname)s: %(message)s',
-        datefmt='%Y/%m/%d %I:%M:%S %p'
+    if args.log:
+        logging.basicConfig(
+            filename=args.log,
+            level=logging.INFO,
+            format='%(asctime)s %(levelname)s: %(message)s',
+            datefmt='%Y/%m/%d %I:%M:%S %p'
+        )
+    else:
+        logging.basicConfig(
+            level=logging.INFO,
+            format='%(asctime)s %(levelname)s: %(message)s',
+            datefmt='%Y/%m/%d %I:%M:%S %p'
         )
 
-    targets_path = snakemake.input.targets
-    weighting_path = snakemake.input.weighting
-    targets_weighted_path = snakemake.output.targets_weighted
-
-    targets = pl.read_csv(targets_path, separator="\t", schema_overrides=TARGET_COLUMNS)
-    weighting = pl.read_csv(weighting_path, separator="\t", schema_overrides=WEIGHTING_COLUMNS)
-
+    targets = pl.read_csv(args.targets, separator="\t", schema_overrides=TARGET_COLUMNS)
+    weighting = pl.read_csv(args.weighting, separator="\t", schema_overrides=WEIGHTING_COLUMNS)
     targets_weighted = pipeline(targets, weighting)
-    targets_weighted.write_csv(targets_weighted_path, separator="\t")
+    targets_weighted.write_csv(args.targets_weighted, separator="\t")
+
+if __name__ == "__main__":
+    main()
