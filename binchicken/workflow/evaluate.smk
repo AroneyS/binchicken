@@ -182,6 +182,7 @@ rule evaluate_plots:
     params:
         script = scripts_dir + "/evaluate.R",
         coassemble_summary = config["coassemble_summary"],
+        test = config["test"],
     output:
         plots_dir = directory(output_dir + "/evaluate/plots"),
         summary_table = output_dir + "/evaluate/summary_table.png",
@@ -196,4 +197,4 @@ rule evaluate_plots:
         "--coassemble-summary {params.coassemble_summary} "
         "--plots-dir {output.plots_dir} "
         "--summary-table {output.summary_table} "
-        "--test {config[test]}"
+        "--test {params.test}"

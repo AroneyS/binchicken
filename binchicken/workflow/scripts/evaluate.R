@@ -33,7 +33,7 @@ option_list <- list(
   make_option("--coassemble-summary", type="character", help="Path to coassemble summary file"),
   make_option("--plots-dir", type="character", help="Path to output plots directory"),
   make_option("--summary-table", type="character", help="Path to output summary table file"),
-  make_option("--test", type="logical", default=FALSE, help="Test mode (True/False)")
+  make_option("--test", type="logical", nargs='?', const=FALSE, default=FALSE, help="Test mode (True/False)")
 )
 
 opt <- parse_args(OptionParser(option_list=option_list))
