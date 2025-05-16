@@ -909,6 +909,7 @@ rule aviary_commands:
         recover_commands = output_dir + "/commands/recover_commands.sh"
     threads: 8
     params:
+        script = scripts_dir + "/aviary_commands.py",
         reads_1 = mapped_reads_1 if config["assemble_unmapped"] else qc_reads_1 if config["run_qc"] else config["reads_1"],
         reads_2 = mapped_reads_2 if config["assemble_unmapped"] else qc_reads_2 if config["run_qc"] else config["reads_2"],
         dir = output_dir,
@@ -920,8 +921,21 @@ rule aviary_commands:
     localrule: True
     log:
         logs_dir + "/aviary_commands.log"
-    script:
-        "scripts/aviary_commands.py"
+    shell:
+        "python3 {params.script} "
+        "--elusive-clusters {input.elusive_clusters} "
+        "--coassemble-commands {output.coassemble_commands} "
+        "--recover-commands {output.recover_commands} "
+        "--reads-1 {params.reads_1} "
+        "--reads-2 {params.reads_2} "
+        "--dir {params.dir} "
+        "--assemble-threads {params.assemble_threads} "
+        "--assemble-memory {params.assemble_memory} "
+        "--recover-threads {params.recover_threads} "
+        "--recover-memory {params.recover_memory} "
+        "--speed {params.speed} "
+        "--threads {threads} "
+        "--log {log}"
 
 #########################################
 ### Run Aviary commands (alternative) ###
