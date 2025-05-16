@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 ###################
 ### evaluate.py ###
 ###################
@@ -5,6 +6,7 @@
 
 import polars as pl
 import os
+import argparse
 
 SINGLEM_COLUMNS = {
     "gene": str,
@@ -58,6 +60,23 @@ SUMMARY_COLUMNS = {
     "total": int,
     "match_percent": float,
     }
+
+# Example shell directive for Snakemake:
+# shell:
+# """
+# python3 binchicken/workflow/scripts/evaluate.py \
+#   --target-otu-table {params.target_otu_table} \
+#   --binned-otu-table {params.binned_otu_table} \
+#   --elusive-clusters {params.elusive_clusters} \
+#   --elusive-edges {params.elusive_edges} \
+#   --recovered-otu-table {input.recovered_otu_table} \
+#   --recovered-bins {params.recovered_bins} \
+#   --matched-hits {output.matched_hits} \
+#   --novel-hits {output.novel_hits} \
+#   --summary-stats {output.summary_stats} \
+#   --threads {threads} \
+#   --log {log}
+# """
 
 def evaluate(target_otu_table, binned_otu_table, elusive_clusters, elusive_edges, recovered_otu_table, recovered_bins):
 
@@ -323,30 +342,50 @@ def summarise_stats(matches, combined_otu_table, recovered_bins):
 
     return summary
 
-if __name__ == "__main__":
-    os.environ["POLARS_MAX_THREADS"] = str(snakemake.threads)
+def main():
+    parser = argparse.ArgumentParser(description="Evaluate pipeline script.")
+    parser.add_argument("--target-otu-table", required=True, help="Path to target OTU table")
+    parser.add_argument("--binned-otu-table", required=True, help="Path to binned OTU table")
+    parser.add_argument("--elusive-clusters", required=True, help="Path to elusive clusters file")
+    parser.add_argument("--elusive-edges", required=True, help="Path to elusive edges file")
+    parser.add_argument("--recovered-otu-table", required=True, help="Path to recovered OTU table")
+    parser.add_argument("--recovered-bins", required=True, type=eval, help="Recovered bins dictionary (as string)")
+    parser.add_argument("--matched-hits", required=True, help="Path to output matched hits file")
+    parser.add_argument("--novel-hits", required=True, help="Path to output novel hits file")
+    parser.add_argument("--summary-stats", required=True, help="Path to output summary stats file")
+    parser.add_argument("--threads", type=int, default=1, help="Number of threads for Polars")
+    parser.add_argument("--log", default=None, help="Log file path")
+    args = parser.parse_args()
+
+    os.environ["POLARS_MAX_THREADS"] = str(args.threads)
     import polars as pl
 
-    target_path = snakemake.params.target_otu_table
-    binned_path = snakemake.params.binned_otu_table
-    elusive_clusters_path = snakemake.params.elusive_clusters
-    elusive_edges_path = snakemake.params.elusive_edges
-    recovered_otu_table_path = snakemake.input.recovered_otu_table
-    recovered_bins = snakemake.params.recovered_bins
-    matched_hits_path = snakemake.output.matched_hits
-    novel_hits_path = snakemake.output.novel_hits
-    summary_stats_path = snakemake.output.summary_stats
+    if args.log:
+        import logging
+        logging.basicConfig(
+            filename=args.log,
+            level=logging.INFO,
+            format='%(asctime)s %(levelname)s: %(message)s',
+            datefmt='%Y/%m/%d %I:%M:%S %p'
+        )
+    else:
+        import logging
+        logging.basicConfig(
+            level=logging.INFO,
+            format='%(asctime)s %(levelname)s: %(message)s',
+            datefmt='%Y/%m/%d %I:%M:%S %p'
+        )
 
-    target_otu_table = pl.read_csv(target_path, separator="\t", schema_overrides=TARGET_COLUMNS)
-    binned_otu_table = pl.read_csv(binned_path, separator="\t", schema_overrides=APPRAISE_COLUMNS)
-    elusive_clusters = pl.read_csv(elusive_clusters_path, separator="\t", schema_overrides=CLUSTER_COLUMNS)
-    elusive_edges = pl.read_csv(elusive_edges_path, separator="\t", schema_overrides=EDGE_COLUMNS)
-    recovered_otu_table = pl.read_csv(recovered_otu_table_path, separator="\t", schema_overrides=SINGLEM_COLUMNS)
+    target_otu_table = pl.read_csv(args.target_otu_table, separator="\t", schema_overrides=TARGET_COLUMNS)
+    binned_otu_table = pl.read_csv(args.binned_otu_table, separator="\t", schema_overrides=APPRAISE_COLUMNS)
+    elusive_clusters = pl.read_csv(args.elusive_clusters, separator="\t", schema_overrides=CLUSTER_COLUMNS)
+    elusive_edges = pl.read_csv(args.elusive_edges, separator="\t", schema_overrides=EDGE_COLUMNS)
+    recovered_otu_table = pl.read_csv(args.recovered_otu_table, separator="\t", schema_overrides=SINGLEM_COLUMNS)
 
-    matches, unmatched, summary = evaluate(target_otu_table, binned_otu_table, elusive_clusters, elusive_edges, recovered_otu_table, recovered_bins)
-    # Export hits matching elusive targets
-    matches.write_csv(matched_hits_path, separator="\t")
-    # Export non-elusive sequence hits
-    unmatched.write_csv(novel_hits_path, separator="\t")
-    # Export summary stats
-    summary.write_csv(summary_stats_path, separator="\t")
+    matches, unmatched, summary = evaluate(target_otu_table, binned_otu_table, elusive_clusters, elusive_edges, recovered_otu_table, args.recovered_bins)
+    matches.write_csv(args.matched_hits, separator="\t")
+    unmatched.write_csv(args.novel_hits, separator="\t")
+    summary.write_csv(args.summary_stats, separator="\t")
+
+if __name__ == "__main__":
+    main()

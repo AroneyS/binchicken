@@ -150,6 +150,7 @@ rule evaluate:
         novel_hits = output_dir + "/evaluate/novel_hits.tsv",
         summary_stats = output_dir + "/evaluate/summary_stats.tsv",
     params:
+        script = scripts_dir + "/evaluate.py",
         target_otu_table = config["targets"],
         binned_otu_table = config["binned"],
         elusive_edges = config["elusive_edges"],
@@ -157,8 +158,19 @@ rule evaluate:
         recovered_bins = config["recovered_bins"],
     threads:
         64
-    script:
-        "scripts/evaluate.py"
+    shell:
+        "python3 {params.script} "
+        "--target-otu-table {params.target_otu_table} "
+        "--binned-otu-table {params.binned_otu_table} "
+        "--elusive-clusters {params.elusive_clusters} "
+        "--elusive-edges {params.elusive_edges} "
+        "--recovered-otu-table {input.recovered_otu_table} "
+        "--recovered-bins {params.recovered_bins} "
+        "--matched-hits {output.matched_hits} "
+        "--novel-hits {output.novel_hits} "
+        "--summary-stats {output.summary_stats} "
+        "--threads {threads} "
+        "--log {log}"
 
 rule evaluate_plots:
     input:
