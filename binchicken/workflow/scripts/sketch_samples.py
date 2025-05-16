@@ -111,7 +111,7 @@ def main():
     parser = argparse.ArgumentParser(description="Sketch samples pipeline script.")
     parser.add_argument("--unbinned", required=True, help="Path to unbinned input file")
     parser.add_argument("--sketch", required=True, help="Path to output sketch file")
-    parser.add_argument("--taxa-of-interest", default=None, help="Taxa of interest string")
+    parser.add_argument("--taxa-of-interest", nargs='?', const=None, default=None, help="Taxa of interest string")
     parser.add_argument("--threads", type=int, default=1, help="Number of threads for Polars and sketching")
     parser.add_argument("--log", default=None, help="Log file path")
     args = parser.parse_args()
