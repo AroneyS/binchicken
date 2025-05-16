@@ -14,6 +14,7 @@ os.umask(0o002)
 output_dir = os.path.abspath("coassemble")
 logs_dir = output_dir + "/logs"
 benchmarks_dir = output_dir + "/benchmarks"
+scripts_dir = os.path.join(os.path.dirname(os.path.abspath(workflow.snakefile)), 'scripts')
 
 def apply_hierarchy(read):
     index = 0
@@ -547,11 +548,12 @@ rule target_elusive:
         output_edges = output_dir + "/target/elusive_edges.tsv",
         output_targets = output_dir + "/target/targets.tsv",
     params:
+        script = scripts_dir + "/target_elusive.py",
         min_coassembly_coverage = config["min_coassembly_coverage"],
         max_coassembly_samples = config["max_coassembly_samples"],
         taxa_of_interest = config["taxa_of_interest"],
-        samples = config["reads_1"],
-        anchor_samples = config["anchor_samples"],
+        samples = " ".join(config["reads_1"]),
+        anchor_samples = " ".join(config["anchor_samples"]),
         precluster_size = config["precluster_size"],
     threads: 64
     resources:
@@ -561,8 +563,20 @@ rule target_elusive:
         logs_dir + "/target/target_elusive.log"
     benchmark:
         benchmarks_dir + "/target/target_elusive.tsv"
-    script:
-        "scripts/target_elusive.py"
+    shell:
+        "python3 {params.script} "
+        "--unbinned {input.unbinned} "
+        "--distances {input.distances} "
+        "--output-targets {output.output_targets} "
+        "--output-edges {output.output_edges} "
+        "--samples {params.samples} "
+        "--anchor-samples {params.anchor_samples} "
+        "--min-coassembly-coverage {params.min_coassembly_coverage} "
+        "--max-coassembly-samples {params.max_coassembly_samples} "
+        "--taxa-of-interest {params.taxa_of_interest} "
+        "--precluster-size {params.precluster_size} "
+        "--threads {threads} "
+        "--log {log}"
 
 rule target_weighting:
     input:
