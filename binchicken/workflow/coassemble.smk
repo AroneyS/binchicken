@@ -379,14 +379,23 @@ rule query_processing_split:
     benchmark:
         benchmarks_dir + "/query/processing_split_{split}.tsv"
     params:
+        script = scripts_dir + "/query_processing.py",
         sequence_identity = config["appraise_sequence_identity"],
         window_size = 60,
     threads: 1
     resources:
         mem_mb=get_mem_mb,
         runtime = get_runtime(base_hours = 48),
-    script:
-        "scripts/query_processing.py"
+    shell:
+        "python3 {params.script} "
+        "--query-reads {input.query_reads} "
+        "--pipe-reads {input.pipe_reads} "
+        "--binned {output.binned} "
+        "--unbinned {output.unbinned} "
+        "--sequence-identity {params.sequence_identity} "
+        "--window-size {params.window_size} "
+        "--threads {threads} "
+        "--log {log}"
 
 rule query_processing:
     input:
