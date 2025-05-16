@@ -500,6 +500,7 @@ rule sketch_samples:
     output:
         sketch = output_dir + "/sketch/samples.sig"
     params:
+        script = scripts_dir + "/sketch_samples.py",
         taxa_of_interest = config["taxa_of_interest"],
     threads: 64
     resources:
@@ -509,8 +510,13 @@ rule sketch_samples:
         logs_dir + "/precluster/sketching.log"
     benchmark:
         benchmarks_dir + "/precluster/sketching.tsv"
-    script:
-        "scripts/sketch_samples.py"
+    shell:
+        "python3 {params.script} "
+        "--unbinned {input.unbinned} "
+        "--sketch {output.sketch} "
+        "--taxa-of-interest {params.taxa_of_interest} "
+        "--threads {threads} "
+        "--log {log}"
 
 rule provided_distances:
     input:
