@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 #####################
 ### no_genomes.py ###
 #####################
@@ -5,6 +6,7 @@
 
 import polars as pl
 import os
+import argparse
 
 SINGLEM_OTU_TABLE_SCHEMA = {
     "gene": str,
@@ -14,6 +16,16 @@ SINGLEM_OTU_TABLE_SCHEMA = {
     "coverage": float,
     "taxonomy": str,
     }
+
+# Example shell directive for Snakemake:
+# shell:
+# """
+# python3 binchicken/workflow/scripts/no_genomes.py \
+#   --reads {input.reads} \
+#   --binned {output.binned} \
+#   --unbinned {output.unbinned} \
+#   --threads {threads}
+# """
 
 def processing(reads):
     print(f"Polars using {str(pl.thread_pool_size())} threads")
@@ -27,19 +39,25 @@ def processing(reads):
 
     return(binned, unbinned)
 
-if __name__ == "__main__":
-    os.environ["POLARS_MAX_THREADS"] = str(snakemake.threads)
+def main():
+    parser = argparse.ArgumentParser(description="No genomes pipeline script.")
+    parser.add_argument("--reads", required=True, nargs='+', help="List of input read files")
+    parser.add_argument("--binned", required=True, help="Path to output binned file")
+    parser.add_argument("--unbinned", required=True, help="Path to output unbinned file")
+    parser.add_argument("--threads", type=int, default=1, help="Number of threads for Polars")
+    args = parser.parse_args()
+
+    os.environ["POLARS_MAX_THREADS"] = str(args.threads)
     import polars as pl
 
-    input_reads = snakemake.input.reads
-    output_binned = snakemake.output.binned
-    output_unbinned = snakemake.output.unbinned
-
     reads = []
-    for read in input_reads:
+    for read in args.reads:
         reads.append(pl.scan_csv(read, separator="\t", schema_overrides=SINGLEM_OTU_TABLE_SCHEMA))
 
     binned, unbinned = processing(pl.concat(reads))
 
-    binned.sink_csv(output_binned, separator="\t")
-    unbinned.sink_csv(output_unbinned, separator="\t")
+    binned.sink_csv(args.binned, separator="\t")
+    unbinned.sink_csv(args.unbinned, separator="\t")
+
+if __name__ == "__main__":
+    main()

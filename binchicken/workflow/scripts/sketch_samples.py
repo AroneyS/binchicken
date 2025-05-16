@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 #########################
 ### sketch_samples.py ###
 #########################
@@ -11,6 +12,7 @@ from sourmash.sourmash_args import SaveSignaturesToLocation
 from concurrent.futures import ProcessPoolExecutor
 import extern
 import re
+import argparse
 
 SINGLEM_OTU_TABLE_SCHEMA = {
     "gene": str,
@@ -20,6 +22,17 @@ SINGLEM_OTU_TABLE_SCHEMA = {
     "coverage": float,
     "taxonomy": str,
     }
+
+# Example shell directive for Snakemake:
+# shell:
+# """
+# python3 binchicken/workflow/scripts/sketch_samples.py \
+#   --unbinned {input.unbinned} \
+#   --sketch {output.sketch} \
+#   --taxa-of-interest {params.taxa_of_interest} \
+#   --threads {threads} \
+#   --log {log}
+# """
 
 def process_groups(groups, output_path):
     with SaveSignaturesToLocation(output_path) as save_sigs:
@@ -94,26 +107,39 @@ def processing(unbinned_path, output_path, taxa_of_interest=None, threads=1, sam
     logging.info("Done")
     return output_path
 
-if __name__ == "__main__":
-    os.environ["POLARS_MAX_THREADS"] = str(snakemake.threads)
+def main():
+    parser = argparse.ArgumentParser(description="Sketch samples pipeline script.")
+    parser.add_argument("--unbinned", required=True, help="Path to unbinned input file")
+    parser.add_argument("--sketch", required=True, help="Path to output sketch file")
+    parser.add_argument("--taxa-of-interest", nargs='?', const=None, default=None, help="Taxa of interest string")
+    parser.add_argument("--threads", type=int, default=1, help="Number of threads for Polars and sketching")
+    parser.add_argument("--log", default=None, help="Log file path")
+    args = parser.parse_args()
+
+    os.environ["POLARS_MAX_THREADS"] = str(args.threads)
     import polars as pl
 
-    logging.basicConfig(
-        filename=snakemake.log[0],
-        level=logging.INFO,
-        format='%(asctime)s %(levelname)s: %(message)s',
-        datefmt='%Y/%m/%d %I:%M:%S %p'
+    if args.log:
+        logging.basicConfig(
+            filename=args.log,
+            level=logging.INFO,
+            format='%(asctime)s %(levelname)s: %(message)s',
+            datefmt='%Y/%m/%d %I:%M:%S %p'
+        )
+    else:
+        logging.basicConfig(
+            level=logging.INFO,
+            format='%(asctime)s %(levelname)s: %(message)s',
+            datefmt='%Y/%m/%d %I:%M:%S %p'
         )
     logging.info(f"Polars using {str(pl.thread_pool_size())} threads")
 
-    unbinned_path = snakemake.input.unbinned
-    TAXA_OF_INTEREST = snakemake.params.taxa_of_interest
-    output_path = snakemake.output.sketch
-    threads = snakemake.threads
+    processing(
+        args.unbinned,
+        args.sketch,
+        taxa_of_interest=args.taxa_of_interest,
+        threads=args.threads
+    )
 
-    signatures = processing(
-        unbinned_path,
-        output_path,
-        taxa_of_interest=TAXA_OF_INTEREST,
-        threads=threads
-        )
+if __name__ == "__main__":
+    main()

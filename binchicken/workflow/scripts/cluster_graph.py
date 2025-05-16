@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 ########################
 ### cluster_graph.py ###
 ########################
@@ -7,6 +8,7 @@ import polars as pl
 import itertools
 import os
 import logging
+import argparse
 
 OUTPUT_COLUMNS={
     "samples": str,
@@ -21,6 +23,26 @@ TARGET_WEIGHTING_COLUMNS = {
     "target": str,
     "weight": float,
 }
+
+# Example shell directive for Snakemake:
+# shell:
+# """
+# python3 binchicken/workflow/scripts/cluster_graph.py \
+#   --elusive-edges {input.elusive_edges} \
+#   --read-size {input.read_size} \
+#   --targets-weighted {input.targets_weighted} \
+#   --elusive-clusters {output.elusive_clusters} \
+#   --max-coassembly-size {params.max_coassembly_size} \
+#   --max-coassembly-samples {params.max_coassembly_samples} \
+#   --num-coassembly-samples {params.num_coassembly_samples} \
+#   --max-recovery-samples {params.max_recovery_samples} \
+#   --coassembly-samples {params.coassembly_samples} \
+#   --exclude-coassemblies {params.exclude_coassemblies} \
+#   --single-assembly {params.single_assembly} \
+#   --anchor-samples {params.anchor_samples} \
+#   --threads {threads} \
+#   --log {log}
+# """
 
 def join_list_subsets(df1, df2):
     """
@@ -321,35 +343,55 @@ def pipeline(
 
     return clusters
 
-if __name__ == "__main__":
-    os.environ["POLARS_MAX_THREADS"] = str(snakemake.threads)
+def main():
+    parser = argparse.ArgumentParser(description="Cluster graph pipeline script.")
+    parser.add_argument("--elusive-edges", required=True, help="Path to elusive edges input file")
+    parser.add_argument("--read-size", required=True, help="Path to read size input file")
+    parser.add_argument("--targets-weighted", nargs='?', const=None, default=None, help="Path to targets weighted input file (optional)")
+    parser.add_argument("--elusive-clusters", required=True, help="Path to output elusive clusters file")
+    parser.add_argument("--max-coassembly-size", type=float, default=None, help="Max coassembly size in GB (optional)")
+    parser.add_argument("--max-coassembly-samples", type=int, default=2, help="Max coassembly samples")
+    parser.add_argument("--num-coassembly-samples", type=int, default=2, help="Num coassembly samples (min)")
+    parser.add_argument("--max-recovery-samples", type=int, default=20, help="Max recovery samples")
+    parser.add_argument("--coassembly-samples", nargs='*', default=[], help="List of coassembly samples")
+    parser.add_argument("--exclude-coassemblies", nargs='*', default=[], help="List of excluded coassemblies")
+    parser.add_argument("--single-assembly", type=lambda x: x.lower() == 'true', nargs='?', const=True, default=False, help="Single assembly mode (True/False)")
+    parser.add_argument("--anchor-samples", nargs='*', default=[], help="List of anchor samples")
+    parser.add_argument("--threads", type=int, default=1, help="Number of threads for Polars")
+    parser.add_argument("--log", default=None, help="Log file path")
+    args = parser.parse_args()
+
+    os.environ["POLARS_MAX_THREADS"] = str(args.threads)
     import polars as pl
 
-    logging.basicConfig(
-        filename=snakemake.log[0],
-        level=logging.INFO,
-        format='%(asctime)s %(levelname)s: %(message)s',
-        datefmt='%Y/%m/%d %I:%M:%S %p'
+    if args.log:
+        logging.basicConfig(
+            filename=args.log,
+            level=logging.INFO,
+            format='%(asctime)s %(levelname)s: %(message)s',
+            datefmt='%Y/%m/%d %I:%M:%S %p'
+        )
+    else:
+        logging.basicConfig(
+            level=logging.INFO,
+            format='%(asctime)s %(levelname)s: %(message)s',
+            datefmt='%Y/%m/%d %I:%M:%S %p'
         )
 
-    MAX_COASSEMBLY_SIZE = snakemake.params.max_coassembly_size * 10**9 if snakemake.params.max_coassembly_size else None
-    MAX_COASSEMBLY_SAMPLES = snakemake.params.max_coassembly_samples
-    MIN_COASSEMBLY_SAMPLES = snakemake.params.num_coassembly_samples
-    MAX_RECOVERY_SAMPLES = snakemake.params.max_recovery_samples
-    COASSEMBLY_SAMPLES = snakemake.params.coassembly_samples
-    EXCLUDE_COASSEMBLIES = snakemake.params.exclude_coassemblies
-    single_assembly = snakemake.params.single_assembly
-    elusive_edges_path = snakemake.input.elusive_edges
-    read_size_path = snakemake.input.read_size
-    weightings_path = snakemake.input.targets_weighted
-    elusive_clusters_path = snakemake.output.elusive_clusters
-    anchor_samples = set(snakemake.params.anchor_samples)
+    MAX_COASSEMBLY_SIZE = args.max_coassembly_size * 10**9 if args.max_coassembly_size else None
+    MAX_COASSEMBLY_SAMPLES = args.max_coassembly_samples
+    MIN_COASSEMBLY_SAMPLES = args.num_coassembly_samples
+    MAX_RECOVERY_SAMPLES = args.max_recovery_samples
+    COASSEMBLY_SAMPLES = args.coassembly_samples
+    EXCLUDE_COASSEMBLIES = args.exclude_coassemblies
+    single_assembly = args.single_assembly
+    anchor_samples = set(args.anchor_samples)
 
-    elusive_edges = pl.read_csv(elusive_edges_path, separator="\t", schema_overrides={"target_ids": str})
-    read_size = pl.read_csv(read_size_path, has_header=False, new_columns=["sample", "read_size"])
+    elusive_edges = pl.read_csv(args.elusive_edges, separator="\t", schema_overrides={"target_ids": str})
+    read_size = pl.read_csv(args.read_size, has_header=False, new_columns=["sample", "read_size"])
 
-    if weightings_path:
-        weightings = pl.read_csv(weightings_path, separator="\t", schema_overrides=TARGET_WEIGHTING_COLUMNS)
+    if args.targets_weighted:
+        weightings = pl.read_csv(args.targets_weighted, separator="\t", schema_overrides=TARGET_WEIGHTING_COLUMNS)
     else:
         weightings = None
 
@@ -372,5 +414,8 @@ if __name__ == "__main__":
         MIN_CLUSTER_TARGETS=min_cluster_targets,
         MAX_SAMPLES_COMBINATIONS=100,
         single_assembly=single_assembly,
-        )
-    clusters.write_csv(elusive_clusters_path, separator="\t")
+    )
+    clusters.write_csv(args.elusive_clusters, separator="\t")
+
+if __name__ == "__main__":
+    main()

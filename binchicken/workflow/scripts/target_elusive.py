@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 #########################
 ### target_elusive.py ###
 #########################
@@ -10,6 +11,7 @@ import numpy as np
 import scipy.sparse as sp
 import itertools
 from binchicken.binchicken import SUFFIX_RE
+import argparse
 
 EDGES_COLUMNS={
     "style": str,
@@ -17,6 +19,24 @@ EDGES_COLUMNS={
     "samples": str,
     "target_ids": str,
     }
+
+# Example shell directive for Snakemake:
+# shell:
+# """
+# python3 binchicken/workflow/scripts/target_elusive.py \
+#   --unbinned {input.unbinned} \
+#   --distances {input.distances} \
+#   --output-targets {output.output_targets} \
+#   --output-edges {output.output_edges} \
+#   --samples {params.samples} \
+#   --anchor-samples {params.anchor_samples} \
+#   --min-coassembly-coverage {params.min_coassembly_coverage} \
+#   --max-coassembly-samples {params.max_coassembly_samples} \
+#   --taxa-of-interest {params.taxa_of_interest} \
+#   --precluster-size {params.precluster_size} \
+#   --threads {threads} \
+#   --log {log}
+# """
 
 def get_clusters(
         sample_distances,
@@ -330,27 +350,48 @@ def pipeline(
 
     return unbinned.with_columns(pl.col("target").cast(pl.Utf8)), sparse_edges
 
-if __name__ == "__main__":
-    os.environ["POLARS_MAX_THREADS"] = str(snakemake.threads)
-    import polars as pl
+def main():
+    parser = argparse.ArgumentParser(description="Target elusive pipeline script.")
+    parser.add_argument("--unbinned", required=True, help="Path to unbinned input file")
+    parser.add_argument("--distances", nargs='?', const=None, required=False, default=None, help="Path to distances input file")
+    parser.add_argument("--output-targets", required=True, help="Path to output targets file")
+    parser.add_argument("--output-edges", required=True, help="Path to output edges file")
+    parser.add_argument("--samples", required=True, nargs='+', help="List of sample names")
+    parser.add_argument("--anchor-samples", required=False, nargs='*', default=[], help="List of anchor sample names")
+    parser.add_argument("--min-coassembly-coverage", type=int, default=10, help="Minimum coassembly coverage")
+    parser.add_argument("--max-coassembly-samples", type=int, default=2, help="Maximum coassembly samples")
+    parser.add_argument("--taxa-of-interest", nargs='?', const="", default="", help="Taxa of interest string")
+    parser.add_argument("--precluster-size", type=int, default=2, help="Precluster size")
+    parser.add_argument("--threads", type=int, default=1, help="Number of threads for Polars")
+    parser.add_argument("--log", default=None, help="Log file path")
+    args = parser.parse_args()
 
-    logging.basicConfig(
-        filename=snakemake.log[0],
-        level=logging.INFO,
-        format='%(asctime)s %(levelname)s: %(message)s',
-        datefmt='%Y/%m/%d %I:%M:%S %p'
+    os.environ["POLARS_MAX_THREADS"] = str(args.threads)
+    import polars as pl
+    if args.log:
+        logging.basicConfig(
+            filename=args.log,
+            level=logging.INFO,
+            format='%(asctime)s %(levelname)s: %(message)s',
+            datefmt='%Y/%m/%d %I:%M:%S %p'
+        )
+    else:
+        logging.basicConfig(
+            level=logging.INFO,
+            format='%(asctime)s %(levelname)s: %(message)s',
+            datefmt='%Y/%m/%d %I:%M:%S %p'
         )
 
-    MIN_COASSEMBLY_COVERAGE = snakemake.params.min_coassembly_coverage
-    MAX_COASSEMBLY_SAMPLES = snakemake.params.max_coassembly_samples
-    TAXA_OF_INTEREST = snakemake.params.taxa_of_interest
-    PRECLUSTER_SIZE = snakemake.params.precluster_size
-    unbinned_path = snakemake.input.unbinned
-    distances_path = snakemake.input.distances
-    targets_path = snakemake.output.output_targets
-    edges_path = snakemake.output.output_edges
-    samples = set(snakemake.params.samples)
-    anchor_samples = set(snakemake.params.anchor_samples)
+    MIN_COASSEMBLY_COVERAGE = args.min_coassembly_coverage
+    MAX_COASSEMBLY_SAMPLES = args.max_coassembly_samples
+    TAXA_OF_INTEREST = args.taxa_of_interest
+    PRECLUSTER_SIZE = args.precluster_size
+    unbinned_path = args.unbinned
+    distances_path = args.distances
+    targets_path = args.output_targets
+    edges_path = args.output_edges
+    samples = set(args.samples)
+    anchor_samples = set(args.anchor_samples)
 
     if distances_path:
         unbinned = pl.scan_csv(unbinned_path, separator="\t")
@@ -388,5 +429,7 @@ if __name__ == "__main__":
             )
         targets.write_csv(targets_path, separator="\t")
         edges.sort("style", "cluster_size", "samples").write_csv(edges_path, separator="\t")
-
         logging.info("Done")
+
+if __name__ == "__main__":
+    main()
