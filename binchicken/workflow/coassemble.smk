@@ -783,8 +783,15 @@ rule collect_genomes:
         genomes = config["genomes"],
         sample = "{read}",
         min_appraised = config["unmapping_min_appraised"],
-    script:
-        "scripts/collect_reference_bins.py"
+    shell:
+        "python3 binchicken/workflow/scripts/collect_reference_bins.py "
+        "--appraise-binned {input.appraise_binned} "
+        "--appraise-unbinned {input.appraise_unbinned} "
+        "--genomes {params.genomes} "
+        "--sample {params.sample} "
+        "--min-appraised {params.min_appraised} "
+        "--read {wildcards.read} "
+        "--output {output}"
 
 rule map_reads:
     input:
