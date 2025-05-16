@@ -133,9 +133,15 @@ rule summary:
         read_size = output_dir + "/unmapped_read_size.csv" if config["assemble_unmapped"] else [],
     output:
         summary = output_dir + "/summary.tsv",
+    params:
+        script = scripts_dir + "/summarise_coassemblies.py",
     localrule: True
-    script:
-        "scripts/summarise_coassemblies.py"
+    shell:
+        "python3 {params.script} "
+        "--elusive-clusters {input.elusive_clusters} "
+        "--read-size {input.read_size} "
+        "--summary {output.summary} "
+        "--threads {threads}"
 
 #####################
 ### SingleM reads ###
