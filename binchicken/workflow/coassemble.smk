@@ -638,6 +638,7 @@ checkpoint cluster_graph:
     output:
         elusive_clusters = output_dir + "/target/elusive_clusters.tsv"
     params:
+        script = scripts_dir + "/cluster_graph.py",
         max_coassembly_size = config["max_coassembly_size"],
         num_coassembly_samples = config["num_coassembly_samples"],
         max_coassembly_samples = config["max_coassembly_samples"],
@@ -654,8 +655,22 @@ checkpoint cluster_graph:
         logs_dir + "/target/cluster_graph.log"
     benchmark:
         benchmarks_dir + "/target/cluster_graph.tsv"
-    script:
-        "scripts/cluster_graph.py"
+    shell:
+        "python3 {params.script} "
+        "--elusive-edges {input.elusive_edges} "
+        "--read-size {input.read_size} "
+        "--targets-weighted {input.targets_weighted} "
+        "--elusive-clusters {output.elusive_clusters} "
+        "--max-coassembly-size {params.max_coassembly_size} "
+        "--max-coassembly-samples {params.max_coassembly_samples} "
+        "--num-coassembly-samples {params.num_coassembly_samples} "
+        "--max-recovery-samples {params.max_recovery_samples} "
+        "--coassembly-samples {params.coassembly_samples} "
+        "--exclude-coassemblies {params.exclude_coassemblies} "
+        "--single-assembly {params.single_assembly} "
+        "--anchor-samples {params.anchor_samples} "
+        "--threads {threads} "
+        "--log {log}"
 
 #######################
 ### SRA downloading ###
