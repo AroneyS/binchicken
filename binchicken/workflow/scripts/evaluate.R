@@ -1,27 +1,57 @@
+#!/usr/bin/env Rscript
 ##################
 ### evaluate.R ###
 ##################
 # Author: Samuel Aroney
 
-test <- !is.null(snakemake@config$test)
+# Example shell directive for Snakemake:
+# shell:
+# """
+# Rscript binchicken/workflow/scripts/evaluate.R \
+#   --matched-hits {input.matched_hits} \
+#   --novel-hits {input.novel_hits} \
+#   --cluster-summary {input.cluster_summary} \
+#   --summary-stats {input.summary_stats} \
+#   --coassemble-summary {params.coassemble_summary} \
+#   --plots-dir {output.plots_dir} \
+#   --summary-table {output.summary_table} \
+#   --test {config[test]}
+# """
+
+suppressPackageStartupMessages({
+  library(optparse)
+  library(gt)
+  library(cowplot)
+  library(tidyverse)
+})
+
+option_list <- list(
+  make_option("--matched-hits", type="character", help="Path to matched hits file"),
+  make_option("--novel-hits", type="character", help="Path to novel hits file"),
+  make_option("--cluster-summary", type="character", nargs='?', const=NULL, default=NULL, help="Path to cluster summary file (optional)"),
+  make_option("--summary-stats", type="character", help="Path to summary stats file"),
+  make_option("--coassemble-summary", type="character", help="Path to coassemble summary file"),
+  make_option("--plots-dir", type="character", help="Path to output plots directory"),
+  make_option("--summary-table", type="character", help="Path to output summary table file"),
+  make_option("--test", type="logical", default=FALSE, help="Test mode (True/False)")
+)
+
+opt <- parse_args(OptionParser(option_list=option_list))
+
+test <- isTRUE(opt$test)
 if (test) sink(file("/dev/null", "w"), type = "message")
 
 Sys.setenv(OPENSSL_CONF = "/dev/null")
-library(gt)
-library(cowplot)
-library(tidyverse)
 if (!webshot::is_phantomjs_installed()) webshot::install_phantomjs()
 
-# Snakemake inputs
-matched_hits_path <- snakemake@input[["matched_hits"]]
-novel_hits_path <- snakemake@input[["novel_hits"]]
-cluster_summary_path <- snakemake@input[["cluster_summary"]]
-summary_stats_path <- snakemake@input[["summary_stats"]]
-
-coassemble_summary_path <- snakemake@params[["coassemble_summary"]]
-
-main_dir <- snakemake@output[["plots_dir"]]
-summary_table_path <- snakemake@output[["summary_table"]]
+# Inputs from argparse
+matched_hits_path <- opt$`matched-hits`
+novel_hits_path <- opt$`novel-hits`
+cluster_summary_path <- opt$`cluster-summary`
+summary_stats_path <- opt$`summary-stats`
+coassemble_summary_path <- opt$`coassemble-summary`
+main_dir <- opt$`plots-dir`
+summary_table_path <- opt$`summary-table`
 
 # Load inputs
 matched_hits <- read_tsv(matched_hits_path)
@@ -29,7 +59,7 @@ novel_hits <- read_tsv(novel_hits_path)
 coassemble_summary <- read_tsv(coassemble_summary_path)
 summary_stats <- read_tsv(summary_stats_path)
 
-if (is.null(cluster_summary_path)) {
+if (is.null(cluster_summary_path) || cluster_summary_path == "") {
     cluster_summary <- tibble(type = c("original", coassemble_summary$coassembly), clusters = NA_real_)
 } else {
     cluster_summary <- read_csv(cluster_summary_path, col_names = c("type", "clusters"))
