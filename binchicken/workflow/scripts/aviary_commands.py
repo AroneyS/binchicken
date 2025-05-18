@@ -8,6 +8,8 @@ import os
 import polars as pl
 from binchicken.binchicken import FAST_AVIARY_MODE
 import argparse
+import ast
+import re
 
 # Example shell directive for Snakemake:
 # shell:
@@ -27,6 +29,19 @@ import argparse
 #   --threads {threads} \
 #   --log {log}
 # """
+
+def parse_snake_dict(s):
+    # Remove leading/trailing whitespace
+    s = s.strip()
+    # If it doesn't start with '{', it's not a dict
+    if not s.startswith("{"):
+        raise ValueError("Input does not look like a dict: " + s)
+    # Add quotes around keys and values if missing
+    # This regex finds keys and values that are not quoted and adds quotes
+    s = re.sub(r'([{,]\s*)([a-zA-Z0-9_]+)\s*:', r'\1"\2":', s)
+    s = re.sub(r':\s*([^,}{]+)', lambda m: ': "' + m.group(1).strip().strip('"\'') + '"', s)
+    # Now safe to use ast.literal_eval
+    return ast.literal_eval(s)
 
 def pipeline(coassemblies, reads_1, reads_2, output_dir, assemble_threads, assemble_memory, recover_threads, recover_memory, fast=False):
     output = (
@@ -100,8 +115,8 @@ def main():
     parser.add_argument("--elusive-clusters", required=True, help="Path to elusive clusters input file")
     parser.add_argument("--coassemble-commands", required=True, help="Path to output coassemble commands file")
     parser.add_argument("--recover-commands", required=True, help="Path to output recover commands file")
-    parser.add_argument("--reads-1", required=True, type=eval, help="Dictionary of sample:read1 pairs")
-    parser.add_argument("--reads-2", required=True, type=eval, help="Dictionary of sample:read2 pairs")
+    parser.add_argument("--reads-1", required=True, type=parse_snake_dict, help="Dictionary of sample:read1 pairs")
+    parser.add_argument("--reads-2", required=True, type=parse_snake_dict, help="Dictionary of sample:read2 pairs")
     parser.add_argument("--dir", required=True, help="Output directory")
     parser.add_argument("--assemble-threads", type=int, required=True, help="Threads for assembly")
     parser.add_argument("--assemble-memory", required=True, help="Memory for assembly")

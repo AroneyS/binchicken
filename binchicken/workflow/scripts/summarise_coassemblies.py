@@ -41,7 +41,7 @@ def processing(elusive_clusters, read_size):
 def main():
     parser = argparse.ArgumentParser(description="Summarise coassemblies pipeline script.")
     parser.add_argument("--elusive-clusters", required=True, help="Path to elusive clusters input file")
-    parser.add_argument("--read-size", required=False, default=None, help="Path to read size input file (optional)")
+    parser.add_argument("--read-size", nargs='?', const=None, default=None, help="Path to read size input file (optional)")
     parser.add_argument("--summary", required=True, help="Path to output summary file")
     parser.add_argument("--threads", type=int, default=1, help="Number of threads for Polars")
     args = parser.parse_args()
