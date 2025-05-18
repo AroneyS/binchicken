@@ -786,11 +786,12 @@ rule collect_genomes:
         mem_mb=get_mem_mb,
         runtime = get_runtime(base_hours = 24),
     params:
+        script = scripts_dir + "/collect_reference_bins.py",
         genomes = config["genomes"],
         sample = "{read}",
         min_appraised = config["unmapping_min_appraised"],
     shell:
-        "python3 binchicken/workflow/scripts/collect_reference_bins.py "
+        "python3 {params.script} "
         "--appraise-binned {input.appraise_binned} "
         "--appraise-unbinned {input.appraise_unbinned} "
         "--genomes {params.genomes} "
