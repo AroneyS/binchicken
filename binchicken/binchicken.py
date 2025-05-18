@@ -1199,6 +1199,7 @@ def build(args):
     logging.info("Building R conda environments")
     args.output = os.path.join(output_dir, "build_evaluate")
     os.mkdir(args.output)
+    args.test = False
     evaluate(args)
 
     logging.info("Building Aviary and Kingfisher conda environments")

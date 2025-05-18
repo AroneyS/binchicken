@@ -6,3 +6,4 @@ checkm_version: 2
 min_completeness: 70
 max_contamination: 10
 tmpdir: false
+test: false
