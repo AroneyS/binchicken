@@ -17,6 +17,6 @@ authors:
     given-names: Ben J.
     orcid: https://orcid.org/0000-0003-0670-7480
 title: "Bin Chicken: targeted metagenomic coassembly for the efficient recovery of novel genomes"
-version: 0.12.9
+version: 0.12.10
 doi: 10.1101/2024.11.24.625082
 date-released: 2025-05-19
