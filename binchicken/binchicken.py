@@ -1149,6 +1149,7 @@ def build(args):
     args.aviary_recover_cores = None
     args.aviary_extra_binners = ["taxvamb"] if args.metabuli_db else None
     args.aviary_skip_binners = None
+    args.aviary_request_gpu = args.build_gpu
     args.assemble_unmapped = True
     args.sra = False
     args.run_qc = True
@@ -1585,7 +1586,7 @@ def main():
     tmp_default = "/tmp"
     build_parser.add_argument("--set-tmp-dir", help=f"Set temporary directory [default: {tmp_default}]", default=tmp_default)
     build_parser.add_argument("--skip-aviary-envs", help="Do not install Aviary subworkflow environments", action="store_true")
-    build_parser.add_argument("--aviary-request-gpu", action="store_true", help="Build GPU-friendly environments for certain binners in Aviary recovery [default: do not]. Must be run on a node with GPU access.")
+    build_parser.add_argument("--build-gpu", action="store_true", help="Build GPU-friendly environments for certain binners in Aviary recovery [default: do not]. Must be run on a node with GPU access.")
     build_parser.add_argument("--download-databases", help="Download databases if provided paths do not exist", action="store_true")
     add_general_snakemake_options(build_parser, required_conda_prefix=True)
 
