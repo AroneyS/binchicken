@@ -183,8 +183,9 @@ rule evaluate_plots:
         summary_stats = output_dir + "/evaluate/summary_stats.tsv",
     params:
         script = scripts_dir + "/evaluate.R",
+        cluster_summary = output_dir + "/evaluate/cluster_stats.csv" if config["cluster"] else "NULL",
         coassemble_summary = config["coassemble_summary"],
-        test = config["test"],
+        test = config["test"] if config["test"] else "FALSE",
     output:
         plots_dir = directory(output_dir + "/evaluate/plots"),
         summary_table = output_dir + "/evaluate/summary_table.png",
@@ -194,7 +195,7 @@ rule evaluate_plots:
         "Rscript {params.script} "
         "--matched-hits {input.matched_hits} "
         "--novel-hits {input.novel_hits} "
-        "--cluster-summary {input.cluster_summary} "
+        "--cluster-summary {params.cluster_summary} "
         "--summary-stats {input.summary_stats} "
         "--coassemble-summary {params.coassemble_summary} "
         "--plots-dir {output.plots_dir} "

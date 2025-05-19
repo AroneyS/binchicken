@@ -28,12 +28,12 @@ suppressPackageStartupMessages({
 option_list <- list(
   make_option("--matched-hits", type="character", help="Path to matched hits file"),
   make_option("--novel-hits", type="character", help="Path to novel hits file"),
-  make_option("--cluster-summary", type="character", nargs='?', const=NULL, default=NULL, help="Path to cluster summary file (optional)"),
+  make_option("--cluster-summary", type="character", default=NULL, help="Path to cluster summary file (optional)"),
   make_option("--summary-stats", type="character", help="Path to summary stats file"),
   make_option("--coassemble-summary", type="character", help="Path to coassemble summary file"),
   make_option("--plots-dir", type="character", help="Path to output plots directory"),
   make_option("--summary-table", type="character", help="Path to output summary table file"),
-  make_option("--test", type="logical", nargs='?', const=FALSE, default=FALSE, help="Test mode (True/False)")
+  make_option("--test", type="logical", default=FALSE, help="Test mode (True/False)")
 )
 
 opt <- parse_args(OptionParser(option_list=option_list))
@@ -59,7 +59,7 @@ novel_hits <- read_tsv(novel_hits_path)
 coassemble_summary <- read_tsv(coassemble_summary_path)
 summary_stats <- read_tsv(summary_stats_path)
 
-if (is.null(cluster_summary_path) || cluster_summary_path == "") {
+if (is.null(cluster_summary_path) || cluster_summary_path == "" || cluster_summary_path == "NULL") {
     cluster_summary <- tibble(type = c("original", coassemble_summary$coassembly), clusters = NA_real_)
 } else {
     cluster_summary <- read_csv(cluster_summary_path, col_names = c("type", "clusters"))
