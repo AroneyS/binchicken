@@ -8,7 +8,7 @@ import polars as pl
 import os
 import numpy as np
 import extern
-from binchicken.binchicken import SUFFIX_RE
+from binchicken.binchicken import SUFFIX_RE, parse_snake_dict
 import argparse
 
 # Example shell directive for Snakemake:
@@ -95,7 +95,7 @@ def main():
     parser = argparse.ArgumentParser(description="Collect reference bins pipeline script.")
     parser.add_argument("--appraise-binned", required=True, help="Path to appraise binned input file")
     parser.add_argument("--appraise-unbinned", required=True, help="Path to appraise unbinned input file")
-    parser.add_argument("--genomes", required=True, nargs='+', help="List of genome fasta files (indexed by bin name)")
+    parser.add_argument("--genomes", required=True, type=parse_snake_dict, help="List of genome fasta files (indexed by bin name)")
     parser.add_argument("--sample", required=True, help="Sample name")
     parser.add_argument("--min-appraised", type=float, default=0.1, help="Minimum appraised fraction")
     parser.add_argument("--read", required=True, help="Read wildcard value")

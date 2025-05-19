@@ -794,7 +794,7 @@ rule collect_genomes:
         "python3 {params.script} "
         "--appraise-binned {input.appraise_binned} "
         "--appraise-unbinned {input.appraise_unbinned} "
-        "--genomes {params.genomes} "
+        "--genomes '{params.genomes}' "
         "--sample {params.sample} "
         "--min-appraised {params.min_appraised} "
         "--read {wildcards.read} "

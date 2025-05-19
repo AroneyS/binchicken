@@ -6,10 +6,8 @@
 
 import os
 import polars as pl
-from binchicken.binchicken import FAST_AVIARY_MODE
+from binchicken.binchicken import FAST_AVIARY_MODE, parse_snake_dict
 import argparse
-import ast
-import re
 
 # Example shell directive for Snakemake:
 # shell:
@@ -29,19 +27,6 @@ import re
 #   --threads {threads} \
 #   --log {log}
 # """
-
-def parse_snake_dict(s):
-    # Remove leading/trailing whitespace
-    s = s.strip()
-    # If it doesn't start with '{', it's not a dict
-    if not s.startswith("{"):
-        raise ValueError("Input does not look like a dict: " + s)
-    # Add quotes around keys and values if missing
-    # This regex finds keys and values that are not quoted and adds quotes
-    s = re.sub(r'([{,]\s*)([a-zA-Z0-9_]+)\s*:', r'\1"\2":', s)
-    s = re.sub(r':\s*([^,}{]+)', lambda m: ': "' + m.group(1).strip().strip('"\'') + '"', s)
-    # Now safe to use ast.literal_eval
-    return ast.literal_eval(s)
 
 def pipeline(coassemblies, reads_1, reads_2, output_dir, assemble_threads, assemble_memory, recover_threads, recover_memory, fast=False):
     output = (
