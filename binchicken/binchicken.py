@@ -580,6 +580,8 @@ def coassemble(args):
         "aviary_recover_threads": args.aviary_recover_cores,
         "aviary_recover_memory": args.aviary_recover_memory,
         "aviary_extra_binners": args.aviary_extra_binners,
+        "aviary_skip_binners": args.aviary_skip_binners,
+        "aviary_request_gpu": args.aviary_request_gpu,
         "conda_prefix": args.conda_prefix,
         "snakemake_profile": args.snakemake_profile,
         "aviary_snakemake_profile": args.aviary_snakemake_profile,
@@ -1146,6 +1148,7 @@ def build(args):
     args.aviary_assemble_cores = None
     args.aviary_recover_cores = None
     args.aviary_extra_binners = ["taxvamb"] if args.metabuli_db else None
+    args.aviary_skip_binners = None
     args.assemble_unmapped = True
     args.sra = False
     args.run_qc = True
@@ -1411,6 +1414,8 @@ def main():
         argument_group.add_argument("--aviary-recover-memory", type=int, help=f"Maximum amount of memory for Aviary recover to use (Gigabytes). [default: {aviary_recover_default_memory}]",
                                     default=aviary_recover_default_memory)
         argument_group.add_argument("--aviary-extra-binners", nargs='*', choices=["maxbin", "maxbin2", "concoct", "comebin", "taxvamb"], help="Optional list of extra binning algorithms to run. Can be any combination of: maxbin, maxbin2, concoct, comebin, taxvamb")
+        argument_group.add_argument("--aviary-skip-binners", nargs='*', choices=["rosella", "semibin", "metabat1", "metabat2", "metabat", "vamb"], help="Optional list of binning algorithms to skip. Can be any combination of: rosella, semibin, metabat1, metabat2, metabat, vamb. Note that specifying 'metabat' will skip both MetaBAT1 and MetaBAT2.")
+        argument_group.add_argument("--aviary-request-gpu", action="store_true", help="Request GPU resources for certain binners in Aviary recovery [default: do not].")
 
     def add_main_coassemble_output_arguments(argument_group):
         argument_group.add_argument("--coassemble-output", help="Output dir from coassemble subcommand")
@@ -1580,6 +1585,7 @@ def main():
     tmp_default = "/tmp"
     build_parser.add_argument("--set-tmp-dir", help=f"Set temporary directory [default: {tmp_default}]", default=tmp_default)
     build_parser.add_argument("--skip-aviary-envs", help="Do not install Aviary subworkflow environments", action="store_true")
+    build_parser.add_argument("--aviary-request-gpu", action="store_true", help="Build GPU-friendly environments for certain binners in Aviary recovery [default: do not]. Must be run on a node with GPU access.")
     build_parser.add_argument("--download-databases", help="Download databases if provided paths do not exist", action="store_true")
     add_general_snakemake_options(build_parser, required_conda_prefix=True)
 

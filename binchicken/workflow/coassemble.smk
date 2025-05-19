@@ -1063,6 +1063,8 @@ rule aviary_recover:
         singlem_metapackage = config["singlem_metapackage"],
         fast = "--binning-only --refinery-max-iterations 0" if config["aviary_speed"] == FAST_AVIARY_MODE else "",
         extra_binners = "--extra-binners " + " ".join(config["aviary_extra_binners"]) if config["aviary_extra_binners"] else "",
+        skip_binners = "--skip-binners " + " ".join(config["aviary_skip_binners"]) if config["aviary_skip_binners"] else "",
+        request_gpu = "--request-gpu" if config["aviary_request_gpu"] else "",
         snakemake_profile = f"--snakemake-profile {config['aviary_snakemake_profile']}" if config["aviary_snakemake_profile"] else "",
         cluster_retries = f"--cluster-retries {config['cluster_retries']}" if config["cluster_retries"] else "",
         tmpdir = f"TMPDIR={config['tmpdir']}" if config["tmpdir"] else "",
@@ -1094,6 +1096,8 @@ rule aviary_recover:
         "--checkm2-db-path {params.checkm2} "
         "{params.fast} "
         "{params.extra_binners} "
+        "{params.skip_binners} "
+        "{params.request_gpu} "
         "-n {params.threads} "
         "-t {params.threads} "
         "-m {resources.mem_gb} "
