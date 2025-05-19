@@ -44,6 +44,8 @@ aviary_assemble_threads: 1
 aviary_recover_memory: 1
 aviary_recover_threads: 1
 aviary_extra_binners: []
+aviary_skip_binners: []
+aviary_request_gpu: false
 test: false
 mock_sra: false
 aviary_dryrun: false
