@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 #################################
 ### summarise_coassemblies.py ###
 #################################
@@ -5,6 +6,7 @@
 
 import os
 import polars as pl
+import argparse
 
 def processing(elusive_clusters, read_size):
     print(f"Polars using {str(pl.thread_pool_size())} threads")
@@ -26,19 +28,35 @@ def processing(elusive_clusters, read_size):
 
     return summary
 
-if __name__ == "__main__":
-    os.environ["POLARS_MAX_THREADS"] = str(snakemake.threads)
-    import polars as pl
-    
-    elusive_clusters_path = snakemake.input.elusive_clusters
-    read_size_path = snakemake.input.read_size
-    output_path = snakemake.output.summary
+# Example shell directive for Snakemake:
+# shell:
+# """
+# python3 binchicken/workflow/scripts/summarise_coassemblies.py \
+#   --elusive-clusters {input.elusive_clusters} \
+#   --read-size {input.read_size} \
+#   --summary {output.summary} \
+#   --threads {threads}
+# """
 
-    elusive_clusters = pl.read_csv(elusive_clusters_path, separator="\t")
-    if read_size_path:
-        read_size = pl.read_csv(read_size_path, has_header=False, new_columns=["sample", "read_size"])
+def main():
+    parser = argparse.ArgumentParser(description="Summarise coassemblies pipeline script.")
+    parser.add_argument("--elusive-clusters", required=True, help="Path to elusive clusters input file")
+    parser.add_argument("--read-size", nargs='?', const=None, default=None, help="Path to read size input file (optional)")
+    parser.add_argument("--summary", required=True, help="Path to output summary file")
+    parser.add_argument("--threads", type=int, default=1, help="Number of threads for Polars")
+    args = parser.parse_args()
+
+    os.environ["POLARS_MAX_THREADS"] = str(args.threads)
+    import polars as pl
+
+    elusive_clusters = pl.read_csv(args.elusive_clusters, separator="\t")
+    if args.read_size:
+        read_size = pl.read_csv(args.read_size, has_header=False, new_columns=["sample", "read_size"])
     else:
         read_size = None
 
     summary = processing(elusive_clusters, read_size)
-    summary.write_csv(output_path, separator="\t")
+    summary.write_csv(args.summary, separator="\t")
+
+if __name__ == "__main__":
+    main()

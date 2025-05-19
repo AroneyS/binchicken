@@ -48,6 +48,7 @@ jobs:
           python test/test_no_genomes.py -b
           python test/test_aviary_commands.py
           python test/test_is_interleaved.py
+          python test/test_parse_snake_dict.py
           python test/test_build.py
           python test/test_coassemble.py
           python test/test_update.py

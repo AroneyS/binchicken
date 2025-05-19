@@ -14,6 +14,7 @@ os.umask(0o002)
 output_dir = os.path.abspath("coassemble")
 logs_dir = output_dir + "/logs"
 benchmarks_dir = output_dir + "/benchmarks"
+scripts_dir = os.path.join(os.path.dirname(os.path.abspath(workflow.snakefile)), 'scripts')
 
 def apply_hierarchy(read):
     index = 0
@@ -132,9 +133,15 @@ rule summary:
         read_size = output_dir + "/unmapped_read_size.csv" if config["assemble_unmapped"] else [],
     output:
         summary = output_dir + "/summary.tsv",
+    params:
+        script = scripts_dir + "/summarise_coassemblies.py",
     localrule: True
-    script:
-        "scripts/summarise_coassemblies.py"
+    shell:
+        "python3 {params.script} "
+        "--elusive-clusters {input.elusive_clusters} "
+        "--read-size {input.read_size} "
+        "--summary {output.summary} "
+        "--threads {threads}"
 
 #####################
 ### SingleM reads ###
@@ -378,14 +385,23 @@ rule query_processing_split:
     benchmark:
         benchmarks_dir + "/query/processing_split_{split}.tsv"
     params:
+        script = scripts_dir + "/query_processing.py",
         sequence_identity = config["appraise_sequence_identity"],
         window_size = 60,
     threads: 1
     resources:
         mem_mb=get_mem_mb,
         runtime = get_runtime(base_hours = 48),
-    script:
-        "scripts/query_processing.py"
+    shell:
+        "python3 {params.script} "
+        "--query-reads {input.query_reads} "
+        "--pipe-reads {input.pipe_reads} "
+        "--binned {output.binned} "
+        "--unbinned {output.unbinned} "
+        "--sequence-identity {params.sequence_identity} "
+        "--window-size {params.window_size} "
+        "--threads {threads} "
+        "--log {log}"
 
 rule query_processing:
     input:
@@ -422,10 +438,16 @@ rule no_genomes:
     resources:
         mem_mb=get_mem_mb,
         runtime = get_runtime(base_hours = 24),
+    params:
+        script = scripts_dir + "/no_genomes.py",
     log:
         logs_dir + "/appraise/appraise.log"
-    script:
-        "scripts/no_genomes.py"
+    shell:
+        "python3 {params.script} "
+        "--reads {input.reads} "
+        "--binned {output.binned} "
+        "--unbinned {output.unbinned} "
+        "--threads {threads}"
 
 ######################
 ### Target elusive ###
@@ -460,7 +482,8 @@ rule abundance_weighting:
         weighted = output_dir + "/appraise/weighted.otu_table.tsv"
     threads: 64
     params:
-        samples = config["abundance_weighted_samples"]
+        script = scripts_dir + "/abundance_weighting.py",
+        samples = config["abundance_weighted_samples"],
     resources:
         mem_mb=get_mem_mb,
         runtime = get_runtime(base_hours = 24),
@@ -468,8 +491,14 @@ rule abundance_weighting:
         logs_dir + "/appraise/abundance_weighting.log"
     benchmark:
         benchmarks_dir + "/appraise/abundance_weighting.tsv"
-    script:
-        "scripts/abundance_weighting.py"
+    shell:
+        "python3 {params.script} "
+        "--unbinned {input.unbinned} "
+        "--binned {input.binned} "
+        "--weighted {output.weighted} "
+        "--samples {params.samples} "
+        "--threads {threads} "
+        "--log {log}"
 
 rule sketch_samples:
     input:
@@ -477,6 +506,7 @@ rule sketch_samples:
     output:
         sketch = output_dir + "/sketch/samples.sig"
     params:
+        script = scripts_dir + "/sketch_samples.py",
         taxa_of_interest = config["taxa_of_interest"],
     threads: 64
     resources:
@@ -486,8 +516,13 @@ rule sketch_samples:
         logs_dir + "/precluster/sketching.log"
     benchmark:
         benchmarks_dir + "/precluster/sketching.tsv"
-    script:
-        "scripts/sketch_samples.py"
+    shell:
+        "python3 {params.script} "
+        "--unbinned {input.unbinned} "
+        "--sketch {output.sketch} "
+        "--taxa-of-interest {params.taxa_of_interest} "
+        "--threads {threads} "
+        "--log {log}"
 
 rule provided_distances:
     input:
@@ -547,11 +582,12 @@ rule target_elusive:
         output_edges = output_dir + "/target/elusive_edges.tsv",
         output_targets = output_dir + "/target/targets.tsv",
     params:
+        script = scripts_dir + "/target_elusive.py",
         min_coassembly_coverage = config["min_coassembly_coverage"],
         max_coassembly_samples = config["max_coassembly_samples"],
         taxa_of_interest = config["taxa_of_interest"],
-        samples = config["reads_1"],
-        anchor_samples = config["anchor_samples"],
+        samples = " ".join(config["reads_1"]),
+        anchor_samples = " ".join(config["anchor_samples"]),
         precluster_size = config["precluster_size"],
     threads: 64
     resources:
@@ -561,8 +597,20 @@ rule target_elusive:
         logs_dir + "/target/target_elusive.log"
     benchmark:
         benchmarks_dir + "/target/target_elusive.tsv"
-    script:
-        "scripts/target_elusive.py"
+    shell:
+        "python3 {params.script} "
+        "--unbinned {input.unbinned} "
+        "--distances {input.distances} "
+        "--output-targets {output.output_targets} "
+        "--output-edges {output.output_edges} "
+        "--samples {params.samples} "
+        "--anchor-samples {params.anchor_samples} "
+        "--min-coassembly-coverage {params.min_coassembly_coverage} "
+        "--max-coassembly-samples {params.max_coassembly_samples} "
+        "--taxa-of-interest {params.taxa_of_interest} "
+        "--precluster-size {params.precluster_size} "
+        "--threads {threads} "
+        "--log {log}"
 
 rule target_weighting:
     input:
@@ -574,12 +622,19 @@ rule target_weighting:
     resources:
         mem_mb=get_mem_mb,
         runtime = get_runtime(base_hours = 24),
+    params:
+        script = scripts_dir + "/target_weighting.py",
     log:
         logs_dir + "/target/target_weighting.log"
     benchmark:
         benchmarks_dir + "/target/target_weighting.tsv"
-    script:
-        "scripts/target_weighting.py"
+    shell:
+        "python3 {params.script} "
+        "--targets {input.targets} "
+        "--weighting {input.weighting} "
+        "--targets-weighted {output.targets_weighted} "
+        "--threads {threads} "
+        "--log {log}"
 
 checkpoint cluster_graph:
     input:
@@ -589,7 +644,8 @@ checkpoint cluster_graph:
     output:
         elusive_clusters = output_dir + "/target/elusive_clusters.tsv"
     params:
-        max_coassembly_size = config["max_coassembly_size"],
+        script = scripts_dir + "/cluster_graph.py",
+        max_coassembly_size = config["max_coassembly_size"] if config["max_coassembly_size"] else [],
         num_coassembly_samples = config["num_coassembly_samples"],
         max_coassembly_samples = config["max_coassembly_samples"],
         max_recovery_samples = config["max_recovery_samples"],
@@ -605,8 +661,22 @@ checkpoint cluster_graph:
         logs_dir + "/target/cluster_graph.log"
     benchmark:
         benchmarks_dir + "/target/cluster_graph.tsv"
-    script:
-        "scripts/cluster_graph.py"
+    shell:
+        "python3 {params.script} "
+        "--elusive-edges {input.elusive_edges} "
+        "--read-size {input.read_size} "
+        "--targets-weighted {input.targets_weighted} "
+        "--elusive-clusters {output.elusive_clusters} "
+        "--max-coassembly-size {params.max_coassembly_size} "
+        "--max-coassembly-samples {params.max_coassembly_samples} "
+        "--num-coassembly-samples {params.num_coassembly_samples} "
+        "--max-recovery-samples {params.max_recovery_samples} "
+        "--coassembly-samples {params.coassembly_samples} "
+        "--exclude-coassemblies {params.exclude_coassemblies} "
+        "--single-assembly {params.single_assembly} "
+        "--anchor-samples {params.anchor_samples} "
+        "--threads {threads} "
+        "--log {log}"
 
 #######################
 ### SRA downloading ###
@@ -716,11 +786,19 @@ rule collect_genomes:
         mem_mb=get_mem_mb,
         runtime = get_runtime(base_hours = 24),
     params:
+        script = scripts_dir + "/collect_reference_bins.py",
         genomes = config["genomes"],
         sample = "{read}",
         min_appraised = config["unmapping_min_appraised"],
-    script:
-        "scripts/collect_reference_bins.py"
+    shell:
+        "python3 {params.script} "
+        "--appraise-binned {input.appraise_binned} "
+        "--appraise-unbinned {input.appraise_unbinned} "
+        "--genomes '{params.genomes}' "
+        "--sample {params.sample} "
+        "--min-appraised {params.min_appraised} "
+        "--read {wildcards.read} "
+        "--output {output}"
 
 rule map_reads:
     input:
@@ -838,6 +916,7 @@ rule aviary_commands:
         recover_commands = output_dir + "/commands/recover_commands.sh"
     threads: 8
     params:
+        script = scripts_dir + "/aviary_commands.py",
         reads_1 = mapped_reads_1 if config["assemble_unmapped"] else qc_reads_1 if config["run_qc"] else config["reads_1"],
         reads_2 = mapped_reads_2 if config["assemble_unmapped"] else qc_reads_2 if config["run_qc"] else config["reads_2"],
         dir = output_dir,
@@ -849,8 +928,21 @@ rule aviary_commands:
     localrule: True
     log:
         logs_dir + "/aviary_commands.log"
-    script:
-        "scripts/aviary_commands.py"
+    shell:
+        "python3 {params.script} "
+        "--elusive-clusters {input.elusive_clusters} "
+        "--coassemble-commands {output.coassemble_commands} "
+        "--recover-commands {output.recover_commands} "
+        "--reads-1 '{params.reads_1}' "
+        "--reads-2 '{params.reads_2}' "
+        "--dir {params.dir} "
+        "--assemble-threads {params.assemble_threads} "
+        "--assemble-memory {params.assemble_memory} "
+        "--recover-threads {params.recover_threads} "
+        "--recover-memory {params.recover_memory} "
+        "--speed {params.speed} "
+        "--threads {threads} "
+        "--log {log}"
 
 #########################################
 ### Run Aviary commands (alternative) ###

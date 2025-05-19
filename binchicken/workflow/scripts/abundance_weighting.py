@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 ##############################
 ### abundance_weighting.py ###
 ##############################
@@ -7,6 +8,7 @@ import os
 import polars as pl
 import logging
 from binchicken.binchicken import SUFFIX_RE
+import argparse
 
 APPRAISE_COLUMNS = {
     "gene": str,
@@ -23,6 +25,18 @@ WEIGHTING_COLUMNS = {
     "sequence": str,
     "weight": float,
 }
+
+# Example shell directive for Snakemake:
+# shell:
+# """
+# python3 binchicken/workflow/scripts/abundance_weighting.py \
+#   --unbinned {input.unbinned} \
+#   --binned {input.binned} \
+#   --weighted {output.weighted} \
+#   --samples {params.samples} \
+#   --threads {threads} \
+#   --log {log}
+# """
 
 def pipeline(unbinned, binned, samples=None):
     logging.info(f"Polars using {str(pl.thread_pool_size())} threads")
@@ -77,24 +91,37 @@ def pipeline(unbinned, binned, samples=None):
 
     return weighted
 
-if __name__ == "__main__":
-    os.environ["POLARS_MAX_THREADS"] = str(snakemake.threads)
+def main():
+    parser = argparse.ArgumentParser(description="Abundance weighting pipeline script.")
+    parser.add_argument("--unbinned", required=True, help="Path to unbinned input file")
+    parser.add_argument("--binned", required=True, help="Path to binned input file")
+    parser.add_argument("--weighted", required=True, help="Path to output weighted file")
+    parser.add_argument("--samples", nargs='*', default=None, help="List of sample names")
+    parser.add_argument("--threads", type=int, default=1, help="Number of threads for Polars")
+    parser.add_argument("--log", default=None, help="Log file path")
+    args = parser.parse_args()
+
+    os.environ["POLARS_MAX_THREADS"] = str(args.threads)
     import polars as pl
 
-    logging.basicConfig(
-        filename=snakemake.log[0],
-        level=logging.INFO,
-        format='%(asctime)s %(levelname)s: %(message)s',
-        datefmt='%Y/%m/%d %I:%M:%S %p'
+    if args.log:
+        logging.basicConfig(
+            filename=args.log,
+            level=logging.INFO,
+            format='%(asctime)s %(levelname)s: %(message)s',
+            datefmt='%Y/%m/%d %I:%M:%S %p'
+        )
+    else:
+        logging.basicConfig(
+            level=logging.INFO,
+            format='%(asctime)s %(levelname)s: %(message)s',
+            datefmt='%Y/%m/%d %I:%M:%S %p'
         )
 
-    unbinned_path = snakemake.input.unbinned
-    binned_path = snakemake.input.binned
-    weighted_path = snakemake.output.weighted
-    samples = snakemake.params.samples
+    unbinned = pl.read_csv(args.unbinned, separator="\t", schema_overrides=APPRAISE_COLUMNS)
+    binned = pl.read_csv(args.binned, separator="\t", schema_overrides=APPRAISE_COLUMNS)
+    weighted = pipeline(unbinned, binned, args.samples)
+    weighted.write_csv(args.weighted, separator="\t")
 
-    unbinned = pl.read_csv(unbinned_path, separator="\t", schema_overrides=APPRAISE_COLUMNS)
-    binned = pl.read_csv(binned_path, separator="\t", schema_overrides=APPRAISE_COLUMNS)
-
-    weighted = pipeline(unbinned, binned, samples)
-    weighted.write_csv(weighted_path, separator="\t")
+if __name__ == "__main__":
+    main()

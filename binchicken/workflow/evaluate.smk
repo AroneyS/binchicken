@@ -7,6 +7,7 @@ os.umask(0o002)
 
 output_dir = os.path.abspath("evaluate")
 logs_dir = output_dir + "/logs"
+scripts_dir = os.path.join(os.path.dirname(os.path.abspath(workflow.snakefile)), 'scripts')
 
 bins = config["recovered_bins"]
 coassemblies = list(set([re.search(r"coassembly_\d+", b)[0] for b in bins.keys()]))
@@ -150,6 +151,7 @@ rule evaluate:
         novel_hits = output_dir + "/evaluate/novel_hits.tsv",
         summary_stats = output_dir + "/evaluate/summary_stats.tsv",
     params:
+        script = scripts_dir + "/evaluate.py",
         target_otu_table = config["targets"],
         binned_otu_table = config["binned"],
         elusive_edges = config["elusive_edges"],
@@ -157,8 +159,21 @@ rule evaluate:
         recovered_bins = config["recovered_bins"],
     threads:
         64
-    script:
-        "scripts/evaluate.py"
+    log:
+        logs_dir + "/evaluate/evaluate.log"
+    shell:
+        "python3 {params.script} "
+        "--target-otu-table {params.target_otu_table} "
+        "--binned-otu-table {params.binned_otu_table} "
+        "--elusive-clusters {params.elusive_clusters} "
+        "--elusive-edges {params.elusive_edges} "
+        "--recovered-otu-table {input.recovered_otu_table} "
+        "--recovered-bins '{params.recovered_bins}' "
+        "--matched-hits {output.matched_hits} "
+        "--novel-hits {output.novel_hits} "
+        "--summary-stats {output.summary_stats} "
+        "--threads {threads} "
+        "--log {log}"
 
 rule evaluate_plots:
     input:
@@ -167,11 +182,22 @@ rule evaluate_plots:
         cluster_summary = output_dir + "/evaluate/cluster_stats.csv" if config["cluster"] else [],
         summary_stats = output_dir + "/evaluate/summary_stats.tsv",
     params:
+        script = scripts_dir + "/evaluate.R",
+        cluster_summary = output_dir + "/evaluate/cluster_stats.csv" if config["cluster"] else "NULL",
         coassemble_summary = config["coassemble_summary"],
+        test = config["test"] if config["test"] else "FALSE",
     output:
         plots_dir = directory(output_dir + "/evaluate/plots"),
         summary_table = output_dir + "/evaluate/summary_table.png",
     conda:
         "env/r.yml"
-    script:
-        "scripts/evaluate.R"
+    shell:
+        "Rscript {params.script} "
+        "--matched-hits {input.matched_hits} "
+        "--novel-hits {input.novel_hits} "
+        "--cluster-summary {params.cluster_summary} "
+        "--summary-stats {input.summary_stats} "
+        "--coassemble-summary {params.coassemble_summary} "
+        "--plots-dir {output.plots_dir} "
+        "--summary-table {output.summary_table} "
+        "--test {params.test}"

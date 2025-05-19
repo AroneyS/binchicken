@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 #################################
 ### collect_reference_bins.py ###
 #################################
@@ -7,7 +8,21 @@ import polars as pl
 import os
 import numpy as np
 import extern
-from binchicken.binchicken import SUFFIX_RE
+from binchicken.binchicken import SUFFIX_RE, parse_snake_dict
+import argparse
+
+# Example shell directive for Snakemake:
+# shell:
+# """
+# python3 binchicken/workflow/scripts/collect_reference_bins.py \
+#   --appraise-binned {input.appraise_binned} \
+#   --appraise-unbinned {input.appraise_unbinned} \
+#   --genomes {params.genomes} \
+#   --sample {params.sample} \
+#   --min-appraised {params.min_appraised} \
+#   --read {wildcards.read} \
+#   --output {output}
+# """
 
 def trimmed_mean(data, trim=0.1):
     cut = int(np.floor(len(data) * trim))
@@ -76,33 +91,42 @@ def pipeline(appraise_binned, appraise_unbinned, sample, MIN_APPRAISED=0.1, TRIM
 
     return set(reference_bins)
 
-if __name__ == "__main__":
-    os.environ["POLARS_MAX_THREADS"] = str(snakemake.threads)
+def main():
+    parser = argparse.ArgumentParser(description="Collect reference bins pipeline script.")
+    parser.add_argument("--appraise-binned", required=True, help="Path to appraise binned input file")
+    parser.add_argument("--appraise-unbinned", required=True, help="Path to appraise unbinned input file")
+    parser.add_argument("--genomes", required=True, type=parse_snake_dict, help="List of genome fasta files (indexed by bin name)")
+    parser.add_argument("--sample", required=True, help="Sample name")
+    parser.add_argument("--min-appraised", type=float, default=0.1, help="Minimum appraised fraction")
+    parser.add_argument("--read", required=True, help="Read wildcard value")
+    parser.add_argument("--output", required=True, help="Output fasta file path")
+    parser.add_argument("--threads", type=int, default=1, help="Number of threads for Polars")
+    args = parser.parse_args()
+
+    os.environ["POLARS_MAX_THREADS"] = str(args.threads)
     import polars as pl
 
-    binned_path = snakemake.input.appraise_binned
-    unbinned_path = snakemake.input.appraise_unbinned
-    genomes = snakemake.params.genomes
-    sample = snakemake.params.sample
-    MIN_APPRAISED = snakemake.params.min_appraised
-    sample_read = snakemake.wildcards.read
-    output_path = snakemake.output
+    appraise_binned = pl.read_csv(args.appraise_binned, separator="\t")
+    appraise_unbinned = pl.read_csv(args.appraise_unbinned, separator="\t")
 
-    appraise_binned = pl.read_csv(binned_path, separator="\t")
-    appraise_unbinned = pl.read_csv(unbinned_path, separator="\t")
+    # Build a mapping from bin name to genome file path
+    genomes_dict = args.genomes
 
-    reference_bins = pipeline(appraise_binned, appraise_unbinned, sample, MIN_APPRAISED=MIN_APPRAISED)
+    reference_bins = pipeline(appraise_binned, appraise_unbinned, args.sample, MIN_APPRAISED=args.min_appraised)
 
     if len(reference_bins) == 0:
-        print(f"Warning: No reference bins found for {sample_read}")
-        cmd = f"touch {output_path}"
+        print(f"Warning: No reference bins found for {args.read}")
+        cmd = f"touch {args.output}"
         extern.run(cmd)
     else:
-        with open(str(output_path), "w") as outfile:
+        with open(str(args.output), "w") as outfile:
             for bin in reference_bins:
-                bin_name = os.path.splitext(os.path.basename(genomes[bin]))[0]
-                with open(genomes[bin], "r") as infile:
+                bin_name = os.path.splitext(os.path.basename(genomes_dict[bin]))[0]
+                with open(genomes_dict[bin], "r") as infile:
                     for line in infile:
                         if line.startswith(">"):
                             line = f">{bin_name}~{line[1:]}"
                         outfile.write(line)
+
+if __name__ == "__main__":
+    main()

@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 ##########################
 ### aviary_commands.py ###
 ##########################
@@ -5,7 +6,27 @@
 
 import os
 import polars as pl
-from binchicken.binchicken import FAST_AVIARY_MODE
+from binchicken.binchicken import FAST_AVIARY_MODE, parse_snake_dict
+import argparse
+
+# Example shell directive for Snakemake:
+# shell:
+# """
+# python3 binchicken/workflow/scripts/aviary_commands.py \
+#   --elusive-clusters {input.elusive_clusters} \
+#   --coassemble-commands {output.coassemble_commands} \
+#   --recover-commands {output.recover_commands} \
+#   --reads-1 {params.reads_1} \
+#   --reads-2 {params.reads_2} \
+#   --dir {params.dir} \
+#   --assemble-threads {params.assemble_threads} \
+#   --assemble-memory {params.assemble_memory} \
+#   --recover-threads {params.recover_threads} \
+#   --recover-memory {params.recover_memory} \
+#   --speed {params.speed} \
+#   --threads {threads} \
+#   --log {log}
+# """
 
 def pipeline(coassemblies, reads_1, reads_2, output_dir, assemble_threads, assemble_memory, recover_threads, recover_memory, fast=False):
     output = (
@@ -74,32 +95,67 @@ def pipeline(coassemblies, reads_1, reads_2, output_dir, assemble_threads, assem
 
     return output.select("assemble", "recover")
 
-if __name__ == "__main__":
-    os.environ["POLARS_MAX_THREADS"] = str(snakemake.threads)
+def main():
+    parser = argparse.ArgumentParser(description="Aviary commands pipeline script.")
+    parser.add_argument("--elusive-clusters", required=True, help="Path to elusive clusters input file")
+    parser.add_argument("--coassemble-commands", required=True, help="Path to output coassemble commands file")
+    parser.add_argument("--recover-commands", required=True, help="Path to output recover commands file")
+    parser.add_argument("--reads-1", required=True, type=parse_snake_dict, help="Dictionary of sample:read1 pairs")
+    parser.add_argument("--reads-2", required=True, type=parse_snake_dict, help="Dictionary of sample:read2 pairs")
+    parser.add_argument("--dir", required=True, help="Output directory")
+    parser.add_argument("--assemble-threads", type=int, required=True, help="Threads for assembly")
+    parser.add_argument("--assemble-memory", required=True, help="Memory for assembly")
+    parser.add_argument("--recover-threads", type=int, required=True, help="Threads for recovery")
+    parser.add_argument("--recover-memory", required=True, help="Memory for recovery")
+    parser.add_argument("--speed", default=None, help="Speed mode (FAST_AVIARY_MODE)")
+    parser.add_argument("--threads", type=int, default=1, help="Number of threads for Polars")
+    parser.add_argument("--log", default=None, help="Log file path")
+    args = parser.parse_args()
+
+    os.environ["POLARS_MAX_THREADS"] = str(args.threads)
     import polars as pl
 
-    coassemblies = pl.read_csv(snakemake.input.elusive_clusters, separator="\t")
+    if args.log:
+        import logging
+        logging.basicConfig(
+            filename=args.log,
+            level=logging.INFO,
+            format='%(asctime)s %(levelname)s: %(message)s',
+            datefmt='%Y/%m/%d %I:%M:%S %p'
+        )
+    else:
+        import logging
+        logging.basicConfig(
+            level=logging.INFO,
+            format='%(asctime)s %(levelname)s: %(message)s',
+            datefmt='%Y/%m/%d %I:%M:%S %p'
+        )
+
+    coassemblies = pl.read_csv(args.elusive_clusters, separator="\t")
     if coassemblies.height == 0:
-        with open(snakemake.output.coassemble_commands, "w") as f:
+        with open(args.coassemble_commands, "w") as f:
             pass
-        with open(snakemake.output.recover_commands, "w") as f:
+        with open(args.recover_commands, "w") as f:
             pass
         print("No coassemblies to perform")
         exit(0)
 
-    fast = snakemake.params.speed == FAST_AVIARY_MODE
+    fast = args.speed == FAST_AVIARY_MODE
 
     coassemblies = pipeline(
         coassemblies,
-        reads_1=snakemake.params.reads_1,
-        reads_2=snakemake.params.reads_2,
-        output_dir=snakemake.params.dir,
-        assemble_threads=snakemake.params.assemble_threads,
-        assemble_memory=snakemake.params.assemble_memory,
-        recover_threads=snakemake.params.recover_threads,
-        recover_memory=snakemake.params.recover_memory,
+        reads_1=args.reads_1,
+        reads_2=args.reads_2,
+        output_dir=args.dir,
+        assemble_threads=args.assemble_threads,
+        assemble_memory=args.assemble_memory,
+        recover_threads=args.recover_threads,
+        recover_memory=args.recover_memory,
         fast=fast,
     )
 
-    coassemblies.select("assemble").write_csv(snakemake.output.coassemble_commands, separator="\t", include_header=False)
-    coassemblies.select("recover").write_csv(snakemake.output.recover_commands, separator="\t", include_header=False)
+    coassemblies.select("assemble").write_csv(args.coassemble_commands, separator="\t", include_header=False)
+    coassemblies.select("recover").write_csv(args.recover_commands, separator="\t", include_header=False)
+
+if __name__ == "__main__":
+    main()

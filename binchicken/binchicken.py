@@ -17,6 +17,8 @@ from snakemake.io import load_configfile
 from ruamel.yaml import YAML
 import copy
 import shutil
+import ast
+import re
 
 FAST_AVIARY_MODE = "fast"
 COMPREHENSIVE_AVIARY_MODE = "comprehensive"
@@ -1199,6 +1201,7 @@ def build(args):
     logging.info("Building R conda environments")
     args.output = os.path.join(output_dir, "build_evaluate")
     os.mkdir(args.output)
+    args.test = False
     evaluate(args)
 
     logging.info("Building Aviary and Kingfisher conda environments")
@@ -1241,6 +1244,19 @@ def build(args):
     logging.info(f"Bin Chicken build complete.")
     logging.info(f"Conda envs at {conda_prefix}")
     logging.info(f"Re-activate conda env to load env variables.")
+
+def parse_snake_dict(s):
+    # Remove leading/trailing whitespace
+    s = s.strip()
+    # If it doesn't start with '{', it's not a dict
+    if not s.startswith("{"):
+        raise ValueError("Input does not look like a dict: " + s)
+    # Add quotes around keys and values if missing
+    # This regex finds keys and values that are not quoted and adds quotes
+    s = re.sub(r'([{,]\s*)([^:,}{]+)\s*:', r'\1"\2":', s)
+    s = re.sub(r':\s*([^,}{]+)', lambda m: ': "' + m.group(1).strip().strip('"\'') + '"', s)
+    # Now safe to use ast.literal_eval
+    return ast.literal_eval(s)
 
 def main():
     main_parser = btu.BirdArgparser(program="Bin Chicken", version = __version__, program_invocation="binchicken",
