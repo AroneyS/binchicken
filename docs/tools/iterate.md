@@ -151,6 +151,21 @@ Automatically excludes previous coassemblies.
 
 <!-- -->
 
+**\--anchor-samples** *ANCHOR_SAMPLES* [*ANCHOR_SAMPLES* \...]
+
+  Samples to use as anchors for coassembly, all coassemblies will
+    contain at least one anchor sample. [default: no restriction]
+
+<!-- -->
+
+**\--anchor-samples-list** *ANCHOR_SAMPLES_LIST*
+
+  Samples to use as anchors for coassembly, all coassemblies will
+    contain at least one anchor sample, newline separated. [default: no
+    restriction]
+
+<!-- -->
+
 **\--singlem-metapackage** *SINGLEM_METAPACKAGE*
 
   SingleM metapackage for sequence searching. [default: use path from
@@ -347,6 +362,26 @@ Automatically excludes previous coassemblies.
 
 <!-- -->
 
+**\--file-hierarchy** {never,large,always}
+
+  Split sample outputs into subdirectories based on sample name.
+    [default: large; use when given \>10000 samples]
+
+<!-- -->
+
+**\--file-hierarchy-depth** *FILE_HIERARCHY_DEPTH*
+
+  Maximum depth of subdirectory hierarchy. [default: 3]
+
+<!-- -->
+
+**\--file-hierarchy-chars** *FILE_HIERARCHY_CHARS*
+
+  Number of characters to use for subdirectory hierarchy. [default:
+    4]
+
+<!-- -->
+
 **\--prodigal-meta**
 
   Use prodigal \"-p meta\" argument (for testing)
@@ -356,6 +391,19 @@ Automatically excludes previous coassemblies.
 **\--assemble-unmapped**
 
   Only assemble reads that do not map to reference genomes
+
+<!-- -->
+
+**\--sra**
+
+  Download reads from SRA (forward read argument intepreted as SRA
+    IDs). Also sets \--run-qc.
+
+<!-- -->
+
+**\--download-limit** *DOWNLOAD_LIMIT*
+
+  Parallel download limit [default: 3]
 
 <!-- -->
 
@@ -438,6 +486,23 @@ Automatically excludes previous coassemblies.
 
 <!-- -->
 
+**\--aviary-metabuli-db** *AVIARY_METABULI_DB*
+
+  Path to MetaBuli database directory for Aviary, specifically for
+    TaxVAMB. [default: use path from METABULI_DB_PATH env variable]
+
+<!-- -->
+
+**\--aviary-snakemake-profile** *AVIARY_SNAKEMAKE_PROFILE*
+
+  Snakemake profile (see
+    https://snakemake.readthedocs.io/en/v7.32.3/executing/cli.html#profiles).
+    Can be used to submit rules as jobs to cluster engine (see
+    https://snakemake.readthedocs.io/en/v7.32.3/executing/cluster.html).
+    [default: same as \`\--snakemake-profile\`]
+
+<!-- -->
+
 **\--aviary-assemble-cores** *AVIARY_ASSEMBLE_CORES*
 
   Maximum number of cores for Aviary assemble to use. [default: 64]
@@ -461,6 +526,28 @@ Automatically excludes previous coassemblies.
 
   Maximum amount of memory for Aviary recover to use (Gigabytes).
     [default: 250]
+
+<!-- -->
+
+**\--aviary-extra-binners** [{maxbin,maxbin2,concoct,comebin,taxvamb} \...]
+
+  Optional list of extra binning algorithms to run. Can be any
+    combination of: maxbin, maxbin2, concoct, comebin, taxvamb
+
+<!-- -->
+
+**\--aviary-skip-binners** [{rosella,semibin,metabat1,metabat2,metabat,vamb} \...]
+
+  Optional list of binning algorithms to skip. Can be any combination
+    of: rosella, semibin, metabat1, metabat2, metabat, vamb. Note that
+    specifying
+
+<!-- -->
+
+**\--aviary-request-gpu**
+
+  Request GPU resources for certain binners in Aviary recovery
+    [default: do not].
 
 # GENERAL OPTIONS
 
