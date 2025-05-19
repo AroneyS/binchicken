@@ -32,6 +32,26 @@ class Tests(unittest.TestCase):
         observed = parse_snake_dict(snake_dict)
         self.assertEqual(expected, observed)
 
+    def test_parse_snake_dict_special(self):
+        snake_dict = '{sample-1: /path/to/file-1.fq, sample_2: /path/to/file_2.fq}'
+
+        expected = {
+            "sample-1": "/path/to/file-1.fq",
+            "sample_2": "/path/to/file_2.fq"
+        }
+        observed = parse_snake_dict(snake_dict)
+        self.assertEqual(expected, observed)
+
+    def test_parse_snake_dict_numeric(self):
+        snake_dict = '{1: /path/to/file1.fq, 2: /path/to/file2.fq}'
+
+        expected = {
+            "1": "/path/to/file1.fq",
+            "2": "/path/to/file2.fq"
+        }
+        observed = parse_snake_dict(snake_dict)
+        self.assertEqual(expected, observed)
+
 
 if __name__ == '__main__':
     unittest.main()
