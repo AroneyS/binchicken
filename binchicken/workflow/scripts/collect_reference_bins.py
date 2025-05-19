@@ -110,7 +110,7 @@ def main():
     appraise_unbinned = pl.read_csv(args.appraise_unbinned, separator="\t")
 
     # Build a mapping from bin name to genome file path
-    genomes_dict = {os.path.splitext(os.path.basename(g))[0]: g for g in args.genomes}
+    genomes_dict = args.genomes
 
     reference_bins = pipeline(appraise_binned, appraise_unbinned, args.sample, MIN_APPRAISED=args.min_appraised)
 

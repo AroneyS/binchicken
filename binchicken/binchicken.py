@@ -1253,7 +1253,7 @@ def parse_snake_dict(s):
         raise ValueError("Input does not look like a dict: " + s)
     # Add quotes around keys and values if missing
     # This regex finds keys and values that are not quoted and adds quotes
-    s = re.sub(r'([{,]\s*)([a-zA-Z0-9_]+)\s*:', r'\1"\2":', s)
+    s = re.sub(r'([{,]\s*)([^:,}{]+)\s*:', r'\1"\2":', s)
     s = re.sub(r':\s*([^,}{]+)', lambda m: ': "' + m.group(1).strip().strip('"\'') + '"', s)
     # Now safe to use ast.literal_eval
     return ast.literal_eval(s)
