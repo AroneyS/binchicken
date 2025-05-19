@@ -7,6 +7,7 @@
 import polars as pl
 import os
 import argparse
+from binchicken.binchicken import parse_snake_dict
 
 SINGLEM_COLUMNS = {
     "gene": str,
@@ -349,7 +350,7 @@ def main():
     parser.add_argument("--elusive-clusters", required=True, help="Path to elusive clusters file")
     parser.add_argument("--elusive-edges", required=True, help="Path to elusive edges file")
     parser.add_argument("--recovered-otu-table", required=True, help="Path to recovered OTU table")
-    parser.add_argument("--recovered-bins", required=True, type=eval, help="Recovered bins dictionary (as string)")
+    parser.add_argument("--recovered-bins", required=True, type=parse_snake_dict, help="Recovered bins dictionary (as string)")
     parser.add_argument("--matched-hits", required=True, help="Path to output matched hits file")
     parser.add_argument("--novel-hits", required=True, help="Path to output novel hits file")
     parser.add_argument("--summary-stats", required=True, help="Path to output summary stats file")

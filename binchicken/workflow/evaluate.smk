@@ -159,6 +159,8 @@ rule evaluate:
         recovered_bins = config["recovered_bins"],
     threads:
         64
+    log:
+        logs_dir + "/evaluate/evaluate.log"
     shell:
         "python3 {params.script} "
         "--target-otu-table {params.target_otu_table} "
@@ -166,7 +168,7 @@ rule evaluate:
         "--elusive-clusters {params.elusive_clusters} "
         "--elusive-edges {params.elusive_edges} "
         "--recovered-otu-table {input.recovered_otu_table} "
-        "--recovered-bins {params.recovered_bins} "
+        "--recovered-bins '{params.recovered_bins}' "
         "--matched-hits {output.matched_hits} "
         "--novel-hits {output.novel_hits} "
         "--summary-stats {output.summary_stats} "
