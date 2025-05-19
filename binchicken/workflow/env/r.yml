@@ -9,3 +9,4 @@ dependencies:
   - r-cowplot
   - r-gt<=0.6.0
   - r-webshot<=0.5.4
+  - r-optparse
