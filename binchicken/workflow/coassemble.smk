@@ -645,7 +645,7 @@ checkpoint cluster_graph:
         elusive_clusters = output_dir + "/target/elusive_clusters.tsv"
     params:
         script = scripts_dir + "/cluster_graph.py",
-        max_coassembly_size = config["max_coassembly_size"],
+        max_coassembly_size = config["max_coassembly_size"] if config["max_coassembly_size"] else [],
         num_coassembly_samples = config["num_coassembly_samples"],
         max_coassembly_samples = config["max_coassembly_samples"],
         max_recovery_samples = config["max_recovery_samples"],

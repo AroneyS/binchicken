@@ -349,7 +349,7 @@ def main():
     parser.add_argument("--read-size", required=True, help="Path to read size input file")
     parser.add_argument("--targets-weighted", nargs='?', const=None, default=None, help="Path to targets weighted input file (optional)")
     parser.add_argument("--elusive-clusters", required=True, help="Path to output elusive clusters file")
-    parser.add_argument("--max-coassembly-size", type=float, default=None, help="Max coassembly size in GB (optional)")
+    parser.add_argument("--max-coassembly-size", type=float, nargs='?', const=None, default=None, help="Max coassembly size in GB (optional)")
     parser.add_argument("--max-coassembly-samples", type=int, default=2, help="Max coassembly samples")
     parser.add_argument("--num-coassembly-samples", type=int, default=2, help="Num coassembly samples (min)")
     parser.add_argument("--max-recovery-samples", type=int, default=20, help="Max recovery samples")
