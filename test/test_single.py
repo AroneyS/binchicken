@@ -208,10 +208,10 @@ class Tests(unittest.TestCase):
             elusive_edges_path = os.path.join("test", "coassemble", "target", "elusive_edges.tsv")
             self.assertTrue(os.path.exists(elusive_edges_path))
             expected = pl.DataFrame([
-                    ["match", 2, "sample_1,sample_2", "0,1"],
-                    ["match", 2, "sample_1,sample_5", "0"],
-                    ["match", 2, "sample_2,sample_5", "0"],
-                    ["match", 2, "sample_3,sample_5", "3,4"],
+                    ["match", 2, "sample_1,sample_2", "1359244014492035223,3314627838873786920"],
+                    ["match", 2, "sample_1,sample_5", "1359244014492035223"],
+                    ["match", 2, "sample_2,sample_5", "1359244014492035223"],
+                    ["match", 2, "sample_3,sample_5", "5802119045849692851,7811645178460805746"],
                 ],
                 schema = ["style", "cluster_size", "samples", "target_ids"],
                 orient="row",
@@ -303,10 +303,10 @@ class Tests(unittest.TestCase):
             elusive_edges_path = os.path.join("test", "coassemble", "target", "elusive_edges.tsv")
             self.assertTrue(os.path.exists(elusive_edges_path))
             expected = pl.DataFrame([
-                    ["match", 2, "sample_1,sample_2", "0,1"],
-                    ["match", 2, "sample_1,sample_5", "0"],
-                    ["match", 2, "sample_2,sample_5", "0"],
-                    ["match", 2, "sample_3,sample_5", "3,4"],
+                    ["match", 2, "sample_1,sample_2", "1359244014492035223,3314627838873786920"],
+                    ["match", 2, "sample_1,sample_5", "1359244014492035223"],
+                    ["match", 2, "sample_2,sample_5", "1359244014492035223"],
+                    ["match", 2, "sample_3,sample_5", "5802119045849692851,7811645178460805746"],
                 ],
                 schema = ["style", "cluster_size", "samples", "target_ids"],
                 orient="row",
@@ -380,7 +380,7 @@ class Tests(unittest.TestCase):
             with self.assertRaises(Exception) as context:
                 _ = extern.run(cmd)
 
-            self.assertTrue("Samples missing assemblies in prior assemblies: sample_2" in str(context.exception))
+            self.assertTrue("Samples/coassemblies missing assemblies in prior assemblies: sample_2" in str(context.exception))
 
     def test_single_assembly_extra(self):
         with in_tempdir():
@@ -398,7 +398,7 @@ class Tests(unittest.TestCase):
             with self.assertRaises(Exception) as context:
                 _ = extern.run(cmd)
 
-            self.assertTrue("Extra assemblies not matching any samples in prior assemblies: sample_3" in str(context.exception))
+            self.assertTrue("Extra assemblies not matching any samples/coassemblies in prior assemblies: sample_3" in str(context.exception))
 
 if __name__ == '__main__':
     unittest.main()

@@ -8,6 +8,7 @@ import subprocess
 from ruamel.yaml import YAML
 import extern
 from bird_tool_utils import in_tempdir
+import pytest
 
 path_to_data = os.path.join(os.path.dirname(os.path.realpath(__file__)),'data')
 path_to_conda = os.path.join(path_to_data,'.conda')
@@ -53,6 +54,7 @@ METAPACKAGE = os.path.join(path_to_data, "singlem_metapackage.smpkg")
 PRIOR_ASSEMBLY = os.path.join(path_to_data, "prior_assembly.tsv")
 PRIOR_COASSEMBLY = os.path.join(path_to_data, "prior_coassembly.tsv")
 
+@pytest.mark.expensive
 class Tests(unittest.TestCase):
     def setup_output_dir(self, output_dir):
         try:
@@ -156,6 +158,7 @@ class Tests(unittest.TestCase):
         self.assertTrue(os.path.exists(os.path.join(output_dir, "coassemble", "sra", "SRR8334324_1.fastq.gz")))
         self.assertTrue(os.path.exists(os.path.join(output_dir, "coassemble", "sra", "SRR8334324_2.fastq.gz")))
 
+    @pytest.mark.qsub
     def test_update_aviary_run_real(self):
         output_dir = os.path.join("example", "test_update_aviary_run_real")
         self.setup_output_dir(output_dir)
@@ -200,6 +203,7 @@ class Tests(unittest.TestCase):
 
         self.assertTrue(os.path.exists(os.path.join(output_dir, "coassemble", "coassemble", "coassembly_0", "recover", "bins", "checkm_minimal.tsv")))
 
+    @pytest.mark.qsub
     def test_update_aviary_run_real_large_assembly(self):
         output_dir = os.path.join("example", "test_update_aviary_run_real_large_assembly")
         self.setup_output_dir(output_dir)

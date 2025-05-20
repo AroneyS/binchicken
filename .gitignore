@@ -7,3 +7,7 @@ example/
 dist/
 site/
 *.sif
+
+# pixi environments
+.pixi
+*.egg-info
