@@ -1,3 +1,5 @@
+db/
+build/
 __pycache__/
 *.egg-info/
 .snakemake/

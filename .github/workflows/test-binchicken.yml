@@ -1,5 +1,5 @@
 name: Test Bin Chicken
-on: [push, pull_request]
+on: [push]
 
 jobs:
   pixi_test_dependencies_locked:
