@@ -17,6 +17,10 @@ if __name__ == "__main__":
     version = get_version('binchicken/__init__.py')
     print("version is {}".format(version))
 
+    # Sync dependencies from pixi to pyproject and requirements.txt
+    print("Syncing dependencies from pixi.lock/pixi.toml to requirements.txt ...")
+    extern.run("pixi run -e dev admin/sync_pixi_to_pyproject.py")
+
     # Replace version in CITATION.cff
     citations_lines = []
     with open("CITATION.cff", "r") as f:

@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "binchicken"
-dynamic = ["version"]
+dynamic = ["version", "dependencies"]
 authors = [
   { name="Samuel Aroney", email="samuel.aroney@outlook.com" },
 ]
@@ -12,14 +12,6 @@ description = "Bin Chicken - targeted recovery of low abundance metagenome assem
 readme = "README.md"
 license = { file="LICENSE" }
 requires-python = ">=3.10"
-dependencies = ["snakemake>=6.0.5",
-  "mamba",
-  "networkx",
-  "bird_tool_utils",
-  "extern",
-  "ruamel.yaml>=0.15.99",
-  "polars",
-  "pyarrow"]
 classifiers = [
     "Topic :: Scientific/Engineering :: Bio-Informatics",
 ]
@@ -37,3 +29,4 @@ packages = ["binchicken", "binchicken.config", "binchicken.workflow", "binchicke
 
 [tool.setuptools.dynamic]
 version = {attr = "binchicken.__version__"}
+dependencies = {file = "admin/requirements.txt"}
