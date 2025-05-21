@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 import unittest
-from binchicken.binchicken import parse_snake_dict
+from binchicken.common import parse_snake_dict
 
 class Tests(unittest.TestCase):
     def test_parse_snake_dict(self):
