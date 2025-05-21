@@ -38,8 +38,8 @@ environments:
       - conda: https://conda.anaconda.org/bioconda/noarch/bird_tool_utils_python-0.4.1-pyhdfd78af_0.tar.bz2
       - conda: https://conda.anaconda.org/conda-forge/linux-64/bitarray-3.4.0-py310ha75aee5_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/bitstring-4.3.1-pyhd8ed1ab_0.conda
-      - conda: https://conda.anaconda.org/conda-forge/noarch/boto3-1.38.18-pyhd8ed1ab_0.conda
-      - conda: https://conda.anaconda.org/conda-forge/noarch/botocore-1.38.18-pyge310_1234567_0.conda
+      - conda: https://conda.anaconda.org/conda-forge/noarch/boto3-1.38.19-pyhd8ed1ab_0.conda
+      - conda: https://conda.anaconda.org/conda-forge/noarch/botocore-1.38.19-pyge310_1234567_0.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/brotli-1.1.0-hb9d3cd8_2.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/brotli-bin-1.1.0-hb9d3cd8_2.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/brotli-python-1.1.0-py310hf71b8c6_2.conda
@@ -184,7 +184,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/linux-64/markupsafe-3.0.2-py310h89163eb_1.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/matplotlib-base-3.10.1-py310h68603db_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/mdurl-0.1.2-pyhd8ed1ab_1.conda
-      - conda: https://conda.anaconda.org/conda-forge/linux-64/multidict-6.4.3-py310h89163eb_0.conda
+      - conda: https://conda.anaconda.org/conda-forge/linux-64/multidict-6.4.4-py310h89163eb_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/munkres-1.1.4-pyh9f0ad1d_0.tar.bz2
       - conda: https://conda.anaconda.org/conda-forge/noarch/nbformat-5.10.4-pyhd8ed1ab_1.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/ncurses-6.5-h2d0b736_3.conda
@@ -350,8 +350,8 @@ environments:
       - conda: https://conda.anaconda.org/bioconda/noarch/bird_tool_utils_python-0.4.1-pyhdfd78af_0.tar.bz2
       - conda: https://conda.anaconda.org/conda-forge/linux-64/bitarray-3.4.0-py310ha75aee5_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/bitstring-4.3.1-pyhd8ed1ab_0.conda
-      - conda: https://conda.anaconda.org/conda-forge/noarch/boto3-1.38.18-pyhd8ed1ab_0.conda
-      - conda: https://conda.anaconda.org/conda-forge/noarch/botocore-1.38.18-pyge310_1234567_0.conda
+      - conda: https://conda.anaconda.org/conda-forge/noarch/boto3-1.38.19-pyhd8ed1ab_0.conda
+      - conda: https://conda.anaconda.org/conda-forge/noarch/botocore-1.38.19-pyge310_1234567_0.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/brotli-1.1.0-hb9d3cd8_2.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/brotli-bin-1.1.0-hb9d3cd8_2.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/brotli-python-1.1.0-py310hf71b8c6_2.conda
@@ -501,7 +501,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/linux-64/matplotlib-base-3.10.1-py310h68603db_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/matplotlib-inline-0.1.7-pyhd8ed1ab_1.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/mdurl-0.1.2-pyhd8ed1ab_1.conda
-      - conda: https://conda.anaconda.org/conda-forge/linux-64/multidict-6.4.3-py310h89163eb_0.conda
+      - conda: https://conda.anaconda.org/conda-forge/linux-64/multidict-6.4.4-py310h89163eb_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/munkres-1.1.4-pyh9f0ad1d_0.tar.bz2
       - conda: https://conda.anaconda.org/conda-forge/noarch/nbformat-5.10.4-pyhd8ed1ab_1.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/ncurses-6.5-h2d0b736_3.conda
@@ -1047,23 +1047,23 @@ packages:
   - pkg:pypi/bitstring?source=hash-mapping
   size: 60656
   timestamp: 1742657613026
-- conda: https://conda.anaconda.org/conda-forge/noarch/boto3-1.38.18-pyhd8ed1ab_0.conda
-  sha256: 1946f6b70d9d0f4d03e9f0e9fec764fafca4ce2e8933c3755ed88709743965fb
-  md5: f4cf36b172d7bef69c22f2e34948469e
+- conda: https://conda.anaconda.org/conda-forge/noarch/boto3-1.38.19-pyhd8ed1ab_0.conda
+  sha256: 3588354eb0d59299bb47f47d7bb8a83782e8b21ed136f8c47d58c8cae620d083
+  md5: 178403d1c92ab49184ad558cb760cf5f
   depends:
-  - botocore >=1.38.18,<1.39.0
+  - botocore >=1.38.19,<1.39.0
   - jmespath >=0.7.1,<2.0.0
   - python >=3.9
   - s3transfer >=0.12.0,<0.13.0
   license: Apache-2.0
   license_family: Apache
   purls:
-  - pkg:pypi/boto3?source=hash-mapping
-  size: 84096
-  timestamp: 1747602608696
-- conda: https://conda.anaconda.org/conda-forge/noarch/botocore-1.38.18-pyge310_1234567_0.conda
-  sha256: 1773f871225e046a1e80d67ff9713f49db16a16e12285b2999ab8e169afa1562
-  md5: 4146ceddfc912c381ad3035c7b870e13
+  - pkg:pypi/boto3?source=compressed-mapping
+  size: 83629
+  timestamp: 1747761204014
+- conda: https://conda.anaconda.org/conda-forge/noarch/botocore-1.38.19-pyge310_1234567_0.conda
+  sha256: 67a9940e631945271e5ab0a4570b3ae636949bb66b8a6a71814ae8d01f9012a8
+  md5: ce1f72fe66eae5f54b092b8d730abe92
   depends:
   - jmespath >=0.7.1,<2.0.0
   - python >=3.10
@@ -1073,8 +1073,8 @@ packages:
   license_family: Apache
   purls:
   - pkg:pypi/botocore?source=hash-mapping
-  size: 7790477
-  timestamp: 1747494128415
+  size: 7756242
+  timestamp: 1747751155283
 - conda: https://conda.anaconda.org/conda-forge/linux-64/brotli-1.1.0-hb9d3cd8_2.conda
   sha256: fcb0b5b28ba7492093e54f3184435144e074dfceab27ac8e6a9457e736565b0b
   md5: 98514fe74548d768907ce7a13f680e8f
@@ -3088,9 +3088,9 @@ packages:
   - pkg:pypi/mdurl?source=hash-mapping
   size: 14465
   timestamp: 1733255681319
-- conda: https://conda.anaconda.org/conda-forge/linux-64/multidict-6.4.3-py310h89163eb_0.conda
-  sha256: 1770342aba796ab100d0e8b0aa7ede9e522a2841c6b1366af7b8cd001073f960
-  md5: c07a9df32b1d027bf5fc0ccea53175ff
+- conda: https://conda.anaconda.org/conda-forge/linux-64/multidict-6.4.4-py310h89163eb_0.conda
+  sha256: 9772de87426ca5bef0e4fff61a68fcf7ea8f5637b4b7745c7e8f1e3edbf2f29d
+  md5: e0ae757607b558453f9a9a8b74573710
   depends:
   - __glibc >=2.17,<3.0.a0
   - libgcc >=13
@@ -3101,8 +3101,8 @@ packages:
   license_family: APACHE
   purls:
   - pkg:pypi/multidict?source=hash-mapping
-  size: 80104
-  timestamp: 1744972545629
+  size: 80809
+  timestamp: 1747722554027
 - conda: https://conda.anaconda.org/conda-forge/noarch/munkres-1.1.4-pyh9f0ad1d_0.tar.bz2
   sha256: f86fb22b58e93d04b6f25e0d811b56797689d598788b59dcb47f59045b568306
   md5: 2ba8498c1018c1e9c61eb99b973dfe19
