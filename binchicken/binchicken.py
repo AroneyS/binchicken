@@ -1112,7 +1112,9 @@ def build(args):
 
     # Create pixi environments
     extern.run("pixi install -a")
-    extern.run("pixi run -e aviary pixi install -a")
+
+    if not args.skip_aviary_envs:
+        extern.run("pixi run -e aviary pixi install -a")
 
     logging.info(f"Bin Chicken build complete.")
 
