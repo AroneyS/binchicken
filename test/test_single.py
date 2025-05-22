@@ -9,7 +9,6 @@ import polars as pl
 from polars.testing import assert_frame_equal
 
 path_to_data = os.path.join(os.path.dirname(os.path.realpath(__file__)),'data')
-path_to_conda = os.path.join(path_to_data,'.conda')
 
 SAMPLE_READS_FORWARD = " ".join([
     os.path.join(path_to_data, "sample_1.1.fq"),
@@ -49,7 +48,6 @@ class Tests(unittest.TestCase):
                 f"--singlem-metapackage {METAPACKAGE} "
                 f"--coassembly-samples sample_1 sample_2 "
                 f"--output test "
-                f"--conda-prefix {path_to_conda} "
             )
             extern.run(cmd)
 
@@ -198,7 +196,6 @@ class Tests(unittest.TestCase):
                 f"--precluster-size 3 "
                 f"--max-recovery-samples 2 "
                 f"--output test "
-                f"--conda-prefix {path_to_conda} "
             )
             extern.run(cmd)
 
@@ -282,7 +279,6 @@ class Tests(unittest.TestCase):
                 f"--precluster-size 3 "
                 f"--max-recovery-samples 2 "
                 f"--output test "
-                f"--conda-prefix {path_to_conda} "
             )
             output_raw = subprocess.run(cmd, shell=True, check=True, capture_output=True)
             output = output_raw.stderr.decode('ascii')
@@ -374,7 +370,6 @@ class Tests(unittest.TestCase):
                 f"--coassembly-samples sample_1 sample_2 "
                 f"--prior-assemblies {PRIOR_MISSING} "
                 f"--output test "
-                f"--conda-prefix {path_to_conda} "
             )
 
             with self.assertRaises(Exception) as context:
@@ -392,7 +387,6 @@ class Tests(unittest.TestCase):
                 f"--coassembly-samples sample_1 sample_2 "
                 f"--prior-assemblies {PRIOR_EXTRA} "
                 f"--output test "
-                f"--conda-prefix {path_to_conda} "
             )
 
             with self.assertRaises(Exception) as context:

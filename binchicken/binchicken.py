@@ -1189,16 +1189,16 @@ def main():
             ],
             "build": [
                 btu.Example(
-                    "create dependency conda environments",
-                    "binchicken build --conda-prefix path_to_conda_envs"
+                    "create dependency environments",
+                    "binchicken build"
                 ),
                 btu.Example(
-                    "create dependency conda environments and setup environment variables for databases",
-                    "binchicken build --conda-prefix path_to_conda_envs --singlem-metapackage metapackage --checkm2-db CheckM2 --gtdbtk-db GTDBtk"
+                    "create dependency environments and setup environment variables for databases",
+                    "binchicken build --singlem-metapackage metapackage --checkm2-db CheckM2 --gtdbtk-db GTDBtk"
                 ),
                 btu.Example(
-                    "create dependency conda environments and download databases",
-                    "binchicken build --conda-prefix path_to_conda_envs --singlem-metapackage metapackage --checkm2-db CheckM2 --download-databases"
+                    "create dependency environments and download databases",
+                    "binchicken build --singlem-metapackage metapackage --checkm2-db CheckM2 --download-databases"
                 ),
             ],
         }

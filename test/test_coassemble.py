@@ -12,7 +12,6 @@ import polars as pl
 from polars.testing import assert_frame_equal
 
 path_to_data = os.path.join(os.path.dirname(os.path.realpath(__file__)),'data')
-path_to_conda = os.path.join(path_to_data,'.conda')
 
 SAMPLE_READS_FORWARD = " ".join([
     os.path.join(path_to_data, "sample_1.1.fq"),
@@ -99,7 +98,6 @@ class Tests(unittest.TestCase):
                 f"--unmapping-max-alignment 90 "
                 f"--prodigal-meta "
                 f"--output test "
-                f"--conda-prefix {path_to_conda} "
             )
             output_raw = subprocess.run(cmd, shell=True, check=True, capture_output=True)
             output = output_raw.stderr.decode('ascii')
@@ -270,7 +268,6 @@ class Tests(unittest.TestCase):
                 f"--taxa-of-interest \"p__Actinobacteriota\" "
                 f"--aviary-speed comprehensive "
                 f"--run-qc "
-                f"--conda-prefix {path_to_conda} "
             )
             extern.run(cmd)
 
@@ -386,7 +383,6 @@ class Tests(unittest.TestCase):
                 f"--genome-singlem {GENOME_SINGLEM} "
                 f"--singlem-metapackage {METAPACKAGE} "
                 f"--output test "
-                f"--conda-prefix {path_to_conda} "
             )
             extern.run(cmd)
 
@@ -444,7 +440,6 @@ class Tests(unittest.TestCase):
                 f"--sample-singlem {SAMPLE_QUERY_SINGLEM} "
                 f"--sample-read-size {SAMPLE_READ_SIZE} "
                 f"--output test "
-                f"--conda-prefix {path_to_conda} "
                 f"--snakemake-args \"cluster_graph\" "
             )
             extern.run(cmd)
@@ -538,7 +533,6 @@ class Tests(unittest.TestCase):
                 f"--sample-read-size sample_size.csv "
                 f"--singlem-metapackage {METAPACKAGE} "
                 f"--output test "
-                f"--conda-prefix {path_to_conda} "
                 f"--snakemake-args \"cluster_graph\" "
             )
             extern.run(cmd)
@@ -603,7 +597,6 @@ class Tests(unittest.TestCase):
                 f"--unmapping-min-appraised 0.09 "
                 f"--prodigal-meta "
                 f"--output test "
-                f"--conda-prefix {path_to_conda} "
             )
             extern.run(cmd)
 
@@ -783,7 +776,6 @@ class Tests(unittest.TestCase):
                 f"--unmapping-max-alignment 90 "
                 f"--prodigal-meta "
                 f"--output test "
-                f"--conda-prefix {path_to_conda} "
             )
             extern.run(cmd)
 
@@ -827,7 +819,6 @@ class Tests(unittest.TestCase):
                 f"--single-assembly "
                 f"--coassembly-samples sample_1 sample_2 "
                 f"--output test "
-                f"--conda-prefix {path_to_conda} "
                 f"--snakemake-args \"cluster_graph\" "
             )
             extern.run(cmd)
@@ -878,7 +869,6 @@ class Tests(unittest.TestCase):
                 f"--reverse {SAMPLE_READS_REVERSE} "
                 f"--singlem-metapackage {METAPACKAGE} "
                 f"--output test "
-                f"--conda-prefix {path_to_conda} "
                 f"--snakemake-args \"cluster_graph\" "
             )
             extern.run(cmd)
@@ -943,7 +933,6 @@ class Tests(unittest.TestCase):
                 f"--genome-transcripts {GENOME_TRANSCRIPTS} "
                 f"--singlem-metapackage {METAPACKAGE} "
                 f"--output test "
-                f"--conda-prefix {path_to_conda} "
             )
             extern.run(cmd)
 
@@ -1011,7 +1000,6 @@ class Tests(unittest.TestCase):
                 f"--assemble-unmapped "
                 f"--prodigal-meta "
                 f"--output test "
-                f"--conda-prefix {path_to_conda} "
                 f"--snakemake-args \"--notemp finish_mapping\" "
             )
             extern.run(cmd)
@@ -1036,7 +1024,6 @@ class Tests(unittest.TestCase):
                 f"--genome-transcripts {GENOME_TRANSCRIPTS} "
                 f"--singlem-metapackage {METAPACKAGE} "
                 f"--output test "
-                f"--conda-prefix {path_to_conda} "
                 f"--dryrun "
             )
             extern.run(cmd)
@@ -1065,7 +1052,6 @@ class Tests(unittest.TestCase):
                 f"--genome-singlem {GENOME_SINGLEM} "
                 f"--singlem-metapackage {METAPACKAGE} "
                 f"--output test "
-                f"--conda-prefix {path_to_conda} "
                 f"--dryrun "
                 f"--snakemake-args \" --quiet\" "
             )
@@ -1107,7 +1093,6 @@ class Tests(unittest.TestCase):
                 f"--genome-singlem {GENOME_SINGLEM} "
                 f"--singlem-metapackage {METAPACKAGE} "
                 f"--output test "
-                f"--conda-prefix {path_to_conda} "
                 f"--dryrun "
                 f"--snakemake-args \" --quiet\" "
             )
@@ -1153,7 +1138,6 @@ class Tests(unittest.TestCase):
                 f"--genome-singlem {GENOME_SINGLEM} "
                 f"--singlem-metapackage {METAPACKAGE} "
                 f"--output test "
-                f"--conda-prefix {path_to_conda} "
                 f"--dryrun "
                 f"--snakemake-args \" --quiet\" "
             )
@@ -1200,7 +1184,6 @@ class Tests(unittest.TestCase):
                 f"--genome-singlem {GENOME_SINGLEM} "
                 f"--singlem-metapackage {METAPACKAGE} "
                 f"--output test "
-                f"--conda-prefix {path_to_conda} "
                 f"--dryrun "
                 f"--snakemake-args \" --quiet\" "
             )
@@ -1254,7 +1237,6 @@ class Tests(unittest.TestCase):
                 f"--assemble-unmapped "
                 f"--assembly-strategy megahit "
                 f"--output test "
-                f"--conda-prefix {path_to_conda} "
                 f"--dryrun "
                 f"--snakemake-args \" --quiet\" "
             )
@@ -1309,7 +1291,6 @@ class Tests(unittest.TestCase):
                 f"--genome-singlem {GENOME_SINGLEM} "
                 f"--singlem-metapackage {METAPACKAGE} "
                 f"--output test "
-                f"--conda-prefix {path_to_conda} "
                 f"--dryrun "
                 f"--snakemake-args \" --quiet\" "
             )
@@ -1349,7 +1330,6 @@ class Tests(unittest.TestCase):
                 f"--sample-query-dir {SAMPLE_QUERY_DIR} "
                 f"--sample-read-size {SAMPLE_READ_SIZE} "
                 f"--output test "
-                f"--conda-prefix {path_to_conda} "
                 f"--dryrun "
                 f"--snakemake-args \" --quiet\" "
             )
@@ -1386,7 +1366,6 @@ class Tests(unittest.TestCase):
                 f"--singlem-metapackage {METAPACKAGE} "
                 f"--prodigal-meta "
                 f"--output test "
-                f"--conda-prefix {path_to_conda} "
             )
             extern.run(cmd)
 
@@ -1440,7 +1419,6 @@ class Tests(unittest.TestCase):
                 f"--genome-singlem {GENOME_SINGLEM} "
                 f"--singlem-metapackage {METAPACKAGE} "
                 f"--output test "
-                f"--conda-prefix {path_to_conda} "
                 f"--dryrun "
                 f"--snakemake-args \" --quiet\" "
             )
@@ -1480,7 +1458,6 @@ class Tests(unittest.TestCase):
                 f"--genome-singlem {GENOME_SINGLEM} "
                 f"--singlem-metapackage {METAPACKAGE} "
                 f"--output test "
-                f"--conda-prefix {path_to_conda} "
                 f"--dryrun "
                 f"--snakemake-args \" --quiet\" "
             )
@@ -1516,7 +1493,6 @@ class Tests(unittest.TestCase):
                 f"--genomes {GENOMES} "
                 f"--genome-transcripts {GENOME_TRANSCRIPTS} "
                 f"--output test "
-                f"--conda-prefix {path_to_conda} "
                 f"--snakemake-args \"singlem_appraise_filtered\" "
             )
             _ = subprocess.run(cmd, shell=True, check=True, capture_output=True, env=os.environ)
@@ -1548,7 +1524,6 @@ class Tests(unittest.TestCase):
                 f"--genome-singlem {GENOME_SINGLEM_EIF} "
                 f"--singlem-metapackage {METAPACKAGE_EIF} "
                 f"--output test "
-                f"--conda-prefix {path_to_conda} "
                 f"--snakemake-args \"target_elusive\" "
             )
             output = extern.run(cmd)
@@ -1583,7 +1558,6 @@ class Tests(unittest.TestCase):
                 f"--kmer-precluster always "
                 f"--precluster-size 3 "
                 f"--output test "
-                f"--conda-prefix {path_to_conda} "
             )
             extern.run(cmd)
 
@@ -1670,7 +1644,6 @@ class Tests(unittest.TestCase):
                 f"--kmer-precluster always "
                 f"--precluster-size 2 "
                 f"--output test "
-                f"--conda-prefix {path_to_conda} "
             )
             extern.run(cmd)
 
@@ -1708,7 +1681,6 @@ class Tests(unittest.TestCase):
                 f"--precluster-size 3 "
                 f"--max-recovery-samples 2 "
                 f"--output test "
-                f"--conda-prefix {path_to_conda} "
             )
             extern.run(cmd)
 
@@ -1791,7 +1763,6 @@ class Tests(unittest.TestCase):
                 f"--kmer-precluster always "
                 f"--precluster-size 3 "
                 f"--output test "
-                f"--conda-prefix {path_to_conda} "
             )
             output_raw = subprocess.run(cmd, shell=True, check=True, capture_output=True)
             output = output_raw.stderr.decode('ascii')
@@ -1882,7 +1853,6 @@ class Tests(unittest.TestCase):
                 f"--kmer-precluster always "
                 f"--precluster-size 3 "
                 f"--output test "
-                f"--conda-prefix {path_to_conda} "
             )
             extern.run(cmd)
 
@@ -1959,7 +1929,6 @@ class Tests(unittest.TestCase):
                 f"--genome-singlem {GENOME_SINGLEM} "
                 f"--singlem-metapackage {METAPACKAGE} "
                 f"--output test "
-                f"--conda-prefix {path_to_conda} "
             )
             extern.run(cmd)
 
@@ -2056,7 +2025,6 @@ class Tests(unittest.TestCase):
                 f"--genome-singlem {GENOME_SINGLEM} "
                 f"--singlem-metapackage {METAPACKAGE} "
                 f"--output test "
-                f"--conda-prefix {path_to_conda} "
             )
             extern.run(cmd)
 
@@ -2093,7 +2061,6 @@ class Tests(unittest.TestCase):
                 f"--taxa-of-interest p__Abyssobacteria "
                 f"--singlem-metapackage {METAPACKAGE} "
                 f"--output test "
-                f"--conda-prefix {path_to_conda} "
             )
             extern.run(cmd)
 
@@ -2166,7 +2133,6 @@ class Tests(unittest.TestCase):
                 f"--sra "
                 f"--genomes {GENOMES} "
                 f"--output test "
-                f"--conda-prefix {path_to_conda} "
                 f"--dryrun "
                 f"--snakemake-args \" --quiet\" "
             )
@@ -2204,7 +2170,6 @@ class Tests(unittest.TestCase):
                 f"--forward SRR3309137 SRR8334323 SRR8334324 "
                 f"--sra "
                 f"--output test "
-                f"--conda-prefix {path_to_conda} "
                 f"--snakemake-args \" --config mock_sra=True\" "
             )
             extern.run(cmd)
@@ -2278,7 +2243,6 @@ class Tests(unittest.TestCase):
                 f"--file-hierarchy-depth 3 "
                 f"--file-hierarchy-chars 3 "
                 f"--output test "
-                f"--conda-prefix {path_to_conda} "
             )
             extern.run(cmd)
 

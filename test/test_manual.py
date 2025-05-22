@@ -11,7 +11,6 @@ from bird_tool_utils import in_tempdir
 import pytest
 
 path_to_data = os.path.join(os.path.dirname(os.path.realpath(__file__)),'data')
-path_to_conda = os.path.join(path_to_data,'.conda')
 
 SAMPLE_READS_FORWARD = " ".join([
     os.path.join(path_to_data, "sample_1.1.fq"),
@@ -73,7 +72,6 @@ class Tests(unittest.TestCase):
             f"--sra "
             f"--cores 32 "
             f"--output {output_dir} "
-            f"--conda-prefix {path_to_conda} "
         )
         subprocess.run(cmd, shell=True, check=True)
 
@@ -140,7 +138,6 @@ class Tests(unittest.TestCase):
             f"--coassemble-elusive-clusters {os.path.join(MOCK_COASSEMBLE, 'target', 'elusive_clusters_sra.tsv')} "
             f"--coassemble-summary {os.path.join(MOCK_COASSEMBLE, 'summary.tsv')} "
             f"--output {output_dir} "
-            f"--conda-prefix {path_to_conda} "
         )
         subprocess.run(cmd, shell=True, check=True)
 
@@ -183,7 +180,6 @@ class Tests(unittest.TestCase):
             f"--coassemble-elusive-clusters {os.path.join(MOCK_COASSEMBLE, 'target', 'elusive_clusters_sra.tsv')} "
             f"--coassemble-summary {os.path.join(MOCK_COASSEMBLE, 'summary.tsv')} "
             f"--output {output_dir} "
-            f"--conda-prefix {path_to_conda} "
             f"--snakemake-profile mqsub "
             f"--local-cores 5 "
             f"--cluster-retries 1 "
@@ -225,7 +221,6 @@ class Tests(unittest.TestCase):
             f"--coassemble-elusive-clusters {os.path.join(MOCK_COASSEMBLE, 'target', 'elusive_clusters_sra_large.tsv')} "
             f"--coassemble-summary {os.path.join(MOCK_COASSEMBLE, 'summary.tsv')} "
             f"--output {output_dir} "
-            f"--conda-prefix {path_to_conda} "
             f"--snakemake-profile mqsub "
             f"--local-cores 5 "
             f"--cluster-retries 1 "
@@ -269,7 +264,6 @@ class Tests(unittest.TestCase):
             f"--coassemble-summary {os.path.join(MOCK_COASSEMBLE, 'summary.tsv')} "
             f"--coassemblies coassembly_0 "
             f"--output {output_dir} "
-            f"--conda-prefix {path_to_conda} "
         )
         subprocess.run(cmd, shell=True, check=True)
 
@@ -288,14 +282,12 @@ class Tests(unittest.TestCase):
 
     def test_build_with_downloads(self):
         with in_tempdir():
-            # path_to_conda = os.path.abspath(".conda")
             path_to_metapackage = os.path.abspath("metapackage.smpkg")
             path_to_checkm2_db = os.path.abspath("checkm2_db")
             path_to_gtdbtk_db = os.path.abspath("gtdb_release")
 
             cmd = (
                 f"binchicken build "
-                f"--conda-prefix {path_to_conda} "
                 f"--singlem-metapackage {path_to_metapackage} "
                 # f"--gtdbtk-db {path_to_gtdbtk_db} "
                 f"--checkm2-db {path_to_checkm2_db} "
@@ -307,8 +299,6 @@ class Tests(unittest.TestCase):
             cmd = "conda env config vars list"
             output = extern.run(cmd).strip().split("\n")
 
-            self.assertTrue(f"SNAKEMAKE_CONDA_PREFIX = {path_to_conda}" in output)
-            self.assertTrue(f"CONDA_ENV_PATH = {path_to_conda}" in output)
             self.assertTrue(f"SINGLEM_METAPACKAGE_PATH = {path_to_metapackage}" in output)
             # self.assertTrue(f"GTDBTK_DATA_PATH = {path_to_gtdbtk_db}" in output)
             self.assertTrue(f"CHECKM2DB = {path_to_checkm2_db}" in output)
@@ -331,7 +321,6 @@ class Tests(unittest.TestCase):
             f"--coassembly-samples sample_1 sample_2 "
             f"--prior-assemblies {PRIOR_ASSEMBLY} "
             f"--output {output_dir} "
-            f"--conda-prefix {path_to_conda} "
         )
         subprocess.run(cmd, shell=True, check=True)
 
@@ -380,7 +369,6 @@ class Tests(unittest.TestCase):
             f"--coassembly-samples sample_1 sample_2 "
             f"--prior-assemblies {PRIOR_ASSEMBLY} "
             f"--output {output_dir} "
-            f"--conda-prefix {path_to_conda} "
             f"--run-aviary "
             f"--aviary-gtdbtk-db /work/microbiome/db/gtdb/gtdb_release207_v2 "
             f"--aviary-checkm2-db /work/microbiome/db/CheckM2_database "
@@ -426,7 +414,6 @@ class Tests(unittest.TestCase):
             f"--prodigal-meta "
             f"--singlem-metapackage {METAPACKAGE} "
             f"--output {output_dir} "
-            f"--conda-prefix {path_to_conda} "
         )
         subprocess.run(cmd, shell=True, check=True)
 
@@ -465,7 +452,6 @@ class Tests(unittest.TestCase):
             f"--coassemblies coassembly_0 "
             f"--prior-assemblies {PRIOR_COASSEMBLY} "
             f"--output {update_dir} "
-            f"--conda-prefix {path_to_conda} "
             f"--run-aviary "
             f"--aviary-gtdbtk-db /work/microbiome/db/gtdb/gtdb_release207_v2 "
             f"--aviary-checkm2-db /work/microbiome/db/CheckM2_database "

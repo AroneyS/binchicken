@@ -1009,7 +1009,6 @@ rule aviary_assemble:
         dryrun = "--build" if config["build"] else "--dryrun" if config["aviary_dryrun"] else "",
         drymkdir = "&& mkdir -p "+output_dir+"/coassemble/{coassembly}/assemble/assembly" if config["aviary_dryrun"] else "",
         drytouch = "&& touch "+output_dir+"/coassemble/{coassembly}/assemble/assembly/final_contigs.fasta" if config["aviary_dryrun"] else "",
-        conda_prefix = config["conda_prefix"] if config["conda_prefix"] else ".",
         tmpdir = f"TMPDIR={config['tmpdir']}" if config["tmpdir"] else "",
     threads: lambda wildcards, attempt: get_assemble_threads(wildcards, attempt)
     resources:
@@ -1025,7 +1024,6 @@ rule aviary_assemble:
         "CHECKM2DB=. "
         "EGGNOG_DATA_DIR=. "
         "METABULI_DB_PATH=. "
-        "CONDA_ENV_PATH={params.conda_prefix} "
         "SINGLEM_METAPACKAGE_PATH=. "
         "{params.tmpdir} "
         "aviary assemble "
@@ -1057,7 +1055,6 @@ rule aviary_recover:
         gtdbtk = config["aviary_gtdbtk"] if config["aviary_gtdbtk"] else ".",
         checkm2 = config["aviary_checkm2"],
         metabuli = config["aviary_metabuli"] if config["aviary_metabuli"] else ".",
-        conda_prefix = config["conda_prefix"] if config["conda_prefix"] else ".",
         singlem_metapackage = config["singlem_metapackage"],
         fast = "--binning-only --refinery-max-iterations 0" if config["aviary_speed"] == FAST_AVIARY_MODE else "",
         extra_binners = "--extra-binners " + " ".join(config["aviary_extra_binners"]) if config["aviary_extra_binners"] else "",
@@ -1082,7 +1079,6 @@ rule aviary_recover:
         "CHECKM2DB={params.checkm2} "
         "EGGNOG_DATA_DIR=. "
         "METABULI_DB_PATH={params.metabuli} "
-        "CONDA_ENV_PATH={params.conda_prefix} "
         "SINGLEM_METAPACKAGE_PATH={params.singlem_metapackage} "
         "{params.tmpdir} "
         "aviary recover "
