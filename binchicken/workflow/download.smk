@@ -3,6 +3,7 @@
 #############
 import os
 import polars as pl
+from binchicken.common import pixi_run
 os.umask(0o002)
 
 output_dir = os.path.abspath("download")
@@ -54,9 +55,8 @@ rule aviary_download:
         runtime = get_runtime(base_hours = 16),
     log:
         logs_dir + "/aviary_downloads.log"
-    conda:
-        "env/aviary.yml"
     shell:
+        f"{pixi_run} -e aviary "
         "{params.singlem_metapackage_env} "
         "{params.checkm2_db_env} "
         "{params.gtdbtk_db_env} "

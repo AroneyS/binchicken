@@ -9,6 +9,7 @@ ruleorder: provided_distances > distance_samples
 import os
 import polars as pl
 from binchicken.binchicken import FAST_AVIARY_MODE, DYNAMIC_ASSEMBLY_STRATEGY, METASPADES_ASSEMBLY, MEGAHIT_ASSEMBLY
+from binchicken.common import pixi_run
 os.umask(0o002)
 
 output_dir = os.path.abspath("coassemble")
@@ -137,6 +138,7 @@ rule summary:
         script = scripts_dir + "/summarise_coassemblies.py",
     localrule: True
     shell:
+        f"{pixi_run} "
         "python3 {params.script} "
         "--elusive-clusters {input.elusive_clusters} "
         "--read-size {input.read_size} "
@@ -162,9 +164,8 @@ rule singlem_pipe_reads:
     resources:
         mem_mb=get_mem_mb,
         runtime = get_runtime(base_hours = 24),
-    conda:
-        "env/singlem.yml"
     shell:
+        f"{pixi_run} -e singlem "
         "singlem pipe "
         "--forward {input.reads_1} "
         "--reverse {input.reads_2} "
@@ -191,9 +192,8 @@ rule genome_transcripts:
         mem_mb=get_mem_mb,
         runtime = get_runtime(base_hours = 1),
     group: "singlem_bins"
-    conda:
-        "env/prodigal.yml"
     shell:
+        f"{pixi_run} -e prodigal "
         "prodigal "
         "-i {input} "
         "-d {output} "
@@ -216,9 +216,8 @@ rule singlem_pipe_genomes:
         mem_mb=get_mem_mb,
         runtime = get_runtime(base_hours = 1),
     group: "singlem_bins"
-    conda:
-        "env/singlem.yml"
     shell:
+        f"{pixi_run} -e singlem "
         "singlem pipe "
         "--forward {input} "
         "--otu-table {output} "
@@ -254,9 +253,8 @@ rule singlem_summarise_genomes:
     resources:
         mem_mb=get_mem_mb,
         runtime = get_runtime(base_hours = 24),
-    conda:
-        "env/singlem.yml"
     shell:
+        f"{pixi_run} -e singlem "
         "singlem summarise "
         "--input-otu-tables-list {input} "
         "--output-otu-table {output} "
@@ -285,9 +283,8 @@ rule singlem_appraise:
     resources:
         mem_mb=get_mem_mb,
         runtime = get_runtime(base_hours = 24),
-    conda:
-        "env/singlem.yml"
     shell:
+        f"{pixi_run} -e singlem "
         "singlem appraise "
         "--metagenome-otu-tables {input.reads} "
         "--genome-otu-tables {input.bins} "
@@ -336,9 +333,8 @@ rule update_appraise:
     resources:
         mem_mb=get_mem_mb,
         runtime = get_runtime(base_hours = 24),
-    conda:
-        "env/singlem.yml"
     shell:
+        f"{pixi_run} -e singlem "
         "singlem appraise --stream-inputs "
         "--metagenome-otu-tables {input.unbinned} "
         "--genome-otu-tables {input.bins} "
@@ -393,6 +389,7 @@ rule query_processing_split:
         mem_mb=get_mem_mb,
         runtime = get_runtime(base_hours = 48),
     shell:
+        f"{pixi_run} "
         "python3 {params.script} "
         "--query-reads {input.query_reads} "
         "--pipe-reads {input.pipe_reads} "
@@ -443,6 +440,7 @@ rule no_genomes:
     log:
         logs_dir + "/appraise/appraise.log"
     shell:
+        f"{pixi_run} "
         "python3 {params.script} "
         "--reads {input.reads} "
         "--binned {output.binned} "
@@ -465,9 +463,8 @@ rule count_bp_reads:
     resources:
         mem_mb=get_mem_mb,
         runtime = get_runtime(base_hours = 24),
-    conda:
-        "env/general.yml"
     shell:
+        f"{pixi_run} -e general "
         "parallel -k -j {threads} "
         "echo -n {{1}}, '&&' "
         "{params.cat} {{2}} {{3}} '|' sed -n 2~4p '|' tr -d '\"\n\"' '|' wc -m "
@@ -492,6 +489,7 @@ rule abundance_weighting:
     benchmark:
         benchmarks_dir + "/appraise/abundance_weighting.tsv"
     shell:
+        f"{pixi_run} "
         "python3 {params.script} "
         "--unbinned {input.unbinned} "
         "--binned {input.binned} "
@@ -517,6 +515,7 @@ rule sketch_samples:
     benchmark:
         benchmarks_dir + "/precluster/sketching.tsv"
     shell:
+        f"{pixi_run} "
         "python3 {params.script} "
         "--unbinned {input.unbinned} "
         "--sketch {output.sketch} "
@@ -550,6 +549,7 @@ rule distance_samples:
     benchmark:
         benchmarks_dir + "/precluster/distance.tsv"
     shell:
+        f"{pixi_run} "
         "sourmash scripts pairwise "
         "{input.sketch} "
         "-o {output.distance} "
@@ -598,6 +598,7 @@ rule target_elusive:
     benchmark:
         benchmarks_dir + "/target/target_elusive.tsv"
     shell:
+        f"{pixi_run} "
         "python3 {params.script} "
         "--unbinned {input.unbinned} "
         "--distances {input.distances} "
@@ -629,6 +630,7 @@ rule target_weighting:
     benchmark:
         benchmarks_dir + "/target/target_weighting.tsv"
     shell:
+        f"{pixi_run} "
         "python3 {params.script} "
         "--targets {input.targets} "
         "--weighting {input.weighting} "
@@ -662,6 +664,7 @@ checkpoint cluster_graph:
     benchmark:
         benchmarks_dir + "/target/cluster_graph.tsv"
     shell:
+        f"{pixi_run} "
         "python3 {params.script} "
         "--elusive-edges {input.elusive_edges} "
         "--read-size {input.read_size} "
@@ -692,13 +695,12 @@ rule download_read:
         mem_mb=get_mem_mb,
         runtime = get_runtime(base_hours = 16),
         downloading = 1,
-    conda:
-        "env/kingfisher.yml"
     log:
         logs_dir + "/sra/kingfisher_{read}.log"
     shell:
         "cd {params.dir} && "
         "rm -f {params.name}*.fastq.gz && "
+        f"{pixi_run} -e kingfisher "
         "kingfisher get "
         "-r {params.name} "
         "-f fastq.gz "
@@ -726,11 +728,10 @@ rule mock_download_sra:
         sra_f = " ".join([workflow.basedir + "/../../test/data/sra/" + s + "_1.fastq.gz" for s in config["sra"][1:]]) if config["sra"] else "",
         sra_r = " ".join([workflow.basedir + "/../../test/data/sra/" + s + "_2.fastq.gz" for s in config["sra"][1:]]) if config["sra"] else "",
     localrule: True
-    conda:
-        "env/kingfisher.yml"
     log:
         logs_dir + "/sra/kingfisher.log"
     shell:
+        f"{pixi_run} -e kingfisher "
         "mkdir -p {output} && "
         "cp {params.sra_u} {params.sra_f} {params.sra_r} {output}"
 
@@ -759,9 +760,8 @@ rule qc_reads:
         logs_dir + "/mapping/{read}_qc.log"
     benchmark:
         benchmarks_dir + "/mapping/{read}_qc.tsv"
-    conda:
-        "env/fastp.yml"
     shell:
+        f"{pixi_run} -e fastp "
         "fastp "
         "-i {input.reads_1} "
         "-I {input.reads_2} "
@@ -791,6 +791,7 @@ rule collect_genomes:
         sample = "{read}",
         min_appraised = config["unmapping_min_appraised"],
     shell:
+        f"{pixi_run} "
         "python3 {params.script} "
         "--appraise-binned {input.appraise_binned} "
         "--appraise-unbinned {input.appraise_unbinned} "
@@ -816,9 +817,8 @@ rule map_reads:
         logs_dir + "/mapping/{read}_coverm.log",
     benchmark:
         benchmarks_dir + "/mapping/{read}_coverm.tsv"
-    conda:
-        "env/coverm.yml"
     shell:
+        f"{pixi_run} -e coverm "
         "coverm make "
         "-r {input.genomes} "
         "-1 {input.reads_1} "
@@ -846,9 +846,8 @@ rule filter_bam_files:
         logs_dir + "/mapping/{read}_filter.log",
     benchmark:
         benchmarks_dir + "/mapping/{read}_filter.tsv"
-    conda:
-        "env/coverm.yml"
     shell:
+        f"{pixi_run} -e coverm "
         "coverm filter "
         "-b {input}/{params.genomes}.{params.reads_1}.bam "
         "-o {output} "
@@ -871,9 +870,8 @@ rule bam_to_fastq:
         runtime = get_runtime(base_hours = 4),
     log:
         logs_dir + "/mapping/{read}_fastq.log",
-    conda:
-        "env/coverm.yml"
     shell:
+        f"{pixi_run} -e coverm "
         "samtools fastq "
         "-@ $(({threads} - 1)) "
         "{input} "
@@ -929,6 +927,7 @@ rule aviary_commands:
     log:
         logs_dir + "/aviary_commands.log"
     shell:
+        f"{pixi_run} "
         "python3 {params.script} "
         "--elusive-clusters {input.elusive_clusters} "
         "--coassemble-commands {output.coassemble_commands} "
@@ -1020,9 +1019,8 @@ rule aviary_assemble:
         assembler = get_assemble_assembler,
     log:
         logs_dir + "/aviary/{coassembly}_assemble.log"
-    conda:
-        "env/aviary.yml"
     shell:
+        f"{pixi_run} -e aviary "
         "GTDBTK_DATA_PATH=. "
         "CHECKM2DB=. "
         "EGGNOG_DATA_DIR=. "
@@ -1078,9 +1076,8 @@ rule aviary_recover:
         runtime = "168h",
     log:
         logs_dir + "/aviary/{coassembly}_recover.log"
-    conda:
-        "env/aviary.yml"
     shell:
+        f"{pixi_run} -e aviary "
         "GTDBTK_DATA_PATH={params.gtdbtk} "
         "CHECKM2DB={params.checkm2} "
         "EGGNOG_DATA_DIR=. "

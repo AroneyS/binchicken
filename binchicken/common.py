@@ -16,7 +16,7 @@ def parse_snake_dict(s):
     return ast.literal_eval(s)
 
 def pixi_run_func():
-    aviary_basedir = os.path.join(os.path.dirname(__file__), "..", "..")
-    return f"pixi run --frozen --manifest-path {aviary_basedir}/pixi.toml"
+    binchicken_basedir = os.path.join(os.path.dirname(__file__), "..")
+    return f"pixi run --frozen --manifest-path {binchicken_basedir}/pixi.toml"
 
 pixi_run = pixi_run_func()
