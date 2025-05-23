@@ -1,4 +1,4 @@
-import os
+import importlib
 import re
 import ast
 
@@ -16,7 +16,7 @@ def parse_snake_dict(s):
     return ast.literal_eval(s)
 
 def pixi_run_func():
-    binchicken_basedir = os.path.join(os.path.dirname(__file__), "..")
-    return f"pixi run --frozen --manifest-path {binchicken_basedir}/pixi.toml"
+    with importlib.resources.path("binchicken", "pixi.toml") as manifest_path:
+        return f"pixi run --frozen --manifest-path {manifest_path}"
 
 pixi_run = pixi_run_func()
