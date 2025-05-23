@@ -8,7 +8,8 @@ import polars as pl
 import os
 import numpy as np
 import extern
-from binchicken.binchicken import SUFFIX_RE, parse_snake_dict
+from binchicken.binchicken import SUFFIX_RE
+from binchicken.common import parse_snake_dict
 import argparse
 
 # Example shell directive for Snakemake:

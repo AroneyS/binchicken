@@ -9,7 +9,6 @@ from snakemake.io import load_configfile
 import re
 
 path_to_data = os.path.join(os.path.dirname(os.path.realpath(__file__)),'data')
-path_to_conda = os.path.join(path_to_data,'.conda')
 
 SAMPLE_READS_FORWARD = " ".join([
     os.path.join(path_to_data, "sample_1.1.fq"),
@@ -80,7 +79,6 @@ class Tests(unittest.TestCase):
                 f"--genome-transcripts {GENOME_TRANSCRIPTS} "
                 f"--singlem-metapackage {METAPACKAGE} "
                 f"--output test "
-                f"--conda-prefix {path_to_conda} "
             )
             extern.run(cmd)
 
@@ -151,7 +149,6 @@ class Tests(unittest.TestCase):
                 f"--coassemble-output {MOCK_COASSEMBLE} "
                 f"--singlem-metapackage {METAPACKAGE} "
                 f"--output test "
-                f"--conda-prefix {path_to_conda} "
             )
             output_raw = subprocess.run(cmd, shell=True, check=True, capture_output=True)
             output = output_raw.stderr.decode('ascii')
@@ -225,7 +222,6 @@ class Tests(unittest.TestCase):
                 f"--coassemble-output {MOCK_COASSEMBLE_MINIMAL} "
                 f"--singlem-metapackage {METAPACKAGE} "
                 f"--output test "
-                f"--conda-prefix {path_to_conda} "
             )
             output_raw = subprocess.run(cmd, shell=True, check=True, capture_output=True)
             output = output_raw.stderr.decode('ascii')
@@ -305,7 +301,6 @@ class Tests(unittest.TestCase):
                 f"--singlem-metapackage {METAPACKAGE} "
                 f"--output test "
                 f"--prodigal-meta "
-                f"--conda-prefix {path_to_conda} "
             )
             extern.run(cmd)
 
@@ -370,7 +365,6 @@ class Tests(unittest.TestCase):
                 f"--genome-transcripts {GENOME_TRANSCRIPTS} "
                 f"--singlem-metapackage {METAPACKAGE} "
                 f"--output test "
-                f"--conda-prefix {path_to_conda} "
                 f"--dryrun "
                 f"--snakemake-args \" --quiet\" "
             )
@@ -413,7 +407,6 @@ class Tests(unittest.TestCase):
                 f"--singlem-metapackage {METAPACKAGE} "
                 f"--exclude-coassemblies sample_4,sample_5 "
                 f"--output test "
-                f"--conda-prefix {path_to_conda} "
                 f"--dryrun "
             )
             output_raw = subprocess.run(cmd, shell=True, check=True, capture_output=True)
@@ -447,7 +440,6 @@ class Tests(unittest.TestCase):
                 f"--genome-singlem {GENOME_SINGLEM} "
                 f"--singlem-metapackage {METAPACKAGE} "
                 f"--output test "
-                f"--conda-prefix {path_to_conda} "
             )
             output_raw = subprocess.run(cmd, shell=True, check=True, capture_output=True)
             output = output_raw.stderr.decode('ascii')
@@ -500,7 +492,6 @@ class Tests(unittest.TestCase):
                 f"--genomes {GENOMES} "
                 f"--singlem-metapackage {METAPACKAGE} "
                 f"--output test "
-                f"--conda-prefix {path_to_conda} "
             )
             output_raw = subprocess.run(cmd, shell=True, check=True, capture_output=True)
             output = output_raw.stderr.decode('ascii')
@@ -541,7 +532,6 @@ class Tests(unittest.TestCase):
                 f"--genome-singlem {GENOME_SINGLEM} "
                 f"--singlem-metapackage {METAPACKAGE} "
                 f"--output test "
-                f"--conda-prefix {path_to_conda} "
             )
             output_raw = subprocess.run(cmd, shell=True, check=True, capture_output=True)
             output = output_raw.stderr.decode('ascii')
@@ -576,7 +566,6 @@ class Tests(unittest.TestCase):
                 f"--sample-read-size {SAMPLE_READ_SIZE} "
                 f"--singlem-metapackage {METAPACKAGE} "
                 f"--output test "
-                f"--conda-prefix {path_to_conda} "
             )
             extern.run(cmd)
 

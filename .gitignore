@@ -1,3 +1,5 @@
+db/
+build/
 __pycache__/
 *.egg-info/
 .snakemake/
@@ -7,3 +9,7 @@ example/
 dist/
 site/
 *.sif
+
+# pixi environments
+.pixi
+*.egg-info

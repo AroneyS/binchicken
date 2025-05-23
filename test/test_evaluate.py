@@ -7,7 +7,6 @@ import extern
 from snakemake.io import load_configfile
 
 path_to_data = os.path.join(os.path.dirname(os.path.realpath(__file__)),'data')
-path_to_conda = os.path.join(path_to_data,'.conda')
 
 METAPACKAGE = os.path.join(path_to_data, "singlem_metapackage.smpkg")
 MOCK_COASSEMBLE = os.path.join(path_to_data, "mock_coassemble")
@@ -45,7 +44,6 @@ class Tests(unittest.TestCase):
                 f"--checkm-version 2 "
                 f"--singlem-metapackage {METAPACKAGE} "
                 f"--output test "
-                f"--conda-prefix {path_to_conda} "
             )
             extern.run(cmd)
 
@@ -151,7 +149,6 @@ class Tests(unittest.TestCase):
                 f"--aviary-outputs {MOCK_COASSEMBLIES} "
                 f"--singlem-metapackage {METAPACKAGE} "
                 f"--output test "
-                f"--conda-prefix {path_to_conda} "
                 f"--dryrun "
                 f"--snakemake-args \" --quiet\" "
             )
@@ -176,7 +173,6 @@ class Tests(unittest.TestCase):
                 f"--coassembly-run coassembly_0 "
                 f"--singlem-metapackage {METAPACKAGE} "
                 f"--output test "
-                f"--conda-prefix {path_to_conda} "
             )
             extern.run(cmd)
 
@@ -281,7 +277,6 @@ class Tests(unittest.TestCase):
                 f"--coassembly-run coassembly_0 "
                 f"--singlem-metapackage {METAPACKAGE} "
                 f"--output test "
-                f"--conda-prefix {path_to_conda} "
                 f"--dryrun "
                 f"--snakemake-args \" --quiet\" "
             )
@@ -304,7 +299,6 @@ class Tests(unittest.TestCase):
                 f"--aviary-outputs {MOCK_COASSEMBLIES} "
                 f"--singlem-metapackage {METAPACKAGE} "
                 f"--output test "
-                f"--conda-prefix {path_to_conda} "
                 f"--dryrun "
             )
             extern.run(cmd)
@@ -323,7 +317,6 @@ class Tests(unittest.TestCase):
                 f"--coassemble-output {MOCK_COASSEMBLE} "
                 f"--aviary-outputs {MOCK_COASSEMBLIES} "
                 f"--output test "
-                f"--conda-prefix {path_to_conda} "
                 f"--snakemake-args \"singlem_summarise_bins\" "
             )
             import subprocess
@@ -353,7 +346,6 @@ class Tests(unittest.TestCase):
                 f"--checkm-version 2 "
                 f"--singlem-metapackage {METAPACKAGE} "
                 f"--output test "
-                f"--conda-prefix {path_to_conda} "
             )
             extern.run(cmd)
 
