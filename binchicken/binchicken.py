@@ -1114,7 +1114,8 @@ def build(args):
     extern.run("pixi install -a")
 
     if not args.skip_aviary_envs:
-        extern.run("pixi run -e aviary pixi install -a")
+        aviary_dirname = extern.run("pixi run -e aviary python -c 'import aviary, os; print(os.path.dirname(aviary.__file__))'")
+        extern.run(f"pixi run -e aviary pixi install -a --manifest-path {aviary_dirname}/pixi.toml")
 
     logging.info(f"Bin Chicken build complete.")
 
