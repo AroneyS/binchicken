@@ -1039,7 +1039,7 @@ def iterate(args):
 
 def configure_variable(variable, value):
     os.environ[variable] = value
-    extern.run(f"pixi run conda env config vars set {variable}={value}")
+    extern.run(f"{pixi_run} conda env config vars set {variable}={value}")
 
 def build(args):
     output_dir = os.path.join(args.output, "build")
@@ -1111,11 +1111,11 @@ def build(args):
             )
 
     # Create pixi environments
-    extern.run("pixi install -a")
+    extern.run(pixi_run.replace("run", "install -a", count = 1))
 
     if not args.skip_aviary_envs:
-        aviary_dirname = extern.run("pixi run -e aviary python -c 'import aviary, os; print(os.path.dirname(aviary.__file__))'")
-        extern.run(f"pixi run -e aviary pixi install -a --manifest-path {aviary_dirname}/pixi.toml")
+        aviary_dirname = extern.run(f"{pixi_run} -e aviary python -c 'import aviary, os; print(os.path.dirname(aviary.__file__))'")
+        extern.run(f"{pixi_run} -e aviary pixi install -a --manifest-path {aviary_dirname}/pixi.toml")
 
     logging.info(f"Bin Chicken build complete.")
 
