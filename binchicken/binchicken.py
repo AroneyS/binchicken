@@ -1111,7 +1111,7 @@ def build(args):
             )
 
     # Create pixi environments
-    extern.run(pixi_run.replace("run", "install -a", count = 1))
+    extern.run(pixi_run.replace("run", "install -a", 1))
 
     if not args.skip_aviary_envs:
         aviary_dirname = extern.run(f"{pixi_run} -e aviary python -c 'import aviary, os; print(os.path.dirname(aviary.__file__))'")
