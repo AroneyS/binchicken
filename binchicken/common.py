@@ -1,4 +1,4 @@
-import importlib
+import importlib.resources
 import re
 import ast
 

@@ -616,7 +616,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/linux-64/zlib-1.2.13-h4ab18f5_6.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/zstandard-0.23.0-py310ha75aee5_2.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/zstd-1.5.6-ha6fb4c9_0.conda
-      - pypi: .
+      - pypi: ..
   dev:
     channels:
     - url: https://conda.anaconda.org/conda-forge/
@@ -943,7 +943,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/linux-64/zlib-1.2.13-h4ab18f5_6.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/zstandard-0.23.0-py310ha75aee5_2.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/zstd-1.5.6-ha6fb4c9_0.conda
-      - pypi: .
+      - pypi: ..
   fastp:
     channels:
     - url: https://conda.anaconda.org/conda-forge/
@@ -2817,7 +2817,7 @@ packages:
   license_family: MIT
   size: 146613
   timestamp: 1744783307123
-- pypi: .
+- pypi: ..
   name: binchicken
   version: 0.12.11
   sha256: 4aef6faf7828568043918bf7a7846b309ab4ef1ec8f3319afae8d13add99401d
