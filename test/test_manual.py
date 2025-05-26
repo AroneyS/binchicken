@@ -180,8 +180,8 @@ class Tests(unittest.TestCase):
             f"--coassemble-elusive-clusters {os.path.join(MOCK_COASSEMBLE, 'target', 'elusive_clusters_sra.tsv')} "
             f"--coassemble-summary {os.path.join(MOCK_COASSEMBLE, 'summary.tsv')} "
             f"--output {output_dir} "
-            f"--snakemake-profile mqsub "
-            f"--local-cores 5 "
+            f"--snakemake-profile aqua "
+            f"--local-cores 12 "
             f"--cluster-retries 1 "
             f"--cluster-submission "
         )
@@ -221,8 +221,8 @@ class Tests(unittest.TestCase):
             f"--coassemble-elusive-clusters {os.path.join(MOCK_COASSEMBLE, 'target', 'elusive_clusters_sra_large.tsv')} "
             f"--coassemble-summary {os.path.join(MOCK_COASSEMBLE, 'summary.tsv')} "
             f"--output {output_dir} "
-            f"--snakemake-profile mqsub "
-            f"--local-cores 5 "
+            f"--snakemake-profile aqua "
+            f"--local-cores 12 "
             f"--cluster-retries 1 "
             f"--cluster-submission "
         )
