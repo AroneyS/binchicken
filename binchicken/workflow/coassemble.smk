@@ -1019,6 +1019,11 @@ rule aviary_assemble:
     log:
         logs_dir + "/aviary/{coassembly}_assemble.log"
     shell:
+        "export GTDBTK_DATA_PATH=. && "
+        "export CHECKM2DB=. && "
+        "export EGGNOG_DATA_DIR=. && "
+        "export METABULI_DB_PATH=. && "
+        "export SINGLEM_METAPACKAGE_PATH=. && "
         "export CONDA_ENV_PATH=. && "
         f"{pixi_run} -e aviary "
         "{params.tmpdir} "
@@ -1031,11 +1036,6 @@ rule aviary_assemble:
         "-t {threads} "
         "-m {resources.mem_gb} "
         "--skip-qc "
-        "--gtdb-path . "
-        "--singlem-metapackage-path . "
-        "--checkm2-db-path . "
-        "--metabuli-db-path . "
-        "--eggnog-db-path . "
         "{resources.assembler} "
         "{params.dryrun} "
         "&> {log} "
