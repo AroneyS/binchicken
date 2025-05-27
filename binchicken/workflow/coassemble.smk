@@ -1019,7 +1019,6 @@ rule aviary_assemble:
     log:
         logs_dir + "/aviary/{coassembly}_assemble.log"
     shell:
-        "export EGGNOG_DATA_DIR=. && "
         "export CONDA_ENV_PATH=. && "
         f"{pixi_run} -e aviary "
         "{params.tmpdir} "
@@ -1036,6 +1035,7 @@ rule aviary_assemble:
         "--singlem-metapackage-path . "
         "--checkm2-db-path . "
         "--metabuli-db-path . "
+        "--eggnog-db-path . "
         "{resources.assembler} "
         "{params.dryrun} "
         "&> {log} "
@@ -1075,7 +1075,6 @@ rule aviary_recover:
     log:
         logs_dir + "/aviary/{coassembly}_recover.log"
     shell:
-        "export EGGNOG_DATA_DIR=. && "
         "export CONDA_ENV_PATH=. && "
         f"{pixi_run} -e aviary "
         "{params.tmpdir} "
@@ -1097,6 +1096,7 @@ rule aviary_recover:
         "--singlem-metapackage-path {params.singlem_metapackage} "
         "--checkm2-db-path {params.checkm2} "
         "--metabuli-db-path {params.metabuli} "
+        "--eggnog-db-path . "
         "{params.snakemake_profile} "
         "{params.cluster_retries} "
         "{params.dryrun} "
