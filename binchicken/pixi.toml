@@ -66,7 +66,7 @@ pyopenssl = "==25.0.0"
 pixi = "*"
 
 [feature.aviary.pypi-dependencies]
-"aviary-genome" = { git = "https://github.com/rhysnewell/aviary.git", rev = "e4b68b9f0b9c02f604c6c0c703cc2aad6598a5af" }
+"aviary-genome" = { git = "https://github.com/rhysnewell/aviary.git", rev = "8707b4a8f015a958e3f522b45b748716524b00d2" }
 
 [feature.coverm.dependencies]
 coverm = "0.6.*"

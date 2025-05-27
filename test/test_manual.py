@@ -168,6 +168,7 @@ class Tests(unittest.TestCase):
             f"--run-aviary "
             f"--aviary-speed fast "
             f"--cores 32 "
+            f"--assembly-strategy megahit "
             f"--aviary-gtdbtk-db /work/microbiome/db/gtdb/gtdb_release207_v2 "
             f"--aviary-checkm2-db /work/microbiome/db/CheckM2_database "
             f"--aviary-metabuli-db /work/microbiome/abisko/aroneys/db/metabuli "
