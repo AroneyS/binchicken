@@ -9,7 +9,7 @@ import os
 base_dir = os.path.join(os.path.dirname(__file__), "..")
 
 # Load explicitly listed dependencies from pixi.toml
-with open(os.path.join(base_dir, "pixi.toml"), "r") as f:
+with open(os.path.join(base_dir, "binchicken", "pixi.toml"), "r") as f:
     pixi_data = toml.load(f)
 
 # Gather conda packages and versions from "pixi list --json"
@@ -65,9 +65,6 @@ if not project_name:
     raise ValueError("Project name not found in pixi.toml.")
 
 print("Excluding project name from requirements.txt:", project_name)
-
-print(f"{pip_list}")
-print(f"{declared_conda}")
 
 # Write requirements.txt
 pip_count = 0

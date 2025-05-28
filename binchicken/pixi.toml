@@ -26,9 +26,11 @@ sourmash_plugin_branchwater = "0.9.*"
 # see https://github.com/pyca/cryptography/issues/7959#issuecomment-1368711852
 pyopenssl = ">22.1.0"
 pixi = "*"
+pip = "*"
 
-[feature.main.pypi-dependencies]
-"binchicken" = { path = "..", editable = true }
+[feature.main.tasks]
+postinstall = "pip install --no-build-isolation --no-deps --disable-pip-version-check -e .."
+build_dep_defs = { cmd = "python ../admin/build_dep_defs_from_pixi.py", depends-on = ["postinstall"] }
 
 [feature.dev.dependencies]
 pytest = "*"
