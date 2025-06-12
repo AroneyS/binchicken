@@ -111,23 +111,33 @@ def get_clusters(
     )
 
     logging.info("Choosing preclusters based on distances")
+    # Split preclusters creation into chunks to avoid Polars row limit
+    CHUNK_SIZE = 10000  # You can adjust this as needed
+    num_chunks = (len(chosen_samples) + CHUNK_SIZE - 1) // CHUNK_SIZE
+    preclusters_list = []
+    logging.info(f"Processing preclusters in {num_chunks} chunks of size {CHUNK_SIZE}")
     with pl.StringCache():
-        preclusters = (
-            pl.LazyFrame(chosen_samples, schema={"samples": pl.List(pl.Categorical)}, orient="row")
-            .filter((not anchor_samples) | (pl.col("samples").list.get(0).is_in(anchor_samples)))
-            .join(sample_combinations, how="cross")
-            .select(
-                pl.col("samples")
-                    .list.gather(pl.col("sample_combinations"))
-                    .cast(pl.List(str))
-                    .list.sort()
-                    .list.join(",")
-                )
-            .unique()
-            .collect(engine="streaming")
-        )
-
-    logging.info(f"Found {preclusters.height} preclusters")
+        for chunk_idx in range(num_chunks):
+            start = chunk_idx * CHUNK_SIZE
+            end = min((chunk_idx + 1) * CHUNK_SIZE, len(chosen_samples))
+            chunk_samples = chosen_samples[start:end]
+            chunk_preclusters = (
+                pl.LazyFrame(chunk_samples, schema={"samples": pl.List(pl.Categorical)}, orient="row")
+                .filter((not anchor_samples) | (pl.col("samples").list.get(0).is_in(anchor_samples)))
+                .join(sample_combinations, how="cross")
+                .select(
+                    pl.col("samples")
+                        .list.gather(pl.col("sample_combinations"))
+                        .cast(pl.List(str))
+                        .list.sort()
+                        .list.join(",")
+                    )
+                .unique()
+                .collect(engine="streaming")
+            )
+            preclusters_list.append(chunk_preclusters)
+        preclusters = pl.concat(preclusters_list).unique()
+    logging.info(f"Found {preclusters.height} preclusters (after chunked creation)")
     return preclusters
 
 def streaming_pipeline(
