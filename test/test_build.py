@@ -6,7 +6,6 @@ import extern
 from bird_tool_utils import in_tempdir
 
 path_to_data = os.path.join(os.path.dirname(os.path.realpath(__file__)),'data')
-path_to_conda = os.path.join(path_to_data,'.conda')
 
 SAMPLE_READS_FORWARD = " ".join([
     os.path.join(path_to_data, "sample_1.1.fq"),
@@ -27,10 +26,8 @@ MOCK_COASSEMBLIES = ' '.join([os.path.join(MOCK_COASSEMBLE, "coassemble", "coass
 class Tests(unittest.TestCase):
     def test_build(self):
         with in_tempdir():
-            #path_to_conda = os.path.abspath(".conda")
             cmd = (
                 f"binchicken build "
-                f"--conda-prefix {path_to_conda} "
                 f"--singlem-metapackage {METAPACKAGE} "
                 f"--gtdbtk-db gtdb_release "
                 f"--checkm2-db CheckM2_database "
@@ -43,8 +40,6 @@ class Tests(unittest.TestCase):
             cmd = "conda env config vars list"
             output = extern.run(cmd).strip().split("\n")
 
-            self.assertTrue(f"SNAKEMAKE_CONDA_PREFIX = {path_to_conda}" in output)
-            self.assertTrue(f"CONDA_ENV_PATH = {path_to_conda}" in output)
             self.assertTrue(f"SINGLEM_METAPACKAGE_PATH = {METAPACKAGE}" in output)
             self.assertTrue(f"GTDBTK_DATA_PATH = gtdb_release" in output)
             self.assertTrue(f"CHECKM2DB = CheckM2_database" in output)
@@ -58,7 +53,6 @@ class Tests(unittest.TestCase):
                 f"--genomes {GENOMES} "
                 f"--singlem-metapackage {METAPACKAGE} "
                 f"--output test_coassemble "
-                f"--conda-prefix {path_to_conda} "
                 f"--dryrun "
             )
             output = extern.run(cmd)
@@ -78,7 +72,6 @@ class Tests(unittest.TestCase):
                 f"--aviary-outputs {MOCK_COASSEMBLIES} "
                 f"--singlem-metapackage {METAPACKAGE} "
                 f"--output test_evaluate "
-                f"--conda-prefix {path_to_conda} "
                 f"--dryrun "
             )
             output = extern.run(cmd)
@@ -108,7 +101,6 @@ class Tests(unittest.TestCase):
                 f"--coassemble-elusive-clusters {os.path.join(MOCK_COASSEMBLE, 'coassemble', 'target', 'elusive_clusters_sra.tsv')} "
                 f"--coassemble-summary {os.path.join(MOCK_COASSEMBLE, 'coassemble', 'summary.tsv')} "
                 f"--output test_update "
-                f"--conda-prefix {path_to_conda} "
                 f"--dryrun "
             )
             output = extern.run(cmd)
@@ -130,7 +122,6 @@ class Tests(unittest.TestCase):
                 f"--genomes {GENOMES} "
                 f"--singlem-metapackage {METAPACKAGE} "
                 f"--output test_iterate "
-                f"--conda-prefix {path_to_conda} "
                 f"--dryrun "
             )
             output = extern.run(cmd)

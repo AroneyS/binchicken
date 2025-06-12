@@ -49,6 +49,5 @@ aviary_request_gpu: false
 test: false
 mock_sra: false
 aviary_dryrun: false
-conda_prefix: false
 tmpdir: false
 build: false

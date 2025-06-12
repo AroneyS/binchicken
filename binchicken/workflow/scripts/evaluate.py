@@ -7,7 +7,7 @@
 import polars as pl
 import os
 import argparse
-from binchicken.binchicken import parse_snake_dict
+from binchicken.common import parse_snake_dict
 
 SINGLEM_COLUMNS = {
     "gene": str,

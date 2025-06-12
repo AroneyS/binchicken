@@ -6,7 +6,8 @@
 
 import os
 import polars as pl
-from binchicken.binchicken import FAST_AVIARY_MODE, parse_snake_dict
+from binchicken.binchicken import FAST_AVIARY_MODE
+from binchicken.common import parse_snake_dict
 import argparse
 
 # Example shell directive for Snakemake:
