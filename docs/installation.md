@@ -42,13 +42,13 @@ Create conda env from `binchicken.yml` and install from source.
 ```bash
 git clone https://github.com/AroneyS/binchicken.git
 cd binchicken
-pixi run --manifest-path binchicken/pixi.toml postinstall
+pixi run postinstall
 ```
 
 Then binchicken can be run using `pixi run` (or via `pixi shell`).
 
 ```bash
-pixi run --manifest-path binchicken/pixi.toml binchicken --help
+pixi run binchicken --help
 ```
 
 When installed this way, binchicken is installed in an "editable" way (similar to `pip install -e .`),
