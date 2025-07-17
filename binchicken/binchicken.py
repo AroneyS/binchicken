@@ -623,6 +623,7 @@ def coassemble(args):
     except (FileNotFoundError, NoDataError):
         pass
 
+    logging.info("---- Bin Chicken coassemble ----------------------------------------------------")
     logging.info(f"Bin Chicken coassemble complete.")
     logging.info(f"Cluster summary at {os.path.join(args.output, 'coassemble', 'summary.tsv')}")
     logging.info(f"More details at {os.path.join(args.output, 'coassemble', 'target', 'elusive_clusters.tsv')}")
@@ -705,6 +706,7 @@ def evaluate(args):
         snakemake_args = args.snakemake_args,
     )
 
+    logging.info("---- Bin Chicken evaluate ------------------------------------------------------")
     logging.info(f"Bin Chicken evaluate complete.")
     logging.info(f"Coassembly evaluation summary at {os.path.join(args.output, 'evaluate', 'evaluate', 'summary_stats.tsv')}")
     logging.info(f"Genome recovery breakdown by phyla at {os.path.join(args.output, 'evaluate', 'evaluate', 'plots', 'combined', 'phylum_recovered.png')}")
@@ -837,6 +839,7 @@ def update(args):
     args.sample_read_size = sample_read_size
     coassemble(args)
 
+    logging.info("---- Bin Chicken update --------------------------------------------------------")
     logging.info(f"Bin Chicken update complete.")
     if not args.run_aviary:
         logging.info(f"Aviary commands for coassembly and recovery in shell scripts at {os.path.join(args.output, 'coassemble', 'commands')}")
@@ -1029,6 +1032,7 @@ def iterate(args):
         logging.warning("Suggested coassemblies may match those from previous iterations. To check, use `--elusive-clusters`.")
         logging.warning("To exclude, provide previous run with `--coassemble-output` or use `--exclude-coassembles`.")
 
+    logging.info("---- Bin Chicken iterate -------------------------------------------------------")
     logging.info(f"Bin Chicken iterate complete.")
     logging.info(f"Cluster summary at {os.path.join(args.output, 'coassemble', 'summary.tsv')}")
     logging.info(f"More details at {os.path.join(args.output, 'coassemble', 'target', 'elusive_clusters.tsv')}")
@@ -1117,6 +1121,7 @@ def build(args):
         aviary_dirname = extern.run(f"{pixi_run} -e aviary python -c 'import aviary, os; print(os.path.dirname(aviary.__file__))'")
         extern.run(f"{pixi_run} -e aviary pixi install -a --manifest-path {aviary_dirname}/pixi.toml")
 
+    logging.info("---- Bin Chicken build ---------------------------------------------------------")
     logging.info(f"Bin Chicken build complete.")
 
 def main():
