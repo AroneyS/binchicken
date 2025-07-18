@@ -50,13 +50,8 @@ def main():
     os.environ["POLARS_MAX_THREADS"] = str(args.threads)
     import polars as pl
 
-    read_paths = pl.read_csv(args.reads, has_header=False, new_columns=["reads"]).get_column("reads").to_list()
-
-    reads = []
-    for read in read_paths:
-        reads.append(pl.scan_csv(read, separator="\t", schema_overrides=SINGLEM_OTU_TABLE_SCHEMA))
-
-    binned, unbinned = processing(pl.concat(reads))
+    reads = pl.scan_csv(args.reads, separator="\t", schema_overrides=SINGLEM_OTU_TABLE_SCHEMA)
+    binned, unbinned = processing(reads)
 
     binned.sink_csv(args.binned, separator="\t")
     unbinned.sink_csv(args.unbinned, separator="\t")

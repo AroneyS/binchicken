@@ -439,9 +439,33 @@ rule read_otu_table_list:
             for read in input.reads:
                 f.write(f"{read}\n")
 
+rule remove_off_targets:
+    input:
+        output_dir + "/lists/reads_otu_table_list.tsv",
+    output:
+        output_dir + "/appraise/reads_cleaned.otu_table.tsv",
+    log:
+        logs_dir + "/appraise/remove_off_targets.log"
+    benchmark:
+        benchmarks_dir + "/appraise/remove_off_targets.tsv"
+    params:
+        singlem_metapackage = config["singlem_metapackage"]
+    threads: 1
+    resources:
+        mem_mb=get_mem_mb,
+        runtime = get_runtime(base_hours = 24),
+    shell:
+        f"{pixi_run} -e singlem "
+        "singlem summarise "
+        "--input-otu-tables-list {input} "
+        "--output-otu-table {output} "
+        "--exclude-off-target-hits "
+        "--metapackage {params.singlem_metapackage} "
+        "&> {log}"
+
 rule no_genomes:
     input:
-        reads = output_dir + "/lists/reads_otu_table_list.tsv",
+        reads = output_dir + "/appraise/reads_cleaned.otu_table.tsv",
     output:
         unbinned = temp(output_dir + "/appraise/unbinned_raw.otu_table.tsv") if config["no_genomes"] else [],
         binned = temp(output_dir + "/appraise/binned_raw.otu_table.tsv") if config["no_genomes"] else [],
