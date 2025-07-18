@@ -425,9 +425,23 @@ rule query_processing:
 ################################
 ### No genomes (alternative) ###
 ################################
-rule no_genomes:
+rule read_otu_table_list:
     input:
         reads = expand(output_dir + "/pipe/{read}_read.otu_table.tsv", read=reads_1),
+    output:
+        output_dir + "/lists/reads_otu_table_list.tsv",
+    threads: 1
+    resources:
+        mem_mb=get_mem_mb,
+        runtime = get_runtime(base_hours = 5),
+    run:
+        with open(output[0], "w") as f:
+            for read in input.reads:
+                f.write(f"{read}\n")
+
+rule no_genomes:
+    input:
+        reads = output_dir + "/lists/reads_otu_table_list.tsv",
     output:
         unbinned = temp(output_dir + "/appraise/unbinned_raw.otu_table.tsv") if config["no_genomes"] else [],
         binned = temp(output_dir + "/appraise/binned_raw.otu_table.tsv") if config["no_genomes"] else [],

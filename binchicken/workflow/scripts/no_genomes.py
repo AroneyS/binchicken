@@ -41,7 +41,7 @@ def processing(reads):
 
 def main():
     parser = argparse.ArgumentParser(description="No genomes pipeline script.")
-    parser.add_argument("--reads", required=True, nargs='+', help="List of input read files")
+    parser.add_argument("--reads", required=True, help="List file of input read files")
     parser.add_argument("--binned", required=True, help="Path to output binned file")
     parser.add_argument("--unbinned", required=True, help="Path to output unbinned file")
     parser.add_argument("--threads", type=int, default=1, help="Number of threads for Polars")
@@ -50,8 +50,10 @@ def main():
     os.environ["POLARS_MAX_THREADS"] = str(args.threads)
     import polars as pl
 
+    read_paths = pl.read_csv(args.reads, has_header=False, new_columns=["reads"]).get_column("reads").to_list()
+
     reads = []
-    for read in args.reads:
+    for read in read_paths:
         reads.append(pl.scan_csv(read, separator="\t", schema_overrides=SINGLEM_OTU_TABLE_SCHEMA))
 
     binned, unbinned = processing(pl.concat(reads))
