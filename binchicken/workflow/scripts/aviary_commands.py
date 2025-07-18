@@ -7,7 +7,6 @@
 import os
 import polars as pl
 from binchicken.binchicken import FAST_AVIARY_MODE
-from binchicken.common import parse_snake_dict
 import argparse
 
 # Example shell directive for Snakemake:
@@ -17,8 +16,8 @@ import argparse
 #   --elusive-clusters {input.elusive_clusters} \
 #   --coassemble-commands {output.coassemble_commands} \
 #   --recover-commands {output.recover_commands} \
-#   --reads-1 {params.reads_1} \
-#   --reads-2 {params.reads_2} \
+#   --reads-1 {input.reads_1} \
+#   --reads-2 {input.reads_2} \
 #   --dir {params.dir} \
 #   --assemble-threads {params.assemble_threads} \
 #   --assemble-memory {params.assemble_memory} \
@@ -101,8 +100,8 @@ def main():
     parser.add_argument("--elusive-clusters", required=True, help="Path to elusive clusters input file")
     parser.add_argument("--coassemble-commands", required=True, help="Path to output coassemble commands file")
     parser.add_argument("--recover-commands", required=True, help="Path to output recover commands file")
-    parser.add_argument("--reads-1", required=True, type=parse_snake_dict, help="Dictionary of sample:read1 pairs")
-    parser.add_argument("--reads-2", required=True, type=parse_snake_dict, help="Dictionary of sample:read2 pairs")
+    parser.add_argument("--reads-1", required=True, help="Named list file of read1")
+    parser.add_argument("--reads-2", required=True, help="Named list file of read2")
     parser.add_argument("--dir", required=True, help="Output directory")
     parser.add_argument("--assemble-threads", type=int, required=True, help="Threads for assembly")
     parser.add_argument("--assemble-memory", required=True, help="Memory for assembly")
@@ -143,10 +142,21 @@ def main():
 
     fast = args.speed == FAST_AVIARY_MODE
 
+    reads_1 = {}
+    with open(args.reads_1, "r") as f:
+        for line in f:
+            sample, read1 = line.strip().split("\t")
+            reads_1[sample] = read1
+    reads_2 = {}
+    with open(args.reads_2, "r") as f:
+        for line in f:
+            sample, read2 = line.strip().split("\t")
+            reads_2[sample] = read2
+
     coassemblies = pipeline(
         coassemblies,
-        reads_1=args.reads_1,
-        reads_2=args.reads_2,
+        reads_1=reads_1,
+        reads_2=reads_2,
         output_dir=args.dir,
         assemble_threads=args.assemble_threads,
         assemble_memory=args.assemble_memory,

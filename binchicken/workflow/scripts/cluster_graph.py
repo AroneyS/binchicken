@@ -36,10 +36,10 @@ TARGET_WEIGHTING_COLUMNS = {
 #   --max-coassembly-samples {params.max_coassembly_samples} \
 #   --num-coassembly-samples {params.num_coassembly_samples} \
 #   --max-recovery-samples {params.max_recovery_samples} \
-#   --coassembly-samples {params.coassembly_samples} \
-#   --exclude-coassemblies {params.exclude_coassemblies} \
+#   --coassembly-samples {input.coassembly_samples} \
+#   --exclude-coassemblies {input.exclude_coassemblies} \
 #   --single-assembly {params.single_assembly} \
-#   --anchor-samples {params.anchor_samples} \
+#   --anchor-samples {input.anchor_samples} \
 #   --threads {threads} \
 #   --log {log}
 # """
@@ -353,10 +353,10 @@ def main():
     parser.add_argument("--max-coassembly-samples", type=int, default=2, help="Max coassembly samples")
     parser.add_argument("--num-coassembly-samples", type=int, default=2, help="Num coassembly samples (min)")
     parser.add_argument("--max-recovery-samples", type=int, default=20, help="Max recovery samples")
-    parser.add_argument("--coassembly-samples", nargs='*', default=[], help="List of coassembly samples")
-    parser.add_argument("--exclude-coassemblies", nargs='*', default=[], help="List of excluded coassemblies")
+    parser.add_argument("--coassembly-samples", nargs='?', default=None, help="List file of coassembly samples")
+    parser.add_argument("--exclude-coassemblies", nargs='?', default=None, help="List file of excluded coassemblies")
     parser.add_argument("--single-assembly", type=lambda x: x.lower() == 'true', nargs='?', const=True, default=False, help="Single assembly mode (True/False)")
-    parser.add_argument("--anchor-samples", nargs='*', default=[], help="List of anchor samples")
+    parser.add_argument("--anchor-samples", nargs='?', default=None, help="List file of anchor samples")
     parser.add_argument("--threads", type=int, default=1, help="Number of threads for Polars")
     parser.add_argument("--log", default=None, help="Log file path")
     args = parser.parse_args()
@@ -382,10 +382,10 @@ def main():
     MAX_COASSEMBLY_SAMPLES = args.max_coassembly_samples
     MIN_COASSEMBLY_SAMPLES = args.num_coassembly_samples
     MAX_RECOVERY_SAMPLES = args.max_recovery_samples
-    COASSEMBLY_SAMPLES = args.coassembly_samples
-    EXCLUDE_COASSEMBLIES = args.exclude_coassemblies
+    COASSEMBLY_SAMPLES = pl.read_csv(args.coassembly_samples, has_header=False, new_columns=["sample"]).get_column("sample").to_list() if args.coassembly_samples else []
+    EXCLUDE_COASSEMBLIES = pl.read_csv(args.exclude_coassemblies, separator="\t", has_header=False, new_columns=["coassembly"]).get_column("coassembly").to_list() if args.exclude_coassemblies else []
     single_assembly = args.single_assembly
-    anchor_samples = set(args.anchor_samples)
+    anchor_samples = set(pl.read_csv(args.anchor_samples, has_header=False, new_columns=["sample"]).get_column("sample").to_list()) if args.anchor_samples else set()
 
     elusive_edges = pl.read_csv(args.elusive_edges, separator="\t", schema_overrides={"target_ids": str})
     read_size = pl.read_csv(args.read_size, has_header=False, new_columns=["sample", "read_size"])

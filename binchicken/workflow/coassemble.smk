@@ -450,14 +450,47 @@ rule no_genomes:
 ######################
 ### Target elusive ###
 ######################
-rule count_bp_reads:
+rule get_reads_list:
     input:
         reads_1 = lambda wildcards: get_reads(wildcards).values(),
         reads_2 = lambda wildcards: get_reads(wildcards, forward=False).values()
     output:
-        output_dir + "/{version,.*}read_size.csv"
+        reads_1 = output_dir + "/lists/{version,.*}reads_1_list.tsv",
+        reads_2 = output_dir + "/lists/{version,.*}reads_2_list.tsv",
+    threads: 1
+    resources:
+        mem_mb=get_mem_mb,
+        runtime = get_runtime(base_hours = 5),
+    run:
+        with open(output.reads_1, "w") as f:
+            for read in input.reads_1:
+                f.write(f"{read}\n")
+        with open(output.reads_2, "w") as f:
+            for read in input.reads_2:
+                f.write(f"{read}\n")
+
+rule get_count_samples_list:
+    output:
+        output_dir + "/lists/{version,.*}count_samples_list.tsv",
     params:
         names = list(config["reads_1"].keys()),
+    threads: 1
+    resources:
+        mem_mb=get_mem_mb,
+        runtime = get_runtime(base_hours = 5),
+    run:
+        with open(output[0], "w") as f:
+            for read in params.names:
+                f.write(f"{read}\n")
+
+rule count_bp_reads:
+    input:
+        reads_1 = output_dir + "/lists/{version}reads_1_list.tsv",
+        reads_2 = output_dir + "/lists/{version}reads_2_list.tsv",
+        samples = output_dir + "/lists/{version}count_samples_list.tsv",
+    output:
+        output_dir + "/{version,.*}read_size.csv"
+    params:
         cat = get_cat,
     threads: 8
     resources:
@@ -468,19 +501,33 @@ rule count_bp_reads:
         "parallel -k -j {threads} "
         "echo -n {{1}}, '&&' "
         "{params.cat} {{2}} {{3}} '|' sed -n 2~4p '|' tr -d '\"\n\"' '|' wc -m "
-        "::: {params.names} :::+ {input.reads_1} :::+ {input.reads_2} "
+        ":::: {input.samples} ::::+ {input.reads_1} ::::+ {input.reads_2} "
         "> {output}"
+
+rule get_abundance_weighted_samples_list:
+    output:
+        output_dir + "/lists/abundance_weighted_samples_list.tsv",
+    params:
+        samples = config["abundance_weighted_samples"],
+    threads: 1
+    resources:
+        mem_mb=get_mem_mb,
+        runtime = get_runtime(base_hours = 5),
+    run:
+        with open(output[0], "w") as f:
+            for sample in params.samples:
+                f.write(f"{sample}\n")
 
 rule abundance_weighting:
     input:
         unbinned = output_dir + "/appraise/unbinned.otu_table.tsv",
         binned = output_dir + "/appraise/binned.otu_table.tsv",
+        samples = output_dir + "/lists/abundance_weighted_samples_list.tsv",
     output:
         weighted = output_dir + "/appraise/weighted.otu_table.tsv"
     threads: 64
     params:
         script = scripts_dir + "/abundance_weighting.py",
-        samples = config["abundance_weighted_samples"],
     resources:
         mem_mb=get_mem_mb,
         runtime = get_runtime(base_hours = 24),
@@ -494,7 +541,7 @@ rule abundance_weighting:
         "--unbinned {input.unbinned} "
         "--binned {input.binned} "
         "--weighted {output.weighted} "
-        "--samples {params.samples} "
+        "--samples {input.samples} "
         "--threads {threads} "
         "--log {log}"
 
@@ -574,10 +621,40 @@ rule filter_distances:
         "awk 'BEGIN{{FS=OFS=\",\"}} $7 >= {params.min_distance}' "
         "{input.distance} > {output.distance}"
 
+rule get_samples_list:
+    output:
+        output_dir + "/lists/samples_list.tsv",
+    params:
+        names = list(config["reads_1"].keys()),
+    threads: 1
+    resources:
+        mem_mb=get_mem_mb,
+        runtime = get_runtime(base_hours = 5),
+    run:
+        with open(output[0], "w") as f:
+            for read in params.names:
+                f.write(f"{read}\n")
+
+rule get_anchor_samples_list:
+    output:
+        output_dir + "/lists/anchor_samples_list.tsv",
+    params:
+        anchor_samples = config["anchor_samples"],
+    threads: 1
+    resources:
+        mem_mb=get_mem_mb,
+        runtime = get_runtime(base_hours = 5),
+    run:
+        with open(output[0], "w") as f:
+            for sample in params.anchor_samples:
+                f.write(f"{sample}\n")
+
 rule target_elusive:
     input:
         unbinned = output_dir + "/appraise/unbinned.otu_table.tsv",
         distances = output_dir + "/sketch/samples_filtered.csv" if config["kmer_precluster"] else [],
+        samples = output_dir + "/lists/samples_list.tsv",
+        anchor_samples = output_dir + "/lists/anchor_samples_list.tsv" if config["anchor_samples"] else [],
     output:
         output_edges = output_dir + "/target/elusive_edges.tsv",
         output_targets = output_dir + "/target/targets.tsv",
@@ -586,8 +663,6 @@ rule target_elusive:
         min_coassembly_coverage = config["min_coassembly_coverage"],
         max_coassembly_samples = config["max_coassembly_samples"],
         taxa_of_interest = config["taxa_of_interest"],
-        samples = " ".join(config["reads_1"]),
-        anchor_samples = " ".join(config["anchor_samples"]),
         precluster_size = config["precluster_size"],
     threads: 64
     resources:
@@ -604,8 +679,8 @@ rule target_elusive:
         "--distances {input.distances} "
         "--output-targets {output.output_targets} "
         "--output-edges {output.output_edges} "
-        "--samples {params.samples} "
-        "--anchor-samples {params.anchor_samples} "
+        "--samples {input.samples} "
+        "--anchor-samples {input.anchor_samples} "
         "--min-coassembly-coverage {params.min_coassembly_coverage} "
         "--max-coassembly-samples {params.max_coassembly_samples} "
         "--taxa-of-interest {params.taxa_of_interest} "
@@ -638,11 +713,42 @@ rule target_weighting:
         "--threads {threads} "
         "--log {log}"
 
+rule get_coassembly_samples:
+    output:
+        coassembly_samples = output_dir + "/lists/coassembly_samples_list.tsv",
+    params:
+        coassembly_samples = config["coassembly_samples"],
+    threads: 1
+    resources:
+        mem_mb=get_mem_mb,
+        runtime = get_runtime(base_hours = 5),
+    run:
+        with open(output[0], "w") as f:
+            for sample in params.coassembly_samples:
+                f.write(f"{sample}\n")
+
+rule get_exclude_coassemblies:
+    output:
+        exclude_coassemblies = output_dir + "/lists/exclude_coassemblies_list.tsv",
+    params:
+        exclude_coassemblies = config["exclude_coassemblies"],
+    threads: 1
+    resources:
+        mem_mb=get_mem_mb,
+        runtime = get_runtime(base_hours = 5),
+    run:
+        with open(output[0], "w") as f:
+            for coassembly in params.exclude_coassemblies:
+                f.write(f"{coassembly}\n")
+
 checkpoint cluster_graph:
     input:
         elusive_edges = output_dir + "/target/elusive_edges.tsv",
         read_size = output_dir + "/read_size.csv",
         targets_weighted = output_dir + "/target/targets_weighted.tsv" if config["abundance_weighted"] else [],
+        anchor_samples = output_dir + "/lists/anchor_samples_list.tsv" if config["anchor_samples"] else [],
+        coassembly_samples = output_dir + "/lists/coassembly_samples_list.tsv" if config["coassembly_samples"] else [],
+        exclude_coassemblies = output_dir + "/lists/exclude_coassemblies_list.tsv" if config["exclude_coassemblies"] else [],
     output:
         elusive_clusters = output_dir + "/target/elusive_clusters.tsv"
     params:
@@ -651,9 +757,6 @@ checkpoint cluster_graph:
         num_coassembly_samples = config["num_coassembly_samples"],
         max_coassembly_samples = config["max_coassembly_samples"],
         max_recovery_samples = config["max_recovery_samples"],
-        coassembly_samples = config["coassembly_samples"],
-        anchor_samples = config["anchor_samples"],
-        exclude_coassemblies = config["exclude_coassemblies"],
         single_assembly = config["single_assembly"],
     threads: 64
     resources:
@@ -674,10 +777,10 @@ checkpoint cluster_graph:
         "--max-coassembly-samples {params.max_coassembly_samples} "
         "--num-coassembly-samples {params.num_coassembly_samples} "
         "--max-recovery-samples {params.max_recovery_samples} "
-        "--coassembly-samples {params.coassembly_samples} "
-        "--exclude-coassemblies {params.exclude_coassemblies} "
+        "--coassembly-samples {input.coassembly_samples} "
+        "--exclude-coassemblies {input.exclude_coassemblies} "
         "--single-assembly {params.single_assembly} "
-        "--anchor-samples {params.anchor_samples} "
+        "--anchor-samples {input.anchor_samples} "
         "--threads {threads} "
         "--log {log}"
 
@@ -775,10 +878,25 @@ rule qc_reads:
         "-l {params.min_length} "
         "&> {log}"
 
+rule get_genomes_named_list:
+    output:
+        output_dir + "/lists/genomes_named_list.tsv",
+    params:
+        genomes = config["genomes"],
+    threads: 1
+    resources:
+        mem_mb=get_mem_mb,
+        runtime = get_runtime(base_hours = 5),
+    run:
+        with open(output[0], "w") as f:
+            for genome, path in params.genomes.items():
+                f.write(f"{genome}\t{path}\n")
+
 rule collect_genomes:
     input:
         appraise_binned = output_dir + "/appraise/binned.otu_table.tsv",
         appraise_unbinned = output_dir + "/appraise/unbinned.otu_table.tsv",
+        genomes = output_dir + "/lists/genomes_named_list.tsv",
     output:
         temp(output_dir + "/mapping/{read}_reference.fna"),
     threads: 1
@@ -787,7 +905,6 @@ rule collect_genomes:
         runtime = get_runtime(base_hours = 24),
     params:
         script = scripts_dir + "/collect_reference_bins.py",
-        genomes = config["genomes"],
         sample = "{read}",
         min_appraised = config["unmapping_min_appraised"],
     shell:
@@ -795,7 +912,7 @@ rule collect_genomes:
         "python3 {params.script} "
         "--appraise-binned {input.appraise_binned} "
         "--appraise-unbinned {input.appraise_unbinned} "
-        "--genomes '{params.genomes}' "
+        "--genomes {input.genomes} "
         "--sample {params.sample} "
         "--min-appraised {params.min_appraised} "
         "--read {wildcards.read} "
@@ -905,18 +1022,37 @@ rule finish_qc:
 ##############################
 ### Create Aviary commands ###
 ##############################
+rule get_reads_named_list:
+    output:
+        reads_1 = output_dir + "/lists/{version,.*}reads_1_named_list.tsv",
+        reads_2 = output_dir + "/lists/{version,.*}reads_2_named_list.tsv",
+    params:
+        reads_1 = lambda wildcards: get_reads(wildcards),
+        reads_2 = lambda wildcards: get_reads(wildcards, forward=False),
+    threads: 1
+    resources:
+        mem_mb=get_mem_mb,
+        runtime = get_runtime(base_hours = 5),
+    run:
+        with open(output.reads_1, "w") as f:
+            for sample, read in params.reads_1.items():
+                f.write(f"{sample}\t{read}\n")
+        with open(output.reads_2, "w") as f:
+            for sample, read in params.reads_2.items():
+                f.write(f"{sample}\t{read}\n")
+
 rule aviary_commands:
     input:
         output_dir + "/mapping/done" if config["assemble_unmapped"] else output_dir + "/qc/done" if config["run_qc"] else [],
         elusive_clusters = output_dir + "/target/elusive_clusters.tsv",
+        reads_1 = lambda wildcards: output_dir + "/lists/unmapped_reads_1_named_list.tsv" if config["assemble_unmapped"] else output_dir + "/lists/qc_reads_1_named_list.tsv" if config["run_qc"] else output_dir + "/lists/reads_1_named_list.tsv",
+        reads_2 = lambda wildcards: output_dir + "/lists/unmapped_reads_2_named_list.tsv" if config["assemble_unmapped"] else output_dir + "/lists/qc_reads_2_named_list.tsv" if config["run_qc"] else output_dir + "/lists/reads_2_named_list.tsv",
     output:
         coassemble_commands = output_dir + "/commands/coassemble_commands.sh",
         recover_commands = output_dir + "/commands/recover_commands.sh"
     threads: 8
     params:
         script = scripts_dir + "/aviary_commands.py",
-        reads_1 = mapped_reads_1 if config["assemble_unmapped"] else qc_reads_1 if config["run_qc"] else config["reads_1"],
-        reads_2 = mapped_reads_2 if config["assemble_unmapped"] else qc_reads_2 if config["run_qc"] else config["reads_2"],
         dir = output_dir,
         assemble_memory = config["aviary_assemble_memory"],
         assemble_threads = config["aviary_assemble_threads"],
@@ -932,8 +1068,8 @@ rule aviary_commands:
         "--elusive-clusters {input.elusive_clusters} "
         "--coassemble-commands {output.coassemble_commands} "
         "--recover-commands {output.recover_commands} "
-        "--reads-1 '{params.reads_1}' "
-        "--reads-2 '{params.reads_2}' "
+        "--reads-1 {input.reads_1} "
+        "--reads-2 {input.reads_2} "
         "--dir {params.dir} "
         "--assemble-threads {params.assemble_threads} "
         "--assemble-memory {params.assemble_memory} "

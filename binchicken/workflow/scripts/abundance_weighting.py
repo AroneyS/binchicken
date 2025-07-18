@@ -33,7 +33,7 @@ WEIGHTING_COLUMNS = {
 #   --unbinned {input.unbinned} \
 #   --binned {input.binned} \
 #   --weighted {output.weighted} \
-#   --samples {params.samples} \
+#   --samples {input.samples} \
 #   --threads {threads} \
 #   --log {log}
 # """
@@ -96,7 +96,7 @@ def main():
     parser.add_argument("--unbinned", required=True, help="Path to unbinned input file")
     parser.add_argument("--binned", required=True, help="Path to binned input file")
     parser.add_argument("--weighted", required=True, help="Path to output weighted file")
-    parser.add_argument("--samples", nargs='*', default=None, help="List of sample names")
+    parser.add_argument("--samples", default=None, help="List file of sample names")
     parser.add_argument("--threads", type=int, default=1, help="Number of threads for Polars")
     parser.add_argument("--log", default=None, help="Log file path")
     args = parser.parse_args()
@@ -120,7 +120,15 @@ def main():
 
     unbinned = pl.read_csv(args.unbinned, separator="\t", schema_overrides=APPRAISE_COLUMNS)
     binned = pl.read_csv(args.binned, separator="\t", schema_overrides=APPRAISE_COLUMNS)
-    weighted = pipeline(unbinned, binned, args.samples)
+
+    if not args.samples:
+        samples = None
+    elif os.path.getsize(args.samples) == 0:
+        samples = None
+    else:
+        samples = pl.read_csv(args.samples, has_header=False, new_columns=["sample"]).get_column("sample").to_list()
+
+    weighted = pipeline(unbinned, binned, samples)
     weighted.write_csv(args.weighted, separator="\t")
 
 if __name__ == "__main__":

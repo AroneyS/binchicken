@@ -28,8 +28,8 @@ EDGES_COLUMNS={
 #   --distances {input.distances} \
 #   --output-targets {output.output_targets} \
 #   --output-edges {output.output_edges} \
-#   --samples {params.samples} \
-#   --anchor-samples {params.anchor_samples} \
+#   --samples {input.samples} \
+#   --anchor-samples {input.anchor_samples} \
 #   --min-coassembly-coverage {params.min_coassembly_coverage} \
 #   --max-coassembly-samples {params.max_coassembly_samples} \
 #   --taxa-of-interest {params.taxa_of_interest} \
@@ -356,8 +356,8 @@ def main():
     parser.add_argument("--distances", nargs='?', const=None, required=False, default=None, help="Path to distances input file")
     parser.add_argument("--output-targets", required=True, help="Path to output targets file")
     parser.add_argument("--output-edges", required=True, help="Path to output edges file")
-    parser.add_argument("--samples", required=True, nargs='+', help="List of sample names")
-    parser.add_argument("--anchor-samples", required=False, nargs='*', default=[], help="List of anchor sample names")
+    parser.add_argument("--samples", required=True, help="List file of sample names")
+    parser.add_argument("--anchor-samples", required=False, nargs='?', default=None, help="List file of anchor sample names")
     parser.add_argument("--min-coassembly-coverage", type=int, default=10, help="Minimum coassembly coverage")
     parser.add_argument("--max-coassembly-samples", type=int, default=2, help="Maximum coassembly samples")
     parser.add_argument("--taxa-of-interest", nargs='?', const="", default="", help="Taxa of interest string")
@@ -390,8 +390,8 @@ def main():
     distances_path = args.distances
     targets_path = args.output_targets
     edges_path = args.output_edges
-    samples = set(args.samples)
-    anchor_samples = set(args.anchor_samples)
+    samples = set(pl.read_csv(args.samples, has_header=False, new_columns=["sample"]).get_column("sample").to_list())
+    anchor_samples = set(pl.read_csv(args.anchor_samples, has_header=False, new_columns=["sample"]).get_column("sample").to_list()) if args.anchor_samples else set()
 
     if distances_path:
         unbinned = pl.scan_csv(unbinned_path, separator="\t")
