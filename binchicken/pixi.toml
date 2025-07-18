@@ -56,19 +56,19 @@ parallel = "==20230522"
 [feature.aviary.dependencies]
 python = ">=3.8,<=3.11"
 snakemake = ">=7.0.0,<=7.32.3"
-"ruamel.yaml" = ">=0.15.99"
-numpy = "==2.2.5"
+"ruamel.yaml" = "==0.18.11"
+numpy = "==2.2.6"
 pandas = "*"
 biopython = "*"
 conda = "==25.1.1"
 pigz = ">=2.6"
 parallel = "*"
 extern = "*"
-pyopenssl = "==25.0.0"
+pyopenssl = "==25.1.0"
 pixi = "*"
 
 [feature.aviary.pypi-dependencies]
-"aviary-genome" = { git = "https://github.com/rhysnewell/aviary.git", rev = "c9662f5b4306486e9576624c16b072537d6f4718" }
+"aviary-genome" = { git = "https://github.com/rhysnewell/aviary.git", rev = "2b7c719f5247ed51154782178d785f87954ad933" }
 
 [feature.coverm.dependencies]
 coverm = "0.6.*"
