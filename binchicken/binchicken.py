@@ -1118,9 +1118,10 @@ def build(args):
     extern.run(pixi_run.replace("run", "install -a", 1))
 
     if not args.skip_aviary_envs:
-        aviary_dirname = extern.run(f"{pixi_run} -e aviary python -c 'import aviary, os; print(os.path.dirname(aviary.__file__))'")
+        aviary_dirname = extern.run(f"{pixi_run} -e aviary python -c 'import aviary, os; print(os.path.dirname(aviary.__file__))'").strip()
+        logging.info(f"Creating Aviary environments in {aviary_dirname}")
         extern.run(f"pixi config set --local run-post-link-scripts insecure --manifest-path {aviary_dirname}/pixi.toml")
-        extern.run(f"{pixi_run} -e aviary pixi install -a --manifest-path {aviary_dirname}/pixi.toml")
+        extern.run(f"{pixi_run} -e aviary pixi install -a --frozen --manifest-path {aviary_dirname}/pixi.toml")
 
     logging.info("---- Bin Chicken build ---------------------------------------------------------")
     logging.info(f"Bin Chicken build complete.")
