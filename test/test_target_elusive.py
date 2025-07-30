@@ -114,6 +114,22 @@ class Tests(unittest.TestCase):
         observed_clusters = get_clusters(sample_distances, samples)
         self.assertDataFrameEqual(expected_clusters, observed_clusters)
 
+    def test_get_clusters_large_precluster_size(self):
+        sample_distances = pl.DataFrame([
+            ["sample_1", "sample_2", 1-0.5],
+            ["sample_1", "sample_3", 1-1],
+            ["sample_2", "sample_3", 1-0.9],
+        ], orient="row", schema=SAMPLE_DISTANCES_COLUMNS)
+        samples = set(["sample_1", "sample_2", "sample_3"])
+
+        expected_clusters = pl.DataFrame([
+            ["sample_1,sample_2"],
+            ["sample_2,sample_3"],
+        ], orient="row", schema=CLUSTERS_COLUMNS)
+
+        observed_clusters = get_clusters(sample_distances, samples, PRECLUSTER_SIZE=10)
+        self.assertDataFrameEqual(expected_clusters, observed_clusters)
+
     def test_get_clusters_size_three(self):
         sample_distances = pl.DataFrame([
             ["1", "2", 1-0.5],

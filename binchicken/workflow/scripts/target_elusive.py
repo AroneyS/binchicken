@@ -72,6 +72,10 @@ def get_clusters(
     ]))
     sample_to_index = {sample: index for index, sample in enumerate(samples)}
 
+    if len(samples) < PRECLUSTER_SIZE:
+        logging.warning(f"Not enough samples ({len(samples)}) for preclustering with size {PRECLUSTER_SIZE}. Restricting to {len(samples)}.")
+        PRECLUSTER_SIZE = len(samples) - 1
+
     logging.info("Initialise the array")
     distances = (
         sp.coo_matrix(
