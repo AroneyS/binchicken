@@ -36,6 +36,7 @@ TARGET_WEIGHTING_COLUMNS = {
 #   --max-coassembly-samples {params.max_coassembly_samples} \
 #   --num-coassembly-samples {params.num_coassembly_samples} \
 #   --max-recovery-samples {params.max_recovery_samples} \
+#   --max-samples-combinations {params.max_samples_combinations} \
 #   --coassembly-samples {input.coassembly_samples} \
 #   --exclude-coassemblies {input.exclude_coassemblies} \
 #   --single-assembly {params.single_assembly} \
@@ -235,7 +236,7 @@ def pipeline(
                     .filter(pl.col("style") == "pool")
                     .filter(pl.col("cluster_size") >= MIN_COASSEMBLY_SAMPLES)
                     # Prevent combinatorial explosion (also, large clusters are less useful for distinguishing between clusters)
-                    .filter(pl.col("samples").list.len() < MAX_SAMPLES_COMBINATIONS)
+                    .filter(pl.col("samples").list.len() <= MAX_SAMPLES_COMBINATIONS)
                     .with_columns(
                         samples_combinations = pl.struct(["length", "cluster_size"]).map_elements(
                             lambda x: [i for i in itertools.combinations(range(x["length"]), x["cluster_size"])],
@@ -353,6 +354,7 @@ def main():
     parser.add_argument("--max-coassembly-samples", type=int, default=2, help="Max coassembly samples")
     parser.add_argument("--num-coassembly-samples", type=int, default=2, help="Num coassembly samples (min)")
     parser.add_argument("--max-recovery-samples", type=int, default=20, help="Max recovery samples")
+    parser.add_argument("--max-samples-combinations", type=int, default=100, help="Max samples combinations for pooled clusters")
     parser.add_argument("--coassembly-samples", nargs='?', default=None, help="List file of coassembly samples")
     parser.add_argument("--exclude-coassemblies", nargs='?', default=None, help="List file of excluded coassemblies")
     parser.add_argument("--single-assembly", type=lambda x: x.lower() == 'true', nargs='?', const=True, default=False, help="Single assembly mode (True/False)")
@@ -382,6 +384,7 @@ def main():
     MAX_COASSEMBLY_SAMPLES = args.max_coassembly_samples
     MIN_COASSEMBLY_SAMPLES = args.num_coassembly_samples
     MAX_RECOVERY_SAMPLES = args.max_recovery_samples
+    MAX_SAMPLES_COMBINATIONS = args.max_samples_combinations
     COASSEMBLY_SAMPLES = pl.read_csv(args.coassembly_samples, has_header=False, new_columns=["sample"]).get_column("sample").to_list() if args.coassembly_samples else []
     EXCLUDE_COASSEMBLIES = pl.read_csv(args.exclude_coassemblies, separator="\t", has_header=False, new_columns=["coassembly"]).get_column("coassembly").to_list() if args.exclude_coassemblies else []
     single_assembly = args.single_assembly
@@ -412,7 +415,7 @@ def main():
         COASSEMBLY_SAMPLES=COASSEMBLY_SAMPLES,
         EXCLUDE_COASSEMBLIES=EXCLUDE_COASSEMBLIES,
         MIN_CLUSTER_TARGETS=min_cluster_targets,
-        MAX_SAMPLES_COMBINATIONS=100,
+        MAX_SAMPLES_COMBINATIONS=MAX_SAMPLES_COMBINATIONS,
         single_assembly=single_assembly,
     )
     clusters.write_csv(args.elusive_clusters, separator="\t")

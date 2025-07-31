@@ -795,6 +795,7 @@ checkpoint cluster_graph:
         num_coassembly_samples = config["num_coassembly_samples"],
         max_coassembly_samples = config["max_coassembly_samples"],
         max_recovery_samples = config["max_recovery_samples"],
+        max_sample_combinations = config["max_sample_combinations"],
         single_assembly = config["single_assembly"],
     threads: 64
     resources:
@@ -815,6 +816,7 @@ checkpoint cluster_graph:
         "--max-coassembly-samples {params.max_coassembly_samples} "
         "--num-coassembly-samples {params.num_coassembly_samples} "
         "--max-recovery-samples {params.max_recovery_samples} "
+        "--max-samples-combinations {params.max_sample_combinations} "
         "--coassembly-samples {input.coassembly_samples} "
         "--exclude-coassemblies {input.exclude_coassemblies} "
         "--single-assembly {params.single_assembly} "
