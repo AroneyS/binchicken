@@ -59,17 +59,8 @@ def join_list_subsets(df1, df2):
 
     output = (
         df1
-        .select(
-            pl.col("samples"),
-            pl.col("samples_hash"),
-            pl.col("length"),
-            )
-        .join(
-            df2,
-            on=["length"],
-            how="left",
-            coalesce=True,
-        )
+        .select("samples", "samples_hash", "length")
+        .join(df2, on="length")
         .filter(pl.col("right_samples").is_not_null())
         .filter(pl.col("samples").list.set_intersection("right_samples").list.len() >= pl.col("length"))
         .group_by("samples_hash")
