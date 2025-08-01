@@ -8,7 +8,7 @@ import polars as pl
 import os
 import numpy as np
 import extern
-from binchicken.binchicken import SUFFIX_RE, parse_snake_dict
+from binchicken.binchicken import SUFFIX_RE
 import argparse
 
 # Example shell directive for Snakemake:
@@ -17,7 +17,7 @@ import argparse
 # python3 binchicken/workflow/scripts/collect_reference_bins.py \
 #   --appraise-binned {input.appraise_binned} \
 #   --appraise-unbinned {input.appraise_unbinned} \
-#   --genomes {params.genomes} \
+#   --genomes {input.genomes} \
 #   --sample {params.sample} \
 #   --min-appraised {params.min_appraised} \
 #   --read {wildcards.read} \
@@ -95,7 +95,7 @@ def main():
     parser = argparse.ArgumentParser(description="Collect reference bins pipeline script.")
     parser.add_argument("--appraise-binned", required=True, help="Path to appraise binned input file")
     parser.add_argument("--appraise-unbinned", required=True, help="Path to appraise unbinned input file")
-    parser.add_argument("--genomes", required=True, type=parse_snake_dict, help="List of genome fasta files (indexed by bin name)")
+    parser.add_argument("--genomes", required=True, help="Named list file of genome fasta files (indexed by bin name)")
     parser.add_argument("--sample", required=True, help="Sample name")
     parser.add_argument("--min-appraised", type=float, default=0.1, help="Minimum appraised fraction")
     parser.add_argument("--read", required=True, help="Read wildcard value")
@@ -110,7 +110,11 @@ def main():
     appraise_unbinned = pl.read_csv(args.appraise_unbinned, separator="\t")
 
     # Build a mapping from bin name to genome file path
-    genomes_dict = args.genomes
+    genomes_dict = {}
+    with open(args.genomes, "r") as f:
+        for line in f:
+            bin_name, genome_path = line.strip().split("\t")
+            genomes_dict[bin_name] = genome_path
 
     reference_bins = pipeline(appraise_binned, appraise_unbinned, args.sample, MIN_APPRAISED=args.min_appraised)
 

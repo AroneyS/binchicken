@@ -53,3 +53,11 @@ Clustering groups of more than 1000 samples quickly leads to memory issues due t
 Kmer preclustering can be used (default if >1000 samples are provided, or use `--kmer-precluster always`) to reduce the number of combinations that are considered.
 This greatly reduces memory usage and allows scaling up to at least 250k samples.
 Kmer preclustering can be disabled with `--kmer-precluster never`.
+
+## Polars idx errors
+
+If you encounter the following error: `Polars' maximum length reached. Consider installing 'polars-u64-idx'.`
+You can try reducing the `--max-sample-combinations` option (default 100).
+Bin Chicken ignores target sequences found in more than this number of samples to prevent combinatorial explosions.
+These targets are also less useful for distinguishing between clusters.
+It is not recommended to set this value lower than the number of requested recovery samples (`--max-recovery-samples`).

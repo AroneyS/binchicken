@@ -3,6 +3,7 @@
 #############
 import os
 import re
+from binchicken.common import pixi_run
 os.umask(0o002)
 
 output_dir = os.path.abspath("evaluate")
@@ -38,9 +39,8 @@ rule prodigal_bins:
         logs_dir + "/transcripts/{bin}.log"
     params:
         prodigal_meta = "-p meta" if config["prodigal_meta"] else ""
-    conda:
-        "env/prodigal.yml"
     shell:
+        f"{pixi_run} -e prodigal "
         "prodigal -i {input} -d {output.fna} -a {output.faa} "
         "{params.prodigal_meta} "
         "&> {log}"
@@ -54,9 +54,8 @@ rule singlem_pipe_bins:
         logs_dir + "/pipe/{bin}.log"
     params:
         singlem_metapackage = config["singlem_metapackage"]
-    conda:
-        "env/singlem.yml"
     shell:
+        f"{pixi_run} -e singlem "
         "singlem pipe "
         "--forward {input} "
         "--otu-table {output} "
@@ -72,9 +71,8 @@ rule singlem_summarise_bins:
         logs_dir + "/summarise/bins.log"
     params:
         singlem_metapackage = config["singlem_metapackage"]
-    conda:
-        "env/singlem.yml"
     shell:
+        f"{pixi_run} -e singlem "
         "singlem summarise "
         "--input-otu-tables {input} "
         "--output-otu-table {output} "
@@ -94,9 +92,8 @@ rule cluster_original_bins:
         genomes = " ".join(config["original_bins"]),
         ani = config["cluster"],
     threads: 64
-    conda:
-        "env/coverm.yml"
     shell:
+        f"{pixi_run} -e coverm "
         "coverm cluster "
         "--genome-fasta-files {params.genomes} "
         "--output-cluster-definition {output} "
@@ -114,9 +111,8 @@ rule cluster_updated_bins:
         genomes = get_cluster_genomes,
         ani = config["cluster"],
     threads: 64
-    conda:
-        "env/coverm.yml"
     shell:
+        f"{pixi_run} -e coverm "
         "coverm cluster "
         "--genome-fasta-files {params.genomes} "
         "--output-cluster-definition {output} "
@@ -134,6 +130,7 @@ rule summarise_clusters:
     params:
         names = ["original"] + coassemblies
     shell:
+        f"{pixi_run} -e general "
         "parallel -k "
         "echo -n {{1}}, '&&' "
         "cut -f1 {{2}} '|' uniq '|' wc -l "
@@ -162,6 +159,7 @@ rule evaluate:
     log:
         logs_dir + "/evaluate/evaluate.log"
     shell:
+        f"{pixi_run} "
         "python3 {params.script} "
         "--target-otu-table {params.target_otu_table} "
         "--binned-otu-table {params.binned_otu_table} "
@@ -189,9 +187,8 @@ rule evaluate_plots:
     output:
         plots_dir = directory(output_dir + "/evaluate/plots"),
         summary_table = output_dir + "/evaluate/summary_table.png",
-    conda:
-        "env/r.yml"
     shell:
+        f"{pixi_run} -e r "
         "Rscript {params.script} "
         "--matched-hits {input.matched_hits} "
         "--novel-hits {input.novel_hits} "

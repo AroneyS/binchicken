@@ -17,8 +17,7 @@ from snakemake.io import load_configfile
 from ruamel.yaml import YAML
 import copy
 import shutil
-import ast
-import re
+from binchicken.common import pixi_run
 
 FAST_AVIARY_MODE = "fast"
 COMPREHENSIVE_AVIARY_MODE = "comprehensive"
@@ -110,14 +109,14 @@ def read_list(path):
 
 def run_workflow(config, workflow, output_dir, cores=16, dryrun=False,
                  profile=None, local_cores=1, cluster_retries=None,
-                 snakemake_args="", conda_frontend="mamba", conda_prefix=None):
+                 snakemake_args=""):
     load_configfile(config)
 
     cmd = (
         "snakemake --snakefile {snakefile} --configfile '{config}' --directory {output_dir} "
         "{jobs} --rerun-incomplete --keep-going --nolock "
         "{snakemake_args} "
-        "{profile} {local} {retries} --use-conda {conda_frontend} {conda_prefix} "
+        "{profile} {local} {retries} "
         "{dryrun} "
     ).format(
         snakefile=os.path.join(os.path.dirname(__file__), "workflow", workflow),
@@ -127,8 +126,6 @@ def run_workflow(config, workflow, output_dir, cores=16, dryrun=False,
         profile="" if not profile else f"--profile {profile}",
         local=f"--local-cores {local_cores}",
         retries="" if (cluster_retries is None) else f"--retries {cluster_retries}",
-        conda_frontend=f"--conda-frontend {conda_frontend}" if conda_frontend is not None else "",
-        conda_prefix=f"--conda-prefix {conda_prefix}" if conda_prefix is not None else "",
         dryrun="--dryrun" if dryrun else "",
         snakemake_args=snakemake_args,
     )
@@ -166,7 +163,6 @@ def download_sra(args):
         profile = args.snakemake_profile,
         local_cores = args.local_cores,
         cluster_retries = args.cluster_retries,
-        conda_prefix = args.conda_prefix,
         snakemake_args = target_rule + " " + args.snakemake_args if args.snakemake_args else target_rule,
     )
 
@@ -326,6 +322,7 @@ def set_standard_args(args):
     args.max_coassembly_samples = None
     args.max_coassembly_size = None
     args.max_recovery_samples = 1
+    args.max_sample_combinations = 100
     args.abundance_weighted = False
     args.abundance_weighted_samples_list = None
     args.abundance_weighted_samples = []
@@ -552,6 +549,7 @@ def coassemble(args):
         "max_coassembly_samples": args.max_coassembly_samples if args.max_coassembly_samples else args.num_coassembly_samples,
         "max_coassembly_size": None if args.max_coassembly_size == "None" else args.max_coassembly_size,
         "max_recovery_samples": args.max_recovery_samples,
+        "max_sample_combinations": args.max_sample_combinations,
         "abundance_weighted": args.abundance_weighted,
         "abundance_weighted_samples": args.abundance_weighted_samples,
         "kmer_precluster": kmer_precluster,
@@ -582,7 +580,6 @@ def coassemble(args):
         "aviary_extra_binners": args.aviary_extra_binners,
         "aviary_skip_binners": args.aviary_skip_binners,
         "aviary_request_gpu": args.aviary_request_gpu,
-        "conda_prefix": args.conda_prefix,
         "snakemake_profile": args.snakemake_profile,
         "aviary_snakemake_profile": args.aviary_snakemake_profile,
         "cluster_retries": args.cluster_retries,
@@ -605,7 +602,6 @@ def coassemble(args):
         profile = args.snakemake_profile,
         local_cores = args.local_cores,
         cluster_retries = args.cluster_retries,
-        conda_prefix = args.conda_prefix,
         snakemake_args = args.snakemake_args,
     )
 
@@ -629,6 +625,7 @@ def coassemble(args):
     except (FileNotFoundError, NoDataError):
         pass
 
+    logging.info("---- Bin Chicken coassemble ----------------------------------------------------")
     logging.info(f"Bin Chicken coassemble complete.")
     logging.info(f"Cluster summary at {os.path.join(args.output, 'coassemble', 'summary.tsv')}")
     logging.info(f"More details at {os.path.join(args.output, 'coassemble', 'target', 'elusive_clusters.tsv')}")
@@ -708,10 +705,10 @@ def evaluate(args):
         profile = args.snakemake_profile,
         local_cores = args.local_cores,
         cluster_retries = args.cluster_retries,
-        conda_prefix = args.conda_prefix,
         snakemake_args = args.snakemake_args,
     )
 
+    logging.info("---- Bin Chicken evaluate ------------------------------------------------------")
     logging.info(f"Bin Chicken evaluate complete.")
     logging.info(f"Coassembly evaluation summary at {os.path.join(args.output, 'evaluate', 'evaluate', 'summary_stats.tsv')}")
     logging.info(f"Genome recovery breakdown by phyla at {os.path.join(args.output, 'evaluate', 'evaluate', 'plots', 'combined', 'phylum_recovered.png')}")
@@ -844,6 +841,7 @@ def update(args):
     args.sample_read_size = sample_read_size
     coassemble(args)
 
+    logging.info("---- Bin Chicken update --------------------------------------------------------")
     logging.info(f"Bin Chicken update complete.")
     if not args.run_aviary:
         logging.info(f"Aviary commands for coassembly and recovery in shell scripts at {os.path.join(args.output, 'coassemble', 'commands')}")
@@ -1036,6 +1034,7 @@ def iterate(args):
         logging.warning("Suggested coassemblies may match those from previous iterations. To check, use `--elusive-clusters`.")
         logging.warning("To exclude, provide previous run with `--coassemble-output` or use `--exclude-coassembles`.")
 
+    logging.info("---- Bin Chicken iterate -------------------------------------------------------")
     logging.info(f"Bin Chicken iterate complete.")
     logging.info(f"Cluster summary at {os.path.join(args.output, 'coassemble', 'summary.tsv')}")
     logging.info(f"More details at {os.path.join(args.output, 'coassemble', 'target', 'elusive_clusters.tsv')}")
@@ -1046,18 +1045,14 @@ def iterate(args):
 
 def configure_variable(variable, value):
     os.environ[variable] = value
-    extern.run(f"conda env config vars set {variable}={value}")
+    extern.run(f"{pixi_run} conda env config vars set {variable}={value}")
 
 def build(args):
     output_dir = os.path.join(args.output, "build")
     shutil.rmtree(output_dir, ignore_errors=True)
     os.makedirs(output_dir, exist_ok=True)
-    conda_prefix = args.conda_prefix
 
     # Setup env variables
-    configure_variable("SNAKEMAKE_CONDA_PREFIX", conda_prefix)
-    configure_variable("CONDA_ENV_PATH", conda_prefix)
-
     if args.set_tmp_dir:
         configure_variable("TMPDIR", args.set_tmp_dir)
 
@@ -1118,149 +1113,19 @@ def build(args):
                 profile = args.snakemake_profile,
                 local_cores = args.local_cores,
                 cluster_retries = args.cluster_retries,
-                conda_prefix = args.conda_prefix,
                 snakemake_args = args.snakemake_args,
             )
 
-    # Set args
-    args = set_standard_args(args)
-    coassemble_config = load_config(importlib.resources.files("binchicken.config").joinpath("template_coassemble.yaml"))
-    vars(args).update(coassemble_config)
-    evaluate_config = load_config(importlib.resources.files("binchicken.config").joinpath("template_evaluate.yaml"))
-    vars(args).update(evaluate_config)
-    args.build = True
-
-    args.snakemake_args_input = args.snakemake_args
-    args.snakemake_args = args.snakemake_args + " --conda-create-envs-only" if args.snakemake_args else "--conda-create-envs-only"
-    args.conda_prefix = conda_prefix
-
-    args.forward_list = None
-    args.reverse_list = None
-    args.genomes_list = None
-    args.new_genomes_list = None
-    args.coassembly_samples_list = None
-    args.anchor_samples_list = None
-    args.sample_read_size = None
-    args.cluster_submission = False
-    args.aviary_gtdbtk_db = "."
-    args.aviary_checkm2_db = "."
-    args.aviary_metabuli_db = "."
-    args.aviary_assemble_cores = None
-    args.aviary_recover_cores = None
-    args.aviary_extra_binners = ["taxvamb"] if args.metabuli_db else None
-    args.aviary_skip_binners = None
-    args.aviary_request_gpu = args.build_gpu
-    args.assemble_unmapped = True
-    args.sra = False
-    args.run_qc = True
-    args.coassemblies = None
-    args.coassemblies_list = None
-    args.singlem_metapackage = "."
-    args.abundance_weighted = False
-    args.abundance_weighted_samples_list = None
-    args.kmer_precluster = PRECLUSTER_NEVER_MODE
-    args.file_hierarchy = HIERARCHY_NEVER_MODE
-    args.download_limit = 1
-
-    # Create mock input files
-    forward_reads = [os.path.join(args.output, "sample_" + s + ".1.fq") for s in ["1", "2", "3"]]
-    args.forward = forward_reads
-    reverse_reads = [os.path.join(args.output, "sample_" + s + ".2.fq") for s in ["1", "2", "3"]]
-    args.reverse = reverse_reads
-    args.genomes = [os.path.join(args.output, "genome_1.fna")]
-
-    # Create mock iterate files
-    args.checkm_version = "build"
-    args.aviary_outputs = [os.path.join(output_dir, "aviary_output")]
-    os.makedirs(args.aviary_outputs[0], exist_ok=True)
-    new_bins = [os.path.join(args.aviary_outputs[0], "iteration_0-coassembly_0-0.fna")]
-
-    # Create mock update files
-    args.coassemble_output = os.path.join(output_dir, "coassemble_output")
-    appraise_dir = os.path.join(args.coassemble_output, "appraise")
-    os.makedirs(appraise_dir, exist_ok=True)
-    otu_tables = [os.path.join(appraise_dir, t + ".otu_table.tsv") for t in ["binned", "unbinned"]]
-    target_dir = os.path.join(args.coassemble_output, "target")
-    os.makedirs(target_dir, exist_ok=True)
-    clusters = [
-        os.path.join(target_dir, "elusive_clusters.tsv"),
-        os.path.join(target_dir, "elusive_edges.tsv"),
-        os.path.join(target_dir, "targets.tsv"),
-        ]
-    clusters_text = "samples\tlength\ttotal_targets\ttotal_size\trecover_samples\tcoassembly\nSRR8334324,SRR8334323\t2\t2\t0\tSRR8334324,SRR8334323\tcoassembly_0\n"
-    with open(clusters[0], "w") as f:
-        f.write(clusters_text)
-
-    with open(os.path.join(args.coassemble_output, "read_size.csv"), "w") as f:
-        f.write("SRR8334324,1000\n")
-
-    for item in args.forward + args.reverse + args.genomes + new_bins + otu_tables + clusters:
-        subprocess.check_call(f"touch {item}", shell=True)
-
-    logging.info("Building SingleM, CoverM and Prodigal conda environments")
-    args.output = os.path.join(output_dir, "build_coassemble")
-    os.mkdir(args.output)
-    coassemble(args)
-
-    logging.info("Building R conda environments")
-    args.output = os.path.join(output_dir, "build_evaluate")
-    os.mkdir(args.output)
-    args.test = False
-    evaluate(args)
-
-    logging.info("Building Aviary and Kingfisher conda environments")
-    args.output = os.path.join(output_dir, "build_sra")
-    os.mkdir(args.output)
-    args.run_aviary = True
-    args.aviary_speed = COMPREHENSIVE_AVIARY_MODE
-    args.sra = "build"
-    args.forward = ["SRR8334323", "SRR8334324"]
-    args.reverse = args.forward
-    update(args)
+    # Create pixi environments
+    extern.run(pixi_run.replace("run", "install -a", 1))
 
     if not args.skip_aviary_envs:
-        logging.info("Building Aviary subworkflow conda environments")
-        args.output = os.path.join(output_dir, "build_aviary")
-        mapping_files = [os.path.join(args.output, "coassemble", "mapping", "sample_" + s + "_unmapped." + n + ".fq.gz") for s in ["1", "2", "3"] for n in ["1", "2"]]
-        mapping_done = os.path.join(args.output, "coassemble", "mapping", "done")
-        elusive_edges = os.path.join(args.output, "coassemble", "target", "elusive_edges.tsv")
-        targets = os.path.join(args.output, "coassemble", "target", "targets.tsv")
-        elusive_clusters = os.path.join(args.output, "coassemble", "target", "elusive_clusters.tsv")
-        summary_file = os.path.join(args.output, "coassemble", "summary.tsv")
+        logging.info(f"Creating Aviary environments")
+        gpu_arg = "--gpu" if args.build_gpu else ""
+        extern.run(f"{pixi_run} -e aviary aviary build {gpu_arg}")
 
-        clusters_text = "samples\tlength\ttotal_targets\ttotal_size\trecover_samples\tcoassembly\nsample_1,sample_2\t2\t2\t0\tsample_1,sample_2\tcoassembly_0\n"
-        clusters_path = os.path.join(args.output, "coassemble", "target", "elusive_clusters.tsv")
-        os.makedirs(os.path.dirname(clusters_path), exist_ok=True)
-        with open(clusters_path, "w") as f:
-            f.write(clusters_text)
-
-        for item in mapping_files + [mapping_done, elusive_edges, targets, elusive_clusters, summary_file]:
-            os.makedirs(os.path.dirname(item), exist_ok=True)
-            subprocess.check_call(f"touch {item}", shell=True)
-
-        args.snakemake_args = args.snakemake_args_input + " --config aviary_dryrun=True"
-        args.forward = forward_reads
-        args.reverse = reverse_reads
-        args.sra = False
-        coassemble(args)
-
-
+    logging.info("---- Bin Chicken build ---------------------------------------------------------")
     logging.info(f"Bin Chicken build complete.")
-    logging.info(f"Conda envs at {conda_prefix}")
-    logging.info(f"Re-activate conda env to load env variables.")
-
-def parse_snake_dict(s):
-    # Remove leading/trailing whitespace
-    s = s.strip()
-    # If it doesn't start with '{', it's not a dict
-    if not s.startswith("{"):
-        raise ValueError("Input does not look like a dict: " + s)
-    # Add quotes around keys and values if missing
-    # This regex finds keys and values that are not quoted and adds quotes
-    s = re.sub(r'([{,]\s*)([^:,}{]+)\s*:', r'\1"\2":', s)
-    s = re.sub(r':\s*([^,}{]+)', lambda m: ': "' + m.group(1).strip().strip('"\'') + '"', s)
-    # Now safe to use ast.literal_eval
-    return ast.literal_eval(s)
 
 def main():
     main_parser = btu.BirdArgparser(program="Bin Chicken", version = __version__, program_invocation="binchicken",
@@ -1333,25 +1198,24 @@ def main():
             ],
             "build": [
                 btu.Example(
-                    "create dependency conda environments",
-                    "binchicken build --conda-prefix path_to_conda_envs"
+                    "create dependency environments",
+                    "binchicken build"
                 ),
                 btu.Example(
-                    "create dependency conda environments and setup environment variables for databases",
-                    "binchicken build --conda-prefix path_to_conda_envs --singlem-metapackage metapackage --checkm2-db CheckM2 --gtdbtk-db GTDBtk"
+                    "create dependency environments and setup environment variables for databases",
+                    "binchicken build --singlem-metapackage metapackage --checkm2-db CheckM2 --gtdbtk-db GTDBtk"
                 ),
                 btu.Example(
-                    "create dependency conda environments and download databases",
-                    "binchicken build --conda-prefix path_to_conda_envs --singlem-metapackage metapackage --checkm2-db CheckM2 --download-databases"
+                    "create dependency environments and download databases",
+                    "binchicken build --singlem-metapackage metapackage --checkm2-db CheckM2 --download-databases"
                 ),
             ],
         }
         )
 
     ###########################################################################
-    def add_general_snakemake_options(argument_group, required_conda_prefix=False):
+    def add_general_snakemake_options(argument_group):
         argument_group.add_argument("--output", help="Output directory [default: .]", default="./")
-        argument_group.add_argument("--conda-prefix", help="Path to conda environment install location. [default: Use path from CONDA_ENV_PATH env variable]", default=None, required=required_conda_prefix)
         cores_default = 1
         argument_group.add_argument("--cores", type=int, help=f"Maximum number of cores to use [default: {cores_default}]", default=cores_default)
         argument_group.add_argument("--dryrun", action="store_true", help="dry run workflow")
@@ -1468,6 +1332,7 @@ def main():
         max_coassembly_size_default = 50
         coassemble_clustering.add_argument("--max-coassembly-size", help=f"Maximum size (Gbp) of coassembly cluster [default: {max_coassembly_size_default}Gbp]", default=max_coassembly_size_default)
         coassemble_clustering.add_argument("--max-recovery-samples", type=int, help="Upper bound for number of related samples to use for differential abundance binning [default: 20]", default=20)
+        coassemble_clustering.add_argument("--max-sample-combinations", type=int, help="Maximum number of samples per target to consider for pooled clusters (reduces combinatorial explosions). Set to a smaller number if you have a polars idx error. [default: 100]", default=100)
         coassemble_clustering.add_argument("--abundance-weighted", action="store_true", help="Weight sequences by mean sample abundance when ranking clusters [default: False]")
         coassemble_clustering.add_argument("--abundance-weighted-samples", nargs='+', help="Restrict sequence weighting to these samples. Remaining samples will still be used for coassembly [default: use all samples]", default=[])
         coassemble_clustering.add_argument("--abundance-weighted-samples-list", help="Restrict sequence weighting to these samples, newline separated. Remaining samples will still be used for coassembly [default: use all samples]", default=[])
@@ -1578,7 +1443,7 @@ def main():
 
     ###########################################################################
 
-    build_parser = main_parser.new_subparser("build", "Create dependency conda environments")
+    build_parser = main_parser.new_subparser("build", "Create dependency environments")
     build_parser.add_argument("--singlem-metapackage", help="SingleM metapackage")
     build_parser.add_argument("--checkm2-db", help="CheckM2 database")
     build_parser.add_argument(f"--gtdbtk-db", help="GTDBtk release database (Only required if --aviary-speed is set to {COMPREHENSIVE_AVIARY_MODE})")
@@ -1588,7 +1453,7 @@ def main():
     build_parser.add_argument("--skip-aviary-envs", help="Do not install Aviary subworkflow environments", action="store_true")
     build_parser.add_argument("--build-gpu", action="store_true", help="Build GPU-friendly environments for certain binners in Aviary recovery [default: do not]. Must be run on a node with GPU access.")
     build_parser.add_argument("--download-databases", help="Download databases if provided paths do not exist", action="store_true")
-    add_general_snakemake_options(build_parser, required_conda_prefix=True)
+    add_general_snakemake_options(build_parser)
 
     ###########################################################################
 
@@ -1610,10 +1475,6 @@ def main():
         except KeyError:
             return None
 
-    if not args.conda_prefix:
-        args.conda_prefix = load_variable("CONDA_ENV_PATH")
-        if not args.conda_prefix:
-            args.conda_prefix = load_variable("SNAKEMAKE_CONDA_PREFIX")
     if not hasattr(args, "singlem_metapackage") or not args.singlem_metapackage:
         args.singlem_metapackage = load_variable("SINGLEM_METAPACKAGE_PATH")
     if not hasattr(args, "aviary_gtdbtk_db") or not args.aviary_gtdbtk_db:

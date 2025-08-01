@@ -8,7 +8,6 @@ import extern
 from snakemake.io import load_configfile
 
 path_to_data = os.path.join(os.path.dirname(os.path.realpath(__file__)),'data')
-path_to_conda = os.path.join(path_to_data,'.conda')
 
 SAMPLE_READS_FORWARD = " ".join([
     os.path.join(path_to_data, "sample_1.1.fq"),
@@ -66,7 +65,6 @@ class Tests(unittest.TestCase):
                 f"--reverse {SAMPLE_READS_REVERSE} "
                 f"--genomes {GENOMES} "
                 f"--output test "
-                f"--conda-prefix {path_to_conda} "
             )
             extern.run(cmd)
 
@@ -160,7 +158,6 @@ class Tests(unittest.TestCase):
                 f"--assemble-unmapped "
                 f"--coassemble-output {MOCK_COASSEMBLE} "
                 f"--output test "
-                f"--conda-prefix {path_to_conda} "
             )
             extern.run(cmd)
 
@@ -232,7 +229,6 @@ class Tests(unittest.TestCase):
                 f"--run-qc "
                 f"--coassemble-output {MOCK_COASSEMBLE} "
                 f"--output test "
-                f"--conda-prefix {path_to_conda} "
             )
             extern.run(cmd)
 
@@ -299,7 +295,6 @@ class Tests(unittest.TestCase):
                 f"--coassemble-output {MOCK_COASSEMBLE_SRA} "
                 f"--sra "
                 f"--output test "
-                f"--conda-prefix {path_to_conda} "
                 f"--dryrun "
             )
             output_comb = extern.run(cmd)
@@ -321,7 +316,6 @@ class Tests(unittest.TestCase):
                 f"--coassemblies coassembly_0 "
                 f"--sra "
                 f"--output test "
-                f"--conda-prefix {path_to_conda} "
                 f"--dryrun "
             )
             output_comb = extern.run(cmd)
@@ -344,7 +338,6 @@ class Tests(unittest.TestCase):
                 f"--coassemblies-list coassemblies "
                 f"--sra "
                 f"--output test "
-                f"--conda-prefix {path_to_conda} "
                 f"--dryrun "
             )
             output_comb = extern.run(cmd)
@@ -372,7 +365,6 @@ class Tests(unittest.TestCase):
                 f"--coassemble-elusive-edges {MOCK_ELUSIVE_EDGES} "
                 f"--coassemble-elusive-clusters {MOCK_ELUSIVE_CLUSTERS} "
                 f"--output test "
-                f"--conda-prefix {path_to_conda} "
                 f"--dryrun "
                 f"--snakemake-args \" --quiet\" "
             )
@@ -407,7 +399,6 @@ class Tests(unittest.TestCase):
                 f"--reverse {SAMPLE_READS_REVERSE} "
                 f"--genomes {GENOMES} "
                 f"--output test "
-                f"--conda-prefix {path_to_conda} "
             )
             extern.run(cmd)
 
@@ -440,7 +431,6 @@ class Tests(unittest.TestCase):
                 f"--genomes {GENOMES} "
                 f"--coassemble-output {MOCK_COASSEMBLE_SRA} "
                 f"--output test "
-                f"--conda-prefix {path_to_conda} "
                 f"--dryrun "
                 f"--snakemake-args \" --quiet\" "
             )
@@ -481,7 +471,6 @@ class Tests(unittest.TestCase):
                 f"--coassemble-elusive-edges {MOCK_ELUSIVE_EDGES} "
                 f"--coassemble-elusive-clusters {MOCK_ELUSIVE_CLUSTERS_SRA_MOCK} "
                 f"--output test "
-                f"--conda-prefix {path_to_conda} "
                 f"--snakemake-args \" --config mock_sra=True\" "
             )
             extern.run(cmd)
@@ -536,7 +525,6 @@ class Tests(unittest.TestCase):
                 f"--coassemble-elusive-edges {MOCK_ELUSIVE_EDGES} "
                 f"--coassemble-elusive-clusters {MOCK_ELUSIVE_CLUSTERS_SRA_MOCK2} "
                 f"--output test "
-                f"--conda-prefix {path_to_conda} "
                 f"--snakemake-args \" --config mock_sra=True\" "
             )
             extern.run(cmd)
@@ -583,7 +571,6 @@ class Tests(unittest.TestCase):
                 f"--coassemble-elusive-edges {MOCK_ELUSIVE_EDGES} "
                 f"--coassemble-elusive-clusters {MOCK_ELUSIVE_CLUSTERS_SRA_MOCK} "
                 f"--output test "
-                f"--conda-prefix {path_to_conda} "
                 f"--snakemake-args \" --config mock_sra=True run_qc=False\" "
             )
             extern.run(cmd)
@@ -625,7 +612,6 @@ class Tests(unittest.TestCase):
                 f"--coassemble-elusive-edges {MOCK_ELUSIVE_EDGES} "
                 f"--coassemble-elusive-clusters {MOCK_ELUSIVE_CLUSTERS_SRA_MOCK3} "
                 f"--output test "
-                f"--conda-prefix {path_to_conda} "
                 f"--snakemake-args \" --config mock_sra=True\" "
             )
             with self.assertRaises(Exception):
@@ -648,7 +634,6 @@ class Tests(unittest.TestCase):
                 f"--coassemble-elusive-edges {MOCK_ELUSIVE_EDGES} "
                 f"--coassemble-elusive-clusters {MOCK_ELUSIVE_CLUSTERS_SRA} "
                 f"--output test "
-                f"--conda-prefix {path_to_conda} "
                 f"--dryrun "
                 f"--snakemake-args \" --quiet\" "
             )
@@ -690,7 +675,6 @@ class Tests(unittest.TestCase):
                 f"--reverse {SAMPLE_READS_REVERSE} "
                 f"--genomes {GENOMES} "
                 f"--output test "
-                f"--conda-prefix {path_to_conda} "
                 f"--snakemake-args \" --config aviary_dryrun=True\" "
             )
             extern.run(cmd)
@@ -737,7 +721,6 @@ class Tests(unittest.TestCase):
                 f"--coassemble-elusive-clusters {MOCK_ELUSIVE_CLUSTERS_TWO} "
                 f"--coassemblies coassembly_0 "
                 f"--output test "
-                f"--conda-prefix {path_to_conda} "
             )
             extern.run(cmd)
 
@@ -767,7 +750,6 @@ class Tests(unittest.TestCase):
                 f"--coassemble-elusive-edges {MOCK_ELUSIVE_EDGES} "
                 f"--coassemble-elusive-clusters {MOCK_ELUSIVE_CLUSTERS} "
                 f"--output test "
-                f"--conda-prefix {path_to_conda} "
                 f"--snakemake-args \" --notemp\" "
             )
             extern.run(cmd)
@@ -787,7 +769,6 @@ class Tests(unittest.TestCase):
                 f"binchicken update "
                 f"--coassemble-output {MOCK_COASSEMBLE_MINIMAL} "
                 f"--output test "
-                f"--conda-prefix {path_to_conda} "
             )
             extern.run(cmd)
 

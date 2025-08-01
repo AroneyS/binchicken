@@ -502,6 +502,35 @@ class Tests(unittest.TestCase):
             )
         self.assertDataFrameEqual(expected, observed)
 
+    def test_cluster_three_samples_small_combinations(self):
+        elusive_edges = pl.DataFrame([
+            ["pool", 3, "1,2,3", "1,3"],
+            ["pool", 3, "4,5,6,7", "5,6"],
+        ], orient="row", schema=ELUSIVE_EDGES_COLUMNS)
+        read_size = pl.DataFrame([
+            ["1", 1000],
+            ["2", 2000],
+            ["3", 3000],
+            ["4", 4000],
+            ["5", 5000],
+            ["6", 6000],
+            ["7", 6000],
+        ], orient="row", schema=READ_SIZE_COLUMNS)
+
+        expected = pl.DataFrame([
+            ["1,2,3", 3, 2, 6000, "1,2,3", "coassembly_0"],
+        ], orient="row", schema=ELUSIVE_CLUSTERS_COLUMNS)
+        observed = pipeline(
+            elusive_edges,
+            read_size,
+            MAX_RECOVERY_SAMPLES=3,
+            MIN_COASSEMBLY_SAMPLES=3,
+            MAX_COASSEMBLY_SAMPLES=3,
+            MIN_CLUSTER_TARGETS=2,
+            MAX_SAMPLES_COMBINATIONS=3,
+            )
+        self.assertDataFrameEqual(expected, observed)
+
     def test_cluster_four_samples(self):
         # 1: 0   2 3 4
         # 2: 0 1   3 4
@@ -1083,6 +1112,52 @@ class Tests(unittest.TestCase):
                 join_list_subsets(df1, df2)
                 .with_columns(pl.col("extra_targets").list.sort())
                 .collect()
+            )
+            self.assertDataFrameEqual(expected, observed)
+
+    def test_join_list_subsets_no_len_2(self):
+        with pl.StringCache():
+            df1 = (
+                pl.DataFrame([
+                        [["a", "b"], ["1"], 2],
+                        [["b", "c", "d"], ["2"], 3],
+                        [["a", "b", "c", "d"], ["3"], 4],
+                        [["d", "e", "f"], ["4"], 3],
+                        [["b", "c", "d", "g"], ["5"], 4],
+                    ], orient="row", schema=["samples", "target_ids", "length"])
+                .with_columns(
+                    pl.col("samples").cast(pl.List(pl.Categorical)),
+                    pl.col("length").cast(pl.UInt32),
+                    )
+                .with_columns(samples_hash = pl.col("samples").list.sort().hash())
+            )
+
+            df2 = (
+                pl.DataFrame([
+                        [["b", "c", "d"], ["4"], 3],
+                        [["b", "c", "d", "g"], ["5"], 3],
+                        [["b", "c", "d"], ["6"], 4],
+                    ], orient="row", schema=["samples", "target_ids", "cluster_size"])
+                .with_columns(pl.col("samples").cast(pl.List(pl.Categorical)))
+                .with_columns(samples_hash = pl.col("samples").list.sort().hash())
+            )
+
+            expected = (
+                pl.DataFrame([
+                        [["a", "b"], ["1"], 2, []],
+                        [["b", "c", "d"], ["2"], 3, ["4", "5"]],
+                        [["a", "b", "c", "d"], ["3"], 4, []],
+                        [["d", "e", "f"], ["4"], 3, []],
+                        [["b", "c", "d", "g"], ["5"], 4, []],
+                    ], orient="row", schema=["samples", "target_ids", "length", "extra_targets"])
+                .with_columns(pl.col("samples").cast(pl.List(pl.Categorical)))
+                .with_columns(samples_hash = pl.col("samples").list.sort().hash())
+                .select("samples", "target_ids", "length", "samples_hash", "extra_targets")
+            )
+
+            observed = (
+                join_list_subsets(df1, df2)
+                .with_columns(pl.col("extra_targets").list.sort())
             )
             self.assertDataFrameEqual(expected, observed)
 

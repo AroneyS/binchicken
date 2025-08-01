@@ -9,6 +9,7 @@ ruleorder: provided_distances > distance_samples
 import os
 import polars as pl
 from binchicken.binchicken import FAST_AVIARY_MODE, DYNAMIC_ASSEMBLY_STRATEGY, METASPADES_ASSEMBLY, MEGAHIT_ASSEMBLY
+from binchicken.common import pixi_run
 os.umask(0o002)
 
 output_dir = os.path.abspath("coassemble")
@@ -137,6 +138,7 @@ rule summary:
         script = scripts_dir + "/summarise_coassemblies.py",
     localrule: True
     shell:
+        f"{pixi_run} "
         "python3 {params.script} "
         "--elusive-clusters {input.elusive_clusters} "
         "--read-size {input.read_size} "
@@ -162,9 +164,8 @@ rule singlem_pipe_reads:
     resources:
         mem_mb=get_mem_mb,
         runtime = get_runtime(base_hours = 24),
-    conda:
-        "env/singlem.yml"
     shell:
+        f"{pixi_run} -e singlem "
         "singlem pipe "
         "--forward {input.reads_1} "
         "--reverse {input.reads_2} "
@@ -191,9 +192,8 @@ rule genome_transcripts:
         mem_mb=get_mem_mb,
         runtime = get_runtime(base_hours = 1),
     group: "singlem_bins"
-    conda:
-        "env/prodigal.yml"
     shell:
+        f"{pixi_run} -e prodigal "
         "prodigal "
         "-i {input} "
         "-d {output} "
@@ -216,9 +216,8 @@ rule singlem_pipe_genomes:
         mem_mb=get_mem_mb,
         runtime = get_runtime(base_hours = 1),
     group: "singlem_bins"
-    conda:
-        "env/singlem.yml"
     shell:
+        f"{pixi_run} -e singlem "
         "singlem pipe "
         "--forward {input} "
         "--otu-table {output} "
@@ -254,9 +253,8 @@ rule singlem_summarise_genomes:
     resources:
         mem_mb=get_mem_mb,
         runtime = get_runtime(base_hours = 24),
-    conda:
-        "env/singlem.yml"
     shell:
+        f"{pixi_run} -e singlem "
         "singlem summarise "
         "--input-otu-tables-list {input} "
         "--output-otu-table {output} "
@@ -285,9 +283,8 @@ rule singlem_appraise:
     resources:
         mem_mb=get_mem_mb,
         runtime = get_runtime(base_hours = 24),
-    conda:
-        "env/singlem.yml"
     shell:
+        f"{pixi_run} -e singlem "
         "singlem appraise "
         "--metagenome-otu-tables {input.reads} "
         "--genome-otu-tables {input.bins} "
@@ -336,9 +333,8 @@ rule update_appraise:
     resources:
         mem_mb=get_mem_mb,
         runtime = get_runtime(base_hours = 24),
-    conda:
-        "env/singlem.yml"
     shell:
+        f"{pixi_run} -e singlem "
         "singlem appraise --stream-inputs "
         "--metagenome-otu-tables {input.unbinned} "
         "--genome-otu-tables {input.bins} "
@@ -393,6 +389,7 @@ rule query_processing_split:
         mem_mb=get_mem_mb,
         runtime = get_runtime(base_hours = 48),
     shell:
+        f"{pixi_run} "
         "python3 {params.script} "
         "--query-reads {input.query_reads} "
         "--pipe-reads {input.pipe_reads} "
@@ -428,9 +425,47 @@ rule query_processing:
 ################################
 ### No genomes (alternative) ###
 ################################
-rule no_genomes:
+rule read_otu_table_list:
     input:
         reads = expand(output_dir + "/pipe/{read}_read.otu_table.tsv", read=reads_1),
+    output:
+        output_dir + "/lists/reads_otu_table_list.tsv",
+    threads: 1
+    resources:
+        mem_mb=get_mem_mb,
+        runtime = get_runtime(base_hours = 5),
+    run:
+        with open(output[0], "w") as f:
+            for read in input.reads:
+                f.write(f"{read}\n")
+
+rule remove_off_targets:
+    input:
+        output_dir + "/lists/reads_otu_table_list.tsv",
+    output:
+        output_dir + "/appraise/reads_cleaned.otu_table.tsv",
+    log:
+        logs_dir + "/appraise/remove_off_targets.log"
+    benchmark:
+        benchmarks_dir + "/appraise/remove_off_targets.tsv"
+    params:
+        singlem_metapackage = config["singlem_metapackage"]
+    threads: 1
+    resources:
+        mem_mb=get_mem_mb,
+        runtime = get_runtime(base_hours = 24),
+    shell:
+        f"{pixi_run} -e singlem "
+        "singlem summarise "
+        "--input-otu-tables-list {input} "
+        "--output-otu-table {output} "
+        "--exclude-off-target-hits "
+        "--metapackage {params.singlem_metapackage} "
+        "&> {log}"
+
+rule no_genomes:
+    input:
+        reads = output_dir + "/appraise/reads_cleaned.otu_table.tsv",
     output:
         unbinned = temp(output_dir + "/appraise/unbinned_raw.otu_table.tsv") if config["no_genomes"] else [],
         binned = temp(output_dir + "/appraise/binned_raw.otu_table.tsv") if config["no_genomes"] else [],
@@ -443,6 +478,7 @@ rule no_genomes:
     log:
         logs_dir + "/appraise/appraise.log"
     shell:
+        f"{pixi_run} "
         "python3 {params.script} "
         "--reads {input.reads} "
         "--binned {output.binned} "
@@ -452,38 +488,84 @@ rule no_genomes:
 ######################
 ### Target elusive ###
 ######################
-rule count_bp_reads:
+rule get_reads_list:
     input:
         reads_1 = lambda wildcards: get_reads(wildcards).values(),
         reads_2 = lambda wildcards: get_reads(wildcards, forward=False).values()
     output:
-        output_dir + "/{version,.*}read_size.csv"
+        reads_1 = output_dir + "/lists/{version,.*}reads_1_list.tsv",
+        reads_2 = output_dir + "/lists/{version,.*}reads_2_list.tsv",
+    threads: 1
+    resources:
+        mem_mb=get_mem_mb,
+        runtime = get_runtime(base_hours = 5),
+    run:
+        with open(output.reads_1, "w") as f:
+            for read in input.reads_1:
+                f.write(f"{read}\n")
+        with open(output.reads_2, "w") as f:
+            for read in input.reads_2:
+                f.write(f"{read}\n")
+
+rule get_count_samples_list:
+    output:
+        output_dir + "/lists/{version,.*}count_samples_list.tsv",
     params:
         names = list(config["reads_1"].keys()),
+    threads: 1
+    resources:
+        mem_mb=get_mem_mb,
+        runtime = get_runtime(base_hours = 5),
+    run:
+        with open(output[0], "w") as f:
+            for read in params.names:
+                f.write(f"{read}\n")
+
+rule count_bp_reads:
+    input:
+        reads_1 = output_dir + "/lists/{version}reads_1_list.tsv",
+        reads_2 = output_dir + "/lists/{version}reads_2_list.tsv",
+        samples = output_dir + "/lists/{version}count_samples_list.tsv",
+    output:
+        output_dir + "/{version,.*}read_size.csv"
+    params:
         cat = get_cat,
     threads: 8
     resources:
         mem_mb=get_mem_mb,
         runtime = get_runtime(base_hours = 24),
-    conda:
-        "env/general.yml"
     shell:
+        f"{pixi_run} -e general "
         "parallel -k -j {threads} "
         "echo -n {{1}}, '&&' "
         "{params.cat} {{2}} {{3}} '|' sed -n 2~4p '|' tr -d '\"\n\"' '|' wc -m "
-        "::: {params.names} :::+ {input.reads_1} :::+ {input.reads_2} "
+        ":::: {input.samples} ::::+ {input.reads_1} ::::+ {input.reads_2} "
         "> {output}"
+
+rule get_abundance_weighted_samples_list:
+    output:
+        output_dir + "/lists/abundance_weighted_samples_list.tsv",
+    params:
+        samples = config["abundance_weighted_samples"],
+    threads: 1
+    resources:
+        mem_mb=get_mem_mb,
+        runtime = get_runtime(base_hours = 5),
+    run:
+        with open(output[0], "w") as f:
+            for sample in params.samples:
+                f.write(f"{sample}\n")
 
 rule abundance_weighting:
     input:
         unbinned = output_dir + "/appraise/unbinned.otu_table.tsv",
         binned = output_dir + "/appraise/binned.otu_table.tsv",
+        samples = output_dir + "/lists/abundance_weighted_samples_list.tsv",
     output:
         weighted = output_dir + "/appraise/weighted.otu_table.tsv"
     threads: 64
     params:
         script = scripts_dir + "/abundance_weighting.py",
-        samples = config["abundance_weighted_samples"],
     resources:
         mem_mb=get_mem_mb,
         runtime = get_runtime(base_hours = 24),
@@ -492,11 +574,12 @@ rule abundance_weighting:
     benchmark:
         benchmarks_dir + "/appraise/abundance_weighting.tsv"
     shell:
+        f"{pixi_run} "
         "python3 {params.script} "
         "--unbinned {input.unbinned} "
         "--binned {input.binned} "
         "--weighted {output.weighted} "
-        "--samples {params.samples} "
+        "--samples {input.samples} "
         "--threads {threads} "
         "--log {log}"
 
@@ -517,6 +600,7 @@ rule sketch_samples:
     benchmark:
         benchmarks_dir + "/precluster/sketching.tsv"
     shell:
+        f"{pixi_run} "
         "python3 {params.script} "
         "--unbinned {input.unbinned} "
         "--sketch {output.sketch} "
@@ -550,6 +634,7 @@ rule distance_samples:
     benchmark:
         benchmarks_dir + "/precluster/distance.tsv"
     shell:
+        f"{pixi_run} "
         "sourmash scripts pairwise "
         "{input.sketch} "
         "-o {output.distance} "
@@ -574,10 +659,40 @@ rule filter_distances:
         "awk 'BEGIN{{FS=OFS=\",\"}} $7 >= {params.min_distance}' "
         "{input.distance} > {output.distance}"
 
+rule get_samples_list:
+    output:
+        output_dir + "/lists/samples_list.tsv",
+    params:
+        names = list(config["reads_1"].keys()),
+    threads: 1
+    resources:
+        mem_mb=get_mem_mb,
+        runtime = get_runtime(base_hours = 5),
+    run:
+        with open(output[0], "w") as f:
+            for read in params.names:
+                f.write(f"{read}\n")
+
+rule get_anchor_samples_list:
+    output:
+        output_dir + "/lists/anchor_samples_list.tsv",
+    params:
+        anchor_samples = config["anchor_samples"],
+    threads: 1
+    resources:
+        mem_mb=get_mem_mb,
+        runtime = get_runtime(base_hours = 5),
+    run:
+        with open(output[0], "w") as f:
+            for sample in params.anchor_samples:
+                f.write(f"{sample}\n")
+
 rule target_elusive:
     input:
         unbinned = output_dir + "/appraise/unbinned.otu_table.tsv",
         distances = output_dir + "/sketch/samples_filtered.csv" if config["kmer_precluster"] else [],
+        samples = output_dir + "/lists/samples_list.tsv",
+        anchor_samples = output_dir + "/lists/anchor_samples_list.tsv" if config["anchor_samples"] else [],
     output:
         output_edges = output_dir + "/target/elusive_edges.tsv",
         output_targets = output_dir + "/target/targets.tsv",
@@ -586,8 +701,6 @@ rule target_elusive:
         min_coassembly_coverage = config["min_coassembly_coverage"],
         max_coassembly_samples = config["max_coassembly_samples"],
         taxa_of_interest = config["taxa_of_interest"],
-        samples = " ".join(config["reads_1"]),
-        anchor_samples = " ".join(config["anchor_samples"]),
         precluster_size = config["precluster_size"],
     threads: 64
     resources:
@@ -598,13 +711,14 @@ rule target_elusive:
     benchmark:
         benchmarks_dir + "/target/target_elusive.tsv"
     shell:
+        f"{pixi_run} "
         "python3 {params.script} "
         "--unbinned {input.unbinned} "
         "--distances {input.distances} "
         "--output-targets {output.output_targets} "
         "--output-edges {output.output_edges} "
-        "--samples {params.samples} "
-        "--anchor-samples {params.anchor_samples} "
+        "--samples {input.samples} "
+        "--anchor-samples {input.anchor_samples} "
         "--min-coassembly-coverage {params.min_coassembly_coverage} "
         "--max-coassembly-samples {params.max_coassembly_samples} "
         "--taxa-of-interest {params.taxa_of_interest} "
@@ -629,6 +743,7 @@ rule target_weighting:
     benchmark:
         benchmarks_dir + "/target/target_weighting.tsv"
     shell:
+        f"{pixi_run} "
         "python3 {params.script} "
         "--targets {input.targets} "
         "--weighting {input.weighting} "
@@ -636,11 +751,42 @@ rule target_weighting:
         "--threads {threads} "
         "--log {log}"
 
+rule get_coassembly_samples:
+    output:
+        coassembly_samples = output_dir + "/lists/coassembly_samples_list.tsv",
+    params:
+        coassembly_samples = config["coassembly_samples"],
+    threads: 1
+    resources:
+        mem_mb=get_mem_mb,
+        runtime = get_runtime(base_hours = 5),
+    run:
+        with open(output[0], "w") as f:
+            for sample in params.coassembly_samples:
+                f.write(f"{sample}\n")
+
+rule get_exclude_coassemblies:
+    output:
+        exclude_coassemblies = output_dir + "/lists/exclude_coassemblies_list.tsv",
+    params:
+        exclude_coassemblies = config["exclude_coassemblies"],
+    threads: 1
+    resources:
+        mem_mb=get_mem_mb,
+        runtime = get_runtime(base_hours = 5),
+    run:
+        with open(output[0], "w") as f:
+            for coassembly in params.exclude_coassemblies:
+                f.write(f"{coassembly}\n")
+
 checkpoint cluster_graph:
     input:
         elusive_edges = output_dir + "/target/elusive_edges.tsv",
         read_size = output_dir + "/read_size.csv",
         targets_weighted = output_dir + "/target/targets_weighted.tsv" if config["abundance_weighted"] else [],
+        anchor_samples = output_dir + "/lists/anchor_samples_list.tsv" if config["anchor_samples"] else [],
+        coassembly_samples = output_dir + "/lists/coassembly_samples_list.tsv" if config["coassembly_samples"] else [],
+        exclude_coassemblies = output_dir + "/lists/exclude_coassemblies_list.tsv" if config["exclude_coassemblies"] else [],
     output:
         elusive_clusters = output_dir + "/target/elusive_clusters.tsv"
     params:
@@ -649,9 +795,7 @@ checkpoint cluster_graph:
         num_coassembly_samples = config["num_coassembly_samples"],
         max_coassembly_samples = config["max_coassembly_samples"],
         max_recovery_samples = config["max_recovery_samples"],
-        coassembly_samples = config["coassembly_samples"],
-        anchor_samples = config["anchor_samples"],
-        exclude_coassemblies = config["exclude_coassemblies"],
+        max_sample_combinations = config["max_sample_combinations"],
         single_assembly = config["single_assembly"],
     threads: 64
     resources:
@@ -662,6 +806,7 @@ checkpoint cluster_graph:
     benchmark:
         benchmarks_dir + "/target/cluster_graph.tsv"
     shell:
+        f"{pixi_run} "
         "python3 {params.script} "
         "--elusive-edges {input.elusive_edges} "
         "--read-size {input.read_size} "
@@ -671,10 +816,11 @@ checkpoint cluster_graph:
         "--max-coassembly-samples {params.max_coassembly_samples} "
         "--num-coassembly-samples {params.num_coassembly_samples} "
         "--max-recovery-samples {params.max_recovery_samples} "
-        "--coassembly-samples {params.coassembly_samples} "
-        "--exclude-coassemblies {params.exclude_coassemblies} "
+        "--max-samples-combinations {params.max_sample_combinations} "
+        "--coassembly-samples {input.coassembly_samples} "
+        "--exclude-coassemblies {input.exclude_coassemblies} "
         "--single-assembly {params.single_assembly} "
-        "--anchor-samples {params.anchor_samples} "
+        "--anchor-samples {input.anchor_samples} "
         "--threads {threads} "
         "--log {log}"
 
@@ -692,13 +838,12 @@ rule download_read:
         mem_mb=get_mem_mb,
         runtime = get_runtime(base_hours = 16),
         downloading = 1,
-    conda:
-        "env/kingfisher.yml"
     log:
         logs_dir + "/sra/kingfisher_{read}.log"
     shell:
         "cd {params.dir} && "
         "rm -f {params.name}*.fastq.gz && "
+        f"{pixi_run} -e kingfisher "
         "kingfisher get "
         "-r {params.name} "
         "-f fastq.gz "
@@ -726,11 +871,10 @@ rule mock_download_sra:
         sra_f = " ".join([workflow.basedir + "/../../test/data/sra/" + s + "_1.fastq.gz" for s in config["sra"][1:]]) if config["sra"] else "",
         sra_r = " ".join([workflow.basedir + "/../../test/data/sra/" + s + "_2.fastq.gz" for s in config["sra"][1:]]) if config["sra"] else "",
     localrule: True
-    conda:
-        "env/kingfisher.yml"
     log:
         logs_dir + "/sra/kingfisher.log"
     shell:
+        f"{pixi_run} -e kingfisher "
         "mkdir -p {output} && "
         "cp {params.sra_u} {params.sra_f} {params.sra_r} {output}"
 
@@ -759,9 +903,8 @@ rule qc_reads:
         logs_dir + "/mapping/{read}_qc.log"
     benchmark:
         benchmarks_dir + "/mapping/{read}_qc.tsv"
-    conda:
-        "env/fastp.yml"
     shell:
+        f"{pixi_run} -e fastp "
         "fastp "
         "-i {input.reads_1} "
         "-I {input.reads_2} "
@@ -775,10 +918,25 @@ rule qc_reads:
         "-l {params.min_length} "
         "&> {log}"
 
+rule get_genomes_named_list:
+    output:
+        output_dir + "/lists/genomes_named_list.tsv",
+    params:
+        genomes = config["genomes"],
+    threads: 1
+    resources:
+        mem_mb=get_mem_mb,
+        runtime = get_runtime(base_hours = 5),
+    run:
+        with open(output[0], "w") as f:
+            for genome, path in params.genomes.items():
+                f.write(f"{genome}\t{path}\n")
+
 rule collect_genomes:
     input:
         appraise_binned = output_dir + "/appraise/binned.otu_table.tsv",
         appraise_unbinned = output_dir + "/appraise/unbinned.otu_table.tsv",
+        genomes = output_dir + "/lists/genomes_named_list.tsv",
     output:
         temp(output_dir + "/mapping/{read}_reference.fna"),
     threads: 1
@@ -787,14 +945,14 @@ rule collect_genomes:
         runtime = get_runtime(base_hours = 24),
     params:
         script = scripts_dir + "/collect_reference_bins.py",
-        genomes = config["genomes"],
         sample = "{read}",
         min_appraised = config["unmapping_min_appraised"],
     shell:
+        f"{pixi_run} "
         "python3 {params.script} "
         "--appraise-binned {input.appraise_binned} "
         "--appraise-unbinned {input.appraise_unbinned} "
-        "--genomes '{params.genomes}' "
+        "--genomes {input.genomes} "
         "--sample {params.sample} "
         "--min-appraised {params.min_appraised} "
         "--read {wildcards.read} "
@@ -816,9 +974,8 @@ rule map_reads:
         logs_dir + "/mapping/{read}_coverm.log",
     benchmark:
         benchmarks_dir + "/mapping/{read}_coverm.tsv"
-    conda:
-        "env/coverm.yml"
     shell:
+        f"{pixi_run} -e coverm "
         "coverm make "
         "-r {input.genomes} "
         "-1 {input.reads_1} "
@@ -846,9 +1003,8 @@ rule filter_bam_files:
         logs_dir + "/mapping/{read}_filter.log",
     benchmark:
         benchmarks_dir + "/mapping/{read}_filter.tsv"
-    conda:
-        "env/coverm.yml"
     shell:
+        f"{pixi_run} -e coverm "
         "coverm filter "
         "-b {input}/{params.genomes}.{params.reads_1}.bam "
         "-o {output} "
@@ -871,9 +1027,8 @@ rule bam_to_fastq:
         runtime = get_runtime(base_hours = 4),
     log:
         logs_dir + "/mapping/{read}_fastq.log",
-    conda:
-        "env/coverm.yml"
     shell:
+        f"{pixi_run} -e coverm "
         "samtools fastq "
         "-@ $(({threads} - 1)) "
         "{input} "
@@ -907,18 +1062,37 @@ rule finish_qc:
 ##############################
 ### Create Aviary commands ###
 ##############################
+rule get_reads_named_list:
+    output:
+        reads_1 = output_dir + "/lists/{version,.*}reads_1_named_list.tsv",
+        reads_2 = output_dir + "/lists/{version,.*}reads_2_named_list.tsv",
+    params:
+        reads_1 = lambda wildcards: get_reads(wildcards),
+        reads_2 = lambda wildcards: get_reads(wildcards, forward=False),
+    threads: 1
+    resources:
+        mem_mb=get_mem_mb,
+        runtime = get_runtime(base_hours = 5),
+    run:
+        with open(output.reads_1, "w") as f:
+            for sample, read in params.reads_1.items():
+                f.write(f"{sample}\t{read}\n")
+        with open(output.reads_2, "w") as f:
+            for sample, read in params.reads_2.items():
+                f.write(f"{sample}\t{read}\n")
+
 rule aviary_commands:
     input:
         output_dir + "/mapping/done" if config["assemble_unmapped"] else output_dir + "/qc/done" if config["run_qc"] else [],
         elusive_clusters = output_dir + "/target/elusive_clusters.tsv",
+        reads_1 = lambda wildcards: output_dir + "/lists/unmapped_reads_1_named_list.tsv" if config["assemble_unmapped"] else output_dir + "/lists/qc_reads_1_named_list.tsv" if config["run_qc"] else output_dir + "/lists/reads_1_named_list.tsv",
+        reads_2 = lambda wildcards: output_dir + "/lists/unmapped_reads_2_named_list.tsv" if config["assemble_unmapped"] else output_dir + "/lists/qc_reads_2_named_list.tsv" if config["run_qc"] else output_dir + "/lists/reads_2_named_list.tsv",
     output:
         coassemble_commands = output_dir + "/commands/coassemble_commands.sh",
         recover_commands = output_dir + "/commands/recover_commands.sh"
     threads: 8
     params:
         script = scripts_dir + "/aviary_commands.py",
-        reads_1 = mapped_reads_1 if config["assemble_unmapped"] else qc_reads_1 if config["run_qc"] else config["reads_1"],
-        reads_2 = mapped_reads_2 if config["assemble_unmapped"] else qc_reads_2 if config["run_qc"] else config["reads_2"],
         dir = output_dir,
         assemble_memory = config["aviary_assemble_memory"],
         assemble_threads = config["aviary_assemble_threads"],
@@ -929,12 +1103,13 @@ rule aviary_commands:
     log:
         logs_dir + "/aviary_commands.log"
     shell:
+        f"{pixi_run} "
         "python3 {params.script} "
         "--elusive-clusters {input.elusive_clusters} "
         "--coassemble-commands {output.coassemble_commands} "
         "--recover-commands {output.recover_commands} "
-        "--reads-1 '{params.reads_1}' "
-        "--reads-2 '{params.reads_2}' "
+        "--reads-1 {input.reads_1} "
+        "--reads-2 {input.reads_2} "
         "--dir {params.dir} "
         "--assemble-threads {params.assemble_threads} "
         "--assemble-memory {params.assemble_memory} "
@@ -1010,7 +1185,6 @@ rule aviary_assemble:
         dryrun = "--build" if config["build"] else "--dryrun" if config["aviary_dryrun"] else "",
         drymkdir = "&& mkdir -p "+output_dir+"/coassemble/{coassembly}/assemble/assembly" if config["aviary_dryrun"] else "",
         drytouch = "&& touch "+output_dir+"/coassemble/{coassembly}/assemble/assembly/final_contigs.fasta" if config["aviary_dryrun"] else "",
-        conda_prefix = config["conda_prefix"] if config["conda_prefix"] else ".",
         tmpdir = f"TMPDIR={config['tmpdir']}" if config["tmpdir"] else "",
     threads: lambda wildcards, attempt: get_assemble_threads(wildcards, attempt)
     resources:
@@ -1020,15 +1194,14 @@ rule aviary_assemble:
         assembler = get_assemble_assembler,
     log:
         logs_dir + "/aviary/{coassembly}_assemble.log"
-    conda:
-        "env/aviary.yml"
     shell:
-        "GTDBTK_DATA_PATH=. "
-        "CHECKM2DB=. "
-        "EGGNOG_DATA_DIR=. "
-        "METABULI_DB_PATH=. "
-        "CONDA_ENV_PATH={params.conda_prefix} "
-        "SINGLEM_METAPACKAGE_PATH=. "
+        "export GTDBTK_DATA_PATH=. && "
+        "export CHECKM2DB=. && "
+        "export EGGNOG_DATA_DIR=. && "
+        "export METABULI_DB_PATH=. && "
+        "export SINGLEM_METAPACKAGE_PATH=. && "
+        "export CONDA_ENV_PATH=. && "
+        f"{pixi_run} -e aviary "
         "{params.tmpdir} "
         "aviary assemble "
         "--coassemble "
@@ -1059,7 +1232,6 @@ rule aviary_recover:
         gtdbtk = config["aviary_gtdbtk"] if config["aviary_gtdbtk"] else ".",
         checkm2 = config["aviary_checkm2"],
         metabuli = config["aviary_metabuli"] if config["aviary_metabuli"] else ".",
-        conda_prefix = config["conda_prefix"] if config["conda_prefix"] else ".",
         singlem_metapackage = config["singlem_metapackage"],
         fast = "--binning-only --refinery-max-iterations 0" if config["aviary_speed"] == FAST_AVIARY_MODE else "",
         extra_binners = "--extra-binners " + " ".join(config["aviary_extra_binners"]) if config["aviary_extra_binners"] else "",
@@ -1078,15 +1250,9 @@ rule aviary_recover:
         runtime = "168h",
     log:
         logs_dir + "/aviary/{coassembly}_recover.log"
-    conda:
-        "env/aviary.yml"
     shell:
-        "GTDBTK_DATA_PATH={params.gtdbtk} "
-        "CHECKM2DB={params.checkm2} "
-        "EGGNOG_DATA_DIR=. "
-        "METABULI_DB_PATH={params.metabuli} "
-        "CONDA_ENV_PATH={params.conda_prefix} "
-        "SINGLEM_METAPACKAGE_PATH={params.singlem_metapackage} "
+        "export CONDA_ENV_PATH=. && "
+        f"{pixi_run} -e aviary "
         "{params.tmpdir} "
         "aviary recover "
         "--assembly {input.assembly} "
@@ -1102,6 +1268,11 @@ rule aviary_recover:
         "-t {params.threads} "
         "-m {resources.mem_gb} "
         "--skip-qc "
+        "--gtdb-path {params.gtdbtk} "
+        "--singlem-metapackage-path {params.singlem_metapackage} "
+        "--checkm2-db-path {params.checkm2} "
+        "--metabuli-db-path {params.metabuli} "
+        "--eggnog-db-path . "
         "{params.snakemake_profile} "
         "{params.cluster_retries} "
         "{params.dryrun} "

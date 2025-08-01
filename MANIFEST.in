@@ -1,3 +1,4 @@
 include LICENSE
 include binchicken_logo.png
-recursive-include binchicken *.yaml *.yml *.smk
+recursive-include binchicken *
+include admin/requirements.txt
