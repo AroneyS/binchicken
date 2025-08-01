@@ -1122,7 +1122,7 @@ def build(args):
     if not args.skip_aviary_envs:
         logging.info(f"Creating Aviary environments")
         gpu_arg = "--gpu" if args.build_gpu else ""
-        extern.run(f"{pixi_run} -e aviary build {gpu_arg}")
+        extern.run(f"{pixi_run} -e aviary aviary build {gpu_arg}")
 
     logging.info("---- Bin Chicken build ---------------------------------------------------------")
     logging.info(f"Bin Chicken build complete.")
