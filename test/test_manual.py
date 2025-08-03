@@ -12,6 +12,11 @@ import pytest
 
 path_to_data = os.path.join(os.path.dirname(os.path.realpath(__file__)),'data')
 
+SINGLEM_METAPACKAGE = "/work/microbiome/db/singlem/S5.4.0.GTDB_r226.metapackage_20250331.smpkg.zb"
+GTDBTK_DB = "/work/microbiome/db/gtdb/gtdb_release207_v2"
+CHECKM2_DB = "/work/microbiome/db/CheckM2_database"
+METABULI_DB = "/work/microbiome/abisko/aroneys/db/metabuli"
+
 SAMPLE_READS_FORWARD = " ".join([
     os.path.join(path_to_data, "sample_1.1.fq"),
     os.path.join(path_to_data, "sample_2.1.fq"),
@@ -69,6 +74,7 @@ class Tests(unittest.TestCase):
         cmd = (
             f"binchicken coassemble "
             f"--forward SRR8334323 SRR8334324 SRR6797127 SRR6797128 "
+            f"--singlem-metapackage {SINGLEM_METAPACKAGE} "
             f"--sra "
             f"--cores 32 "
             f"--output {output_dir} "
@@ -169,9 +175,9 @@ class Tests(unittest.TestCase):
             f"--aviary-speed fast "
             f"--cores 32 "
             f"--assembly-strategy megahit "
-            f"--aviary-gtdbtk-db /work/microbiome/db/gtdb/gtdb_release207_v2 "
-            f"--aviary-checkm2-db /work/microbiome/db/CheckM2_database "
-            f"--aviary-metabuli-db /work/microbiome/abisko/aroneys/db/metabuli "
+            f"--aviary-gtdbtk-db {GTDBTK_DB} "
+            f"--aviary-checkm2-db {CHECKM2_DB} "
+            f"--aviary-metabuli-db {METABULI_DB} "
             f"--aviary-extra-binners taxvamb "
             f"--genomes {GENOMES} "
             f"--coassemble-unbinned {os.path.join(MOCK_COASSEMBLE, 'appraise', 'unbinned_sra.otu_table.tsv')} "
@@ -213,8 +219,8 @@ class Tests(unittest.TestCase):
             f"--genomes {GENOMES} "
             f"--run-aviary "
             f"--cores 32 "
-            f"--aviary-gtdbtk-db /work/microbiome/db/gtdb/gtdb_release207_v2 "
-            f"--aviary-checkm2-db /work/microbiome/db/CheckM2_database "
+            f"--aviary-gtdbtk-db {GTDBTK_DB} "
+            f"--aviary-checkm2-db {CHECKM2_DB} "
             f"--coassemble-unbinned {os.path.join(MOCK_COASSEMBLE, 'appraise', 'unbinned_sra.otu_table.tsv')} "
             f"--coassemble-binned {os.path.join(MOCK_COASSEMBLE, 'appraise', 'binned_sra.otu_table.tsv')} "
             f"--coassemble-targets {os.path.join(MOCK_COASSEMBLE, 'target', 'targets.tsv')} "
@@ -371,8 +377,8 @@ class Tests(unittest.TestCase):
             f"--prior-assemblies {PRIOR_ASSEMBLY} "
             f"--output {output_dir} "
             f"--run-aviary "
-            f"--aviary-gtdbtk-db /work/microbiome/db/gtdb/gtdb_release207_v2 "
-            f"--aviary-checkm2-db /work/microbiome/db/CheckM2_database "
+            f"--aviary-gtdbtk-db {GTDBTK_DB} "
+            f"--aviary-checkm2-db {CHECKM2_DB} "
         )
         output_raw = subprocess.run(cmd, shell=True, check=True, capture_output=True)
         output = output_raw.stderr.decode('ascii')
@@ -454,8 +460,8 @@ class Tests(unittest.TestCase):
             f"--prior-assemblies {PRIOR_COASSEMBLY} "
             f"--output {update_dir} "
             f"--run-aviary "
-            f"--aviary-gtdbtk-db /work/microbiome/db/gtdb/gtdb_release207_v2 "
-            f"--aviary-checkm2-db /work/microbiome/db/CheckM2_database "
+            f"--aviary-gtdbtk-db {GTDBTK_DB} "
+            f"--aviary-checkm2-db {CHECKM2_DB} "
         )
         output_raw = subprocess.run(cmd, shell=True, check=True, capture_output=True)
         output = output_raw.stderr.decode('ascii')
