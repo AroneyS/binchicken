@@ -108,7 +108,7 @@ class Tests(unittest.TestCase):
                 "\t".join([
                     "SRR8334323,SRR8334324",
                     "2",
-                    "39",
+                    "29",
                     "5046179100",
                     "SRR8334323,SRR8334324",
                     "coassembly_0"
@@ -116,7 +116,7 @@ class Tests(unittest.TestCase):
                 "\t".join([
                     "SRR6797127,SRR6797128",
                     "2",
-                    "12",
+                    "10",
                     "7675876600",
                     "SRR6797127,SRR6797128",
                     "coassembly_1"
