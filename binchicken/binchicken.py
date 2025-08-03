@@ -1448,8 +1448,7 @@ def main():
     build_parser.add_argument("--checkm2-db", help="CheckM2 database")
     build_parser.add_argument(f"--gtdbtk-db", help="GTDBtk release database (Only required if --aviary-speed is set to {COMPREHENSIVE_AVIARY_MODE})")
     build_parser.add_argument("--metabuli-db", help="MetaBuli database (Only required with TaxVAMB extra binner)")
-    tmp_default = "/tmp"
-    build_parser.add_argument("--set-tmp-dir", help=f"Set temporary directory [default: {tmp_default}]", default=tmp_default)
+    build_parser.add_argument("--set-tmp-dir", help=f"Set temporary directory [default: unset]", default=None)
     build_parser.add_argument("--skip-aviary-envs", help="Do not install Aviary subworkflow environments", action="store_true")
     build_parser.add_argument("--build-gpu", action="store_true", help="Build GPU-friendly environments for certain binners in Aviary recovery [default: do not]. Must be run on a node with GPU access.")
     build_parser.add_argument("--download-databases", help="Download databases if provided paths do not exist", action="store_true")
