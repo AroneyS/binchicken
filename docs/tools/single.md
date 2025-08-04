@@ -259,6 +259,14 @@ Kmer preclustering can be disabled with `--kmer-precluster never`.
 
 <!-- -->
 
+**\--max-sample-combinations** *MAX_SAMPLE_COMBINATIONS*
+
+  Maximum number of samples per target to consider for pooled clusters
+    (reduces combinatorial explosions). Set to a smaller number if you
+    have a polars idx error. [default: 100]
+
+<!-- -->
+
 **\--abundance-weighted**
 
   Weight sequences by mean sample abundance when ranking clusters
@@ -494,13 +502,6 @@ Kmer preclustering can be disabled with `--kmer-precluster never`.
 **\--output** *OUTPUT*
 
   Output directory [default: .]
-
-<!-- -->
-
-**\--conda-prefix** *CONDA_PREFIX*
-
-  Path to conda environment install location. [default: Use path from
-    CONDA_ENV_PATH env variable]
 
 <!-- -->
 

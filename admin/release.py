@@ -14,18 +14,18 @@ def get_version(relpath):
         return line.split("'")[1]
 
 if __name__ == "__main__":
-    version = get_version('binchicken/__init__.py')
+    version = get_version('../binchicken/__init__.py')
     print("version is {}".format(version))
 
     yes_no = input(
-        "Did you run the non-CI tests first, to make sure everything is OK (y/n)? \n\nmqsub -t 32 --hours 24 -- pytest --run-expensive test/test_manual.py\n\n"
+        "Did you run the non-CI tests first, to make sure everything is OK (y/n)? \n\nmqsub -t 32 -- pixi run -e dev pytest --run-expensive test/test_manual.py\n\n"
     )
     if yes_no != "y":
         raise Exception("Please run the non-CI tests first")
 
     # Sync dependencies from pixi to pyproject and requirements.txt
     print("Syncing dependencies from pixi.lock/pixi.toml to requirements.txt ...")
-    extern.run("pixi run -e dev admin/sync_pixi_to_pyproject.py")
+    extern.run("pixi run -e dev build_dep_defs")
 
     # Replace version in CITATION.cff
     citations_lines = []
@@ -44,7 +44,7 @@ if __name__ == "__main__":
         f.writelines(citations_lines)
 
     print("building docs")
-    extern.run("pixi run python3 admin/build_docs.py --version {}".format(version))
+    extern.run("pixi run -e dev python3 admin/build_docs.py --version {}".format(version))
 
     print(
         "Checking if repo is clean. If this fails it might be because the docs have changed from the previous command here? If so you may need to remove the git tag with 'git tag -d v{}'".format(version)

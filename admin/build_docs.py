@@ -27,9 +27,8 @@ def get_version(relpath):
 
 if __name__ == '__main__':
     parent_parser = argparse.ArgumentParser(add_help=False)
-    # parent_parser.add_argument('--debug', help='output debug information', action="store_true")
-    # parent_parser.add_argument('--version', help='output version information and quit',  action='version', version=repeatm.__version__)
     parent_parser.add_argument('--quiet', help='only output errors', action="store_true")
+    parent_parser.add_argument('--version', help='not with v e.g. 0.12.11', required=True)
 
     args = parent_parser.parse_args()
 
@@ -42,7 +41,7 @@ if __name__ == '__main__':
     logging.basicConfig(level=loglevel, format='%(asctime)s %(levelname)s: %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
 
     subdir_and_commands = [
-        ["tools", ["coassemble", "single", "evaluate", "iterate", "update"]],
+        ["tools", ["coassemble", "single", "evaluate", "iterate", "update", "build"]],
     ]
 
     for subdir, commands in subdir_and_commands:

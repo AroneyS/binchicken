@@ -159,13 +159,6 @@ Defaults to using genomes (from the provided coassemble outputs) with at least 7
 
 <!-- -->
 
-**\--conda-prefix** *CONDA_PREFIX*
-
-  Path to conda environment install location. [default: Use path from
-    CONDA_ENV_PATH env variable]
-
-<!-- -->
-
 **\--cores** *CORES*
 
   Maximum number of cores to use [default: 1]

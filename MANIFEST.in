@@ -1,4 +1,11 @@
 include LICENSE
 include binchicken_logo.png
-recursive-include binchicken *
+include binchicken/*py
+include binchicken/*sh
+include binchicken/pixi.toml
+include binchicken/pixi.lock
+recursive-include binchicken/workflow *
+recursive-include binchicken/config *
 include admin/requirements.txt
+prune */__pycache__
+prune */.pixi

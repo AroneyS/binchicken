@@ -16,3 +16,4 @@ navigation:
     - path: docs/tools/update.md
     - path: docs/tools/iterate.md
     - path: docs/tools/evaluate.md
+    - path: docs/tools/build.md

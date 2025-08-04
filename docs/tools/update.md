@@ -330,13 +330,6 @@ binchicken update --coassemble-output coassemble_dir --sra \
 
 <!-- -->
 
-**\--conda-prefix** *CONDA_PREFIX*
-
-  Path to conda environment install location. [default: Use path from
-    CONDA_ENV_PATH env variable]
-
-<!-- -->
-
 **\--cores** *CORES*
 
   Maximum number of cores to use [default: 1]

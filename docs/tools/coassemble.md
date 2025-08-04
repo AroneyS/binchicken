@@ -58,6 +58,14 @@ Kmer preclustering can be used (default if >1000 samples are provided, or use `-
 This greatly reduces memory usage and allows scaling up to at least 250k samples.
 Kmer preclustering can be disabled with `--kmer-precluster never`.
 
+## Polars idx errors
+
+If you encounter the following error: `Polars' maximum length reached. Consider installing 'polars-u64-idx'.`
+You can try reducing the `--max-sample-combinations` option (default 100).
+Bin Chicken ignores target sequences found in more than this number of samples to prevent combinatorial explosions.
+These targets are also less useful for distinguishing between clusters.
+It is not recommended to set this value lower than the number of requested recovery samples (`--max-recovery-samples`).
+
 # OPTIONS
 
 # BASE INPUT ARGUMENTS
@@ -277,6 +285,14 @@ Kmer preclustering can be disabled with `--kmer-precluster never`.
 
   Upper bound for number of related samples to use for differential
     abundance binning [default: 20]
+
+<!-- -->
+
+**\--max-sample-combinations** *MAX_SAMPLE_COMBINATIONS*
+
+  Maximum number of samples per target to consider for pooled clusters
+    (reduces combinatorial explosions). Set to a smaller number if you
+    have a polars idx error. [default: 100]
 
 <!-- -->
 
@@ -515,13 +531,6 @@ Kmer preclustering can be disabled with `--kmer-precluster never`.
 **\--output** *OUTPUT*
 
   Output directory [default: .]
-
-<!-- -->
-
-**\--conda-prefix** *CONDA_PREFIX*
-
-  Path to conda environment install location. [default: Use path from
-    CONDA_ENV_PATH env variable]
 
 <!-- -->
 
