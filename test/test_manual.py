@@ -309,7 +309,7 @@ class Tests(unittest.TestCase):
             self.assertTrue(f"SINGLEM_METAPACKAGE_PATH = {path_to_metapackage}" in output)
             # self.assertTrue(f"GTDBTK_DATA_PATH = {path_to_gtdbtk_db}" in output)
             self.assertTrue(f"CHECKM2DB = {path_to_checkm2_db}" in output)
-            self.assertTrue(f"TMPDIR = /tmp" not in output)
+            self.assertTrue(f"TMPDIR = /tmp" in output)
 
             # Check databases downloaded
             self.assertTrue(os.path.exists(path_to_metapackage))
