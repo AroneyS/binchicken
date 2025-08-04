@@ -1075,7 +1075,11 @@ def build(args):
             "checkm2_db": False,
             "gtdbtk_db": False,
             "metabuli_db": False,
+            "tmpdir": None,
         }
+
+        if args.set_tmp_dir:
+            download_config["tmpdir"] = args.set_tmp_dir
 
         if args.singlem_metapackage and not os.path.exists(args.singlem_metapackage):
             download_config["singlem_metapackage"] = args.singlem_metapackage

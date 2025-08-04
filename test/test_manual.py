@@ -288,6 +288,9 @@ class Tests(unittest.TestCase):
         self.assertFalse(os.path.exists(os.path.join(output_dir, "coassemble", "sra", "SRR8334321_2.fastq.gz")))
 
     def test_build_with_downloads(self):
+        output_dir = os.path.abspath(os.path.join("example", "test_build_with_downloads"))
+        self.setup_output_dir(output_dir)
+
         with in_tempdir():
             path_to_metapackage = os.path.abspath("metapackage.smpkg")
             path_to_checkm2_db = os.path.abspath("checkm2_db")
@@ -298,6 +301,7 @@ class Tests(unittest.TestCase):
                 f"--singlem-metapackage {path_to_metapackage} "
                 # f"--gtdbtk-db {path_to_gtdbtk_db} "
                 f"--checkm2-db {path_to_checkm2_db} "
+                f"--output {output_dir} "
                 f"--download-databases "
             )
             subprocess.run(cmd, shell=True, check=True)

@@ -10,6 +10,7 @@ output_dir = os.path.abspath("download")
 logs_dir = output_dir + "/logs"
 benchmarks_dir = output_dir + "/benchmarks"
 
+tmpdir = config["tmpdir"]
 singlem_metapackage = config["singlem_metapackage"]
 checkm2_db = config["checkm2_db"]
 gtdbtk_db = config["gtdbtk_db"]
@@ -42,9 +43,10 @@ rule aviary_download:
     output:
         output_dir + "/aviary_downloads.done",
     params:
-        singlem_metapackage_env = "SINGLEM_METAPACKAGE_PATH=. " if not singlem_metapackage else "",
-        checkm2_db_env = "CHECKM2DB=. " if not checkm2_db else "",
-        gtdbtk_db_env = "GTDBTK_DATA_PATH=. " if not gtdbtk_db else "",
+        tmpdir = f"export TMPDIR={tmpdir} && " if tmpdir else "",
+        singlem_metapackage_env = "export SINGLEM_METAPACKAGE_PATH=. && " if not singlem_metapackage else "",
+        checkm2_db_env = "export CHECKM2DB=. && " if not checkm2_db else "",
+        gtdbtk_db_env = "export GTDBTK_DATA_PATH=. && " if not gtdbtk_db else "",
         singlem_metapackage = "--singlem-metapackage-path " + singlem_metapackage if singlem_metapackage else "",
         checkm2_db = "--checkm2-db-path " + checkm2_db if checkm2_db else "",
         gtdbtk_db = "--gtdb-path " + gtdbtk_db if gtdbtk_db else "",
@@ -56,11 +58,12 @@ rule aviary_download:
     log:
         logs_dir + "/aviary_downloads.log"
     shell:
-        f"{pixi_run} -e aviary "
+        "{params.tmpdir} "
         "{params.singlem_metapackage_env} "
         "{params.checkm2_db_env} "
         "{params.gtdbtk_db_env} "
-        "EGGNOG_DATA_DIR=. "
+        "export EGGNOG_DATA_DIR=. && "
+        f"{pixi_run} -e aviary "
         "aviary configure "
         "{params.singlem_metapackage} "
         "{params.checkm2_db} "
