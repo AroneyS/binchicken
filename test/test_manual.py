@@ -301,8 +301,9 @@ class Tests(unittest.TestCase):
                 f"--singlem-metapackage {path_to_metapackage} "
                 # f"--gtdbtk-db {path_to_gtdbtk_db} "
                 f"--checkm2-db {path_to_checkm2_db} "
-                f"--output {output_dir} "
                 f"--download-databases "
+                f"--cluster-retries 0 "
+                f"--output {output_dir} "
             )
             subprocess.run(cmd, shell=True, check=True)
 
