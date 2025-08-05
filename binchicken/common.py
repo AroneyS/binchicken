@@ -1,6 +1,17 @@
-import importlib.resources
+import os
 import re
 import ast
+import importlib.resources
+
+def fasta_to_name(filename):
+    sample_name = os.path.basename(filename)
+    # Put .gz first so it is stripped off first.
+    for extension in (".gz",".fna",".fq",".fastq",".fasta",".fa"):
+        if sample_name.endswith(extension):
+            sample_name = sample_name[0:(len(sample_name)-len(extension))]
+            if extension != ".gz":
+                break
+    return sample_name
 
 def parse_snake_dict(s):
     # Remove leading/trailing whitespace

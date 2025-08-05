@@ -10,7 +10,6 @@ import logging
 import numpy as np
 import scipy.sparse as sp
 import itertools
-from binchicken.binchicken import SUFFIX_RE
 import argparse
 
 EDGES_COLUMNS={
@@ -52,18 +51,6 @@ def get_clusters(
     if MAX_COASSEMBLY_SAMPLES < 2:
         # Set to 2 to produce paired edges
         MAX_COASSEMBLY_SAMPLES = 2
-
-    sample_distances = (
-        sample_distances
-        .with_columns(
-            pl.when(pl.col("query_name").is_in(samples))
-                .then(pl.col("query_name"))
-                .otherwise(pl.col("query_name").str.replace(SUFFIX_RE, "")),
-            pl.when(pl.col("match_name").is_in(samples))
-                .then(pl.col("match_name"))
-                .otherwise(pl.col("match_name").str.replace(SUFFIX_RE, "")),
-            )
-    )
 
     logging.info("Converting to sparse array")
     samples = np.unique(np.concatenate([
@@ -182,11 +169,6 @@ def streaming_pipeline(
     else:
         unbinned = (
             unbinned
-            .with_columns(
-                pl.when(pl.col("sample").is_in(samples))
-                .then(pl.col("sample"))
-                .otherwise(pl.col("sample").str.replace(SUFFIX_RE, ""))
-                )
             .filter(pl.col("sample").is_in(samples))
         )
 
@@ -285,11 +267,6 @@ def pipeline(
     logging.info("Grouping hits by marker gene sequences to form targets")
     unbinned = (
         unbinned
-        .with_columns(
-            pl.when(pl.col("sample").is_in(samples))
-            .then(pl.col("sample"))
-            .otherwise(pl.col("sample").str.replace(SUFFIX_RE, ""))
-            )
         .filter(pl.col("sample").is_in(samples))
         .drop("found_in")
         .with_row_index("target")

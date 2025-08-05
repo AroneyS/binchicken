@@ -107,7 +107,7 @@ class Tests(unittest.TestCase):
 
             unused_samples_path = os.path.join("test", "coassemble", "target", "unused_samples.tsv")
             self.assertTrue(os.path.exists(unused_samples_path))
-            expected = "\n".join(["sample_4"])
+            expected = "\n".join(["sample_4.1"])
             with open(unused_samples_path) as f:
                 self.assertEqual(expected, f.read())
 
@@ -118,10 +118,10 @@ class Tests(unittest.TestCase):
             self.assertTrue(os.path.exists(read_size_path))
             expected = "\n".join(
                 [
-                    ",".join(["sample_1", "4832"]),
-                    ",".join(["sample_2", "3926"]),
-                    ",".join(["sample_3", "3624"]),
-                    ",".join(["sample_4", "604"]),
+                    ",".join(["sample_1.1", "4832"]),
+                    ",".join(["sample_2.1", "3926"]),
+                    ",".join(["sample_3.1", "3624"]),
+                    ",".join(["sample_4.1", "604"]),
                     ""
                 ]
             )
@@ -148,11 +148,11 @@ class Tests(unittest.TestCase):
                         "coassembly",
                     ]),
                     "\t".join([
-                        "sample_1,sample_2",
+                        "sample_1.1,sample_2.1",
                         "2",
                         "3",
                         "8758",
-                        "sample_1,sample_2,sample_3",
+                        "sample_1.1,sample_2.1,sample_3.1",
                         "coassembly_0"
                     ]),
                     ""
@@ -161,16 +161,16 @@ class Tests(unittest.TestCase):
             with open(cluster_path) as f:
                 self.assertEqual(expected, f.read())
 
-            bins_reference_path = os.path.join("test", "coassemble", "mapping", "sample_1_reference.fna")
+            bins_reference_path = os.path.join("test", "coassemble", "mapping", "sample_1.1_reference.fna")
             self.assertFalse(os.path.exists(bins_reference_path))
 
-            output_bam_files = os.path.join("test", "coassemble", "mapping", "sample_1_unmapped.bam")
+            output_bam_files = os.path.join("test", "coassemble", "mapping", "sample_1.1_unmapped.bam")
             self.assertFalse(os.path.exists(output_bam_files))
 
-            coverm_working_dir = os.path.join("test", "coassemble", "mapping", "sample_1_coverm")
+            coverm_working_dir = os.path.join("test", "coassemble", "mapping", "sample_1.1_coverm")
             self.assertFalse(os.path.exists(coverm_working_dir))
 
-            unmapped_sample_1_path = os.path.join("test", "coassemble", "mapping", "sample_1_unmapped.1.fq.gz")
+            unmapped_sample_1_path = os.path.join("test", "coassemble", "mapping", "sample_1.1_unmapped.1.fq.gz")
             self.assertTrue(os.path.exists(unmapped_sample_1_path))
             with gzip.open(unmapped_sample_1_path) as f:
                 file = f.read().decode()
@@ -184,11 +184,11 @@ class Tests(unittest.TestCase):
                 [
                     " ".join([
                         "aviary assemble --coassemble -1",
-                        os.path.join(test_dir, "coassemble", "mapping", "sample_1_unmapped.1.fq.gz"),
-                        os.path.join(test_dir, "coassemble", "mapping", "sample_2_unmapped.1.fq.gz"),
+                        os.path.join(test_dir, "coassemble", "mapping", "sample_1.1_unmapped.1.fq.gz"),
+                        os.path.join(test_dir, "coassemble", "mapping", "sample_2.1_unmapped.1.fq.gz"),
                         "-2",
-                        os.path.join(test_dir, "coassemble", "mapping", "sample_1_unmapped.2.fq.gz"),
-                        os.path.join(test_dir, "coassemble", "mapping", "sample_2_unmapped.2.fq.gz"),
+                        os.path.join(test_dir, "coassemble", "mapping", "sample_1.1_unmapped.2.fq.gz"),
+                        os.path.join(test_dir, "coassemble", "mapping", "sample_2.1_unmapped.2.fq.gz"),
                         "--output", os.path.join(test_dir, "coassemble", "coassemble", "coassembly_0", "assemble"),
                         "-n 64 -t 64 -m 500 --skip-qc &>",
                         os.path.join(test_dir, "coassemble", "coassemble", "logs", "coassembly_0_assemble.log"),
@@ -207,13 +207,13 @@ class Tests(unittest.TestCase):
                     " ".join([
                         "aviary recover --assembly", os.path.join(test_dir, "coassemble", "coassemble", "coassembly_0", "assemble", "assembly", "final_contigs.fasta"),
                         "-1",
-                        os.path.join(test_dir, "coassemble", "mapping", "sample_1_unmapped.1.fq.gz"),
-                        os.path.join(test_dir, "coassemble", "mapping", "sample_2_unmapped.1.fq.gz"),
-                        os.path.join(test_dir, "coassemble", "mapping", "sample_3_unmapped.1.fq.gz"),
+                        os.path.join(test_dir, "coassemble", "mapping", "sample_1.1_unmapped.1.fq.gz"),
+                        os.path.join(test_dir, "coassemble", "mapping", "sample_2.1_unmapped.1.fq.gz"),
+                        os.path.join(test_dir, "coassemble", "mapping", "sample_3.1_unmapped.1.fq.gz"),
                         "-2",
-                        os.path.join(test_dir, "coassemble", "mapping", "sample_1_unmapped.2.fq.gz"),
-                        os.path.join(test_dir, "coassemble", "mapping", "sample_2_unmapped.2.fq.gz"),
-                        os.path.join(test_dir, "coassemble", "mapping", "sample_3_unmapped.2.fq.gz"),
+                        os.path.join(test_dir, "coassemble", "mapping", "sample_1.1_unmapped.2.fq.gz"),
+                        os.path.join(test_dir, "coassemble", "mapping", "sample_2.1_unmapped.2.fq.gz"),
+                        os.path.join(test_dir, "coassemble", "mapping", "sample_3.1_unmapped.2.fq.gz"),
                         "--output", os.path.join(test_dir, "coassemble", "coassemble", "coassembly_0", "recover"),
                         "--binning-only --refinery-max-iterations 0 "
                         "-n 32 -t 32 -m 250 --skip-qc &>",
@@ -240,7 +240,7 @@ class Tests(unittest.TestCase):
                     ]),
                     "\t".join([
                         "coassembly_0",
-                        "sample_1,sample_2",
+                        "sample_1.1,sample_2.1",
                         "2",
                         "3",
                         "8758",
@@ -294,11 +294,11 @@ class Tests(unittest.TestCase):
                         "coassembly",
                     ]),
                     "\t".join([
-                        "sample_1,sample_3",
+                        "sample_1.1,sample_3.1",
                         "2",
                         "2",
                         "2869",
-                        "sample_1,sample_3",
+                        "sample_1.1,sample_3.1",
                         "coassembly_0"
                     ]),
                     ""
@@ -307,19 +307,19 @@ class Tests(unittest.TestCase):
             with open(cluster_path) as f:
                 self.assertEqual(expected, f.read())
 
-            qc_sample_1F_path = os.path.join("test", "coassemble", "qc", "sample_1_1.fastq.gz")
+            qc_sample_1F_path = os.path.join("test", "coassemble", "qc", "sample_1.1_1.fastq.gz")
             self.assertTrue(os.path.exists(qc_sample_1F_path))
-            qc_sample_1R_path = os.path.join("test", "coassemble", "qc", "sample_1_2.fastq.gz")
+            qc_sample_1R_path = os.path.join("test", "coassemble", "qc", "sample_1.1_2.fastq.gz")
             self.assertTrue(os.path.exists(qc_sample_1R_path))
 
-            qc_sample_2F_path = os.path.join("test", "coassemble", "qc", "sample_2_1.fastq.gz")
+            qc_sample_2F_path = os.path.join("test", "coassemble", "qc", "sample_2.1_1.fastq.gz")
             self.assertTrue(os.path.exists(qc_sample_2F_path))
-            qc_sample_2R_path = os.path.join("test", "coassemble", "qc", "sample_2_2.fastq.gz")
+            qc_sample_2R_path = os.path.join("test", "coassemble", "qc", "sample_2.1_2.fastq.gz")
             self.assertTrue(os.path.exists(qc_sample_2R_path))
 
-            qc_sample_3F_path = os.path.join("test", "coassemble", "qc", "sample_3_1.fastq.gz")
+            qc_sample_3F_path = os.path.join("test", "coassemble", "qc", "sample_3.1_1.fastq.gz")
             self.assertTrue(os.path.exists(qc_sample_3F_path))
-            qc_sample_3R_path = os.path.join("test", "coassemble", "qc", "sample_3_2.fastq.gz")
+            qc_sample_3R_path = os.path.join("test", "coassemble", "qc", "sample_3.1_2.fastq.gz")
             self.assertTrue(os.path.exists(qc_sample_3R_path))
 
             coassemble_path = os.path.join("test", "coassemble", "commands", "coassemble_commands.sh")
@@ -329,11 +329,11 @@ class Tests(unittest.TestCase):
                 [
                     " ".join([
                         "aviary assemble --coassemble -1",
-                        os.path.join(test_dir, "coassemble", "qc", "sample_1_1.fastq.gz"),
-                        os.path.join(test_dir, "coassemble", "qc", "sample_3_1.fastq.gz"),
+                        os.path.join(test_dir, "coassemble", "qc", "sample_1.1_1.fastq.gz"),
+                        os.path.join(test_dir, "coassemble", "qc", "sample_3.1_1.fastq.gz"),
                         "-2",
-                        os.path.join(test_dir, "coassemble", "qc", "sample_1_2.fastq.gz"),
-                        os.path.join(test_dir, "coassemble", "qc", "sample_3_2.fastq.gz"),
+                        os.path.join(test_dir, "coassemble", "qc", "sample_1.1_2.fastq.gz"),
+                        os.path.join(test_dir, "coassemble", "qc", "sample_3.1_2.fastq.gz"),
                         "--output", os.path.join(test_dir, "coassemble", "coassemble", "coassembly_0", "assemble"),
                         "-n 64 -t 64 -m 500 --skip-qc &>",
                         os.path.join(test_dir, "coassemble", "coassemble", "logs", "coassembly_0_assemble.log"),
@@ -352,11 +352,11 @@ class Tests(unittest.TestCase):
                     " ".join([
                         "aviary recover --assembly", os.path.join(test_dir, "coassemble", "coassemble", "coassembly_0", "assemble", "assembly", "final_contigs.fasta"),
                         "-1",
-                        os.path.join(test_dir, "coassemble", "qc", "sample_1_1.fastq.gz"),
-                        os.path.join(test_dir, "coassemble", "qc", "sample_3_1.fastq.gz"),
+                        os.path.join(test_dir, "coassemble", "qc", "sample_1.1_1.fastq.gz"),
+                        os.path.join(test_dir, "coassemble", "qc", "sample_3.1_1.fastq.gz"),
                         "-2",
-                        os.path.join(test_dir, "coassemble", "qc", "sample_1_2.fastq.gz"),
-                        os.path.join(test_dir, "coassemble", "qc", "sample_3_2.fastq.gz"),
+                        os.path.join(test_dir, "coassemble", "qc", "sample_1.1_2.fastq.gz"),
+                        os.path.join(test_dir, "coassemble", "qc", "sample_3.1_2.fastq.gz"),
                         "--output", os.path.join(test_dir, "coassemble", "coassemble", "coassembly_0", "recover"),
                         "-n 32 -t 32 -m 250 --skip-qc &>",
                         os.path.join(test_dir, "coassemble", "coassemble", "logs", "coassembly_0_recover.log"),
@@ -398,34 +398,34 @@ class Tests(unittest.TestCase):
             cluster_path = os.path.join("test", "coassemble", "target", "elusive_clusters.tsv")
             self.assertTrue(os.path.exists(cluster_path))
 
-            qc_sample_1F_path = os.path.join("test", "coassemble", "qc", "sample_1_1.fastq.gz")
+            qc_sample_1F_path = os.path.join("test", "coassemble", "qc", "sample_1.1_1.fastq.gz")
             self.assertTrue(os.path.exists(qc_sample_1F_path))
-            qc_sample_1R_path = os.path.join("test", "coassemble", "qc", "sample_1_2.fastq.gz")
+            qc_sample_1R_path = os.path.join("test", "coassemble", "qc", "sample_1.1_2.fastq.gz")
             self.assertTrue(os.path.exists(qc_sample_1R_path))
 
-            qc_sample_2F_path = os.path.join("test", "coassemble", "qc", "sample_2_1.fastq.gz")
+            qc_sample_2F_path = os.path.join("test", "coassemble", "qc", "sample_2.1_1.fastq.gz")
             self.assertTrue(os.path.exists(qc_sample_2F_path))
-            qc_sample_2R_path = os.path.join("test", "coassemble", "qc", "sample_2_2.fastq.gz")
+            qc_sample_2R_path = os.path.join("test", "coassemble", "qc", "sample_2.1_2.fastq.gz")
             self.assertTrue(os.path.exists(qc_sample_2R_path))
 
-            qc_sample_3F_path = os.path.join("test", "coassemble", "qc", "sample_3_1.fastq.gz")
+            qc_sample_3F_path = os.path.join("test", "coassemble", "qc", "sample_3.1_1.fastq.gz")
             self.assertTrue(os.path.exists(qc_sample_3F_path))
-            qc_sample_3R_path = os.path.join("test", "coassemble", "qc", "sample_3_2.fastq.gz")
+            qc_sample_3R_path = os.path.join("test", "coassemble", "qc", "sample_3.1_2.fastq.gz")
             self.assertTrue(os.path.exists(qc_sample_3R_path))
 
-            map_sample_1F_path = os.path.join("test", "coassemble", "mapping", "sample_1_unmapped.1.fq.gz")
+            map_sample_1F_path = os.path.join("test", "coassemble", "mapping", "sample_1.1_unmapped.1.fq.gz")
             self.assertTrue(os.path.exists(map_sample_1F_path))
-            map_sample_1R_path = os.path.join("test", "coassemble", "mapping", "sample_1_unmapped.2.fq.gz")
+            map_sample_1R_path = os.path.join("test", "coassemble", "mapping", "sample_1.1_unmapped.2.fq.gz")
             self.assertTrue(os.path.exists(map_sample_1R_path))
 
-            map_sample_2F_path = os.path.join("test", "coassemble", "mapping", "sample_2_unmapped.1.fq.gz")
+            map_sample_2F_path = os.path.join("test", "coassemble", "mapping", "sample_2.1_unmapped.1.fq.gz")
             self.assertTrue(os.path.exists(map_sample_2F_path))
-            map_sample_2R_path = os.path.join("test", "coassemble", "mapping", "sample_2_unmapped.2.fq.gz")
+            map_sample_2R_path = os.path.join("test", "coassemble", "mapping", "sample_2.1_unmapped.2.fq.gz")
             self.assertTrue(os.path.exists(map_sample_2R_path))
 
-            map_sample_3F_path = os.path.join("test", "coassemble", "mapping", "sample_3_unmapped.1.fq.gz")
+            map_sample_3F_path = os.path.join("test", "coassemble", "mapping", "sample_3.1_unmapped.1.fq.gz")
             self.assertTrue(os.path.exists(map_sample_3F_path))
-            map_sample_3R_path = os.path.join("test", "coassemble", "mapping", "sample_3_unmapped.2.fq.gz")
+            map_sample_3R_path = os.path.join("test", "coassemble", "mapping", "sample_3.1_unmapped.2.fq.gz")
             self.assertTrue(os.path.exists(map_sample_3R_path))
 
     def test_coassemble_query_input(self):
@@ -467,11 +467,11 @@ class Tests(unittest.TestCase):
                         "coassembly",
                     ]),
                     "\t".join([
-                        "sample_1,sample_2",
+                        "sample_1.1,sample_2.1",
                         "2",
                         "3",
                         "2869",
-                        "sample_1,sample_2,sample_3",
+                        "sample_1.1,sample_2.1,sample_3.1",
                         "coassembly_0"
                     ]),
                     ""
@@ -608,9 +608,9 @@ class Tests(unittest.TestCase):
             expected = "\n".join(
                 [
                     "\t".join(["gene", "sample", "sequence", "num_hits", "coverage", "taxonomy", "found_in"]),
-                    "\t".join(["S3.7.ribosomal_protein_S7", "sample_1", "TTCCAGGTGCCTACCGAAGTTCGTCCCGAGCGTAAAATTGCATTGGGTATGAAATGGCTC", "2", "3.28", "Root; d__Bacteria; p__Bacteroidota; c__Bacteroidia; o__Sphingobacteriales; f__Sphingobacteriaceae; g__Mucilaginibacter; s__Mucilaginibacter sp013286235", "GB_GCA_013286235.1,GB_GCA_013286235.2"]),
-                    "\t".join(["S3.7.ribosomal_protein_S7", "sample_2", "TTCCAGGTGCCTACCGAAGTTCGTCCCGAGCGTAAAATTGCATTGGGTATGAAATGGCTC", "1", "1.64", "Root; d__Bacteria; p__Bacteroidota; c__Bacteroidia; o__Sphingobacteriales; f__Sphingobacteriaceae; g__Mucilaginibacter; s__Mucilaginibacter sp013286235", "GB_GCA_013286235.1"]),
-                    "\t".join(["S3.7.ribosomal_protein_S7", "sample_3", "TTCCAGGTGCCTACCGAAGTTCGTCCCGAGCGTAAAATTGCATTGGGTATGAAATGGCTC", "1", "1.64", "Root; d__Bacteria; p__Bacteroidota; c__Bacteroidia; o__Sphingobacteriales; f__Sphingobacteriaceae; g__Mucilaginibacter; s__Mucilaginibacter sp013286235", "GB_GCA_013286235.1"]),
+                    "\t".join(["S3.7.ribosomal_protein_S7", "sample_1.1", "TTCCAGGTGCCTACCGAAGTTCGTCCCGAGCGTAAAATTGCATTGGGTATGAAATGGCTC", "2", "3.28", "Root; d__Bacteria; p__Bacteroidota; c__Bacteroidia; o__Sphingobacteriales; f__Sphingobacteriaceae; g__Mucilaginibacter; s__Mucilaginibacter sp013286235", "GB_GCA_013286235.1,GB_GCA_013286235.2"]),
+                    "\t".join(["S3.7.ribosomal_protein_S7", "sample_2.1", "TTCCAGGTGCCTACCGAAGTTCGTCCCGAGCGTAAAATTGCATTGGGTATGAAATGGCTC", "1", "1.64", "Root; d__Bacteria; p__Bacteroidota; c__Bacteroidia; o__Sphingobacteriales; f__Sphingobacteriaceae; g__Mucilaginibacter; s__Mucilaginibacter sp013286235", "GB_GCA_013286235.1"]),
+                    "\t".join(["S3.7.ribosomal_protein_S7", "sample_3.1", "TTCCAGGTGCCTACCGAAGTTCGTCCCGAGCGTAAAATTGCATTGGGTATGAAATGGCTC", "1", "1.64", "Root; d__Bacteria; p__Bacteroidota; c__Bacteroidia; o__Sphingobacteriales; f__Sphingobacteriaceae; g__Mucilaginibacter; s__Mucilaginibacter sp013286235", "GB_GCA_013286235.1"]),
                     ""
                 ]
             )
@@ -632,7 +632,7 @@ class Tests(unittest.TestCase):
                     ]),
                     "\t".join([
                         "S3.7.ribosomal_protein_S7",
-                        "sample_1",
+                        "sample_1.1",
                         "TATCAAGTTCCACAAGAAGTTAGAGGAGAAAGAAGAATCTCGTTAGCTATTAGATGGATT",
                         "3",
                         "4.92",
@@ -641,7 +641,7 @@ class Tests(unittest.TestCase):
                     ]),
                     "\t".join([
                         "S3.7.ribosomal_protein_S7",
-                        "sample_1",
+                        "sample_1.1",
                         "TACCAGGTCCCGGTCGAGGTCCGTCCGATCCGCCAGACGACGCTCGCCCTGCGCTGGCTC",
                         "5",
                         "8.21",
@@ -650,7 +650,7 @@ class Tests(unittest.TestCase):
                     ]),
                     "\t".join([
                         "S3.7.ribosomal_protein_S7",
-                        "sample_1",
+                        "sample_1.1",
                         "TATCAGGTGCCTATTGAGGTAAGACCTGAAAGAAGACAGACTTTAGCGCTTCGCTGGATA",
                         "1",
                         "1.64",
@@ -659,7 +659,7 @@ class Tests(unittest.TestCase):
                     ]),
                     "\t".join([
                         "S3.7.ribosomal_protein_S7",
-                        "sample_1",
+                        "sample_1.1",
                         "TATCAGGTGCCTATTGAGGTAAGACCTGAAAGAAGACAGACTTTAGCGCTTCGCTGGATC",
                         "5",
                         "8.21",
@@ -668,7 +668,7 @@ class Tests(unittest.TestCase):
                     ]),
                     "\t".join([
                         "S3.7.ribosomal_protein_S7",
-                        "sample_1",
+                        "sample_1.1",
                         "TATCAGGTGCCTATTGAGGTAAGACCTGAAAGAAGACAGACTTTAGCGCTTCGCTGGATG",
                         "5",
                         "8.21",
@@ -677,7 +677,7 @@ class Tests(unittest.TestCase):
                     ]),
                     "\t".join([
                         "S3.7.ribosomal_protein_S7",
-                        "sample_2",
+                        "sample_2.1",
                         "TATCAAGTTCCACAAGAAGTTAGAGGAGAAAGAAGAATCTCGTTAGCTATTAGATGGATT",
                         "4",
                         "6.57",
@@ -686,7 +686,7 @@ class Tests(unittest.TestCase):
                     ]),
                     "\t".join([
                         "S3.7.ribosomal_protein_S7",
-                        "sample_2",
+                        "sample_2.1",
                         "TACCAGGTCCCGGTCGAGGTCCGTCCGATCCGCCAGACGACGCTCGCCCTGCGCTGGCTC",
                         "3",
                         "4.92",
@@ -695,7 +695,7 @@ class Tests(unittest.TestCase):
                     ]),
                     "\t".join([
                         "S3.7.ribosomal_protein_S7",
-                        "sample_2",
+                        "sample_2.1",
                         "TATCAGGTGCCTATTGAGGTAAGACCTGAAAGAAGACAGACTTTAGCGCTTCGCTGGATG",
                         "5",
                         "8.21",
@@ -704,7 +704,7 @@ class Tests(unittest.TestCase):
                     ]),
                     "\t".join([
                         "S3.7.ribosomal_protein_S7",
-                        "sample_3",
+                        "sample_3.1",
                         "TATCAGGTGCCTATTGAGGTAAGACCTGAAAGAAGACAGACTTTAGCGCTTCGCTGGATA",
                         "6",
                         "9.85",
@@ -713,7 +713,7 @@ class Tests(unittest.TestCase):
                     ]),
                     "\t".join([
                         "S3.7.ribosomal_protein_S7",
-                        "sample_3",
+                        "sample_3.1",
                         "TATCAGGTGCCTATTGAGGTAAGACCTGAAAGAAGACAGACTTTAGCGCTTCGCTGGATG",
                         "5",
                         "8.21",
@@ -735,7 +735,7 @@ class Tests(unittest.TestCase):
             cluster_path = os.path.join("test", "coassemble", "target", "elusive_clusters.tsv")
             self.assertTrue(os.path.exists(cluster_path))
 
-            unmapped_sample_1_path = os.path.join("test", "coassemble", "mapping", "sample_1_unmapped.1.fq.gz")
+            unmapped_sample_1_path = os.path.join("test", "coassemble", "mapping", "sample_1.1_unmapped.1.fq.gz")
             self.assertTrue(os.path.exists(unmapped_sample_1_path))
             with gzip.open(unmapped_sample_1_path) as f:
                 file = f.read().decode()
@@ -747,14 +747,14 @@ class Tests(unittest.TestCase):
             expected1 = "\n".join(
                 [
                     "\t".join(["coassembly", "samples", "length", "total_targets", "total_size", "unmapped_size",]),
-                    "\t".join(["coassembly_0", "sample_1,sample_2", "2", "2", "2869", "8456",]),
+                    "\t".join(["coassembly_0", "sample_1.1,sample_2.1", "2", "2", "2869", "8456",]),
                     ""
                 ]
             )
             expected2 = "\n".join(
                 [
                     "\t".join(["coassembly", "samples", "length", "total_targets", "total_size", "unmapped_size",]),
-                    "\t".join(["coassembly_0", "sample_1,sample_3", "2", "2", "2869", "8154",]),
+                    "\t".join(["coassembly_0", "sample_1.1,sample_3.1", "2", "2", "2869", "8154",]),
                     ""
                 ]
             )
@@ -770,7 +770,7 @@ class Tests(unittest.TestCase):
                 f"--reverse {SAMPLE_READS_REVERSE} "
                 f"--genomes {GENOMES} "
                 f"--singlem-metapackage {METAPACKAGE} "
-                f"--exclude-coassemblies sample_1,sample_2 "
+                f"--exclude-coassemblies sample_1.1,sample_2.1 "
                 f"--assemble-unmapped "
                 f"--unmapping-max-identity 99 "
                 f"--unmapping-max-alignment 90 "
@@ -796,11 +796,11 @@ class Tests(unittest.TestCase):
                         "coassembly",
                     ]),
                     "\t".join([
-                        "sample_1,sample_3",
+                        "sample_1.1,sample_3.1",
                         "2",
                         "2",
                         "8456",
-                        "sample_1,sample_2,sample_3",
+                        "sample_1.1,sample_2.1,sample_3.1",
                         "coassembly_0"
                     ]),
                     ""
@@ -817,7 +817,7 @@ class Tests(unittest.TestCase):
                 f"--reverse {SAMPLE_READS_REVERSE} "
                 f"--singlem-metapackage {METAPACKAGE} "
                 f"--single-assembly "
-                f"--coassembly-samples sample_1 sample_2 "
+                f"--coassembly-samples sample_1.1 sample_2.1 "
                 f"--output test "
                 f"--snakemake-args \"cluster_graph\" "
             )
@@ -840,20 +840,20 @@ class Tests(unittest.TestCase):
                         "coassembly",
                     ]),
                     "\t".join([
-                        "sample_1",
+                        "sample_1.1",
                         "1",
                         "4",
                         "4832",
-                        "sample_1,sample_2,sample_3",
-                        "sample_1"
+                        "sample_1.1,sample_2.1,sample_3.1",
+                        "sample_1.1"
                     ]),
                     "\t".join([
-                        "sample_2",
+                        "sample_2.1",
                         "1",
                         "3",
                         "3926",
-                        "sample_1,sample_2,sample_3",
-                        "sample_2"
+                        "sample_1.1,sample_2.1,sample_3.1",
+                        "sample_2.1"
                     ]),
                     ""
                 ]
@@ -910,11 +910,11 @@ class Tests(unittest.TestCase):
                         "coassembly",
                     ]),
                     "\t".join([
-                        "sample_1,sample_2",
+                        "sample_1.1,sample_2.1",
                         "2",
                         "3",
                         "8758",
-                        "sample_1,sample_2,sample_3",
+                        "sample_1.1,sample_2.1,sample_3.1",
                         "coassembly_0"
                     ]),
                     ""
@@ -1007,7 +1007,7 @@ class Tests(unittest.TestCase):
             config_path = os.path.join("test", "config.yaml")
             self.assertTrue(os.path.exists(config_path))
 
-            genomes_to_map_path = os.path.join("test", "coassemble", "mapping", "sample_1_reference.fna")
+            genomes_to_map_path = os.path.join("test", "coassemble", "mapping", "sample_1.1_reference.fna")
             self.assertTrue(os.path.exists(genomes_to_map_path))
             with open(genomes_to_map_path) as f:
                 lines = f.read()
@@ -1218,10 +1218,10 @@ class Tests(unittest.TestCase):
             write_string_to_file(SAMPLE_READS_REVERSE, "sample_reads_reverse")
             write_string_to_file(GENOMES, "genomes")
             write_string_to_file(GENOME_TRANSCRIPTS, "genome_transcripts")
-            write_string_to_file("sample_1\nsample_2", "coassembly_samples")
-            write_string_to_file("sample_1,sample_2", "exclude_coassemblies")
-            write_string_to_file("sample_2\nsample_3", "abundance_samples")
-            write_string_to_file("sample_1\nsample_3", "anchor_samples")
+            write_string_to_file("sample_1.1\nsample_2.1", "coassembly_samples")
+            write_string_to_file("sample_1.1,sample_2.1", "exclude_coassemblies")
+            write_string_to_file("sample_2.1\nsample_3.1", "abundance_samples")
+            write_string_to_file("sample_1.1\nsample_3.1", "anchor_samples")
 
             cmd = (
                 f"binchicken coassemble "
@@ -1264,13 +1264,13 @@ class Tests(unittest.TestCase):
 
             config = load_configfile(os.path.join("test", "config.yaml"))
             self.assertEqual(config["genomes"], {os.path.splitext(os.path.basename(g))[0]: g for g in GENOMES.split(" ")})
-            self.assertEqual(config["coassembly_samples"], ["sample_1", "sample_2"])
-            self.assertEqual(config["exclude_coassemblies"], ["sample_1,sample_2"])
-            self.assertEqual(config["abundance_weighted_samples"], ["sample_2", "sample_3"])
+            self.assertEqual(config["coassembly_samples"], ["sample_1.1", "sample_2.1"])
+            self.assertEqual(config["exclude_coassemblies"], ["sample_1.1,sample_2.1"])
+            self.assertEqual(config["abundance_weighted_samples"], ["sample_2.1", "sample_3.1"])
             self.assertEqual(config["reads_1"], {os.path.splitext(os.path.splitext(os.path.basename(s))[0])[0]: s for s in SAMPLE_READS_FORWARD.split(" ")})
             self.assertEqual(config["reads_2"], {os.path.splitext(os.path.splitext(os.path.basename(s))[0])[0]: s for s in SAMPLE_READS_REVERSE.split(" ")})
             self.assertEqual(config["assembly_strategy"], "megahit")
-            self.assertEqual(config["anchor_samples"], ["sample_1", "sample_3"])
+            self.assertEqual(config["anchor_samples"], ["sample_1.1", "sample_3.1"])
 
     def test_coassemble_singlem_inputs_files_of_paths(self):
         with in_tempdir():
@@ -1361,7 +1361,7 @@ class Tests(unittest.TestCase):
                 f"binchicken coassemble "
                 f"--forward {SAMPLE_READS_FORWARD} "
                 f"--reverse {SAMPLE_READS_REVERSE} "
-                f"--anchor-samples sample_3 "
+                f"--anchor-samples sample_3.1 "
                 f"--genomes {GENOMES} "
                 f"--singlem-metapackage {METAPACKAGE} "
                 f"--prodigal-meta "
@@ -1392,11 +1392,11 @@ class Tests(unittest.TestCase):
                         "coassembly",
                     ]),
                     "\t".join([
-                        "sample_1,sample_3",
+                        "sample_1.1,sample_3.1",
                         "2",
                         "2",
                         "8456",
-                        "sample_1,sample_2,sample_3",
+                        "sample_1.1,sample_2.1,sample_3.1",
                         "coassembly_0"
                     ]),
                     ""
@@ -1568,10 +1568,10 @@ class Tests(unittest.TestCase):
             self.assertTrue(os.path.exists(read_size_path))
             expected = "\n".join(
                 [
-                    ",".join(["sample_1", "4832"]),
-                    ",".join(["sample_2", "3926"]),
-                    ",".join(["sample_3", "3624"]),
-                    ",".join(["sample_5", "3624"]),
+                    ",".join(["sample_1.1", "4832"]),
+                    ",".join(["sample_2.1", "3926"]),
+                    ",".join(["sample_3.1", "3624"]),
+                    ",".join(["sample_5.1", "3624"]),
                     ""
                 ]
             )
@@ -1587,10 +1587,10 @@ class Tests(unittest.TestCase):
             elusive_edges_path = os.path.join("test", "coassemble", "target", "elusive_edges.tsv")
             self.assertTrue(os.path.exists(elusive_edges_path))
             expected = pl.DataFrame([
-                    ["match", 2, "sample_1,sample_2", "2416810233479675551,6360827971060584481"],
-                    ["match", 2, "sample_1,sample_5", "2416810233479675551"],
-                    ["match", 2, "sample_2,sample_5", "2416810233479675551"],
-                    ["match", 2, "sample_3,sample_5", "1779956245962588283,5034568815038442683"],
+                    ["match", 2, "sample_1.1,sample_2.1", "2416810233479675551,6360827971060584481"],
+                    ["match", 2, "sample_1.1,sample_5.1", "2416810233479675551"],
+                    ["match", 2, "sample_2.1,sample_5.1", "2416810233479675551"],
+                    ["match", 2, "sample_3.1,sample_5.1", "1779956245962588283,5034568815038442683"],
                 ],
                 schema = ["style", "cluster_size", "samples", "target_ids"],
                 orient="row",
@@ -1611,19 +1611,19 @@ class Tests(unittest.TestCase):
                         "coassembly",
                     ]),
                     "\t".join([
-                        "sample_3,sample_5",
+                        "sample_3.1,sample_5.1",
                         "2",
                         "2",
                         "7248",
-                        "sample_3,sample_5",
+                        "sample_3.1,sample_5.1",
                         "coassembly_0"
                     ]),
                     "\t".join([
-                        "sample_1,sample_2",
+                        "sample_1.1,sample_2.1",
                         "2",
                         "2",
                         "8758",
-                        "sample_1,sample_2,sample_5",
+                        "sample_1.1,sample_2.1,sample_5.1",
                         "coassembly_1"
                     ]),
                     ""
@@ -1661,7 +1661,7 @@ class Tests(unittest.TestCase):
             expected = "\n".join(
                 [
                     "\t".join(["style", "cluster_size", "samples", "target_ids"]),
-                    "\t".join(["match", "2", "sample_2,sample_5", "2416810233479675551"]),
+                    "\t".join(["match", "2", "sample_2.1,sample_5.1", "2416810233479675551"]),
                     ""
                 ]
             )
@@ -1690,10 +1690,10 @@ class Tests(unittest.TestCase):
             elusive_edges_path = os.path.join("test", "coassemble", "target", "elusive_edges.tsv")
             self.assertTrue(os.path.exists(elusive_edges_path))
             expected = pl.DataFrame([
-                    ["match", 2, "sample_1,sample_2", "2416810233479675551,6360827971060584481"],
-                    ["match", 2, "sample_1,sample_5", "2416810233479675551"],
-                    ["match", 2, "sample_2,sample_5", "2416810233479675551"],
-                    ["match", 2, "sample_3,sample_5", "1779956245962588283,5034568815038442683"],
+                    ["match", 2, "sample_1.1,sample_2.1", "2416810233479675551,6360827971060584481"],
+                    ["match", 2, "sample_1.1,sample_5.1", "2416810233479675551"],
+                    ["match", 2, "sample_2.1,sample_5.1", "2416810233479675551"],
+                    ["match", 2, "sample_3.1,sample_5.1", "1779956245962588283,5034568815038442683"],
                 ],
                 schema = ["style", "cluster_size", "samples", "target_ids"],
                 orient="row",
@@ -1714,36 +1714,36 @@ class Tests(unittest.TestCase):
                         "coassembly",
                     ]),
                     "\t".join([
-                        "sample_5",
+                        "sample_5.1",
                         "1",
                         "3",
                         "3624",
-                        "sample_3,sample_5",
-                        "sample_5"
+                        "sample_3.1,sample_5.1",
+                        "sample_5.1"
                     ]),
                     "\t".join([
-                        "sample_3",
+                        "sample_3.1",
                         "1",
                         "2",
                         "3624",
-                        "sample_3,sample_5",
-                        "sample_3"
+                        "sample_3.1,sample_5.1",
+                        "sample_3.1"
                     ]),
                     "\t".join([
-                        "sample_2",
+                        "sample_2.1",
                         "1",
                         "2",
                         "3926",
-                        "sample_1,sample_2",
-                        "sample_2"
+                        "sample_1.1,sample_2.1",
+                        "sample_2.1"
                     ]),
                     "\t".join([
-                        "sample_1",
+                        "sample_1.1",
                         "1",
                         "2",
                         "4832",
-                        "sample_1,sample_2",
-                        "sample_1"
+                        "sample_1.1,sample_2.1",
+                        "sample_1.1"
                     ]),
                     ""
                 ]
@@ -1777,10 +1777,10 @@ class Tests(unittest.TestCase):
             self.assertTrue(os.path.exists(read_size_path))
             expected = "\n".join(
                 [
-                    ",".join(["sample_1", "4832"]),
-                    ",".join(["sample_2", "3926"]),
-                    ",".join(["sample_3", "3624"]),
-                    ",".join(["sample_5", "3624"]),
+                    ",".join(["sample_1.1", "4832"]),
+                    ",".join(["sample_2.1", "3926"]),
+                    ",".join(["sample_3.1", "3624"]),
+                    ",".join(["sample_5.1", "3624"]),
                     ""
                 ]
             )
@@ -1796,10 +1796,10 @@ class Tests(unittest.TestCase):
             elusive_edges_path = os.path.join("test", "coassemble", "target", "elusive_edges.tsv")
             self.assertTrue(os.path.exists(elusive_edges_path))
             expected = pl.DataFrame([
-                    ["match", 2, "sample_1,sample_2", "2416810233479675551,6360827971060584481"],
-                    ["match", 2, "sample_1,sample_5", "2416810233479675551"],
-                    ["match", 2, "sample_2,sample_5", "2416810233479675551"],
-                    ["match", 2, "sample_3,sample_5", "1779956245962588283,5034568815038442683"],
+                    ["match", 2, "sample_1.1,sample_2.1", "2416810233479675551,6360827971060584481"],
+                    ["match", 2, "sample_1.1,sample_5.1", "2416810233479675551"],
+                    ["match", 2, "sample_2.1,sample_5.1", "2416810233479675551"],
+                    ["match", 2, "sample_3.1,sample_5.1", "1779956245962588283,5034568815038442683"],
                 ],
                 schema = ["style", "cluster_size", "samples", "target_ids"],
                 orient="row",
@@ -1820,19 +1820,19 @@ class Tests(unittest.TestCase):
                         "coassembly",
                     ]),
                     "\t".join([
-                        "sample_3,sample_5",
+                        "sample_3.1,sample_5.1",
                         "2",
                         "2",
                         "7248",
-                        "sample_3,sample_5",
+                        "sample_3.1,sample_5.1",
                         "coassembly_0"
                     ]),
                     "\t".join([
-                        "sample_1,sample_2",
+                        "sample_1.1,sample_2.1",
                         "2",
                         "2",
                         "8758",
-                        "sample_1,sample_2,sample_5",
+                        "sample_1.1,sample_2.1,sample_5.1",
                         "coassembly_1"
                     ]),
                     ""
@@ -1847,7 +1847,7 @@ class Tests(unittest.TestCase):
                 f"binchicken coassemble "
                 f"--forward {SAMPLE_READS_FORWARD_PRE} "
                 f"--reverse {SAMPLE_READS_REVERSE_PRE} "
-                f"--anchor-samples sample_1 "
+                f"--anchor-samples sample_1.1 "
                 f"--sample-singlem {SAMPLE_SINGLEM_PRE} "
                 f"--singlem-metapackage {METAPACKAGE} "
                 f"--kmer-precluster always "
@@ -1863,10 +1863,10 @@ class Tests(unittest.TestCase):
             self.assertTrue(os.path.exists(read_size_path))
             expected = "\n".join(
                 [
-                    ",".join(["sample_1", "4832"]),
-                    ",".join(["sample_2", "3926"]),
-                    ",".join(["sample_3", "3624"]),
-                    ",".join(["sample_5", "3624"]),
+                    ",".join(["sample_1.1", "4832"]),
+                    ",".join(["sample_2.1", "3926"]),
+                    ",".join(["sample_3.1", "3624"]),
+                    ",".join(["sample_5.1", "3624"]),
                     ""
                 ]
             )
@@ -1882,8 +1882,8 @@ class Tests(unittest.TestCase):
             elusive_edges_path = os.path.join("test", "coassemble", "target", "elusive_edges.tsv")
             self.assertTrue(os.path.exists(elusive_edges_path))
             expected = pl.DataFrame([
-                    ["match", 2, "sample_1,sample_2", "2416810233479675551,6360827971060584481"],
-                    ["match", 2, "sample_1,sample_5", "2416810233479675551"],
+                    ["match", 2, "sample_1.1,sample_2.1", "2416810233479675551,6360827971060584481"],
+                    ["match", 2, "sample_1.1,sample_5.1", "2416810233479675551"],
                 ],
                 schema = ["style", "cluster_size", "samples", "target_ids"],
                 orient="row",
@@ -1904,11 +1904,11 @@ class Tests(unittest.TestCase):
                         "coassembly",
                     ]),
                     "\t".join([
-                        "sample_1,sample_2",
+                        "sample_1.1,sample_2.1",
                         "2",
                         "2",
                         "8758",
-                        "sample_1,sample_2,sample_5",
+                        "sample_1.1,sample_2.1,sample_5.1",
                         "coassembly_0"
                     ]),
                     ""
@@ -1939,10 +1939,10 @@ class Tests(unittest.TestCase):
             self.assertTrue(os.path.exists(read_size_path))
             expected = "\n".join(
                 [
-                    ",".join(["sample_1", "4832"]),
-                    ",".join(["sample_2", "3926"]),
-                    ",".join(["sample_3", "3624"]),
-                    ",".join(["sample_5", "3624"]),
+                    ",".join(["sample_1.1", "4832"]),
+                    ",".join(["sample_2.1", "3926"]),
+                    ",".join(["sample_3.1", "3624"]),
+                    ",".join(["sample_5.1", "3624"]),
                     ""
                 ]
             )
@@ -1988,11 +1988,11 @@ class Tests(unittest.TestCase):
             elusive_edges_path = os.path.join("test", "coassemble", "target", "elusive_edges.tsv")
             self.assertTrue(os.path.exists(elusive_edges_path))
             expected = pl.DataFrame([
-                    ["match", 2, "sample_1,sample_2", "1,3"],
-                    ["match", 2, "sample_1,sample_5", "0,2"],
-                    ["match", 2, "sample_2,sample_3", "5"],
-                    ["match", 2, "sample_2,sample_5", "4,5"],
-                    ["match", 2, "sample_3,sample_5", "5,7"],
+                    ["match", 2, "sample_1.1,sample_2.1", "1,3"],
+                    ["match", 2, "sample_1.1,sample_5.1", "0,2"],
+                    ["match", 2, "sample_2.1,sample_3.1", "5"],
+                    ["match", 2, "sample_2.1,sample_5.1", "4,5"],
+                    ["match", 2, "sample_3.1,sample_5.1", "5,7"],
                 ],
                 schema = ["style", "cluster_size", "samples", "target_ids"],
                 orient="row",
@@ -2003,8 +2003,8 @@ class Tests(unittest.TestCase):
             cluster_path = os.path.join("test", "coassemble", "target", "elusive_clusters.tsv")
             self.assertTrue(os.path.exists(cluster_path))
             expected = pl.DataFrame([
-                    ["sample_1,sample_5", 2, 0.003241+0.446710, 8456, "sample_1,sample_5", "coassembly_0"],
-                    ["sample_2,sample_3", 2, 0.094538, 7550, "sample_2,sample_3,sample_5", "coassembly_1"],
+                    ["sample_1.1,sample_5.1", 2, 0.003241+0.446710, 8456, "sample_1.1,sample_5.1", "coassembly_0"],
+                    ["sample_2.1,sample_3.1", 2, 0.094538, 7550, "sample_2.1,sample_3.1,sample_5.1", "coassembly_1"],
                 ],
                 schema = ["samples", "length", "total_targets", "total_size", "recover_samples", "coassembly"],
                 orient="row",
@@ -2017,7 +2017,7 @@ class Tests(unittest.TestCase):
             cmd = (
                 f"binchicken coassemble "
                 f"--abundance-weighted "
-                f"--abundance-weighted-samples sample_1 sample_2 "
+                f"--abundance-weighted-samples sample_1.1 sample_2.1 "
                 f"--forward {SAMPLE_READS_FORWARD_PRE} "
                 f"--reverse {SAMPLE_READS_REVERSE_PRE} "
                 f"--sample-singlem {SAMPLE_SINGLEM_WEIGHT} "
@@ -2106,8 +2106,8 @@ class Tests(unittest.TestCase):
             expected = "\n".join(
                 [
                     "\t".join(["style", "cluster_size", "samples", "target_ids"]),
-                    "\t".join(["match", "2", "sample_1,sample_2", "0"]),
-                    "\t".join(["match", "2", "sample_2,sample_5", "1,3"]),
+                    "\t".join(["match", "2", "sample_1.1,sample_2.1", "0"]),
+                    "\t".join(["match", "2", "sample_2.1,sample_5.1", "1,3"]),
                     ""
                 ]
             )
@@ -2117,7 +2117,7 @@ class Tests(unittest.TestCase):
             cluster_path = os.path.join("test", "coassemble", "target", "elusive_clusters.tsv")
             self.assertTrue(os.path.exists(cluster_path))
             expected = pl.DataFrame([
-                    ["sample_1,sample_2", 2, 0.239923, 8758, "sample_1,sample_2", "coassembly_0"],
+                    ["sample_1.1,sample_2.1", 2, 0.239923, 8758, "sample_1.1,sample_2.1", "coassembly_0"],
                 ],
                 schema = ["samples", "length", "total_targets", "total_size", "recover_samples", "coassembly"],
                 orient="row",
@@ -2275,7 +2275,7 @@ class Tests(unittest.TestCase):
             self.assertTrue(os.path.exists(read_size_path))
             expected = "\n".join(
                 [
-                    ",".join(["sample_1", "4832"]),
+                    ",".join(["sample_1.1", "4832"]),
                     ",".join(["different_2", "3926"]),
                     ",".join(["simple_3", "3624"]),
                     ",".join(["sam_4", "604"]),
@@ -2298,11 +2298,11 @@ class Tests(unittest.TestCase):
                         "coassembly",
                     ]),
                     "\t".join([
-                        "different_2,sample_1",
+                        "different_2,sample_1.1",
                         "2",
                         "3",
                         "8758",
-                        "different_2,sample_1,simple_3",
+                        "different_2,sample_1.1,simple_3",
                         "coassembly_0"
                     ]),
                     ""

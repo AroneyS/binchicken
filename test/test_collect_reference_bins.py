@@ -18,7 +18,7 @@ class Tests(unittest.TestCase):
         ], orient="row", schema=APPRAISE_COLUMNS)
 
         expected = set(["genome_1", "genome_2"])
-        observed = pipeline(appraise_binned, appraise_unbinned, "sample_1")
+        observed = pipeline(appraise_binned, appraise_unbinned, "sample_1.1")
         self.assertEqual(expected, observed)
 
     def test_collect_reference_bins_underscore(self):
@@ -30,7 +30,7 @@ class Tests(unittest.TestCase):
         ], orient="row", schema=APPRAISE_COLUMNS)
 
         expected = set(["genome_1", "genome_2"])
-        observed = pipeline(appraise_binned, appraise_unbinned, "sample_1")
+        observed = pipeline(appraise_binned, appraise_unbinned, "sample_1_1")
         self.assertEqual(expected, observed)
 
     def test_collect_reference_bins_suffix_R(self):
@@ -42,7 +42,7 @@ class Tests(unittest.TestCase):
         ], orient="row", schema=APPRAISE_COLUMNS)
 
         expected = set(["genome_1", "genome_2"])
-        observed = pipeline(appraise_binned, appraise_unbinned, "sample_1")
+        observed = pipeline(appraise_binned, appraise_unbinned, "sample_1_R1")
         self.assertEqual(expected, observed)
 
     def test_collect_reference_bins_no_hits(self):
@@ -53,7 +53,7 @@ class Tests(unittest.TestCase):
         ], orient="row", schema=APPRAISE_COLUMNS)
 
         expected = set()
-        observed = pipeline(appraise_binned, appraise_unbinned, "sample_1")
+        observed = pipeline(appraise_binned, appraise_unbinned, "sample_1.1")
         self.assertEqual(expected, observed)
 
     def test_collect_reference_bins_no_sequences(self):
@@ -75,7 +75,7 @@ class Tests(unittest.TestCase):
         ], orient="row", schema=APPRAISE_COLUMNS)
 
         expected = set()
-        observed = pipeline(appraise_binned, appraise_unbinned, "sample_1")
+        observed = pipeline(appraise_binned, appraise_unbinned, "sample_1.1")
         self.assertEqual(expected, observed)
 
     def test_collect_reference_bins_trimmed(self):
@@ -96,7 +96,7 @@ class Tests(unittest.TestCase):
         ], orient="row", schema=APPRAISE_COLUMNS)
 
         expected = set(["genome_1"])
-        observed = pipeline(appraise_binned, appraise_unbinned, "sample_1")
+        observed = pipeline(appraise_binned, appraise_unbinned, "sample_1.1")
         self.assertEqual(expected, observed)
 
     def test_collect_reference_bins_multiple_samples(self):
@@ -112,7 +112,7 @@ class Tests(unittest.TestCase):
         ], orient="row", schema=APPRAISE_COLUMNS)
 
         expected = set(["genome_1"])
-        observed = pipeline(appraise_binned, appraise_unbinned, "sample_1")
+        observed = pipeline(appraise_binned, appraise_unbinned, "sample_1.1")
         self.assertEqual(expected, observed)
 
 
