@@ -10,7 +10,6 @@ import logging
 import numpy as np
 import scipy.sparse as sp
 import itertools
-from binchicken.binchicken import SUFFIX_RE
 import argparse
 
 EDGES_COLUMNS={
@@ -52,18 +51,6 @@ def get_clusters(
     if MAX_COASSEMBLY_SAMPLES < 2:
         # Set to 2 to produce paired edges
         MAX_COASSEMBLY_SAMPLES = 2
-
-    sample_distances = (
-        sample_distances
-        .with_columns(
-            pl.when(pl.col("query_name").is_in(samples))
-                .then(pl.col("query_name"))
-                .otherwise(pl.col("query_name").str.replace(SUFFIX_RE, "")),
-            pl.when(pl.col("match_name").is_in(samples))
-                .then(pl.col("match_name"))
-                .otherwise(pl.col("match_name").str.replace(SUFFIX_RE, "")),
-            )
-    )
 
     logging.info("Converting to sparse array")
     samples = np.unique(np.concatenate([
@@ -176,17 +163,10 @@ def streaming_pipeline(
 
     logging.info("Grouping hits by marker gene sequences to form targets")
     if len(samples) > 100_000:
-        logging.warning("Skipping sample suffix removal due to having more than 100,000 samples.")
-        logging.warning("This may return no results if query inputs were not used.")
-        logging.warning("To fix, remove suffixes from appraise results (e.g. sample_1 is in the sample list, but sample_1.1 is in the otu_table).")
+        logging.warning("Assuming all samples are relevant due to having more than 100,000 samples.")
     else:
         unbinned = (
             unbinned
-            .with_columns(
-                pl.when(pl.col("sample").is_in(samples))
-                .then(pl.col("sample"))
-                .otherwise(pl.col("sample").str.replace(SUFFIX_RE, ""))
-                )
             .filter(pl.col("sample").is_in(samples))
         )
 
@@ -285,11 +265,6 @@ def pipeline(
     logging.info("Grouping hits by marker gene sequences to form targets")
     unbinned = (
         unbinned
-        .with_columns(
-            pl.when(pl.col("sample").is_in(samples))
-            .then(pl.col("sample"))
-            .otherwise(pl.col("sample").str.replace(SUFFIX_RE, ""))
-            )
         .filter(pl.col("sample").is_in(samples))
         .drop("found_in")
         .with_row_index("target")

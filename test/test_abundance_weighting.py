@@ -159,7 +159,7 @@ class Tests(unittest.TestCase):
             ["S3.1", "sample_1.1", "AAB", 5, 10, "Root", ""],
             ["S3.1", "sample_2.1", "AAB", 5, 10, "Root", ""],
         ], orient="row", schema=APPRAISE_COLUMNS)
-        samples = ["sample_1", "sample_2"]
+        samples = ["sample_1.1", "sample_2.1"]
 
         expected = pl.DataFrame([
             ["S3.1", "AAA", 0.5],
@@ -179,7 +179,7 @@ class Tests(unittest.TestCase):
             ["S3.1", "sample_1_1", "AAB", 5, 10, "Root", ""],
             ["S3.1", "sample_2_1", "AAB", 5, 10, "Root", ""],
         ], orient="row", schema=APPRAISE_COLUMNS)
-        samples = ["sample_1", "sample_2"]
+        samples = ["sample_1_1", "sample_2_1"]
 
         expected = pl.DataFrame([
             ["S3.1", "AAA", 0.5],
@@ -199,7 +199,7 @@ class Tests(unittest.TestCase):
             ["S3.1", "sample_1_R1", "AAB", 5, 10, "Root", ""],
             ["S3.1", "sample_2_R1", "AAB", 5, 10, "Root", ""],
         ], orient="row", schema=APPRAISE_COLUMNS)
-        samples = ["sample_1", "sample_2"]
+        samples = ["sample_1_R1", "sample_2_R1"]
 
         expected = pl.DataFrame([
             ["S3.1", "AAA", 0.5],
