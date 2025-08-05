@@ -549,7 +549,7 @@ def coassemble(args):
         "max_coassembly_samples": args.max_coassembly_samples if args.max_coassembly_samples else args.num_coassembly_samples,
         "max_coassembly_size": None if args.max_coassembly_size == "None" else args.max_coassembly_size,
         "max_recovery_samples": args.max_recovery_samples,
-        "max_sample_combinations": args.max_sample_combinations,
+        "max_sample_combinations": args.max_sample_combinations if args.max_sample_combinations else None,
         "abundance_weighted": args.abundance_weighted,
         "abundance_weighted_samples": args.abundance_weighted_samples,
         "kmer_precluster": kmer_precluster,
@@ -1336,7 +1336,7 @@ def main():
         max_coassembly_size_default = 50
         coassemble_clustering.add_argument("--max-coassembly-size", help=f"Maximum size (Gbp) of coassembly cluster [default: {max_coassembly_size_default}Gbp]", default=max_coassembly_size_default)
         coassemble_clustering.add_argument("--max-recovery-samples", type=int, help="Upper bound for number of related samples to use for differential abundance binning [default: 20]", default=20)
-        coassemble_clustering.add_argument("--max-sample-combinations", type=int, help="Maximum number of samples per target to consider for pooled clusters (reduces combinatorial explosions). Set to a smaller number if you have a polars idx error. [default: 100]", default=100)
+        coassemble_clustering.add_argument("--max-sample-combinations", type=int, help="Maximum number of samples per target to consider for pooled clusters (reduces combinatorial explosions). Set to a smaller number if you have a polars idx error. [default: starts at 100, reducing by 20 with retries]", default=None)
         coassemble_clustering.add_argument("--abundance-weighted", action="store_true", help="Weight sequences by mean sample abundance when ranking clusters [default: False]")
         coassemble_clustering.add_argument("--abundance-weighted-samples", nargs='+', help="Restrict sequence weighting to these samples. Remaining samples will still be used for coassembly [default: use all samples]", default=[])
         coassemble_clustering.add_argument("--abundance-weighted-samples-list", help="Restrict sequence weighting to these samples, newline separated. Remaining samples will still be used for coassembly [default: use all samples]", default=[])

@@ -45,6 +45,9 @@ qc_reads_2 = {read: output_dir + f"/qc/{read}_2.fastq.gz" for read in reads_2}
 def get_mem_mb(wildcards, threads, attempt):
     return 8 * 1000 * threads * attempt
 
+def get_mem_mb_no_attempts(wildcards, threads):
+    return 8 * 1000 * threads
+
 def get_runtime(base_hours):
     def runtime_func(wildcards, attempt):
         return f"{attempt * base_hours}h"
@@ -795,12 +798,12 @@ checkpoint cluster_graph:
         num_coassembly_samples = config["num_coassembly_samples"],
         max_coassembly_samples = config["max_coassembly_samples"],
         max_recovery_samples = config["max_recovery_samples"],
-        max_sample_combinations = config["max_sample_combinations"],
         single_assembly = config["single_assembly"],
     threads: 64
     resources:
-        mem_mb=get_mem_mb,
+        mem_mb=get_mem_mb_no_attempts,
         runtime = get_runtime(base_hours = 48),
+        max_sample_combinations = lambda wildcards, attempt: config["max_sample_combinations"] if config["max_sample_combinations"] else 120 - attempt * 20,
     log:
         logs_dir + "/target/cluster_graph.log"
     benchmark:
@@ -816,7 +819,7 @@ checkpoint cluster_graph:
         "--max-coassembly-samples {params.max_coassembly_samples} "
         "--num-coassembly-samples {params.num_coassembly_samples} "
         "--max-recovery-samples {params.max_recovery_samples} "
-        "--max-samples-combinations {params.max_sample_combinations} "
+        "--max-samples-combinations {resources.max_sample_combinations} "
         "--coassembly-samples {input.coassembly_samples} "
         "--exclude-coassemblies {input.exclude_coassemblies} "
         "--single-assembly {params.single_assembly} "
