@@ -193,6 +193,11 @@ rule rename_pipe_reads:
         (
             pl.scan_csv(input[0], separator="\t")
             .with_columns(sample = pl.lit(params.sample))
+            .with_columns(
+                pl.when(pl.col("sample").str.contains("/"))
+                .then(pl.col("sample").str.split("/").list.last())
+                .otherwise(pl.col("sample"))
+            )
             .sink_csv(output[0], separator="\t")
         )
 
