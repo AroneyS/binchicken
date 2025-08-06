@@ -1502,9 +1502,9 @@ class Tests(unittest.TestCase):
             expected = "\n".join(
                 [
                     "\t".join(["gene", "sample", "sequence", "num_hits", "coverage", "taxonomy", "found_in"]),
-                    "\t".join(["S3.7.ribosomal_protein_S7", "sample_1.1", "TTCCAGGTGCCTACCGAAGTTCGTCCCGAGCGTAAAATTGCATTGGGTATGAAATGGCTC", "2", "3.28", "Root; d__Bacteria; p__Bacteroidota; c__Bacteroidia; o__Sphingobacteriales; f__Sphingobacteriaceae; g__Mucilaginibacter; s__Mucilaginibacter_sp013286235", "GB_GCA_013286235.1_protein"]),
-                    "\t".join(["S3.7.ribosomal_protein_S7", "sample_2.1", "TTCCAGGTGCCTACCGAAGTTCGTCCCGAGCGTAAAATTGCATTGGGTATGAAATGGCTC", "1", "1.64", "Root; d__Bacteria; p__Bacteroidota; c__Bacteroidia; o__Sphingobacteriales; f__Sphingobacteriaceae; g__Mucilaginibacter; s__Mucilaginibacter_sp013286235", "GB_GCA_013286235.1_protein"]),
-                    "\t".join(["S3.7.ribosomal_protein_S7", "sample_3.1", "TTCCAGGTGCCTACCGAAGTTCGTCCCGAGCGTAAAATTGCATTGGGTATGAAATGGCTC", "1", "1.64", "Root; d__Bacteria; p__Bacteroidota; c__Bacteroidia; o__Sphingobacteriales; f__Sphingobacteriaceae; g__Mucilaginibacter; s__Mucilaginibacter_sp013286235", "GB_GCA_013286235.1_protein"]),
+                    "\t".join(["S3.7.ribosomal_protein_S7", "sample_1", "TTCCAGGTGCCTACCGAAGTTCGTCCCGAGCGTAAAATTGCATTGGGTATGAAATGGCTC", "2", "3.28", "Root; d__Bacteria; p__Bacteroidota; c__Bacteroidia; o__Sphingobacteriales; f__Sphingobacteriaceae; g__Mucilaginibacter; s__Mucilaginibacter_sp013286235", "GB_GCA_013286235.1_protein"]),
+                    "\t".join(["S3.7.ribosomal_protein_S7", "sample_2", "TTCCAGGTGCCTACCGAAGTTCGTCCCGAGCGTAAAATTGCATTGGGTATGAAATGGCTC", "1", "1.64", "Root; d__Bacteria; p__Bacteroidota; c__Bacteroidia; o__Sphingobacteriales; f__Sphingobacteriaceae; g__Mucilaginibacter; s__Mucilaginibacter_sp013286235", "GB_GCA_013286235.1_protein"]),
+                    "\t".join(["S3.7.ribosomal_protein_S7", "sample_3", "TTCCAGGTGCCTACCGAAGTTCGTCCCGAGCGTAAAATTGCATTGGGTATGAAATGGCTC", "1", "1.64", "Root; d__Bacteria; p__Bacteroidota; c__Bacteroidia; o__Sphingobacteriales; f__Sphingobacteriaceae; g__Mucilaginibacter; s__Mucilaginibacter_sp013286235", "GB_GCA_013286235.1_protein"]),
                     ""
                 ]
             )
@@ -1533,14 +1533,14 @@ class Tests(unittest.TestCase):
             expected = "\n".join(
                 [
                     "\t".join(["gene", "sample", "sequence", "num_hits", "coverage", "taxonomy", "found_in"]),
-                    "\t".join(["S3.7.ribosomal_protein_S7", "sample_1.1", "TATCAAGTTCCACAAGAAGTTAGAGGAGAAAGAAGAATCTCGTTAGCTATTAGATGGATT", "3", "4.92", "Root; d__Bacteria; p__Proteobacteria; c__Gammaproteobacteria; o__Burkholderiales; f__Burkholderiaceae; g__Polynucleobacter; s__Polynucleobacter sp018688335", ""]),
-                    "\t".join(["S3.7.ribosomal_protein_S7", "sample_1.1", "TACCAGGTCCCGGTCGAGGTCCGTCCGATCCGCCAGACGACGCTCGCCCTGCGCTGGCTC", "5", "8.21", "Root; d__Bacteria; p__Actinobacteriota; c__Actinomycetia; o__Mycobacteriales; f__Mycobacteriaceae; g__Nocardia; s__Nocardia grenadensis", ""]),
-                    "\t".join(["S3.7.ribosomal_protein_S7", "sample_1.1", "TATCAGGTGCCTATTGAGGTAAGACCTGAAAGAAGACAGACTTTAGCGCTTCGCTGGATA", "1", "1.64", "Root; d__Bacteria; p__Actinobacteriota; c__Actinomycetia; o__Mycobacteriales; f__Mycobacteriaceae; g__Nocardia; s__Nocardia grenadensis2", ""]),
-                    "\t".join(["S3.7.ribosomal_protein_S7", "sample_1.1", "TATCAGGTGCCTATTGAGGTAAGACCTGAAAGAAGACAGACTTTAGCGCTTCGCTGGATC", "5", "8.21", "Root; d__Bacteria; p__Actinobacteriota; c__Actinomycetia; o__Mycobacteriales; f__Mycobacteriaceae; g__Nocardia; s__Nocardia grenadensis3", ""]),
-                    "\t".join(["S3.7.ribosomal_protein_S7", "sample_2.1", "TATCAAGTTCCACAAGAAGTTAGAGGAGAAAGAAGAATCTCGTTAGCTATTAGATGGATT", "4", "6.57", "Root; d__Bacteria; p__Proteobacteria; c__Gammaproteobacteria; o__Burkholderiales; f__Burkholderiaceae; g__Polynucleobacter; s__Polynucleobacter sp018688335", ""]),
-                    "\t".join(["S3.7.ribosomal_protein_S7", "sample_2.1", "TACCAGGTCCCGGTCGAGGTCCGTCCGATCCGCCAGACGACGCTCGCCCTGCGCTGGCTC", "3", "4.92", "Root; d__Bacteria; p__Actinobacteriota; c__Actinomycetia; o__Mycobacteriales; f__Mycobacteriaceae; g__Nocardia; s__Nocardia grenadensis", ""]),
-                    "\t".join(["S3.7.ribosomal_protein_S7", "sample_3.1", "TATCAGGTGCCTATTGAGGTAAGACCTGAAAGAAGACAGACTTTAGCGCTTCGCTGGATA", "6", "9.85", "Root; d__Bacteria; p__Actinobacteriota; c__Actinomycetia; o__Mycobacteriales; f__Mycobacteriaceae; g__Nocardia; s__Nocardia grenadensis2", ""]),
-                    "\t".join(["S3.7.ribosomal_protein_S7", "sample_3.1", "TATCAGGTGCCTATTGAGGTAAGACCTGAAAGAAGACAGACTTTAGCGCTTCGCTGGATC", "5", "8.21", "Root; d__Bacteria; p__Actinobacteriota; c__Actinomycetia; o__Mycobacteriales; f__Mycobacteriaceae; g__Nocardia; s__Nocardia grenadensis3", ""]),
+                    "\t".join(["S3.7.ribosomal_protein_S7", "sample_1", "TATCAAGTTCCACAAGAAGTTAGAGGAGAAAGAAGAATCTCGTTAGCTATTAGATGGATT", "3", "4.92", "Root; d__Bacteria; p__Proteobacteria; c__Gammaproteobacteria; o__Burkholderiales; f__Burkholderiaceae; g__Polynucleobacter; s__Polynucleobacter sp018688335", ""]),
+                    "\t".join(["S3.7.ribosomal_protein_S7", "sample_1", "TACCAGGTCCCGGTCGAGGTCCGTCCGATCCGCCAGACGACGCTCGCCCTGCGCTGGCTC", "5", "8.21", "Root; d__Bacteria; p__Actinobacteriota; c__Actinomycetia; o__Mycobacteriales; f__Mycobacteriaceae; g__Nocardia; s__Nocardia grenadensis", ""]),
+                    "\t".join(["S3.7.ribosomal_protein_S7", "sample_1", "TATCAGGTGCCTATTGAGGTAAGACCTGAAAGAAGACAGACTTTAGCGCTTCGCTGGATA", "1", "1.64", "Root; d__Bacteria; p__Actinobacteriota; c__Actinomycetia; o__Mycobacteriales; f__Mycobacteriaceae; g__Nocardia; s__Nocardia grenadensis2", ""]),
+                    "\t".join(["S3.7.ribosomal_protein_S7", "sample_1", "TATCAGGTGCCTATTGAGGTAAGACCTGAAAGAAGACAGACTTTAGCGCTTCGCTGGATC", "5", "8.21", "Root; d__Bacteria; p__Actinobacteriota; c__Actinomycetia; o__Mycobacteriales; f__Mycobacteriaceae; g__Nocardia; s__Nocardia grenadensis3", ""]),
+                    "\t".join(["S3.7.ribosomal_protein_S7", "sample_2", "TATCAAGTTCCACAAGAAGTTAGAGGAGAAAGAAGAATCTCGTTAGCTATTAGATGGATT", "4", "6.57", "Root; d__Bacteria; p__Proteobacteria; c__Gammaproteobacteria; o__Burkholderiales; f__Burkholderiaceae; g__Polynucleobacter; s__Polynucleobacter sp018688335", ""]),
+                    "\t".join(["S3.7.ribosomal_protein_S7", "sample_2", "TACCAGGTCCCGGTCGAGGTCCGTCCGATCCGCCAGACGACGCTCGCCCTGCGCTGGCTC", "3", "4.92", "Root; d__Bacteria; p__Actinobacteriota; c__Actinomycetia; o__Mycobacteriales; f__Mycobacteriaceae; g__Nocardia; s__Nocardia grenadensis", ""]),
+                    "\t".join(["S3.7.ribosomal_protein_S7", "sample_3", "TATCAGGTGCCTATTGAGGTAAGACCTGAAAGAAGACAGACTTTAGCGCTTCGCTGGATA", "6", "9.85", "Root; d__Bacteria; p__Actinobacteriota; c__Actinomycetia; o__Mycobacteriales; f__Mycobacteriaceae; g__Nocardia; s__Nocardia grenadensis2", ""]),
+                    "\t".join(["S3.7.ribosomal_protein_S7", "sample_3", "TATCAGGTGCCTATTGAGGTAAGACCTGAAAGAAGACAGACTTTAGCGCTTCGCTGGATC", "5", "8.21", "Root; d__Bacteria; p__Actinobacteriota; c__Actinomycetia; o__Mycobacteriales; f__Mycobacteriaceae; g__Nocardia; s__Nocardia grenadensis3", ""]),
                     ""
                 ]
             )
@@ -2303,6 +2303,92 @@ class Tests(unittest.TestCase):
                         "3",
                         "8758",
                         "different_2,sample_1,simple_3",
+                        "coassembly_0"
+                    ]),
+                    ""
+                ]
+            )
+            with open(cluster_path) as f:
+                self.assertEqual(expected, f.read())
+
+    def test_coassemble_sample_naming(self):
+        with in_tempdir():
+            local_samples_forward = [
+                os.path.abspath("sample_1.1.fq"),
+                os.path.abspath("sample_2_R1.fq"),
+                os.path.abspath("sample_3_1.fq"),
+                os.path.abspath("sample_R1_4.fq"),
+            ]
+            for old, new in zip(SAMPLE_READS_FORWARD_EMPTY.split(" "), local_samples_forward):
+                shutil.copy(old, new)
+
+            local_samples_reverse = [
+                os.path.abspath("sample_1.2.fq"),
+                os.path.abspath("sample_2_R2.fq"),
+                os.path.abspath("sample_3_2.fq"),
+                os.path.abspath("sample_R2_4.fq"),
+            ]
+            for old, new in zip(SAMPLE_READS_REVERSE_EMPTY.split(" "), local_samples_reverse):
+                shutil.copy(old, new)
+
+            cmd = (
+                f"binchicken coassemble "
+                f"--forward {' '.join(local_samples_forward)} "
+                f"--reverse {' '.join(local_samples_reverse)} "
+                f"--genomes {TWO_GENOMES} "
+                f"--singlem-metapackage {METAPACKAGE} "
+                f"--prodigal-meta "
+                f"--output test "
+            )
+            extern.run(cmd)
+
+            config_path = os.path.join("test", "config.yaml")
+            self.assertTrue(os.path.exists(config_path))
+
+            sample_1_path = os.path.join("test", "coassemble", "pipe", "sample_1_read.otu_table.tsv")
+            self.assertTrue(os.path.exists(sample_1_path))
+
+            sample_2_path = os.path.join("test", "coassemble", "pipe", "sample_2_read.otu_table.tsv")
+            self.assertTrue(os.path.exists(sample_2_path))
+
+            sample_3_path = os.path.join("test", "coassemble", "pipe", "sample_3_read.otu_table.tsv")
+            self.assertTrue(os.path.exists(sample_3_path))
+
+            sample_4_path = os.path.join("test", "coassemble", "pipe", "sample_read.otu_table.tsv")
+            self.assertTrue(os.path.exists(sample_4_path))
+
+            read_size_path = os.path.join("test", "coassemble", "read_size.csv")
+            self.assertTrue(os.path.exists(read_size_path))
+            expected = "\n".join(
+                [
+                    ",".join(["sample_1", "4832"]),
+                    ",".join(["sample_2", "3926"]),
+                    ",".join(["sample_3", "3624"]),
+                    ",".join(["sample", "604"]),
+                    ""
+                ]
+            )
+            with open(read_size_path) as f:
+                self.assertEqual(expected, f.read())
+
+            cluster_path = os.path.join("test", "coassemble", "target", "elusive_clusters.tsv")
+            self.assertTrue(os.path.exists(cluster_path))
+            expected = "\n".join(
+                [
+                    "\t".join([
+                        "samples",
+                        "length",
+                        "total_targets",
+                        "total_size",
+                        "recover_samples",
+                        "coassembly",
+                    ]),
+                    "\t".join([
+                        "sample_1,sample_2",
+                        "2",
+                        "3",
+                        "8758",
+                        "sample_1,sample_2,sample_3",
                         "coassembly_0"
                     ]),
                     ""

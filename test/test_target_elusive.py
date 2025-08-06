@@ -75,8 +75,8 @@ class Tests(unittest.TestCase):
         samples = set(["sample_1", "sample_2", "sample_3"])
 
         expected_clusters = pl.DataFrame([
-            ["sample_1,sample_2"],
-            ["sample_2,sample_3"],
+            ["sample_1.1,sample_2.1"],
+            ["sample_2.1,sample_3.1"],
         ], orient="row", schema=CLUSTERS_COLUMNS)
 
         observed_clusters = get_clusters(sample_distances, samples)
@@ -88,11 +88,11 @@ class Tests(unittest.TestCase):
             ["sample_1_1", "sample_3_1", 1-1],
             ["sample_2_1", "sample_3_1", 1-0.9],
         ], orient="row", schema=SAMPLE_DISTANCES_COLUMNS)
-        samples = set(["sample_1", "sample_2", "sample_3"])
+        samples = set(["sample_1_1", "sample_2_1", "sample_3_1"])
 
         expected_clusters = pl.DataFrame([
-            ["sample_1,sample_2"],
-            ["sample_2,sample_3"],
+            ["sample_1_1,sample_2_1"],
+            ["sample_2_1,sample_3_1"],
         ], orient="row", schema=CLUSTERS_COLUMNS)
 
         observed_clusters = get_clusters(sample_distances, samples)
@@ -104,11 +104,11 @@ class Tests(unittest.TestCase):
             ["sample_1_R1", "sample_3_R1", 1-1],
             ["sample_2_R1", "sample_3_R1", 1-0.9],
         ], orient="row", schema=SAMPLE_DISTANCES_COLUMNS)
-        samples = set(["sample_1", "sample_2", "sample_3"])
+        samples = set(["sample_1_R1", "sample_2_R1", "sample_3_R1"])
 
         expected_clusters = pl.DataFrame([
-            ["sample_1,sample_2"],
-            ["sample_2,sample_3"],
+            ["sample_1_R1,sample_2_R1"],
+            ["sample_2_R1,sample_3_R1"],
         ], orient="row", schema=CLUSTERS_COLUMNS)
 
         observed_clusters = get_clusters(sample_distances, samples)
@@ -550,14 +550,14 @@ class Tests(unittest.TestCase):
             ["S3.1", "sample_1.1", "AAA", 5, 10, "Root", ""],
             ["S3.1", "sample_2.1", "AAA", 5, 10, "Root", ""],
         ], orient="row", schema=APPRAISE_COLUMNS)
-        samples = set(["sample_1", "sample_2"])
+        samples = set(["sample_1.1", "sample_2.1"])
 
         expected_targets = pl.DataFrame([
-            ["S3.1", "sample_1", "AAA", 5, 10, "Root", "0"],
-            ["S3.1", "sample_2", "AAA", 5, 10, "Root", "0"],
+            ["S3.1", "sample_1.1", "AAA", 5, 10, "Root", "0"],
+            ["S3.1", "sample_2.1", "AAA", 5, 10, "Root", "0"],
         ], orient="row", schema=TARGETS_COLUMNS)
         expected_edges = pl.DataFrame([
-            ["match", 2, "sample_1,sample_2", "0"],
+            ["match", 2, "sample_1.1,sample_2.1", "0"],
         ], orient="row", schema=EDGES_COLUMNS)
 
         observed_targets, observed_edges = pipeline(unbinned, samples)
@@ -569,14 +569,14 @@ class Tests(unittest.TestCase):
             ["S3.1", "sample_1_1", "AAA", 5, 10, "Root", ""],
             ["S3.1", "sample_2_1", "AAA", 5, 10, "Root", ""],
         ], orient="row", schema=APPRAISE_COLUMNS)
-        samples = set(["sample_1", "sample_2"])
+        samples = set(["sample_1_1", "sample_2_1"])
 
         expected_targets = pl.DataFrame([
-            ["S3.1", "sample_1", "AAA", 5, 10, "Root", "0"],
-            ["S3.1", "sample_2", "AAA", 5, 10, "Root", "0"],
+            ["S3.1", "sample_1_1", "AAA", 5, 10, "Root", "0"],
+            ["S3.1", "sample_2_1", "AAA", 5, 10, "Root", "0"],
         ], orient="row", schema=TARGETS_COLUMNS)
         expected_edges = pl.DataFrame([
-            ["match", 2, "sample_1,sample_2", "0"],
+            ["match", 2, "sample_1_1,sample_2_1", "0"],
         ], orient="row", schema=EDGES_COLUMNS)
 
         observed_targets, observed_edges = pipeline(unbinned, samples)
@@ -588,14 +588,14 @@ class Tests(unittest.TestCase):
             ["S3.1", "sample_1_R1", "AAA", 5, 10, "Root", ""],
             ["S3.1", "sample_2_R1", "AAA", 5, 10, "Root", ""],
         ], orient="row", schema=APPRAISE_COLUMNS)
-        samples = set(["sample_1", "sample_2"])
+        samples = set(["sample_1_R1", "sample_2_R1"])
 
         expected_targets = pl.DataFrame([
-            ["S3.1", "sample_1", "AAA", 5, 10, "Root", "0"],
-            ["S3.1", "sample_2", "AAA", 5, 10, "Root", "0"],
+            ["S3.1", "sample_1_R1", "AAA", 5, 10, "Root", "0"],
+            ["S3.1", "sample_2_R1", "AAA", 5, 10, "Root", "0"],
         ], orient="row", schema=TARGETS_COLUMNS)
         expected_edges = pl.DataFrame([
-            ["match", 2, "sample_1,sample_2", "0"],
+            ["match", 2, "sample_1_R1,sample_2_R1", "0"],
         ], orient="row", schema=EDGES_COLUMNS)
 
         observed_targets, observed_edges = pipeline(unbinned, samples)

@@ -17,7 +17,7 @@ from snakemake.io import load_configfile
 from ruamel.yaml import YAML
 import copy
 import shutil
-from binchicken.common import pixi_run
+from binchicken.common import fasta_to_name, pixi_run
 
 FAST_AVIARY_MODE = "fast"
 COMPREHENSIVE_AVIARY_MODE = "comprehensive"
@@ -31,7 +31,6 @@ HIERARCHY_NEVER_MODE = "never"
 HIERARCHY_SIZE_DEP_MODE = "large"
 HIERARCHY_SIZE_CUTOFF = 10000
 HIERARCHY_ALWAYS_MODE = "always"
-SUFFIX_RE = r"(_|\.)R?1$"
 
 def build_reads_list(forward, reverse):
     if reverse:
@@ -51,7 +50,7 @@ def build_reads_list(forward, reverse):
             forward_reads[joint_name] = os.path.abspath(forward)
             reverse_reads[joint_name] = os.path.abspath(reverse)
     else:
-        forward_reads = {os.path.basename(read): os.path.abspath(read) for read in forward}
+        forward_reads = {fasta_to_name(read): os.path.abspath(read) for read in forward}
         reverse_reads = None
 
     return forward_reads, reverse_reads

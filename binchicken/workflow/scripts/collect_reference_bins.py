@@ -8,7 +8,6 @@ import polars as pl
 import os
 import numpy as np
 import extern
-from binchicken.binchicken import SUFFIX_RE
 import argparse
 
 # Example shell directive for Snakemake:
@@ -38,19 +37,13 @@ def pipeline(appraise_binned, appraise_unbinned, sample, MIN_APPRAISED=0.1, TRIM
     appraise_binned = (
         appraise_binned
         .with_columns(pl.col("sample").cast(str))
-        .with_columns(
-            sample_remove_suffix = pl.col("sample").str.replace(SUFFIX_RE, ""),
-            )
-        .filter((pl.col("sample") == sample) | (pl.col("sample_remove_suffix") == sample))
+        .filter(pl.col("sample") == sample)
     )
 
     appraise_unbinned = (
         appraise_unbinned
         .with_columns(pl.col("sample").cast(str))
-        .with_columns(
-            sample_remove_suffix = pl.col("sample").str.replace(SUFFIX_RE, ""),
-            )
-        .filter((pl.col("sample") == sample) | (pl.col("sample_remove_suffix") == sample))
+        .filter(pl.col("sample") == sample)
     )
 
     num_binned = sum(appraise_binned.get_column("num_hits").to_list())

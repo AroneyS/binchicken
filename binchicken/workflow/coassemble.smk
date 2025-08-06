@@ -156,7 +156,7 @@ rule singlem_pipe_reads:
         reads_1 = lambda wildcards: reads_1[wildcards.read],
         reads_2 = lambda wildcards: reads_2[wildcards.read],
     output:
-        output_dir + "/pipe/{read}_read.otu_table.tsv"
+        temp(output_dir + "/pipe/{read}_read_raw.otu_table.tsv")
     log:
         logs_dir + "/pipe/{read}_read.log"
     benchmark:
@@ -167,6 +167,7 @@ rule singlem_pipe_reads:
     resources:
         mem_mb=get_mem_mb,
         runtime = get_runtime(base_hours = 24),
+    group: "singlem_pipe"
     shell:
         f"{pixi_run} -e singlem "
         "singlem pipe "
@@ -175,6 +176,30 @@ rule singlem_pipe_reads:
         "--otu-table {output} "
         "--metapackage {params.singlem_metapackage} "
         "&> {log}"
+
+rule rename_pipe_reads:
+    input:
+        output_dir + "/pipe/{read}_read_raw.otu_table.tsv"
+    output:
+        output_dir + "/pipe/{read}_read.otu_table.tsv"
+    params:
+        sample = "{read}",
+    threads: 1
+    resources:
+        mem_mb=get_mem_mb,
+        runtime = get_runtime(base_hours = 6),
+    group: "singlem_pipe"
+    run:
+        (
+            pl.scan_csv(input[0], separator="\t")
+            .with_columns(sample = pl.lit(params.sample))
+            .with_columns(
+                pl.when(pl.col("sample").str.contains("/"))
+                .then(pl.col("sample").str.split("/").list.last())
+                .otherwise(pl.col("sample"))
+            )
+            .sink_csv(output[0], separator="\t")
+        )
 
 #######################
 ### SingleM genomes ###
