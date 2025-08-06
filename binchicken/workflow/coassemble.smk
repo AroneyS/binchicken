@@ -828,7 +828,7 @@ checkpoint cluster_graph:
     resources:
         mem_mb=get_mem_mb_no_attempts,
         runtime = get_runtime(base_hours = 48),
-        max_sample_combinations = lambda wildcards, attempt: config["max_sample_combinations"] if config["max_sample_combinations"] else 120 - attempt * 20,
+        max_sample_combinations = lambda wildcards, attempt: config["max_sample_combinations"] if config["max_sample_combinations"] else 125 - attempt * 25,
     log:
         logs_dir + "/target/cluster_graph.log"
     benchmark:
