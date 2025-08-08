@@ -113,7 +113,7 @@ def run_workflow(config, workflow, output_dir, cores=16, dryrun=False,
 
     cmd = (
         "snakemake --snakefile {snakefile} --configfile '{config}' --directory {output_dir} "
-        "{jobs} --rerun-incomplete --keep-going --nolock "
+        "{jobs} --rerun-triggers mtime --rerun-incomplete --keep-going --nolock "
         "{snakemake_args} "
         "{profile} {local} {retries} "
         "{dryrun} "
