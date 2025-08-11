@@ -385,8 +385,11 @@ class Tests(unittest.TestCase):
             f"--aviary-gtdbtk-db {GTDBTK_DB} "
             f"--aviary-checkm2-db {CHECKM2_DB} "
         )
-        output_raw = subprocess.run(cmd, shell=True, check=True, capture_output=True)
-        output = output_raw.stderr.decode('ascii')
+        try:
+            output_raw = subprocess.run(cmd, shell=True, check=True, capture_output=True)
+            output = output_raw.stderr.decode('ascii')
+        except subprocess.CalledProcessError as e:
+            output = e.stderr.decode('ascii')
 
         config_path = os.path.join(output_dir, "config.yaml")
         self.assertTrue(os.path.exists(config_path))
@@ -468,8 +471,11 @@ class Tests(unittest.TestCase):
             f"--aviary-gtdbtk-db {GTDBTK_DB} "
             f"--aviary-checkm2-db {CHECKM2_DB} "
         )
-        output_raw = subprocess.run(cmd, shell=True, check=True, capture_output=True)
-        output = output_raw.stderr.decode('ascii')
+        try:
+            output_raw = subprocess.run(cmd, shell=True, check=True, capture_output=True)
+            output = output_raw.stderr.decode('ascii')
+        except subprocess.CalledProcessError as e:
+            output = e.stderr.decode('ascii')
 
         config_path = os.path.join(update_dir, "config.yaml")
         self.assertTrue(os.path.exists(config_path))
