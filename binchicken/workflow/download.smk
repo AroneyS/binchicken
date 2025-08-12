@@ -56,7 +56,7 @@ rule aviary_download:
         mem_mb=get_mem_mb,
         runtime = get_runtime(base_hours = 16),
     log:
-        logs_dir + "/aviary_downloads.log"
+        logs_dir + "/aviary_downloads.attempt{attempt}.log"
     shell:
         "{params.tmpdir} "
         "{params.singlem_metapackage_env} "

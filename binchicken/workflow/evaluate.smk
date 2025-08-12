@@ -36,7 +36,7 @@ rule prodigal_bins:
         fna = output_dir + "/transcripts/{bin}_transcripts.fna",
         faa = output_dir + "/transcripts/{bin}_transcripts.faa",
     log:
-        logs_dir + "/transcripts/{bin}.log"
+        logs_dir + "/transcripts/{bin}.attempt{attempt}.log"
     params:
         prodigal_meta = "-p meta" if config["prodigal_meta"] else ""
     shell:
@@ -51,7 +51,7 @@ rule singlem_pipe_bins:
     output:
         output_dir + "/pipe/{bin}.otu_table.tsv"
     log:
-        logs_dir + "/pipe/{bin}.log"
+        logs_dir + "/pipe/{bin}.attempt{attempt}.log"
     params:
         singlem_metapackage = config["singlem_metapackage"]
     shell:
@@ -68,7 +68,7 @@ rule singlem_summarise_bins:
     output:
         output_dir + "/summarise/bins_summarised.otu_table.tsv"
     log:
-        logs_dir + "/summarise/bins.log"
+        logs_dir + "/summarise/bins.attempt{attempt}.log"
     params:
         singlem_metapackage = config["singlem_metapackage"]
     shell:
@@ -87,7 +87,7 @@ rule cluster_original_bins:
     output:
         output_dir + "/cluster/original.txt",
     log:
-        logs_dir + "/cluster/original.log"
+        logs_dir + "/cluster/original.attempt{attempt}.log"
     params:
         genomes = " ".join(config["original_bins"]),
         ani = config["cluster"],
@@ -106,7 +106,7 @@ rule cluster_updated_bins:
     output:
         output_dir + "/cluster/{coassembly}.txt",
     log:
-        logs_dir + "/cluster/{coassembly}.log"
+        logs_dir + "/cluster/{coassembly}.attempt{attempt}.log"
     params:
         genomes = get_cluster_genomes,
         ani = config["cluster"],
@@ -157,7 +157,7 @@ rule evaluate:
     threads:
         64
     log:
-        logs_dir + "/evaluate/evaluate.log"
+        logs_dir + "/evaluate/evaluate.attempt{attempt}.log"
     shell:
         f"{pixi_run} "
         "python3 {params.script} "
