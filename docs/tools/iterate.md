@@ -323,7 +323,8 @@ Automatically excludes previous coassemblies.
 
   Maximum number of samples per target to consider for pooled clusters
     (reduces combinatorial explosions). Set to a smaller number if you
-    have a polars idx error. [default: 100]
+    have a polars idx error. [default: starts at 100, reducing by 20
+    with retries]
 
 <!-- -->
 
