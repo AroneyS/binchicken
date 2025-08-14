@@ -7,6 +7,7 @@ ruleorder: prior_assemble > aviary_assemble
 ruleorder: provided_distances > distance_samples
 
 import os
+import time
 import polars as pl
 from binchicken.binchicken import FAST_AVIARY_MODE, DYNAMIC_ASSEMBLY_STRATEGY, METASPADES_ASSEMBLY, MEGAHIT_ASSEMBLY
 from binchicken.common import pixi_run
@@ -14,6 +15,15 @@ os.umask(0o002)
 
 output_dir = os.path.abspath("coassemble")
 logs_dir = output_dir + "/logs"
+ 
+ 
+def log_timestamp():
+    return time.strftime("%Y%m%d_%H%M%S")
+
+
+def ts_log(path):
+    return lambda wildcards, attempt: path.format(log_timestamp=log_timestamp(), **wildcards)
+
 benchmarks_dir = output_dir + "/benchmarks"
 scripts_dir = os.path.join(os.path.dirname(os.path.abspath(workflow.snakefile)), 'scripts')
 
@@ -158,7 +168,7 @@ rule singlem_pipe_reads:
     output:
         temp(output_dir + "/pipe/{read}_read_raw.otu_table.tsv")
     log:
-        logs_dir + "/pipe/{read}_read.log"
+        ts_log(f"{logs_dir}/pipe/{{read}}_read_{{log_timestamp}}.log")
     benchmark:
         benchmarks_dir + "/pipe/{read}_read.tsv"
     params:
@@ -210,7 +220,7 @@ rule genome_transcripts:
     output:
         output_dir + "/transcripts/{genome}_protein.fna"
     log:
-        logs_dir + "/transcripts/{genome}_protein.log"
+        ts_log(f"{logs_dir}/transcripts/{{genome}}_protein_{{log_timestamp}}.log")
     benchmark:
         benchmarks_dir + "/transcripts/{genome}_protein.tsv"
     params:
@@ -234,7 +244,7 @@ rule singlem_pipe_genomes:
     output:
         output_dir + "/pipe/{genome}_bin.otu_table.tsv"
     log:
-        logs_dir + "/pipe/{genome}_bin.log"
+        ts_log(f"{logs_dir}/pipe/{{genome}}_bin_{{log_timestamp}}.log")
     benchmark:
         benchmarks_dir + "/pipe/{genome}_bin.tsv"
     params:
@@ -272,7 +282,7 @@ rule singlem_summarise_genomes:
     output:
         output_dir + "/summarise/{version,.*}bins_summarised.otu_table.tsv"
     log:
-        logs_dir + "/summarise/{version,.*}genomes.log"
+        ts_log(f"{logs_dir}/summarise/{{version,.*}}genomes_{{log_timestamp}}.log")
     benchmark:
         benchmarks_dir + "/summarise/{version,.*}genomes.tsv"
     params:
@@ -301,7 +311,7 @@ rule singlem_appraise:
         unbinned = temp(output_dir + "/appraise/unbinned_raw.otu_table.tsv"),
         binned = temp(output_dir + "/appraise/binned_raw.otu_table.tsv"),
     log:
-        logs_dir + "/appraise/appraise.log"
+        ts_log(f"{logs_dir}/appraise/appraise_{{log_timestamp}}.log")
     benchmark:
         benchmarks_dir + "/appraise/appraise.tsv"
     params:
@@ -350,7 +360,7 @@ rule update_appraise:
         unbinned = temp(output_dir + "/appraise/unbinned_raw.otu_table.tsv"),
         binned = temp(output_dir + "/appraise/binned_raw.otu_table.tsv"),
     log:
-        logs_dir + "/appraise/appraise.log"
+        ts_log(f"{logs_dir}/appraise/appraise_{{log_timestamp}}.log")
     benchmark:
         benchmarks_dir + "/appraise/appraise.tsv"
     params:
@@ -405,7 +415,7 @@ rule query_processing_split:
         unbinned = temp(output_dir + "/appraise/unbinned_split_{split}.otu_table.tsv"),
         binned = temp(output_dir + "/appraise/binned_split_{split}.otu_table.tsv"),
     log:
-        logs_dir + "/query/processing_split_{split}.log"
+        ts_log(f"{logs_dir}/query/processing_split_{{split}}_{{log_timestamp}}.log")
     benchmark:
         benchmarks_dir + "/query/processing_split_{split}.tsv"
     params:
@@ -436,7 +446,7 @@ rule query_processing:
         unbinned = temp(output_dir + "/appraise/unbinned_raw.otu_table.tsv"),
         binned = temp(output_dir + "/appraise/binned_raw.otu_table.tsv"),
     log:
-        logs_dir + "/query/processing.log"
+        ts_log(f"{logs_dir}/query/processing_{{log_timestamp}}.log")
     benchmark:
         benchmarks_dir + "/query/processing.tsv"
     threads: 1
@@ -473,7 +483,7 @@ rule remove_off_targets:
     output:
         output_dir + "/appraise/reads_cleaned.otu_table.tsv",
     log:
-        logs_dir + "/appraise/remove_off_targets.log"
+        ts_log(f"{logs_dir}/appraise/remove_off_targets_{{log_timestamp}}.log")
     benchmark:
         benchmarks_dir + "/appraise/remove_off_targets.tsv"
     params:
@@ -504,7 +514,7 @@ rule no_genomes:
     params:
         script = scripts_dir + "/no_genomes.py",
     log:
-        logs_dir + "/appraise/appraise.log"
+        ts_log(f"{logs_dir}/appraise/appraise_{{log_timestamp}}.log")
     shell:
         f"{pixi_run} "
         "python3 {params.script} "
@@ -598,7 +608,7 @@ rule abundance_weighting:
         mem_mb=get_mem_mb,
         runtime = get_runtime(base_hours = 24),
     log:
-        logs_dir + "/appraise/abundance_weighting.log"
+        ts_log(f"{logs_dir}/appraise/abundance_weighting_{{log_timestamp}}.log")
     benchmark:
         benchmarks_dir + "/appraise/abundance_weighting.tsv"
     shell:
@@ -624,7 +634,7 @@ rule sketch_samples:
         mem_mb=get_mem_mb,
         runtime = get_runtime(base_hours = 96),
     log:
-        logs_dir + "/precluster/sketching.log"
+        ts_log(f"{logs_dir}/precluster/sketching_{{log_timestamp}}.log")
     benchmark:
         benchmarks_dir + "/precluster/sketching.tsv"
     shell:
@@ -658,7 +668,7 @@ rule distance_samples:
         mem_mb=get_mem_mb,
         runtime = get_runtime(base_hours = 48),
     log:
-        logs_dir + "/precluster/distance.log"
+        ts_log(f"{logs_dir}/precluster/distance_{{log_timestamp}}.log")
     benchmark:
         benchmarks_dir + "/precluster/distance.tsv"
     shell:
@@ -735,7 +745,7 @@ rule target_elusive:
         mem_mb=get_mem_mb,
         runtime = get_runtime(base_hours = 24),
     log:
-        logs_dir + "/target/target_elusive.log"
+        ts_log(f"{logs_dir}/target/target_elusive_{{log_timestamp}}.log")
     benchmark:
         benchmarks_dir + "/target/target_elusive.tsv"
     shell:
@@ -767,7 +777,7 @@ rule target_weighting:
     params:
         script = scripts_dir + "/target_weighting.py",
     log:
-        logs_dir + "/target/target_weighting.log"
+        ts_log(f"{logs_dir}/target/target_weighting_{{log_timestamp}}.log")
     benchmark:
         benchmarks_dir + "/target/target_weighting.tsv"
     shell:
@@ -830,7 +840,7 @@ checkpoint cluster_graph:
         runtime = get_runtime(base_hours = 48),
         max_sample_combinations = lambda wildcards, attempt: config["max_sample_combinations"] if config["max_sample_combinations"] else 125 - attempt * 25,
     log:
-        logs_dir + "/target/cluster_graph.log"
+        ts_log(f"{logs_dir}/target/cluster_graph_{{log_timestamp}}.log")
     benchmark:
         benchmarks_dir + "/target/cluster_graph.tsv"
     shell:
@@ -867,7 +877,7 @@ rule download_read:
         runtime = get_runtime(base_hours = 16),
         downloading = 1,
     log:
-        logs_dir + "/sra/kingfisher_{read}.log"
+        ts_log(f"{logs_dir}/sra/kingfisher_{{read}}_{{log_timestamp}}.log")
     shell:
         "cd {params.dir} && "
         "rm -f {params.name}*.fastq.gz && "
@@ -900,7 +910,7 @@ rule mock_download_sra:
         sra_r = " ".join([workflow.basedir + "/../../test/data/sra/" + s + "_2.fastq.gz" for s in config["sra"][1:]]) if config["sra"] else "",
     localrule: True
     log:
-        logs_dir + "/sra/kingfisher.log"
+        ts_log(f"{logs_dir}/sra/kingfisher_{{log_timestamp}}.log")
     shell:
         f"{pixi_run} -e kingfisher "
         "mkdir -p {output} && "
@@ -928,7 +938,7 @@ rule qc_reads:
         mem_mb=get_mem_mb,
         runtime = get_runtime(base_hours = 4),
     log:
-        logs_dir + "/mapping/{read}_qc.log"
+        ts_log(f"{logs_dir}/mapping/{{read}}_qc_{{log_timestamp}}.log")
     benchmark:
         benchmarks_dir + "/mapping/{read}_qc.tsv"
     shell:
@@ -999,7 +1009,7 @@ rule map_reads:
         mem_mb=get_mem_mb,
         runtime = get_runtime(base_hours = 12),
     log:
-        logs_dir + "/mapping/{read}_coverm.log",
+        ts_log(f"{logs_dir}/mapping/{{read}}_coverm_{{log_timestamp}}.log"),
     benchmark:
         benchmarks_dir + "/mapping/{read}_coverm.tsv"
     shell:
@@ -1028,7 +1038,7 @@ rule filter_bam_files:
         mem_mb=get_mem_mb,
         runtime = get_runtime(base_hours = 4),
     log:
-        logs_dir + "/mapping/{read}_filter.log",
+        ts_log(f"{logs_dir}/mapping/{{read}}_filter_{{log_timestamp}}.log"),
     benchmark:
         benchmarks_dir + "/mapping/{read}_filter.tsv"
     shell:
@@ -1054,7 +1064,7 @@ rule bam_to_fastq:
         mem_mb=get_mem_mb,
         runtime = get_runtime(base_hours = 4),
     log:
-        logs_dir + "/mapping/{read}_fastq.log",
+        ts_log(f"{logs_dir}/mapping/{{read}}_fastq_{{log_timestamp}}.log"),
     shell:
         f"{pixi_run} -e coverm "
         "samtools fastq "
@@ -1129,7 +1139,7 @@ rule aviary_commands:
         speed = config["aviary_speed"],
     localrule: True
     log:
-        logs_dir + "/aviary_commands.log"
+        ts_log(f"{logs_dir}/aviary_commands_{{log_timestamp}}.log")
     shell:
         f"{pixi_run} "
         "python3 {params.script} "
@@ -1221,7 +1231,7 @@ rule aviary_assemble:
         runtime = get_runtime(base_hours = 96),
         assembler = get_assemble_assembler,
     log:
-        logs_dir + "/aviary/{coassembly}_assemble.log"
+        ts_log(f"{logs_dir}/aviary/{{coassembly}}_assemble_{{log_timestamp}}.log")
     shell:
         "export GTDBTK_DATA_PATH=. && "
         "export CHECKM2DB=. && "
@@ -1277,7 +1287,7 @@ rule aviary_recover:
         mem_gb = int(config["aviary_recover_memory"]),
         runtime = "168h",
     log:
-        logs_dir + "/aviary/{coassembly}_recover.log"
+        ts_log(f"{logs_dir}/aviary/{{coassembly}}_recover_{{log_timestamp}}.log")
     shell:
         "export CONDA_ENV_PATH=. && "
         f"{pixi_run} -e aviary "

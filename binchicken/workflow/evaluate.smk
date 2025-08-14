@@ -2,12 +2,22 @@
 ### Setup ###
 #############
 import os
+import time
 import re
 from binchicken.common import pixi_run
 os.umask(0o002)
 
 output_dir = os.path.abspath("evaluate")
 logs_dir = output_dir + "/logs"
+
+
+def log_timestamp():
+    return time.strftime("%Y%m%d_%H%M%S")
+
+
+def ts_log(path):
+    return lambda wildcards, attempt: path.format(log_timestamp=log_timestamp(), **wildcards)
+
 scripts_dir = os.path.join(os.path.dirname(os.path.abspath(workflow.snakefile)), 'scripts')
 
 bins = config["recovered_bins"]
@@ -36,7 +46,7 @@ rule prodigal_bins:
         fna = output_dir + "/transcripts/{bin}_transcripts.fna",
         faa = output_dir + "/transcripts/{bin}_transcripts.faa",
     log:
-        logs_dir + "/transcripts/{bin}.log"
+        ts_log(f"{logs_dir}/transcripts/{{bin}}_{{log_timestamp}}.log")
     params:
         prodigal_meta = "-p meta" if config["prodigal_meta"] else ""
     shell:
@@ -51,7 +61,7 @@ rule singlem_pipe_bins:
     output:
         output_dir + "/pipe/{bin}.otu_table.tsv"
     log:
-        logs_dir + "/pipe/{bin}.log"
+        ts_log(f"{logs_dir}/pipe/{{bin}}_{{log_timestamp}}.log")
     params:
         singlem_metapackage = config["singlem_metapackage"]
     shell:
@@ -68,7 +78,7 @@ rule singlem_summarise_bins:
     output:
         output_dir + "/summarise/bins_summarised.otu_table.tsv"
     log:
-        logs_dir + "/summarise/bins.log"
+        ts_log(f"{logs_dir}/summarise/bins_{{log_timestamp}}.log")
     params:
         singlem_metapackage = config["singlem_metapackage"]
     shell:
@@ -87,7 +97,7 @@ rule cluster_original_bins:
     output:
         output_dir + "/cluster/original.txt",
     log:
-        logs_dir + "/cluster/original.log"
+        ts_log(f"{logs_dir}/cluster/original_{{log_timestamp}}.log")
     params:
         genomes = " ".join(config["original_bins"]),
         ani = config["cluster"],
@@ -106,7 +116,7 @@ rule cluster_updated_bins:
     output:
         output_dir + "/cluster/{coassembly}.txt",
     log:
-        logs_dir + "/cluster/{coassembly}.log"
+        ts_log(f"{logs_dir}/cluster/{{coassembly}}_{{log_timestamp}}.log")
     params:
         genomes = get_cluster_genomes,
         ani = config["cluster"],
@@ -157,7 +167,7 @@ rule evaluate:
     threads:
         64
     log:
-        logs_dir + "/evaluate/evaluate.log"
+        ts_log(f"{logs_dir}/evaluate/evaluate_{{log_timestamp}}.log")
     shell:
         f"{pixi_run} "
         "python3 {params.script} "

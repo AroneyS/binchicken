@@ -2,12 +2,22 @@
 ### Setup ###
 #############
 import os
+import time
 import polars as pl
 from binchicken.common import pixi_run
 os.umask(0o002)
 
 output_dir = os.path.abspath("download")
 logs_dir = output_dir + "/logs"
+
+
+def log_timestamp():
+    return time.strftime("%Y%m%d_%H%M%S")
+
+
+def ts_log(path):
+    return lambda wildcards, attempt: path.format(log_timestamp=log_timestamp(), **wildcards)
+
 benchmarks_dir = output_dir + "/benchmarks"
 
 tmpdir = config["tmpdir"]
@@ -56,7 +66,7 @@ rule aviary_download:
         mem_mb=get_mem_mb,
         runtime = get_runtime(base_hours = 16),
     log:
-        logs_dir + "/aviary_downloads.log"
+        ts_log(f"{logs_dir}/aviary_downloads_{{log_timestamp}}.log")
     shell:
         "{params.tmpdir} "
         "{params.singlem_metapackage_env} "
