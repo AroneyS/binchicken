@@ -502,7 +502,7 @@ rule no_genomes:
         "--binned {output.binned} "
         "--unbinned {output.unbinned} "
         "--threads {threads} "
-        "--log {resources.log_path}"
+        "&> {resources.log_path}"
 
 ######################
 ### Target elusive ###
