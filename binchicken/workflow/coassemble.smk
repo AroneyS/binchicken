@@ -9,7 +9,7 @@ ruleorder: provided_distances > distance_samples
 import os
 import polars as pl
 from binchicken.binchicken import FAST_AVIARY_MODE, DYNAMIC_ASSEMBLY_STRATEGY, METASPADES_ASSEMBLY, MEGAHIT_ASSEMBLY
-from binchicken.common import pixi_run
+from binchicken.common import pixi_run, setup_log
 os.umask(0o002)
 
 output_dir = os.path.abspath("coassemble")
@@ -157,8 +157,6 @@ rule singlem_pipe_reads:
         reads_2 = lambda wildcards: reads_2[wildcards.read],
     output:
         temp(output_dir + "/pipe/{read}_read_raw.otu_table.tsv")
-    log:
-        logs_dir + "/pipe/{read}_read.log"
     benchmark:
         benchmarks_dir + "/pipe/{read}_read.tsv"
     params:
@@ -167,6 +165,7 @@ rule singlem_pipe_reads:
     resources:
         mem_mb=get_mem_mb,
         runtime = get_runtime(base_hours = 24),
+        log_path=lambda wildcards, attempt: setup_log(f"{logs_dir}/pipe/{wildcards.read}_read", attempt)
     group: "singlem_pipe"
     shell:
         f"{pixi_run} -e singlem "
@@ -175,7 +174,7 @@ rule singlem_pipe_reads:
         "--reverse {input.reads_2} "
         "--otu-table {output} "
         "--metapackage {params.singlem_metapackage} "
-        "&> {log}"
+        "&> {resources.log_path}"
 
 rule rename_pipe_reads:
     input:
@@ -209,8 +208,6 @@ rule genome_transcripts:
         lambda wildcards: config["genomes"][wildcards.genome],
     output:
         output_dir + "/transcripts/{genome}_protein.fna"
-    log:
-        logs_dir + "/transcripts/{genome}_protein.log"
     benchmark:
         benchmarks_dir + "/transcripts/{genome}_protein.tsv"
     params:
@@ -219,6 +216,7 @@ rule genome_transcripts:
     resources:
         mem_mb=get_mem_mb,
         runtime = get_runtime(base_hours = 1),
+        log_path=lambda wildcards, attempt: setup_log(f"{logs_dir}/transcripts/{wildcards.genome}_protein", attempt)
     group: "singlem_bins"
     shell:
         f"{pixi_run} -e prodigal "
@@ -226,15 +224,13 @@ rule genome_transcripts:
         "-i {input} "
         "-d {output} "
         "{params.prodigal_meta} "
-        "&> {log} "
+        "&> {resources.log_path} "
 
 rule singlem_pipe_genomes:
     input:
         output_dir + "/transcripts/{genome}_protein.fna"
     output:
         output_dir + "/pipe/{genome}_bin.otu_table.tsv"
-    log:
-        logs_dir + "/pipe/{genome}_bin.log"
     benchmark:
         benchmarks_dir + "/pipe/{genome}_bin.tsv"
     params:
@@ -243,6 +239,7 @@ rule singlem_pipe_genomes:
     resources:
         mem_mb=get_mem_mb,
         runtime = get_runtime(base_hours = 1),
+        log_path=lambda wildcards, attempt: setup_log(f"{logs_dir}/pipe/{wildcards.genome}_bin", attempt)
     group: "singlem_bins"
     shell:
         f"{pixi_run} -e singlem "
@@ -250,7 +247,7 @@ rule singlem_pipe_genomes:
         "--forward {input} "
         "--otu-table {output} "
         "--metapackage {params.singlem_metapackage} "
-        "&> {log}"
+        "&> {resources.log_path}"
 
 rule singlem_genomes_list:
     input:
@@ -271,8 +268,6 @@ rule singlem_summarise_genomes:
         lambda wildcards: get_genomes_list(wildcards)
     output:
         output_dir + "/summarise/{version,.*}bins_summarised.otu_table.tsv"
-    log:
-        logs_dir + "/summarise/{version,.*}genomes.log"
     benchmark:
         benchmarks_dir + "/summarise/{version,.*}genomes.tsv"
     params:
@@ -281,6 +276,7 @@ rule singlem_summarise_genomes:
     resources:
         mem_mb=get_mem_mb,
         runtime = get_runtime(base_hours = 24),
+        log_path=lambda wildcards, attempt: setup_log(f"{logs_dir}/summarise/{wildcards.version}genomes", attempt)
     shell:
         f"{pixi_run} -e singlem "
         "singlem summarise "
@@ -288,7 +284,7 @@ rule singlem_summarise_genomes:
         "--output-otu-table {output} "
         "--exclude-off-target-hits "
         "--metapackage {params.singlem_metapackage} "
-        "&> {log}"
+        "&> {resources.log_path}"
 
 ########################
 ### SingleM appraise ###
@@ -300,8 +296,6 @@ rule singlem_appraise:
     output:
         unbinned = temp(output_dir + "/appraise/unbinned_raw.otu_table.tsv"),
         binned = temp(output_dir + "/appraise/binned_raw.otu_table.tsv"),
-    log:
-        logs_dir + "/appraise/appraise.log"
     benchmark:
         benchmarks_dir + "/appraise/appraise.tsv"
     params:
@@ -311,6 +305,7 @@ rule singlem_appraise:
     resources:
         mem_mb=get_mem_mb,
         runtime = get_runtime(base_hours = 24),
+        log_path=lambda wildcards, attempt: setup_log(f"{logs_dir}/appraise/appraise", attempt)
     shell:
         f"{pixi_run} -e singlem "
         "singlem appraise "
@@ -322,7 +317,7 @@ rule singlem_appraise:
         "--imperfect "
         "--sequence-identity {params.sequence_identity} "
         "--output-found-in "
-        "&> {log}"
+        "&> {resources.log_path}"
 
 rule singlem_appraise_filtered:
     input:
@@ -349,8 +344,6 @@ rule update_appraise:
     output:
         unbinned = temp(output_dir + "/appraise/unbinned_raw.otu_table.tsv"),
         binned = temp(output_dir + "/appraise/binned_raw.otu_table.tsv"),
-    log:
-        logs_dir + "/appraise/appraise.log"
     benchmark:
         benchmarks_dir + "/appraise/appraise.tsv"
     params:
@@ -361,6 +354,7 @@ rule update_appraise:
     resources:
         mem_mb=get_mem_mb,
         runtime = get_runtime(base_hours = 24),
+        log_path=lambda wildcards, attempt: setup_log(f"{logs_dir}/appraise/appraise", attempt)
     shell:
         f"{pixi_run} -e singlem "
         "singlem appraise --stream-inputs "
@@ -373,7 +367,7 @@ rule update_appraise:
         "--sequence-identity {params.sequence_identity} "
         "--output-found-in "
         "--threads {threads} "
-        "&> {log} "
+        "&> {resources.log_path} "
         "&& cat {input.binned} <(tail -n+2 {params.new_binned}) > {output.binned} "
 
 ###################################
@@ -404,8 +398,6 @@ rule query_processing_split:
     output:
         unbinned = temp(output_dir + "/appraise/unbinned_split_{split}.otu_table.tsv"),
         binned = temp(output_dir + "/appraise/binned_split_{split}.otu_table.tsv"),
-    log:
-        logs_dir + "/query/processing_split_{split}.log"
     benchmark:
         benchmarks_dir + "/query/processing_split_{split}.tsv"
     params:
@@ -416,6 +408,7 @@ rule query_processing_split:
     resources:
         mem_mb=get_mem_mb,
         runtime = get_runtime(base_hours = 48),
+        log_path=lambda wildcards, attempt: setup_log(f"{logs_dir}/query/processing_split_{wildcards.split}", attempt)
     shell:
         f"{pixi_run} "
         "python3 {params.script} "
@@ -426,7 +419,7 @@ rule query_processing_split:
         "--sequence-identity {params.sequence_identity} "
         "--window-size {params.window_size} "
         "--threads {threads} "
-        "--log {log}"
+        "--log {resources.log_path}"
 
 rule query_processing:
     input:
@@ -435,20 +428,19 @@ rule query_processing:
     output:
         unbinned = temp(output_dir + "/appraise/unbinned_raw.otu_table.tsv"),
         binned = temp(output_dir + "/appraise/binned_raw.otu_table.tsv"),
-    log:
-        logs_dir + "/query/processing.log"
     benchmark:
         benchmarks_dir + "/query/processing.tsv"
     threads: 1
     resources:
         mem_mb=get_mem_mb,
         runtime = get_runtime(base_hours = 48),
+        log_path=lambda wildcards, attempt: setup_log(f"{logs_dir}/query/processing", attempt)
     shell:
-        "echo 'Start' > {log} && "
+        "echo 'Start' > {resources.log_path} && "
         "awk '(NR == 1 || FNR > 1)' {input.unbinned} > {output.unbinned} && "
-        "echo 'Unbinned done' > {log} && "
+        "echo 'Unbinned done' > {resources.log_path} && "
         "awk '(NR == 1 || FNR > 1)' {input.binned} > {output.binned} && "
-        "echo 'Binned done' > {log}"
+        "echo 'Binned done' > {resources.log_path}"
 
 ################################
 ### No genomes (alternative) ###
@@ -472,8 +464,6 @@ rule remove_off_targets:
         output_dir + "/lists/reads_otu_table_list.tsv",
     output:
         output_dir + "/appraise/reads_cleaned.otu_table.tsv",
-    log:
-        logs_dir + "/appraise/remove_off_targets.log"
     benchmark:
         benchmarks_dir + "/appraise/remove_off_targets.tsv"
     params:
@@ -482,6 +472,7 @@ rule remove_off_targets:
     resources:
         mem_mb=get_mem_mb,
         runtime = get_runtime(base_hours = 24),
+        log_path=lambda wildcards, attempt: setup_log(f"{logs_dir}/appraise/remove_off_targets", attempt)
     shell:
         f"{pixi_run} -e singlem "
         "singlem summarise "
@@ -489,7 +480,7 @@ rule remove_off_targets:
         "--output-otu-table {output} "
         "--exclude-off-target-hits "
         "--metapackage {params.singlem_metapackage} "
-        "&> {log}"
+        "&> {resources.log_path}"
 
 rule no_genomes:
     input:
@@ -501,17 +492,17 @@ rule no_genomes:
     resources:
         mem_mb=get_mem_mb,
         runtime = get_runtime(base_hours = 24),
+        log_path=lambda wildcards, attempt: setup_log(f"{logs_dir}/appraise/appraise", attempt)
     params:
         script = scripts_dir + "/no_genomes.py",
-    log:
-        logs_dir + "/appraise/appraise.log"
     shell:
         f"{pixi_run} "
         "python3 {params.script} "
         "--reads {input.reads} "
         "--binned {output.binned} "
         "--unbinned {output.unbinned} "
-        "--threads {threads}"
+        "--threads {threads} "
+        "--log {resources.log_path}"
 
 ######################
 ### Target elusive ###
@@ -597,8 +588,7 @@ rule abundance_weighting:
     resources:
         mem_mb=get_mem_mb,
         runtime = get_runtime(base_hours = 24),
-    log:
-        logs_dir + "/appraise/abundance_weighting.log"
+        log_path=lambda wildcards, attempt: setup_log(f"{logs_dir}/appraise/abundance_weighting", attempt)
     benchmark:
         benchmarks_dir + "/appraise/abundance_weighting.tsv"
     shell:
@@ -609,7 +599,7 @@ rule abundance_weighting:
         "--weighted {output.weighted} "
         "--samples {input.samples} "
         "--threads {threads} "
-        "--log {log}"
+        "--log {resources.log_path}"
 
 rule sketch_samples:
     input:
@@ -620,13 +610,12 @@ rule sketch_samples:
         script = scripts_dir + "/sketch_samples.py",
         taxa_of_interest = config["taxa_of_interest"],
     threads: 64
+    benchmark:
+        benchmarks_dir + "/precluster/sketching.tsv"
     resources:
         mem_mb=get_mem_mb,
         runtime = get_runtime(base_hours = 96),
-    log:
-        logs_dir + "/precluster/sketching.log"
-    benchmark:
-        benchmarks_dir + "/precluster/sketching.tsv"
+        log_path=lambda wildcards, attempt: setup_log(f"{logs_dir}/precluster/sketching", attempt)
     shell:
         f"{pixi_run} "
         "python3 {params.script} "
@@ -634,7 +623,7 @@ rule sketch_samples:
         "--sketch {output.sketch} "
         "--taxa-of-interest {params.taxa_of_interest} "
         "--threads {threads} "
-        "--log {log}"
+        "--log {resources.log_path}"
 
 rule provided_distances:
     input:
@@ -657,8 +646,7 @@ rule distance_samples:
     resources:
         mem_mb=get_mem_mb,
         runtime = get_runtime(base_hours = 48),
-    log:
-        logs_dir + "/precluster/distance.log"
+        log_path=lambda wildcards, attempt: setup_log(f"{logs_dir}/precluster/distance", attempt)
     benchmark:
         benchmarks_dir + "/precluster/distance.tsv"
     shell:
@@ -670,7 +658,7 @@ rule distance_samples:
         "-s 1 "
         "-t 0.1 "
         "-c {threads} "
-        "&> {log} "
+        "&> {resources.log_path} "
 
 rule filter_distances:
     input:
@@ -734,8 +722,7 @@ rule target_elusive:
     resources:
         mem_mb=get_mem_mb,
         runtime = get_runtime(base_hours = 24),
-    log:
-        logs_dir + "/target/target_elusive.log"
+        log_path=lambda wildcards, attempt: setup_log(f"{logs_dir}/target/target_elusive", attempt)
     benchmark:
         benchmarks_dir + "/target/target_elusive.tsv"
     shell:
@@ -752,7 +739,7 @@ rule target_elusive:
         "--taxa-of-interest {params.taxa_of_interest} "
         "--precluster-size {params.precluster_size} "
         "--threads {threads} "
-        "--log {log}"
+        "--log {resources.log_path}"
 
 rule target_weighting:
     input:
@@ -761,15 +748,14 @@ rule target_weighting:
     output:
         targets_weighted = output_dir + "/target/targets_weighted.tsv",
     threads: 64
+    params:
+        script = scripts_dir + "/target_weighting.py",
+    benchmark:
+        benchmarks_dir + "/target/target_weighting.tsv"
     resources:
         mem_mb=get_mem_mb,
         runtime = get_runtime(base_hours = 24),
-    params:
-        script = scripts_dir + "/target_weighting.py",
-    log:
-        logs_dir + "/target/target_weighting.log"
-    benchmark:
-        benchmarks_dir + "/target/target_weighting.tsv"
+        log_path=lambda wildcards, attempt: setup_log(f"{logs_dir}/target/target_weighting", attempt)
     shell:
         f"{pixi_run} "
         "python3 {params.script} "
@@ -777,7 +763,7 @@ rule target_weighting:
         "--weighting {input.weighting} "
         "--targets-weighted {output.targets_weighted} "
         "--threads {threads} "
-        "--log {log}"
+        "--log {resources.log_path}"
 
 rule get_coassembly_samples:
     output:
@@ -829,8 +815,7 @@ checkpoint cluster_graph:
         mem_mb=get_mem_mb_no_attempts,
         runtime = get_runtime(base_hours = 48),
         max_sample_combinations = lambda wildcards, attempt: config["max_sample_combinations"] if config["max_sample_combinations"] else 125 - attempt * 25,
-    log:
-        logs_dir + "/target/cluster_graph.log"
+        log_path=lambda wildcards, attempt: setup_log(f"{logs_dir}/target/cluster_graph", attempt)
     benchmark:
         benchmarks_dir + "/target/cluster_graph.tsv"
     shell:
@@ -850,7 +835,7 @@ checkpoint cluster_graph:
         "--single-assembly {params.single_assembly} "
         "--anchor-samples {input.anchor_samples} "
         "--threads {threads} "
-        "--log {log}"
+        "--log {resources.log_path}"
 
 #######################
 ### SRA downloading ###
@@ -866,8 +851,7 @@ rule download_read:
         mem_mb=get_mem_mb,
         runtime = get_runtime(base_hours = 16),
         downloading = 1,
-    log:
-        logs_dir + "/sra/kingfisher_{read}.log"
+        log_path=lambda wildcards, attempt: setup_log(f"{logs_dir}/sra/kingfisher_{wildcards.read}", attempt)
     shell:
         "cd {params.dir} && "
         "rm -f {params.name}*.fastq.gz && "
@@ -878,7 +862,7 @@ rule download_read:
         "-m ena-ftp prefetch ena-ascp aws-http aws-cp "
         "-t {threads} "
         "--download_threads {threads} "
-        "&> {log} "
+        "&> {resources.log_path} "
         "&& touch {output.done}"
 
 rule download_sra:
@@ -899,12 +883,13 @@ rule mock_download_sra:
         sra_f = " ".join([workflow.basedir + "/../../test/data/sra/" + s + "_1.fastq.gz" for s in config["sra"][1:]]) if config["sra"] else "",
         sra_r = " ".join([workflow.basedir + "/../../test/data/sra/" + s + "_2.fastq.gz" for s in config["sra"][1:]]) if config["sra"] else "",
     localrule: True
-    log:
-        logs_dir + "/sra/kingfisher.log"
+    resources:
+        log_path=lambda wildcards, attempt: setup_log(f"{logs_dir}/sra/kingfisher", attempt)
     shell:
         f"{pixi_run} -e kingfisher "
         "mkdir -p {output} && "
-        "cp {params.sra_u} {params.sra_f} {params.sra_r} {output}"
+        "cp {params.sra_u} {params.sra_f} {params.sra_r} {output} "
+        "&> {resources.log_path}"
 
 #####################################
 ### Map reads to matching genomes ###
@@ -927,8 +912,7 @@ rule qc_reads:
     resources:
         mem_mb=get_mem_mb,
         runtime = get_runtime(base_hours = 4),
-    log:
-        logs_dir + "/mapping/{read}_qc.log"
+        log_path=lambda wildcards, attempt: setup_log(f"{logs_dir}/mapping/{wildcards.read}_qc", attempt)
     benchmark:
         benchmarks_dir + "/mapping/{read}_qc.tsv"
     shell:
@@ -944,7 +928,7 @@ rule qc_reads:
         "-q {params.quality_cutoff} "
         "-u {params.unqualified_percent_limit} "
         "-l {params.min_length} "
-        "&> {log}"
+        "&> {resources.log_path}"
 
 rule get_genomes_named_list:
     output:
@@ -998,8 +982,7 @@ rule map_reads:
     resources:
         mem_mb=get_mem_mb,
         runtime = get_runtime(base_hours = 12),
-    log:
-        logs_dir + "/mapping/{read}_coverm.log",
+        log_path=lambda wildcards, attempt: setup_log(f"{logs_dir}/mapping/{wildcards.read}_coverm", attempt)
     benchmark:
         benchmarks_dir + "/mapping/{read}_coverm.tsv"
     shell:
@@ -1010,7 +993,7 @@ rule map_reads:
         "-2 {input.reads_2} "
         "-o {output.dir} "
         "-t {threads} "
-        "&> {log} "
+        "&> {resources.log_path} "
 
 rule filter_bam_files:
     input:
@@ -1027,8 +1010,7 @@ rule filter_bam_files:
     resources:
         mem_mb=get_mem_mb,
         runtime = get_runtime(base_hours = 4),
-    log:
-        logs_dir + "/mapping/{read}_filter.log",
+        log_path=lambda wildcards, attempt: setup_log(f"{logs_dir}/mapping/{wildcards.read}_filter", attempt)
     benchmark:
         benchmarks_dir + "/mapping/{read}_filter.tsv"
     shell:
@@ -1040,7 +1022,7 @@ rule filter_bam_files:
         "--min-read-percent-identity-pair {params.sequence_identity} "
         "--min-read-aligned-percent-pair {params.alignment_percent} "
         "--proper-pairs-only "
-        "&> {log}"
+        "&> {resources.log_path}"
 
 rule bam_to_fastq:
     input:
@@ -1053,8 +1035,7 @@ rule bam_to_fastq:
     resources:
         mem_mb=get_mem_mb,
         runtime = get_runtime(base_hours = 4),
-    log:
-        logs_dir + "/mapping/{read}_fastq.log",
+        log_path=lambda wildcards, attempt: setup_log(f"{logs_dir}/mapping/{wildcards.read}_fastq", attempt)
     shell:
         f"{pixi_run} -e coverm "
         "samtools fastq "
@@ -1065,7 +1046,7 @@ rule bam_to_fastq:
         "-0 /dev/null "
         "-s /dev/null "
         "-n "
-        "&> {log} "
+        "&> {resources.log_path} "
 
 rule finish_mapping:
     input:
@@ -1128,8 +1109,8 @@ rule aviary_commands:
         recover_threads = config["aviary_recover_threads"],
         speed = config["aviary_speed"],
     localrule: True
-    log:
-        logs_dir + "/aviary_commands.log"
+    resources:
+        log_path=lambda wildcards, attempt: setup_log(f"{logs_dir}/aviary_commands", attempt)
     shell:
         f"{pixi_run} "
         "python3 {params.script} "
@@ -1145,7 +1126,7 @@ rule aviary_commands:
         "--recover-memory {params.recover_memory} "
         "--speed {params.speed} "
         "--threads {threads} "
-        "--log {log}"
+        "--log {resources.log_path}"
 
 #########################################
 ### Run Aviary commands (alternative) ###
@@ -1220,8 +1201,7 @@ rule aviary_assemble:
         mem_gb = get_assemble_memory,
         runtime = get_runtime(base_hours = 96),
         assembler = get_assemble_assembler,
-    log:
-        logs_dir + "/aviary/{coassembly}_assemble.log"
+        log_path=lambda wildcards, attempt: setup_log(f"{logs_dir}/aviary/{wildcards.coassembly}_assemble", attempt)
     shell:
         "export GTDBTK_DATA_PATH=. && "
         "export CHECKM2DB=. && "
@@ -1242,7 +1222,7 @@ rule aviary_assemble:
         "--skip-qc "
         "{resources.assembler} "
         "{params.dryrun} "
-        "&> {log} "
+        "&> {resources.log_path} "
         "{params.drymkdir} "
         "{params.drytouch} "
 
@@ -1276,8 +1256,7 @@ rule aviary_recover:
         mem_mb = int(config["aviary_recover_memory"])*1000,
         mem_gb = int(config["aviary_recover_memory"]),
         runtime = "168h",
-    log:
-        logs_dir + "/aviary/{coassembly}_recover.log"
+        log_path=lambda wildcards, attempt: setup_log(f"{logs_dir}/aviary/{wildcards.coassembly}_recover", attempt)
     shell:
         "export CONDA_ENV_PATH=. && "
         f"{pixi_run} -e aviary "
@@ -1304,7 +1283,7 @@ rule aviary_recover:
         "{params.snakemake_profile} "
         "{params.cluster_retries} "
         "{params.dryrun} "
-        "&> {log} "
+        "&> {resources.log_path} "
         "&& touch {output} "
 
 rule aviary_combine:
