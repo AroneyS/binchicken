@@ -3,7 +3,7 @@
 #############
 import os
 import re
-from binchicken.common import pixi_run
+from binchicken.common import pixi_run, setup_log
 os.umask(0o002)
 
 output_dir = os.path.abspath("evaluate")
@@ -35,42 +35,42 @@ rule prodigal_bins:
     output:
         fna = output_dir + "/transcripts/{bin}_transcripts.fna",
         faa = output_dir + "/transcripts/{bin}_transcripts.faa",
-    log:
-        logs_dir + "/transcripts/{bin}.log"
     params:
         prodigal_meta = "-p meta" if config["prodigal_meta"] else ""
+    resources:
+        log_path=lambda wildcards, attempt: setup_log(f"{logs_dir}/transcripts/{wildcards.bin}", attempt)
     shell:
         f"{pixi_run} -e prodigal "
         "prodigal -i {input} -d {output.fna} -a {output.faa} "
         "{params.prodigal_meta} "
-        "&> {log}"
+        "&> {resources.log_path}"
 
 rule singlem_pipe_bins:
     input:
         output_dir + "/transcripts/{bin}_transcripts.fna"
     output:
         output_dir + "/pipe/{bin}.otu_table.tsv"
-    log:
-        logs_dir + "/pipe/{bin}.log"
     params:
         singlem_metapackage = config["singlem_metapackage"]
+    resources:
+        log_path=lambda wildcards, attempt: setup_log(f"{logs_dir}/pipe/{wildcards.bin}", attempt)
     shell:
         f"{pixi_run} -e singlem "
         "singlem pipe "
         "--forward {input} "
         "--otu-table {output} "
         "--metapackage {params.singlem_metapackage} "
-        "&> {log}"
+        "&> {resources.log_path}"
 
 rule singlem_summarise_bins:
     input:
         expand(output_dir + "/pipe/{bin}.otu_table.tsv", bin=bins.keys())
     output:
         output_dir + "/summarise/bins_summarised.otu_table.tsv"
-    log:
-        logs_dir + "/summarise/bins.log"
     params:
         singlem_metapackage = config["singlem_metapackage"]
+    resources:
+        log_path=lambda wildcards, attempt: setup_log(f"{logs_dir}/summarise/bins", attempt)
     shell:
         f"{pixi_run} -e singlem "
         "singlem summarise "
@@ -78,7 +78,7 @@ rule singlem_summarise_bins:
         "--output-otu-table {output} "
         "--exclude-off-target-hits "
         "--metapackage {params.singlem_metapackage} "
-        "&> {log}"
+        "&> {resources.log_path}"
 
 ###############
 ### Cluster ###
@@ -86,12 +86,12 @@ rule singlem_summarise_bins:
 rule cluster_original_bins:
     output:
         output_dir + "/cluster/original.txt",
-    log:
-        logs_dir + "/cluster/original.log"
     params:
         genomes = " ".join(config["original_bins"]),
         ani = config["cluster"],
     threads: 64
+    resources:
+        log_path=lambda wildcards, attempt: setup_log(f"{logs_dir}/cluster/original", attempt)
     shell:
         f"{pixi_run} -e coverm "
         "coverm cluster "
@@ -100,17 +100,17 @@ rule cluster_original_bins:
         "--precluster-method finch "
         "--ani {params.ani} "
         "--threads {threads} "
-        "&> {log}"
+        "&> {resources.log_path}"
 
 rule cluster_updated_bins:
     output:
         output_dir + "/cluster/{coassembly}.txt",
-    log:
-        logs_dir + "/cluster/{coassembly}.log"
     params:
         genomes = get_cluster_genomes,
         ani = config["cluster"],
     threads: 64
+    resources:
+        log_path=lambda wildcards, attempt: setup_log(f"{logs_dir}/cluster/{wildcards.coassembly}", attempt)
     shell:
         f"{pixi_run} -e coverm "
         "coverm cluster "
@@ -119,7 +119,7 @@ rule cluster_updated_bins:
         "--precluster-method finch "
         "--ani {params.ani} "
         "--threads {threads} "
-        "&> {log}"
+        "&> {resources.log_path}"
 
 rule summarise_clusters:
     input:
@@ -156,8 +156,8 @@ rule evaluate:
         recovered_bins = config["recovered_bins"],
     threads:
         64
-    log:
-        logs_dir + "/evaluate/evaluate.log"
+    resources:
+        log_path=lambda wildcards, attempt: setup_log(f"{logs_dir}/evaluate/evaluate", attempt)
     shell:
         f"{pixi_run} "
         "python3 {params.script} "
@@ -171,7 +171,7 @@ rule evaluate:
         "--novel-hits {output.novel_hits} "
         "--summary-stats {output.summary_stats} "
         "--threads {threads} "
-        "--log {log}"
+        "--log {resources.log_path}"
 
 rule evaluate_plots:
     input:

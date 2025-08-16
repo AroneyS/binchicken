@@ -3,7 +3,7 @@
 #############
 import os
 import polars as pl
-from binchicken.common import pixi_run
+from binchicken.common import pixi_run, setup_log
 os.umask(0o002)
 
 output_dir = os.path.abspath("download")
@@ -55,8 +55,7 @@ rule aviary_download:
     resources:
         mem_mb=get_mem_mb,
         runtime = get_runtime(base_hours = 16),
-    log:
-        logs_dir + "/aviary_downloads.log"
+        log_path=lambda wildcards, attempt: setup_log(f"{logs_dir}/aviary_downloads", attempt)
     shell:
         "{params.tmpdir} "
         "{params.singlem_metapackage_env} "
@@ -69,5 +68,5 @@ rule aviary_download:
         "{params.checkm2_db} "
         "{params.gtdbtk_db} "
         "{params.download_arg} "
-        "&> {log} "
+        "&> {resources.log_path} "
         "&& touch {output} "
