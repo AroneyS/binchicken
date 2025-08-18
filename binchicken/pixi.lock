@@ -247,7 +247,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/linux-64/zlib-1.3.1-hb9d3cd8_2.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/zstandard-0.23.0-py311h9ecbd09_2.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/zstd-1.5.7-hb8e6e7a_2.conda
-      - pypi: git+https://github.com/rhysnewell/aviary.git?rev=09131a400c0aa9dc99f2937611dd3dd5de48144b#09131a400c0aa9dc99f2937611dd3dd5de48144b
+      - pypi: git+https://github.com/rhysnewell/aviary.git?rev=d004968459b1eb22604cd99b25f351bf96179823#d004968459b1eb22604cd99b25f351bf96179823
       - pypi: https://files.pythonhosted.org/packages/29/a2/d40fb2460e883eca5199c62cfc2463fd261f760556ae6290f88488c362c0/pip-25.1.1-py3-none-any.whl
   coverm:
     channels:
@@ -2104,7 +2104,7 @@ packages:
   - pkg:pypi/attrs?source=hash-mapping
   size: 57181
   timestamp: 1741918625732
-- pypi: git+https://github.com/rhysnewell/aviary.git?rev=09131a400c0aa9dc99f2937611dd3dd5de48144b#09131a400c0aa9dc99f2937611dd3dd5de48144b
+- pypi: git+https://github.com/rhysnewell/aviary.git?rev=d004968459b1eb22604cd99b25f351bf96179823#d004968459b1eb22604cd99b25f351bf96179823
   name: aviary-genome
   version: 0.12.0
   requires_dist:
