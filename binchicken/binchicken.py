@@ -17,7 +17,8 @@ from snakemake.io import load_configfile
 from ruamel.yaml import YAML
 import copy
 import shutil
-from binchicken.common import fasta_to_name, pixi_run
+from binchicken.common import fasta_to_name, pixi_run, workflow_identifier
+import re
 
 FAST_AVIARY_MODE = "fast"
 COMPREHENSIVE_AVIARY_MODE = "comprehensive"
@@ -130,7 +131,90 @@ def run_workflow(config, workflow, output_dir, cores=16, dryrun=False,
     )
 
     logging.info(f"Executing: {cmd}")
-    subprocess.check_call(cmd, shell=True)
+
+    def parse_snakemake_errors(text: str):
+        # Return list of {rule: str, logs: [str]}
+        errors = []
+        current_rule = None
+        collected_logs = []
+        for raw in text.splitlines():
+            line = raw.rstrip()
+            m = re.search(r"Error in rule (\S+):", line)
+            if m:
+                if current_rule:
+                    errors.append({"rule": current_rule, "logs": collected_logs})
+                current_rule = m.group(1)
+                collected_logs = []
+                continue
+            if current_rule and line.lstrip().startswith("log:"):
+                rest = line.split("log:", 1)[1].strip()
+                # Trim parenthetical note
+                if "(" in rest:
+                    rest = rest.split("(", 1)[0].strip()
+                # Split on whitespace to support multiple log paths
+                for p in rest.split():
+                    if p:
+                        collected_logs.append(p)
+        if current_rule:
+            errors.append({"rule": current_rule, "logs": collected_logs})
+        return errors
+
+    # Run Snakemake and capture combined output
+    result = subprocess.run(
+        cmd,
+        shell=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+    )
+
+    # Echo Snakemake output to stdout for visibility
+    if result.stdout:
+        sys.stdout.write(result.stdout)
+        sys.stdout.flush()
+
+    if result.returncode == 0:
+        return
+
+    # On failure, parse errors and surface helpful diagnostics
+    output_text = result.stdout or ""
+    parsed = parse_snakemake_errors(output_text)
+
+    if not parsed:
+        logging.error("Snakemake failed, but no rule-specific errors were parsed. See output above.")
+        sys.exit(1)
+
+    unique_logs = []
+    seen = set()
+    for entry in parsed:
+        rule = entry.get("rule", "<unknown>")
+        logs = entry.get("logs", []) or []
+        if logs:
+            # Log each rule failure and its first log; if multiple, list all
+            for lp in logs:
+                logging.error(f"[{workflow_identifier}] Rule failed: {rule}; log: {lp}")
+                if lp not in seen:
+                    unique_logs.append(lp)
+                    seen.add(lp)
+        else:
+            logging.error(f"[{workflow_identifier}] Rule failed: {rule}; no log file reported by Snakemake")
+
+    # Dump log files to stderr
+    for lp in unique_logs:
+        try:
+            with open(lp, "r", encoding="utf-8", errors="replace") as fh:
+                sys.stderr.write(f"\n===== BEGIN LOG ({workflow_identifier}): {lp} =====\n")
+                sys.stderr.write(fh.read())
+                sys.stderr.write(f"\n===== END LOG ({workflow_identifier}): {lp} =====\n")
+        except FileNotFoundError:
+            sys.stderr.write(f"\n===== LOG NOT FOUND ({workflow_identifier}): {lp} =====\n")
+        except Exception as e:
+            sys.stderr.write(f"\n===== ERROR READING LOG ({workflow_identifier}) {lp}: {e} =====\n")
+        sys.stderr.flush()
+
+    sys.exit(1)
 
 def download_sra(args):
     config_items = {
@@ -195,12 +279,12 @@ def download_sra(args):
                 "--input {input} "
                 "--start-check-pairs {start_check_pairs} "
                 "--end-check-pairs {end_check_pairs} "
-            ).format(
-                script = importlib.resources.files("binchicken.workflow.scripts").joinpath("is_interleaved.py"),
-                input = u,
-                start_check_pairs = 5,
-                end_check_pairs = 5,
-            )
+                ).format(
+                    script = importlib.resources.files("binchicken.workflow.scripts").joinpath("is_interleaved.py"),
+                    input = u,
+                    start_check_pairs = 5,
+                    end_check_pairs = 5,
+                )
             output = extern.run(cmd).strip().split("\t")
 
             if output[0] != "True":
