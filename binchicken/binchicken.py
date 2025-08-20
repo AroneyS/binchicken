@@ -19,6 +19,7 @@ import copy
 import shutil
 from binchicken.common import fasta_to_name, pixi_run, workflow_identifier
 import re
+import threading
 
 FAST_AVIARY_MODE = "fast"
 COMPREHENSIVE_AVIARY_MODE = "comprehensive"
@@ -222,32 +223,55 @@ def run_workflow(config, workflow, output_dir, cores=16, dryrun=False,
     )
 
     logging.info(f"Executing: {cmd}")
-    # Stream output in real time while buffering for parsing
-    output_buffer = []
+    # Stream stdout and stderr separately in real time while buffering for parsing
+    combined_output = []
+    out_buffer = []
+    err_buffer = []
     proc = subprocess.Popen(
         cmd,
         shell=True,
         stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT,
+        stderr=subprocess.PIPE,
         text=True,
         encoding="utf-8",
         errors="replace",
         bufsize=1,
     )
 
-    assert proc.stdout is not None
-    for line in proc.stdout:
-        sys.stderr.write(line)
-        sys.stderr.flush()
-        output_buffer.append(line)
-    proc.stdout.close()
+    def _pump(stream, writer, buf):
+        try:
+            for line in stream:
+                writer.write(line)
+                writer.flush()
+                buf.append(line)
+                combined_output.append(line)
+        finally:
+            try:
+                stream.close()
+            except Exception:
+                pass
+
+    threads = []
+    if proc.stdout is not None:
+        t_out = threading.Thread(target=_pump, args=(proc.stdout, sys.stdout, out_buffer))
+        t_out.daemon = True
+        t_out.start()
+        threads.append(t_out)
+    if proc.stderr is not None:
+        t_err = threading.Thread(target=_pump, args=(proc.stderr, sys.stderr, err_buffer))
+        t_err.daemon = True
+        t_err.start()
+        threads.append(t_err)
+
+    for t in threads:
+        t.join()
     proc.wait()
 
     if proc.returncode == 0:
         return
 
     # On failure, parse errors and surface helpful diagnostics
-    output_text = "".join(output_buffer)
+    output_text = "".join(combined_output)
     failed_rules = parse_snakemake_errors(output_text)
 
     if not failed_rules:
