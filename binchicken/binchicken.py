@@ -237,8 +237,8 @@ def run_workflow(config, workflow, output_dir, cores=16, dryrun=False,
 
     assert proc.stdout is not None
     for line in proc.stdout:
-        sys.stdout.write(line)
-        sys.stdout.flush()
+        sys.stderr.write(line)
+        sys.stderr.flush()
         output_buffer.append(line)
     proc.stdout.close()
     proc.wait()
