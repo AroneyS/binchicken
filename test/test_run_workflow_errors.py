@@ -9,10 +9,24 @@ from unittest.mock import patch
 import binchicken.binchicken as bc
 
 
-class DummyCompleted:
-    def __init__(self, returncode: int, stdout: str):
+class DummyProc:
+    def __init__(self, stdout_text: str, returncode: int = 0):
+        self._stdout_text = stdout_text
+        self.stdout = io.StringIO(stdout_text)
         self.returncode = returncode
-        self.stdout = stdout
+
+    def wait(self):
+        return self.returncode
+
+    def poll(self):
+        return self.returncode
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc, tb):
+        if self.stdout:
+            self.stdout.close()
 
 
 def make_config(path: Path) -> str:
@@ -94,8 +108,8 @@ class Tests(unittest.TestCase):
                 "        (one of the commands exited with non-zero exit code; note that snakemake uses bash strict mode!)\n"
             )
 
-            def fake_run(cmd, shell, stdout, stderr, text, encoding, errors):
-                return DummyCompleted(returncode=1, stdout=smk_output)
+            def fake_popen(cmd, shell, stdout, stderr, text, encoding, errors, bufsize):
+                return DummyProc(smk_output, returncode=1)
 
             cfg = make_config(tmp_path)
 
@@ -111,7 +125,7 @@ class Tests(unittest.TestCase):
             root_logger.addHandler(handler)
 
             try:
-                with patch.object(bc.subprocess, "run", fake_run), \
+                with patch.object(bc.subprocess, "Popen", fake_popen), \
                      patch.object(bc, "workflow_identifier", wid, create=True), \
                      patch.object(bc, "load_configfile", lambda p: None, create=True), \
                      redirect_stdout(stdout_buf), redirect_stderr(stderr_buf):
@@ -167,8 +181,8 @@ class Tests(unittest.TestCase):
             # No logs created under logs dir; parser should report that none were found
             smk_output = "Error in rule build:\n"
 
-            def fake_run(cmd, shell, stdout, stderr, text, encoding, errors):
-                return DummyCompleted(returncode=1, stdout=smk_output)
+            def fake_popen(cmd, shell, stdout, stderr, text, encoding, errors, bufsize):
+                return DummyProc(smk_output, returncode=1)
 
             cfg = make_config(tmp_path)
             stdout_buf = io.StringIO()
@@ -183,7 +197,7 @@ class Tests(unittest.TestCase):
             root_logger.addHandler(handler)
 
             try:
-                with patch.object(bc.subprocess, "run", fake_run), \
+                with patch.object(bc.subprocess, "Popen", fake_popen), \
                      patch.object(bc, "workflow_identifier", wid, create=True), \
                      patch.object(bc, "load_configfile", lambda p: None, create=True), \
                      redirect_stdout(stdout_buf), redirect_stderr(stderr_buf):
@@ -217,14 +231,14 @@ class Tests(unittest.TestCase):
             tmp_path = Path(tmp)
             smk_output = "some failure text without the pattern"
 
-            def fake_run(cmd, shell, stdout, stderr, text, encoding, errors):
-                return DummyCompleted(returncode=1, stdout=smk_output)
+            def fake_popen(cmd, shell, stdout, stderr, text, encoding, errors, bufsize):
+                return DummyProc(smk_output, returncode=1)
 
             cfg = make_config(tmp_path)
             stdout_buf = io.StringIO()
             stderr_buf = io.StringIO()
 
-            with patch.object(bc.subprocess, "run", fake_run), \
+            with patch.object(bc.subprocess, "Popen", fake_popen), \
                  patch.object(bc, "load_configfile", lambda p: None, create=True), \
                  redirect_stdout(stdout_buf), redirect_stderr(stderr_buf):
                 with self.assertRaises(SystemExit) as cm:
