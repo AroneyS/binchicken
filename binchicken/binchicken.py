@@ -222,11 +222,9 @@ def run_workflow(config, workflow, output_dir, cores=16, dryrun=False,
     )
 
     logging.info(f"Executing: {cmd}")
-
-    
-
-    # Run Snakemake and capture combined output
-    result = subprocess.run(
+    # Stream output in real time while buffering for parsing
+    output_buffer = []
+    proc = subprocess.Popen(
         cmd,
         shell=True,
         stdout=subprocess.PIPE,
@@ -234,18 +232,22 @@ def run_workflow(config, workflow, output_dir, cores=16, dryrun=False,
         text=True,
         encoding="utf-8",
         errors="replace",
+        bufsize=1,
     )
 
-    # Echo Snakemake output to stdout for visibility
-    if result.stdout:
-        sys.stdout.write(result.stdout)
+    assert proc.stdout is not None
+    for line in proc.stdout:
+        sys.stdout.write(line)
         sys.stdout.flush()
+        output_buffer.append(line)
+    proc.stdout.close()
+    proc.wait()
 
-    if result.returncode == 0:
+    if proc.returncode == 0:
         return
 
     # On failure, parse errors and surface helpful diagnostics
-    output_text = result.stdout or ""
+    output_text = "".join(output_buffer)
     failed_rules = parse_snakemake_errors(output_text)
 
     if not failed_rules:
