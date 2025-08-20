@@ -107,6 +107,97 @@ def read_list(path):
         raise Exception(f"Empty list at {path}")
     return contents
 
+def parse_snakemake_errors(text: str):
+    """Extract failed rule names from Snakemake output.
+
+    Since Snakemake no longer reliably prints "log:" lines, we only
+    capture the erroring rule names here; log discovery happens via the
+    workflow's resources:log_path layout on disk.
+    """
+    rules = []
+    for raw in text.splitlines():
+        m = re.search(r"Error in rule (\S+):", raw)
+        if m:
+            rules.append(m.group(1))
+    # Preserve order but dedupe
+    seen = set()
+    unique_rules = []
+    for r in rules:
+        if r not in seen:
+            unique_rules.append(r)
+            seen.add(r)
+    return unique_rules
+
+def logs_dir_root_for_workflow(output_dir: str, workflow: str) -> str:
+    wf_base = os.path.splitext(os.path.basename(workflow))[0]
+    return os.path.join(output_dir, wf_base, "logs")
+
+def find_logs_for_rule(rule_name: str, workflow: str, output_dir: str, wid: str | None = None):
+    """Discover log files for a rule by parsing its resources:log_path in the Snakefile.
+
+    Parameters
+    - rule_name: Snakemake rule name
+    - workflow: Snakefile name (e.g., 'coassemble.smk')
+    - output_dir: snakemake working directory used by run_workflow
+    - wid: workflow identifier subdirectory; defaults to binchicken.common.workflow_identifier
+    """
+    import glob
+
+    wid = wid or workflow_identifier
+    logs_root = logs_dir_root_for_workflow(output_dir, workflow)
+    if not os.path.isdir(logs_root):
+        return []
+
+    # Locate and read the Snakefile specified by `workflow`
+    snakefile_path = os.path.join(os.path.dirname(__file__), "workflow", workflow)
+    try:
+        with open(snakefile_path, "r", encoding="utf-8", errors="replace") as sf:
+            snake_txt = sf.read()
+    except Exception:
+        # Fallback to any logs for this workflow invocation if Snakefile unreadable
+        snake_txt = ""
+
+    patterns = []
+    if snake_txt:
+        # Extract the block for the rule
+        block_re = re.compile(rf"(?ms)^rule\s+{re.escape(rule_name)}\s*:\s*(.*?)\n(?=rule\s+\w+:|$)")
+        m_block = block_re.search(snake_txt)
+        if m_block:
+            block = m_block.group(1)
+            # Find setup_log(f"{logs_dir}/...", attempt)
+            m_log = re.search(r"log_path\s*=\s*lambda[^:]*:\s*setup_log\((.+?),\s*attempt\)", block, re.S)
+            if m_log:
+                arg = m_log.group(1)
+                m_f = re.search(r"f[\"'](.+?)[\"']", arg, re.S)
+                if m_f:
+                    content = m_f.group(1)
+                    # Replace placeholders
+                    # {logs_dir} -> logs_root
+                    content = content.replace("{logs_dir}", logs_root)
+                    # Replace wildcards with glob star
+                    content = re.sub(r"\{wildcards\.[^}]+\}", "*", content)
+                    # Normalize duplicate slashes
+                    content = re.sub(r"/+", "/", content)
+                    # Build glob pattern to attempts under this workflow invocation
+                    patterns.append(os.path.join(content, wid, "attempt*.log"))
+
+    # Fallback if no pattern found for the rule
+    if not patterns:
+        patterns.append(os.path.join(logs_root, "**", wid, "attempt*.log"))
+
+    files = set()
+    for pat in patterns:
+        for f in glob.glob(pat, recursive=True):
+            if os.path.isfile(f):
+                files.add(os.path.abspath(f))
+
+    # Prefer higher attempt numbers in each directory. Keep deterministic order.
+    def attempt_num(p):
+        m = re.search(r"attempt(\d+)\.log$", os.path.basename(p))
+        return int(m.group(1)) if m else -1
+
+    return sorted(files, key=lambda p: (os.path.dirname(p), attempt_num(p)), reverse=True)
+
 def run_workflow(config, workflow, output_dir, cores=16, dryrun=False,
                  profile=None, local_cores=1, cluster_retries=None,
                  snakemake_args=""):
@@ -132,32 +223,7 @@ def run_workflow(config, workflow, output_dir, cores=16, dryrun=False,
 
     logging.info(f"Executing: {cmd}")
 
-    def parse_snakemake_errors(text: str):
-        # Return list of {rule: str, logs: [str]}
-        errors = []
-        current_rule = None
-        collected_logs = []
-        for raw in text.splitlines():
-            line = raw.rstrip()
-            m = re.search(r"Error in rule (\S+):", line)
-            if m:
-                if current_rule:
-                    errors.append({"rule": current_rule, "logs": collected_logs})
-                current_rule = m.group(1)
-                collected_logs = []
-                continue
-            if current_rule and line.lstrip().startswith("log:"):
-                rest = line.split("log:", 1)[1].strip()
-                # Trim parenthetical note
-                if "(" in rest:
-                    rest = rest.split("(", 1)[0].strip()
-                # Split on whitespace to support multiple log paths
-                for p in rest.split():
-                    if p:
-                        collected_logs.append(p)
-        if current_rule:
-            errors.append({"rule": current_rule, "logs": collected_logs})
-        return errors
+    
 
     # Run Snakemake and capture combined output
     result = subprocess.run(
@@ -180,26 +246,25 @@ def run_workflow(config, workflow, output_dir, cores=16, dryrun=False,
 
     # On failure, parse errors and surface helpful diagnostics
     output_text = result.stdout or ""
-    parsed = parse_snakemake_errors(output_text)
+    failed_rules = parse_snakemake_errors(output_text)
 
-    if not parsed:
+    if not failed_rules:
         logging.error("Snakemake failed, but no rule-specific errors were parsed. See output above.")
         sys.exit(1)
 
     unique_logs = []
     seen = set()
-    for entry in parsed:
-        rule = entry.get("rule", "<unknown>")
-        logs = entry.get("logs", []) or []
+    for rule in failed_rules:
+        logs = find_logs_for_rule(rule, workflow, output_dir, workflow_identifier)
         if logs:
-            # Log each rule failure and its first log; if multiple, list all
             for lp in logs:
                 logging.error(f"[{workflow_identifier}] Rule failed: {rule}; log: {lp}")
                 if lp not in seen:
                     unique_logs.append(lp)
                     seen.add(lp)
         else:
-            logging.error(f"[{workflow_identifier}] Rule failed: {rule}; no log file reported by Snakemake")
+            logs_root = logs_dir_root_for_workflow(output_dir, workflow)
+            logging.error(f"[{workflow_identifier}] Rule failed: {rule}; no log files found under {logs_root}")
 
     # Dump log files to stderr
     for lp in unique_logs:
