@@ -10,9 +10,11 @@ import binchicken.binchicken as bc
 
 
 class DummyProc:
-    def __init__(self, stdout_text: str, returncode: int = 0):
+    def __init__(self, stdout_text: str, stderr_text: str = "", returncode: int = 0):
         self._stdout_text = stdout_text
+        self._stderr_text = stderr_text
         self.stdout = io.StringIO(stdout_text)
+        self.stderr = io.StringIO(stderr_text)
         self.returncode = returncode
 
     def wait(self):
@@ -27,6 +29,8 @@ class DummyProc:
     def __exit__(self, exc_type, exc, tb):
         if self.stdout:
             self.stdout.close()
+        if self.stderr:
+            self.stderr.close()
 
 
 def make_config(path: Path) -> str:
@@ -109,7 +113,7 @@ class Tests(unittest.TestCase):
             )
 
             def fake_popen(cmd, shell, stdout, stderr, text, encoding, errors, bufsize):
-                return DummyProc(smk_output, returncode=1)
+                return DummyProc(smk_output, stderr_text="", returncode=1)
 
             cfg = make_config(tmp_path)
 
@@ -182,7 +186,7 @@ class Tests(unittest.TestCase):
             smk_output = "Error in rule build:\n"
 
             def fake_popen(cmd, shell, stdout, stderr, text, encoding, errors, bufsize):
-                return DummyProc(smk_output, returncode=1)
+                return DummyProc(smk_output, stderr_text="", returncode=1)
 
             cfg = make_config(tmp_path)
             stdout_buf = io.StringIO()
@@ -232,7 +236,7 @@ class Tests(unittest.TestCase):
             smk_output = "some failure text without the pattern"
 
             def fake_popen(cmd, shell, stdout, stderr, text, encoding, errors, bufsize):
-                return DummyProc(smk_output, returncode=1)
+                return DummyProc(smk_output, stderr_text="", returncode=1)
 
             cfg = make_config(tmp_path)
             stdout_buf = io.StringIO()
