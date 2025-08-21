@@ -340,7 +340,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/linux-64/aws-crt-cpp-0.26.8-h4f3a3cc_11.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/aws-sdk-cpp-1.11.267-h51dfee4_8.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/bcrypt-4.3.0-py310h505e2c1_0.conda
-      - conda: https://conda.anaconda.org/bioconda/noarch/bird_tool_utils_python-0.4.1-pyhdfd78af_0.tar.bz2
+      - conda: https://conda.anaconda.org/bioconda/noarch/bird_tool_utils_python-0.5.1-pyh7e72e81_0.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/bitarray-3.4.0-py310ha75aee5_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/bitstring-4.3.1-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/boto3-1.38.20-pyhd8ed1ab_0.conda
@@ -652,7 +652,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/linux-64/aws-crt-cpp-0.26.8-h4f3a3cc_11.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/aws-sdk-cpp-1.11.267-h51dfee4_8.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/bcrypt-4.3.0-py310h505e2c1_0.conda
-      - conda: https://conda.anaconda.org/bioconda/noarch/bird_tool_utils_python-0.4.1-pyhdfd78af_0.tar.bz2
+      - conda: https://conda.anaconda.org/bioconda/noarch/bird_tool_utils_python-0.5.1-pyh7e72e81_0.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/bitarray-3.4.0-py310ha75aee5_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/bitstring-4.3.1-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/boto3-1.38.20-pyhd8ed1ab_0.conda
@@ -2885,6 +2885,16 @@ packages:
   - pkg:pypi/bird-tool-utils?source=hash-mapping
   size: 30190
   timestamp: 1665732095655
+- conda: https://conda.anaconda.org/bioconda/noarch/bird_tool_utils_python-0.5.1-pyh7e72e81_0.conda
+  sha256: aaba5abb9ab642321e5a738b56a4732389be6b0bff080be40d4216767265fb6f
+  md5: e205fcceebb475d39d2ee7a985a5f742
+  depends:
+  - argparse-manpage-birdtools >=1.7.0
+  - python >=3.7
+  license: GPL-3.0-or-later
+  license_family: GPL3
+  size: 27597
+  timestamp: 1755740258344
 - conda: https://conda.anaconda.org/conda-forge/linux-64/bitarray-3.4.0-py310ha75aee5_0.conda
   sha256: c5581e6d23b091a987105c92a4625f9262c1e712411c9d033aba02a39bc95c74
   md5: 9fd5978ae4a687bccbb828d62476e317
