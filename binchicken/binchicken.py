@@ -1447,7 +1447,7 @@ def main():
 
     ###########################################################################
 
-    build_parser = main_parser.new_subparser("build", "Create dependency environments")
+    build_parser = main_parser.new_subparser("build", "Create dependency environments", allow_no_args=True)
     build_parser.add_argument("--singlem-metapackage", help="SingleM metapackage")
     build_parser.add_argument("--checkm2-db", help="CheckM2 database")
     build_parser.add_argument(f"--gtdbtk-db", help="GTDBtk release database (Only required if --aviary-speed is set to {COMPREHENSIVE_AVIARY_MODE})")
