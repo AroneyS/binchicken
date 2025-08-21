@@ -1703,7 +1703,7 @@ def main():
             raise Exception("Assemble unmapped is incompatible with single-sample assembly")
         if args.assemble_unmapped and not args.genomes and not args.genomes_list:
             raise Exception("Reference genomes must be provided to assemble unmapped reads")
-        if not args.singlem_metapackage and not os.environ['SINGLEM_METAPACKAGE_PATH'] and not args.sample_query and not args.sample_query_list:
+        if not args.singlem_metapackage and not args.sample_query and not args.sample_query_list:
             raise Exception("SingleM metapackage (--singlem-metapackage or SINGLEM_METAPACKAGE_PATH environment variable, see SingleM data) must be provided when SingleM query otu tables are not provided")
         if (args.sample_singlem and args.sample_singlem_list) or (args.sample_singlem_dir and args.sample_singlem_list) or (args.sample_singlem and args.sample_singlem_dir) or \
             (args.sample_query and args.sample_query_list) or (args.sample_query_dir and args.sample_query_list) or (args.sample_query and args.sample_query_dir) or \
@@ -1749,7 +1749,7 @@ def main():
 
     elif args.subparser_name == "evaluate":
         coassemble_output_argument_verification(args, evaluate=True)
-        if not args.singlem_metapackage and not os.environ['SINGLEM_METAPACKAGE_PATH']:
+        if not args.singlem_metapackage:
             raise Exception("SingleM metapackage (--singlem-metapackage or SINGLEM_METAPACKAGE_PATH environment variable, see SingleM data) must be provided")
         if args.cluster and not (args.genomes or args.genomes_list):
             raise Exception("Reference genomes must be provided to cluster with new genomes")
