@@ -1045,6 +1045,7 @@ def iterate(args):
 def configure_variable(variable, value):
     os.environ[variable] = value
     extern.run(f"{pixi_run} conda env config vars set {variable}={value}")
+    extern.run(f"pixi run --frozen conda env config vars set {variable}={value}")
 
 def build(args):
     output_dir = os.path.join(args.output, "build")
