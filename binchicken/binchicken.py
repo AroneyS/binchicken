@@ -1451,7 +1451,8 @@ def main():
     build_parser.add_argument("--singlem-metapackage", help="SingleM metapackage")
     build_parser.add_argument("--checkm2-db", help="CheckM2 database")
     build_parser.add_argument(f"--gtdbtk-db", help="GTDBtk release database (Only required if --aviary-speed is set to {COMPREHENSIVE_AVIARY_MODE})")
-    build_parser.add_argument("--metabuli-db", help="MetaBuli database (Only required with TaxVAMB extra binner)")
+    metabuli_db_default = "."
+    build_parser.add_argument("--metabuli-db", help="MetaBuli database (Only required with TaxVAMB extra binner)", default=metabuli_db_default)
     tmp_default = "/tmp"
     build_parser.add_argument("--set-tmp-dir", help=f"Set temporary directory [default: {tmp_default}]", default=tmp_default)
     build_parser.add_argument("--skip-aviary-envs", help="Do not install Aviary subworkflow environments", action="store_true")
