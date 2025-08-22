@@ -6,8 +6,13 @@
 
 import os
 import polars as pl
-from binchicken.binchicken import FAST_AVIARY_MODE
 import argparse
+
+# Use local fallback if binchicken isn’t importable in this runtime env
+try:
+    from binchicken.binchicken import FAST_AVIARY_MODE
+except Exception:
+    FAST_AVIARY_MODE = "fast"
 
 # Example shell directive for Snakemake:
 # shell:
