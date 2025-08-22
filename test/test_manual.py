@@ -9,6 +9,8 @@ from ruamel.yaml import YAML
 import extern
 from bird_tool_utils import in_tempdir
 import pytest
+import glob
+import re
 
 path_to_data = os.path.join(os.path.dirname(os.path.realpath(__file__)),'data')
 
@@ -492,6 +494,48 @@ class Tests(unittest.TestCase):
         self.assertTrue("aviary_combine" in output)
 
         print(output)
+
+    def test_aviary_recover_error_integration(self):
+        """Expect aviary_assemble to fail with tiny test data, then check logging.
+        The small input cannot be assembled, so aviary_assemble will error first.
+        We assert Snakemake reports the aviary_assemble error, our handler logs the
+        rule failure with a concrete log path, and that an assemble log exists.
+        """
+        with in_tempdir():
+            cmd = (
+                f"binchicken update "
+                f"--forward {SAMPLE_READS_FORWARD} "
+                f"--reverse {SAMPLE_READS_REVERSE} "
+                f"--genomes {GENOMES} "
+                f"--coassemble-output {MOCK_COASSEMBLE} "
+                f"--coassemblies coassembly_0 "
+                f"--run-aviary "
+                f"--cores 4 "
+                f"--local-cores 2 "
+                f"--cluster-retries 0 "
+                f"--output test "
+            )
+
+            try:
+                proc = subprocess.run(cmd, shell=True, check=True, capture_output=True)
+                combined = (proc.stdout or b"").decode("utf-8", errors="replace") + (proc.stderr or b"").decode("utf-8", errors="replace")
+            except subprocess.CalledProcessError as e:
+                combined = (e.stdout or b"").decode("utf-8", errors="replace") + (e.stderr or b"").decode("utf-8", errors="replace")
+
+            # Snakemake should report a rule error; our wrapper should emit log dumps
+            self.assertTrue(("Error in rule aviary_assemble" in combined) or ("RuleException in rule aviary_assemble" in combined))
+            self.assertIn("Rule failed: aviary_assemble", combined)
+            self.assertTrue(("===== BEGIN LOG (" in combined) and ("===== END LOG (" in combined))
+
+            # Ensure an assemble log exists under the expected logs tree
+            assemble_logs = glob.glob(os.path.join("test", "coassemble", "logs", "aviary", "coassembly_0_assemble", "*", "attempt*.log"))
+            self.assertTrue(len(assemble_logs) > 0)
+
+            # One of the printed log paths should match an existing file
+            printed_paths = re.findall(r"BEGIN LOG \([^)]*\):\s*(.*?)\s*=====", combined)
+            if printed_paths:
+                # Normalize whitespace and test for existence of at least one printed log
+                self.assertTrue(any(os.path.exists(p.strip()) for p in printed_paths))
 
 
 if __name__ == '__main__':
