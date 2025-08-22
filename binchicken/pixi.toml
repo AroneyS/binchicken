@@ -4,11 +4,6 @@ channels = ["conda-forge", "bioconda", "rpetit3"]
 name = "binchicken"
 platforms = ["linux-64"]
 
-[activation]
-# Sets metapackage environment variables, which are assumed to be in the db/ of
-# the base directory (perhaps symlnked).
-scripts = ["set_env_vars.sh"]
-
 [feature.main.dependencies]
 python = "3.10.*"
 snakemake = "7.32.*"
