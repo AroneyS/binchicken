@@ -17,7 +17,9 @@ from snakemake.io import load_configfile
 from ruamel.yaml import YAML
 import copy
 import shutil
-from binchicken.common import fasta_to_name, pixi_run
+from binchicken.common import fasta_to_name, pixi_run, workflow_identifier
+import re
+import threading
 
 FAST_AVIARY_MODE = "fast"
 COMPREHENSIVE_AVIARY_MODE = "comprehensive"
@@ -106,6 +108,102 @@ def read_list(path):
         raise Exception(f"Empty list at {path}")
     return contents
 
+def parse_snakemake_errors(text: str):
+    """Extract failed rule names from Snakemake output.
+
+    Since Snakemake no longer reliably prints "log:" lines, we only
+    capture the erroring rule names here; log discovery happens via the
+    workflow's resources:log_path layout on disk.
+    """
+    rules = []
+    for raw in text.splitlines():
+        m = re.search(r"Error in rule (\S+):", raw)
+        if m:
+            rules.append(m.group(1))
+    # Preserve order but dedupe
+    seen = set()
+    unique_rules = []
+    for r in rules:
+        if r not in seen:
+            unique_rules.append(r)
+            seen.add(r)
+    return unique_rules
+
+def logs_dir_root_for_workflow(output_dir: str, workflow: str) -> str:
+    wf_base = os.path.splitext(os.path.basename(workflow))[0]
+    return os.path.join(output_dir, wf_base, "logs")
+
+def find_logs_for_rule(rule_name: str, workflow: str, output_dir: str, wid: str | None = None):
+    """Discover log files for a rule by parsing its resources:log_path in the Snakefile.
+
+    Parameters
+    - rule_name: Snakemake rule name
+    - workflow: Snakefile name (e.g., 'coassemble.smk')
+    - output_dir: snakemake working directory used by run_workflow
+    - wid: workflow identifier subdirectory; defaults to binchicken.common.workflow_identifier
+    """
+    import glob
+
+    wid = wid or workflow_identifier
+    logs_root = logs_dir_root_for_workflow(output_dir, workflow)
+    if not os.path.isdir(logs_root):
+        return []
+
+    # Locate and read the Snakefile specified by `workflow`
+    snakefile_path = os.path.join(os.path.dirname(__file__), "workflow", workflow)
+    try:
+        with open(snakefile_path, "r", encoding="utf-8", errors="replace") as sf:
+            snake_txt = sf.read()
+    except Exception:
+        # Fallback to any logs for this workflow invocation if Snakefile unreadable
+        snake_txt = ""
+
+    patterns = []
+    if snake_txt:
+        # Extract the block for the rule
+        block_re = re.compile(rf"(?ms)^rule\s+{re.escape(rule_name)}\s*:\s*(.*?)\n(?=rule\s+\w+:|$)")
+        m_block = block_re.search(snake_txt)
+        if m_block:
+            block = m_block.group(1)
+            # Find setup_log(f"{logs_dir}/...", attempt)
+            m_log = re.search(r"log_path\s*=\s*lambda[^:]*:\s*setup_log\((.+?),\s*attempt\)", block, re.S)
+            if m_log:
+                arg = m_log.group(1)
+                m_f = re.search(r"f[\"'](.+?)[\"']", arg, re.S)
+                if m_f:
+                    content = m_f.group(1)
+                    # Replace placeholders
+                    # {logs_dir} -> logs_root
+                    content = content.replace("{logs_dir}", logs_root)
+                    # Replace wildcards with glob star
+                    content = re.sub(r"\{wildcards\.[^}]+\}", "*", content)
+                    # Normalize duplicate slashes
+                    content = re.sub(r"/+", "/", content)
+                    # Build glob pattern to attempts; don't rely on exact wid as the
+                    # Snakefile may import at a slightly different time. Prefer any wid.
+                    patterns.append(os.path.join(content, "*", "attempt*.log"))
+
+    # Fallback if no pattern found for the rule
+    if not patterns:
+        # Fallback: search for any rule logs under logs_root
+        patterns.append(os.path.join(logs_root, "**", "attempt*.log"))
+
+    files = set()
+    for pat in patterns:
+        for f in glob.glob(pat, recursive=True):
+            if os.path.isfile(f):
+                files.add(os.path.abspath(f))
+
+    # Prefer higher attempt numbers and newer wid directories. Keep deterministic order.
+    def attempt_num(p):
+        m = re.search(r"attempt(\d+)\.log$", os.path.basename(p))
+        return int(m.group(1)) if m else -1
+    def wid_dir_key(p):
+        # parent dir name is the wid (e.g., 20250101_123456); lexical sort works
+        return os.path.basename(os.path.dirname(p))
+
+    return sorted(files, key=lambda p: (wid_dir_key(p), attempt_num(p)), reverse=True)
+
 def run_workflow(config, workflow, output_dir, cores=16, dryrun=False,
                  profile=None, local_cores=1, cluster_retries=None,
                  snakemake_args=""):
@@ -130,7 +228,89 @@ def run_workflow(config, workflow, output_dir, cores=16, dryrun=False,
     )
 
     logging.info(f"Executing: {cmd}")
-    subprocess.check_call(cmd, shell=True)
+    # Stream stdout and stderr separately in real time while buffering for parsing
+    combined_output = []
+    out_buffer = []
+    err_buffer = []
+    proc = subprocess.Popen(
+        cmd,
+        shell=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+        bufsize=1,
+    )
+
+    def _pump(stream, writer, buf):
+        try:
+            for line in stream:
+                writer.write(line)
+                writer.flush()
+                buf.append(line)
+                combined_output.append(line)
+        finally:
+            try:
+                stream.close()
+            except Exception:
+                pass
+
+    threads = []
+    if proc.stdout is not None:
+        t_out = threading.Thread(target=_pump, args=(proc.stdout, sys.stdout, out_buffer))
+        t_out.daemon = True
+        t_out.start()
+        threads.append(t_out)
+    if proc.stderr is not None:
+        t_err = threading.Thread(target=_pump, args=(proc.stderr, sys.stderr, err_buffer))
+        t_err.daemon = True
+        t_err.start()
+        threads.append(t_err)
+
+    for t in threads:
+        t.join()
+    proc.wait()
+
+    if proc.returncode == 0:
+        return
+
+    # On failure, parse errors and surface helpful diagnostics
+    output_text = "".join(combined_output)
+    failed_rules = parse_snakemake_errors(output_text)
+
+    if not failed_rules:
+        logging.error("Snakemake failed, but no rule-specific errors were parsed. See output above.")
+        sys.exit(1)
+
+    unique_logs = []
+    seen = set()
+    for rule in failed_rules:
+        logs = find_logs_for_rule(rule, workflow, output_dir, workflow_identifier)
+        if logs:
+            for lp in logs:
+                logging.error(f"[{workflow_identifier}] Rule failed: {rule}; log: {lp}")
+                if lp not in seen:
+                    unique_logs.append(lp)
+                    seen.add(lp)
+        else:
+            logs_root = logs_dir_root_for_workflow(output_dir, workflow)
+            logging.error(f"[{workflow_identifier}] Rule failed: {rule}; no log files found under {logs_root}")
+
+    # Dump log files to stderr
+    for lp in unique_logs:
+        try:
+            with open(lp, "r", encoding="utf-8", errors="replace") as fh:
+                sys.stderr.write(f"\n===== BEGIN LOG ({workflow_identifier}): {lp} =====\n")
+                sys.stderr.write(fh.read())
+                sys.stderr.write(f"\n===== END LOG ({workflow_identifier}): {lp} =====\n")
+        except FileNotFoundError:
+            sys.stderr.write(f"\n===== LOG NOT FOUND ({workflow_identifier}): {lp} =====\n")
+        except Exception as e:
+            sys.stderr.write(f"\n===== ERROR READING LOG ({workflow_identifier}) {lp}: {e} =====\n")
+        sys.stderr.flush()
+
+    sys.exit(1)
 
 def download_sra(args):
     config_items = {
@@ -195,12 +375,12 @@ def download_sra(args):
                 "--input {input} "
                 "--start-check-pairs {start_check_pairs} "
                 "--end-check-pairs {end_check_pairs} "
-            ).format(
-                script = importlib.resources.files("binchicken.workflow.scripts").joinpath("is_interleaved.py"),
-                input = u,
-                start_check_pairs = 5,
-                end_check_pairs = 5,
-            )
+                ).format(
+                    script = importlib.resources.files("binchicken.workflow.scripts").joinpath("is_interleaved.py"),
+                    input = u,
+                    start_check_pairs = 5,
+                    end_check_pairs = 5,
+                )
             output = extern.run(cmd).strip().split("\t")
 
             if output[0] != "True":
@@ -1528,7 +1708,7 @@ def main():
             raise Exception("Assemble unmapped is incompatible with single-sample assembly")
         if args.assemble_unmapped and not args.genomes and not args.genomes_list:
             raise Exception("Reference genomes must be provided to assemble unmapped reads")
-        if not args.singlem_metapackage and not os.environ['SINGLEM_METAPACKAGE_PATH'] and not args.sample_query and not args.sample_query_list:
+        if not args.singlem_metapackage and not args.sample_query and not args.sample_query_list:
             raise Exception("SingleM metapackage (--singlem-metapackage or SINGLEM_METAPACKAGE_PATH environment variable, see SingleM data) must be provided when SingleM query otu tables are not provided")
         if (args.sample_singlem and args.sample_singlem_list) or (args.sample_singlem_dir and args.sample_singlem_list) or (args.sample_singlem and args.sample_singlem_dir) or \
             (args.sample_query and args.sample_query_list) or (args.sample_query_dir and args.sample_query_list) or (args.sample_query and args.sample_query_dir) or \
@@ -1574,7 +1754,7 @@ def main():
 
     elif args.subparser_name == "evaluate":
         coassemble_output_argument_verification(args, evaluate=True)
-        if not args.singlem_metapackage and not os.environ['SINGLEM_METAPACKAGE_PATH']:
+        if not args.singlem_metapackage:
             raise Exception("SingleM metapackage (--singlem-metapackage or SINGLEM_METAPACKAGE_PATH environment variable, see SingleM data) must be provided")
         if args.cluster and not (args.genomes or args.genomes_list):
             raise Exception("Reference genomes must be provided to cluster with new genomes")
