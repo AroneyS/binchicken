@@ -179,12 +179,14 @@ def find_logs_for_rule(rule_name: str, workflow: str, output_dir: str, wid: str 
                     content = re.sub(r"\{wildcards\.[^}]+\}", "*", content)
                     # Normalize duplicate slashes
                     content = re.sub(r"/+", "/", content)
-                    # Build glob pattern to attempts under this workflow invocation
-                    patterns.append(os.path.join(content, wid, "attempt*.log"))
+                    # Build glob pattern to attempts; don't rely on exact wid as the
+                    # Snakefile may import at a slightly different time. Prefer any wid.
+                    patterns.append(os.path.join(content, "*", "attempt*.log"))
 
     # Fallback if no pattern found for the rule
     if not patterns:
-        patterns.append(os.path.join(logs_root, "**", wid, "attempt*.log"))
+        # Fallback: search for any rule logs under logs_root
+        patterns.append(os.path.join(logs_root, "**", "attempt*.log"))
 
     files = set()
     for pat in patterns:
@@ -192,12 +194,15 @@ def find_logs_for_rule(rule_name: str, workflow: str, output_dir: str, wid: str 
             if os.path.isfile(f):
                 files.add(os.path.abspath(f))
 
-    # Prefer higher attempt numbers in each directory. Keep deterministic order.
+    # Prefer higher attempt numbers and newer wid directories. Keep deterministic order.
     def attempt_num(p):
         m = re.search(r"attempt(\d+)\.log$", os.path.basename(p))
         return int(m.group(1)) if m else -1
+    def wid_dir_key(p):
+        # parent dir name is the wid (e.g., 20250101_123456); lexical sort works
+        return os.path.basename(os.path.dirname(p))
 
-    return sorted(files, key=lambda p: (os.path.dirname(p), attempt_num(p)), reverse=True)
+    return sorted(files, key=lambda p: (wid_dir_key(p), attempt_num(p)), reverse=True)
 
 def run_workflow(config, workflow, output_dir, cores=16, dryrun=False,
                  profile=None, local_cores=1, cluster_retries=None,
