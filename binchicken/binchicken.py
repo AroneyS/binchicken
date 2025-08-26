@@ -1228,7 +1228,10 @@ def configure_variable(variable, value):
     try:
         extern.run(f"pixi run --frozen conda env config vars set {variable}={value}")
     except extern.CalledProcessError:
-        logging.warning(f"Environment variable {variable} was not set in the outer environment. This may need to be set manually.")
+        try:
+            extern.run(f"conda env config vars set {variable}={value}")
+        except extern.CalledProcessError:
+            logging.warning(f"Environment variable {variable} was not set in the outer environment. This may need to be set manually.")
 
 def build(args):
     output_dir = os.path.join(args.output, "build")
