@@ -142,7 +142,7 @@ class Tests(unittest.TestCase):
                             dryrun=False,
                             profile=None,
                             local_cores=1,
-                            cluster_retries=None,
+                            retries=None,
                             snakemake_args="",
                         )
 
@@ -214,7 +214,7 @@ class Tests(unittest.TestCase):
                             dryrun=False,
                             profile=None,
                             local_cores=1,
-                            cluster_retries=None,
+                            retries=None,
                             snakemake_args="",
                         )
             finally:
@@ -254,7 +254,7 @@ class Tests(unittest.TestCase):
                         dryrun=False,
                         profile=None,
                         local_cores=1,
-                        cluster_retries=None,
+                        retries=None,
                         snakemake_args="",
                     )
 

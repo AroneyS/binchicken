@@ -48,4 +48,4 @@ reads_2:
   SRR8334325: ../SRR8334325
   SRR8334326: ../SRR8334326
 snakemake_profile: ''
-cluster_retries: 0
+retries: 0
