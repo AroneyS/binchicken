@@ -16,12 +16,40 @@ Bin Chicken is supported for Linux (tested on SUSE 12.5). Specific dependencies 
 Bin Chicken uses many independent pixi environments for different tasks. These environments are listed in [pixi.toml](https://github.com/AroneyS/binchicken/blob/master/binchicken/pixi.toml).
 See [setup](/setup) for environment and database setup.
 
-## Install from Bioconda
+## Install from Bioconda via Pixi
 
-Install latest release via bioconda.
+Create pixi.toml file:
+
+```toml
+[workspace]
+channels = ["conda-forge", "bioconda"]
+name = "binchicken"
+platforms = ["linux-64"]
+
+[dependencies]
+binchicken = "*"
+```
+
+Create pixi environment.
+
+```bash
+pixi install
+
+# Either run within your current environment
+pixi run binchicken -h
+# Or enter the environment
+pixi shell
+```
+
+## Install from Bioconda via Conda
+
+Install latest release via conda.
 
 ```bash
 conda create -n binchicken -c bioconda -c conda-forge binchicken
+
+# Activate the environment
+conda activate binchicken
 ```
 
 ## Install from pip
