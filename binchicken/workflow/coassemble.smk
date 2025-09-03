@@ -889,7 +889,8 @@ rule mock_download_sra:
         f"{pixi_run} -e kingfisher "
         "mkdir -p {output} && "
         "cp {params.sra_u} {params.sra_f} {params.sra_r} {output} "
-        "&> {resources.log_path}"
+        "&> {resources.log_path} "
+        "&& sleep 1"
 
 #####################################
 ### Map reads to matching genomes ###
