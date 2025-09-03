@@ -804,9 +804,52 @@ def coassemble(args):
     except (FileNotFoundError, NoDataError):
         pass
 
+    elusive_clusters_path = os.path.join(args.output, "coassemble", "target", "elusive_clusters.tsv")
+    recovered_bins_dir = os.path.join(args.output, "recovered_bins")
+    bin_prov_path = os.path.join(recovered_bins_dir, "bin_provenance.tsv")
+    if args.run_aviary and not args.dryrun and os.path.exists(elusive_clusters_path):
+        logging.info("Extracting recovered bins...")
+        try:
+            coassembly_dir = os.path.join(args.output, "coassemble", "coassemble")
+            expected_coassemblies = (
+                pl.read_csv(elusive_clusters_path, separator="\t")
+                .get_column("coassembly")
+                .unique()
+                .to_list()
+            )
+
+            recovered: dict[str, str] = {}
+            for coassembly in sorted(expected_coassemblies):
+                bins_dir = os.path.join(coassembly_dir, coassembly, "recover", "bins", "final_bins")
+                if not os.path.isdir(bins_dir):
+                    logging.warning(f"No Aviary outputs found for {coassembly}; expected at {bins_dir}")
+                    continue
+                bin_files = sorted([f for f in os.listdir(bins_dir) if f.endswith((".fna", ".fa", ".fasta"))])
+                if not bin_files:
+                    logging.warning(f"No recovered genomes found for {coassembly} in {bins_dir}")
+                    continue
+                for i, fname in enumerate(bin_files):
+                    src = os.path.abspath(os.path.join(bins_dir, fname))
+                    key = f"binchicken_{coassembly}.{i}"
+                    recovered[key] = src
+
+            if recovered:
+                os.makedirs(recovered_bins_dir, exist_ok=True)
+                for key, src in recovered.items():
+                    dest = os.path.join(recovered_bins_dir, key + ".fna")
+                    copy_input(src, dest, suppress=True)
+                with open(bin_prov_path, "w") as f:
+                    f.writelines(
+                        "\n".join(["\t".join([os.path.abspath(src), key + ".fna"]) for key, src in recovered.items()])
+                    )
+                logging.info(f"Recovered {len(recovered)} bins to {recovered_bins_dir}")
+            else:
+                logging.info("No recovered bins found to extract.")
+        except Exception as e:
+            logging.warning(f"Failed to collect recovered bins: {e}")
+
     logging.info("---- Bin Chicken coassemble ----------------------------------------------------")
     logging.info(f"Bin Chicken coassemble complete.")
-    elusive_clusters_path = os.path.join(args.output, 'coassemble', 'target', 'elusive_clusters.tsv')
     if os.path.exists(elusive_clusters_path):
         elusive_clusters = pl.read_csv(elusive_clusters_path, separator="\t")
         sizes = ", ".join([f"{c} {s}-sample" for s,c in elusive_clusters.group_by("length").count().iter_rows()])
@@ -817,6 +860,8 @@ def coassemble(args):
         if args.dryrun:
             logging.info(f"Aviary outputs will be at {os.path.join(args.output, 'coassemble', 'coassemble')}")
         else:
+            logging.info(f"Bins recovered by Aviary are at {recovered_bins_dir}")
+            logging.info(f"Bin provenance (source paths) at {bin_prov_path}")
             logging.info(f"Aviary outputs at {os.path.join(args.output, 'coassemble', 'coassemble')}")
     else:
         logging.info(f"Aviary commands for coassembly and recovery in shell scripts at {os.path.join(args.output, 'coassemble', 'commands')}")

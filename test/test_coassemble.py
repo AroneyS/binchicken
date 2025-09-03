@@ -2397,5 +2397,59 @@ class Tests(unittest.TestCase):
             with open(cluster_path) as f:
                 self.assertEqual(expected, f.read())
 
+    def test_coassemble_extract_recovered_bins(self):
+        with in_tempdir():
+            output_bins_path = os.path.join("test", "coassemble", "coassemble", "coassembly_0", "recover", "bins", "final_bins")
+            os.makedirs(output_bins_path, exist_ok=True)
+
+            source_genome1_path = os.path.join(output_bins_path, "bin_A.fna")
+            with open(source_genome1_path, "w") as f:
+                f.write(">contigA\nACGT\n")
+
+            source_genome2_path = os.path.join(output_bins_path, "bin_B.fna")
+            with open(source_genome2_path, "w") as f:
+                f.write(">contigB\nTGCA\n")
+
+            cmd = (
+                f"binchicken coassemble "
+                f"--run-aviary "
+                f"--aviary-checkm2-db CheckM2_database "
+                f"--forward {SAMPLE_READS_FORWARD} "
+                f"--reverse {SAMPLE_READS_REVERSE} "
+                f"--genomes {GENOMES} "
+                f"--genome-transcripts {GENOME_TRANSCRIPTS} "
+                f"--sample-singlem {SAMPLE_SINGLEM} "
+                f"--sample-read-size {SAMPLE_READ_SIZE} "
+                f"--genome-singlem {GENOME_SINGLEM} "
+                f"--singlem-metapackage {METAPACKAGE} "
+                f"--output test "
+                f"--snakemake-args \"cluster_graph\" "
+            )
+            extern.run(cmd)
+
+            recovered_bins_path = os.path.join("test", "recovered_bins")
+            self.assertTrue(os.path.exists(recovered_bins_path))
+
+            genome1_path = os.path.join(recovered_bins_path, "binchicken_coassembly_0.0.fna")
+            self.assertTrue(os.path.exists(genome1_path))
+            with open(genome1_path) as f:
+                self.assertIn(">contigA", f.read())
+
+            genome2_path = os.path.join(recovered_bins_path, "binchicken_coassembly_0.1.fna")
+            self.assertTrue(os.path.exists(genome2_path))
+            with open(genome2_path) as f:
+                self.assertIn(">contigB", f.read())
+
+            provenance_path = os.path.join(recovered_bins_path, "bin_provenance.tsv")
+            self.assertTrue(os.path.exists(provenance_path))
+            with open(provenance_path) as f:
+                contents = f.read().splitlines()
+
+            expected_lines = {
+                "\t".join([os.path.abspath(source_genome1_path), "binchicken_coassembly_0.0.fna"]),
+                "\t".join([os.path.abspath(source_genome2_path), "binchicken_coassembly_0.1.fna"]),
+            }
+            self.assertEqual(set(contents), expected_lines)
+
 if __name__ == '__main__':
     unittest.main()
