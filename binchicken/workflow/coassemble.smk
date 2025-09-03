@@ -1246,7 +1246,7 @@ rule aviary_recover:
         skip_binners = "--skip-binners " + " ".join(config["aviary_skip_binners"]) if config["aviary_skip_binners"] else "",
         request_gpu = "--request-gpu" if config["aviary_request_gpu"] else "",
         snakemake_profile = f"--snakemake-profile {config['aviary_snakemake_profile']}" if config["aviary_snakemake_profile"] else "",
-        cluster_retries = f"--cluster-retries {config['cluster_retries']}" if config["cluster_retries"] else "",
+        retries = f"--cluster-retries {config['retries']}" if config["retries"] else "",
         tmpdir = f"TMPDIR={config['tmpdir']}" if config["tmpdir"] else "",
         threads = int(config["aviary_recover_threads"])
     localrule: True
@@ -1281,7 +1281,7 @@ rule aviary_recover:
         "--metabuli-db-path {params.metabuli} "
         "--eggnog-db-path . "
         "{params.snakemake_profile} "
-        "{params.cluster_retries} "
+        "{params.retries} "
         "{params.dryrun} "
         "&> {resources.log_path} "
         "&& touch {output} "
