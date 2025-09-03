@@ -807,9 +807,10 @@ def coassemble(args):
     logging.info("---- Bin Chicken coassemble ----------------------------------------------------")
     logging.info(f"Bin Chicken coassemble complete.")
     elusive_clusters_path = os.path.join(args.output, 'coassemble', 'target', 'elusive_clusters.tsv')
-    elusive_clusters = pl.read_csv(elusive_clusters_path, separator="\t")
-    sizes = ", ".join([f"{c} {s}-sample" for s,c in elusive_clusters.group_by("length").count().iter_rows()])
-    logging.info(f"Identified {elusive_clusters.height} coassemblies, including {sizes}.")
+    if os.path.exists(elusive_clusters_path):
+        elusive_clusters = pl.read_csv(elusive_clusters_path, separator="\t")
+        sizes = ", ".join([f"{c} {s}-sample" for s,c in elusive_clusters.group_by("length").count().iter_rows()])
+        logging.info(f"Identified {elusive_clusters.height} coassemblies, including {sizes}.")
     logging.info(f"Cluster summary at {os.path.join(args.output, 'coassemble', 'summary.tsv')}")
     logging.info(f"More details at {elusive_clusters_path}")
     if args.run_aviary:
