@@ -17,7 +17,7 @@ from snakemake.io import load_configfile
 from ruamel.yaml import YAML
 import copy
 import shutil
-from binchicken.common import fasta_to_name, pixi_run, workflow_identifier
+from binchicken.common import fasta_to_name, pixi_run, workflow_identifier, BIN_INFO_COLUMNS, CHECKM2_QUALITY_COLUMNS
 import re
 import threading
 
@@ -807,6 +807,8 @@ def coassemble(args):
     elusive_clusters_path = os.path.join(args.output, "coassemble", "target", "elusive_clusters.tsv")
     recovered_bins_dir = os.path.join(args.output, "recovered_bins")
     bin_prov_path = os.path.join(recovered_bins_dir, "bin_provenance.tsv")
+    final_bin_info_path = os.path.join(recovered_bins_dir, "bin_info.tsv")
+    checkm2_quality_path = os.path.join(recovered_bins_dir, "quality_report.tsv")
     if args.run_aviary and not args.dryrun and os.path.exists(elusive_clusters_path):
         logging.info("Extracting recovered bins...")
         try:
@@ -818,31 +820,76 @@ def coassemble(args):
                 .to_list()
             )
 
-            recovered: dict[str, str] = {}
+            bin_infos = []
             for coassembly in sorted(expected_coassemblies):
-                bins_dir = os.path.join(coassembly_dir, coassembly, "recover", "bins", "final_bins")
+                bins_dir = os.path.join(coassembly_dir, coassembly, "recover", "bins")
                 if not os.path.isdir(bins_dir):
                     logging.warning(f"No Aviary outputs found for {coassembly}; expected at {bins_dir}")
                     continue
-                bin_files = sorted([f for f in os.listdir(bins_dir) if f.endswith((".fna", ".fa", ".fasta"))])
-                if not bin_files:
-                    logging.warning(f"No recovered genomes found for {coassembly} in {bins_dir}")
-                    continue
-                for i, fname in enumerate(bin_files):
-                    src = os.path.abspath(os.path.join(bins_dir, fname))
-                    key = f"binchicken_{coassembly}.{i}"
-                    recovered[key] = src
 
-            if recovered:
-                os.makedirs(recovered_bins_dir, exist_ok=True)
-                for key, src in recovered.items():
-                    dest = os.path.join(recovered_bins_dir, key + ".fna")
-                    copy_input(src, dest, suppress=True)
-                with open(bin_prov_path, "w") as f:
-                    f.writelines(
-                        "\n".join(["\t".join([os.path.abspath(src), key + ".fna"]) for key, src in recovered.items()])
+                bin_info_path = os.path.join(bins_dir, "bin_info.tsv")
+                if not os.path.isfile(bin_info_path):
+                    logging.warning(f"No Aviary bin_info.tsv found for {coassembly}; expected at {bin_info_path}")
+                    continue
+                try:
+                    bin_info = (
+                        pl.read_csv(bin_info_path, separator="\t", schema_overrides=BIN_INFO_COLUMNS)
+                        .with_row_index("index")
+                        .with_columns(
+                            binner = pl.col("Bin Id").str.extract(r"(^[^_.]+_)").str.replace(r"_", ""),
+                            bin_source = pl.concat_str(pl.lit(bins_dir + "/final_bins/"), pl.col("Bin Id"), pl.lit(".fna")),
+                            new_name = pl.concat_str(pl.lit(f"binchicken_{coassembly}."), (pl.col("index") + 1).cast(pl.Utf8))
+                        )
                     )
-                logging.info(f"Recovered {len(recovered)} bins to {recovered_bins_dir}")
+                except Exception as e:
+                    logging.warning(f"Failed to read Aviary bin_info.tsv for {coassembly} at {bin_info_path}: {e}")
+                    continue
+
+                if bin_info.height == 0:
+                    logging.warning(f"No bins found in Aviary bin_info.tsv for {coassembly} at {bin_info_path}")
+                    continue
+
+                bin_infos.append(bin_info)
+
+            recovered_bins = pl.concat(bin_infos)
+            if recovered_bins.height > 0:
+                os.makedirs(recovered_bins_dir, exist_ok=True)
+                recovered = (
+                    recovered_bins
+                    .with_columns(
+                        bin_dest = pl.concat_str(pl.lit(recovered_bins_dir + "/"), pl.col("new_name"), pl.lit(".fna")),
+                        )
+                    .with_columns(
+                        copied = pl.struct(["bin_source", "bin_dest"]).map_elements(lambda x: copy_input(x["bin_source"], x["bin_dest"]), return_dtype=pl.Utf8),
+                        )
+                )
+
+                (
+                    recovered
+                    .select("Bin Id", "bin_source", "new_name", "binner")
+                    .write_csv(bin_prov_path, separator="\t")
+                )
+
+                (
+                    recovered
+                    .drop("Bin Id")
+                    .rename({"new_name": "Bin Id"})
+                    .select(BIN_INFO_COLUMNS.keys())
+                    .write_csv(final_bin_info_path, separator="\t")
+                )
+
+                (
+                    recovered
+                    .rename({
+                        "new_name": "Name",
+                        "Completeness (CheckM2)": "Completeness",
+                        "Contamination (CheckM2)": "Contamination",
+                        })
+                    .select(CHECKM2_QUALITY_COLUMNS.keys())
+                    .write_csv(checkm2_quality_path, separator="\t")
+                )
+
+                logging.info(f"Recovered {recovered_bins.height} bins to {recovered_bins_dir}")
             else:
                 logging.info("No recovered bins found to extract.")
         except Exception as e:
@@ -862,6 +909,8 @@ def coassemble(args):
         else:
             logging.info(f"Bins recovered by Aviary are at {recovered_bins_dir}")
             logging.info(f"Bin provenance (source paths) at {bin_prov_path}")
+            logging.info(f"Compiled bin info at {final_bin_info_path}")
+            logging.info(f"CheckM2 quality summary at {checkm2_quality_path}")
             logging.info(f"Aviary outputs at {os.path.join(args.output, 'coassemble', 'coassemble')}")
     else:
         logging.info(f"Aviary commands for coassembly and recovery in shell scripts at {os.path.join(args.output, 'coassemble', 'commands')}")

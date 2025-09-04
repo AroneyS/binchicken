@@ -80,6 +80,76 @@ SAMPLE_QUERY_SINGLEM = ' '.join([
 
 PRECLUSTER_DISTANCES = os.path.join(path_to_data, "sketch", "sample_distances.csv")
 
+BIN_INFO_COLUMNS = {
+    "Bin Id": str,
+    "Marker lineage": str,
+    "# genomes": str,
+    "# markers": str,
+    "# marker sets": str,
+    "Completeness (CheckM1)": str,
+    "Contamination (CheckM1)": str,
+    "Strain heterogeneity": str,
+    "Genome size (bp)": str,
+    "# ambiguous bases": str,
+    "# scaffolds": str,
+    "# contigs": str,
+    "N50 (scaffolds)": str,
+    "N50 (contigs)": str,
+    "Mean scaffold length (bp)": str,
+    "Mean contig length (bp)": str,
+    "Longest scaffold (bp)": str,
+    "Longest contig (bp)": str,
+    "GC": str,
+    "GC std (scaffolds > 1kbp)": str,
+    "Coding density": str,
+    "Translation table": str,
+    "# predicted genes 0": str,
+    "1": str,
+    "2": str,
+    "3": str,
+    "4": str,
+    "5+": str,
+    "Completeness (CheckM2)": str,
+    "Contamination (CheckM2)": str,
+    "Completeness_Model_Used": str,
+    "Translation_Table_Used": str,
+    "Coding_Density": str,
+    "Contig_N50": str,
+    "Average_Gene_Length": str,
+    "Genome_Size": str,
+    "GC_Content": str,
+    "Total_Coding_Sequences": str,
+    "Total_Contigs": str,
+    "Max_Contig_Length": str,
+    "Additional_Notes": str,
+}
+
+ELUSIVE_CLUSTERS_COLUMNS = {
+    "samples": str,
+    "length": int,
+    "total_targets": float,
+    "total_size": int,
+    "recover_samples": str,
+    "coassembly": str,
+}
+
+CHECKM2_QUALITY_COLUMNS = {
+    "Name": str,
+    "Completeness": str,
+    "Contamination": str,
+    "Completeness_Model_Used": str,
+    "Translation_Table_Used": str,
+    "Coding_Density": str,
+    "Contig_N50": str,
+    "Average_Gene_Length": str,
+    "Genome_Size": str,
+    "GC_Content": str,
+    "Total_Coding_Sequences": str,
+    "Total_Contigs": str,
+    "Max_Contig_Length": str,
+    "Additional_Notes": str,
+}
+
 def write_string_to_file(string, filename):
     with open(filename, "w") as f:
         f.write("\n".join(string.split(" ")))
@@ -2399,16 +2469,57 @@ class Tests(unittest.TestCase):
 
     def test_coassemble_extract_recovered_bins(self):
         with in_tempdir():
-            output_bins_path = os.path.join("test", "coassemble", "coassemble", "coassembly_0", "recover", "bins", "final_bins")
-            os.makedirs(output_bins_path, exist_ok=True)
+            # elusive clusters
+            elusive_clusters_path = os.path.join("test", "coassemble", "target", "elusive_clusters.tsv")
+            os.makedirs(os.path.dirname(elusive_clusters_path), exist_ok=True)
+            (
+                pl.DataFrame([
+                        ["sample_1,sample_2", "2", "2", "2869", "sample_1,sample_2", "coassembly_0"],
+                        ["sample_1,sample_3", "2", "2", "2869", "sample_1,sample_3", "coassembly_1"],
+                        ],
+                    orient="row", schema=ELUSIVE_CLUSTERS_COLUMNS
+                    )
+                .write_csv(elusive_clusters_path, separator="\t")
+            )
 
-            source_genome1_path = os.path.join(output_bins_path, "bin_A.fna")
+            # coassembly_0 outputs
+            output_bins_path = os.path.join("test", "coassemble", "coassemble", "coassembly_0", "recover", "bins")
+            os.makedirs(os.path.join(output_bins_path, "final_bins"), exist_ok=True)
+
+            source_genome1_path = os.path.join(output_bins_path, "final_bins", "metabat2_refined_bins.tsv.005.fna")
             with open(source_genome1_path, "w") as f:
                 f.write(">contigA\nACGT\n")
 
-            source_genome2_path = os.path.join(output_bins_path, "bin_B.fna")
+            source_genome2_path = os.path.join(output_bins_path, "final_bins", "semibin_refined_bins.tsv.072_sub.fna")
             with open(source_genome2_path, "w") as f:
                 f.write(">contigB\nTGCA\n")
+
+            bin_info = pl.DataFrame([
+                    [
+                        "metabat2_refined_bins.tsv.005",
+                        "p__Bacteroidetes (UID2605)", "350", "314", "208", "86.44", "1.8", "12.5", "1705643", "0", "315", "315", "6824", "6824", "5414", "5414", "25260", "25260", "59.9", "3.41", "90.22", "11",
+                        "1669", "37", "269", "8", "0", "0", "0",
+                        "83.86", "1.14", "Neural Network (Specific Model)", "11", "0.902", "6824", "307.7531455961654", "1705643", "0.6", "1669", "315", "25260"
+                    ],
+                    [
+                        "semibin_refined_bins.tsv.072_sub",
+                        "o__Clostridiales (UID1212)", "172", "257", "149", "44.16", "1.03", "33.33", "980304", "0", "399", "399", "2442", "2442", "2456", "2456", "7735", "7735", "60.2", "2.97", "90.94", "11",
+                        "1244", "143", "111", "3", "0", "0", "0",
+                        "36.49", "0.24", "Neural Network (Specific Model)", "11", "0.909", "2442", "239.274115755627", "980304", "0.6", "1244", "399", "7735"
+                    ],
+                ], orient="row", schema=BIN_INFO_COLUMNS)
+            (
+                bin_info
+                .write_csv(os.path.join(output_bins_path, "bin_info.tsv"), separator="\t")
+            )
+
+            # coassembly_1 outputs
+            output_bins_path2 = os.path.join("test", "coassemble", "coassemble", "coassembly_1", "recover", "bins")
+            os.makedirs(os.path.join(output_bins_path2, "final_bins"), exist_ok=True)
+            (
+                pl.DataFrame([], orient="row", schema=BIN_INFO_COLUMNS)
+                .write_csv(os.path.join(output_bins_path2, "bin_info.tsv"), separator="\t")
+            )
 
             cmd = (
                 f"binchicken coassemble "
@@ -2423,33 +2534,67 @@ class Tests(unittest.TestCase):
                 f"--genome-singlem {GENOME_SINGLEM} "
                 f"--singlem-metapackage {METAPACKAGE} "
                 f"--output test "
-                f"--snakemake-args \"cluster_graph\" "
+                f"--snakemake-args \"target_elusive\" "
             )
             extern.run(cmd)
 
             recovered_bins_path = os.path.join("test", "recovered_bins")
             self.assertTrue(os.path.exists(recovered_bins_path))
 
-            genome1_path = os.path.join(recovered_bins_path, "binchicken_coassembly_0.0.fna")
+            genome1_path = os.path.join(recovered_bins_path, "binchicken_coassembly_0.1.fna")
             self.assertTrue(os.path.exists(genome1_path))
             with open(genome1_path) as f:
                 self.assertIn(">contigA", f.read())
 
-            genome2_path = os.path.join(recovered_bins_path, "binchicken_coassembly_0.1.fna")
+            genome2_path = os.path.join(recovered_bins_path, "binchicken_coassembly_0.2.fna")
             self.assertTrue(os.path.exists(genome2_path))
             with open(genome2_path) as f:
                 self.assertIn(">contigB", f.read())
 
             provenance_path = os.path.join(recovered_bins_path, "bin_provenance.tsv")
             self.assertTrue(os.path.exists(provenance_path))
-            with open(provenance_path) as f:
-                contents = f.read().splitlines()
+            observed = pl.read_csv(provenance_path, separator="\t")
+            expected = pl.DataFrame([
+                    ["metabat2_refined_bins.tsv.005", os.path.abspath(source_genome1_path), "binchicken_coassembly_0.1", "metabat2"],
+                    ["semibin_refined_bins.tsv.072_sub", os.path.abspath(source_genome2_path), "binchicken_coassembly_0.2", "semibin"],
+                ],
+                schema=["Bin Id", "bin_source", "new_name", "binner"],
+                orient="row",
+            )
+            assert_frame_equal(expected, observed, check_dtypes=False, check_row_order=False, atol=1e-5)
 
-            expected_lines = {
-                "\t".join([os.path.abspath(source_genome1_path), "binchicken_coassembly_0.0.fna"]),
-                "\t".join([os.path.abspath(source_genome2_path), "binchicken_coassembly_0.1.fna"]),
-            }
-            self.assertEqual(set(contents), expected_lines)
+            bin_info_path = os.path.join(recovered_bins_path, "bin_info.tsv")
+            self.assertTrue(os.path.exists(bin_info_path))
+            observed = pl.read_csv(bin_info_path, separator="\t", schema_overrides=BIN_INFO_COLUMNS)
+            expected = (
+                bin_info
+                .with_columns(
+                    pl.col("Bin Id").replace_strict(
+                        ["metabat2_refined_bins.tsv.005", "semibin_refined_bins.tsv.072_sub"],
+                        ["binchicken_coassembly_0.1", "binchicken_coassembly_0.2"]
+                        )
+                    )
+            )
+            assert_frame_equal(expected, observed, check_dtypes=False, check_row_order=False, atol=1e-5)
+
+            quality_report_path = os.path.join(recovered_bins_path, "quality_report.tsv")
+            self.assertTrue(os.path.exists(quality_report_path))
+            observed = pl.read_csv(quality_report_path, separator="\t", schema_overrides=CHECKM2_QUALITY_COLUMNS)
+            expected = (
+                bin_info
+                .with_columns(
+                    Name = pl.col("Bin Id").replace_strict(
+                        ["metabat2_refined_bins.tsv.005", "semibin_refined_bins.tsv.072_sub"],
+                        ["binchicken_coassembly_0.1", "binchicken_coassembly_0.2"]
+                        )
+                    )
+                .rename({
+                    "Completeness (CheckM2)": "Completeness",
+                    "Contamination (CheckM2)": "Contamination",
+                    })
+                .select(CHECKM2_QUALITY_COLUMNS.keys())
+            )
+            assert_frame_equal(expected, observed, check_dtypes=False, check_row_order=False, atol=1e-5)
 
 if __name__ == '__main__':
     unittest.main()
