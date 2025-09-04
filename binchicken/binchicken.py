@@ -571,6 +571,88 @@ def check_prior_assemblies(prior_assemblies, inputs):
 
     return {row[0]: os.path.abspath(row[1]) for row in prior_assemblies.iter_rows()}
 
+def extract_recovered_bins(elusive_clusters_path, recovered_bins_dir, bin_prov_path, final_bin_info_path, checkm2_quality_path, coassembly_dir):
+    logging.info("Extracting recovered bins...")
+    expected_coassemblies = (
+        pl.read_csv(elusive_clusters_path, separator="\t")
+        .get_column("coassembly")
+        .unique()
+        .to_list()
+    )
+
+    bin_infos = []
+    for coassembly in sorted(expected_coassemblies):
+        bins_dir = os.path.join(coassembly_dir, coassembly, "recover", "bins")
+        if not os.path.isdir(bins_dir):
+            logging.warning(f"No Aviary outputs found for {coassembly}; expected at {bins_dir}")
+            continue
+
+        bin_info_path = os.path.join(bins_dir, "bin_info.tsv")
+        if not os.path.isfile(bin_info_path):
+            logging.warning(f"No Aviary bin_info.tsv found for {coassembly}; expected at {bin_info_path}")
+            continue
+        try:
+            bin_info = (
+                pl.read_csv(bin_info_path, separator="\t", schema_overrides=BIN_INFO_COLUMNS)
+                .with_row_index("index")
+                .with_columns(
+                    binner = pl.col("Bin Id").str.extract(r"(^[^_.]+_)").str.replace(r"_", ""),
+                    bin_source = pl.concat_str(pl.lit(bins_dir + "/final_bins/"), pl.col("Bin Id"), pl.lit(".fna")),
+                    new_name = pl.concat_str(pl.lit(f"binchicken_{coassembly}."), (pl.col("index") + 1).cast(pl.Utf8))
+                )
+            )
+        except Exception as e:
+            logging.warning(f"Failed to read Aviary bin_info.tsv for {coassembly} at {bin_info_path}: {e}")
+            continue
+
+        if bin_info.height == 0:
+            logging.warning(f"No bins found in Aviary bin_info.tsv for {coassembly} at {bin_info_path}")
+            continue
+
+        bin_infos.append(bin_info)
+
+    recovered_bins = pl.concat(bin_infos)
+    if recovered_bins.height > 0:
+        os.makedirs(recovered_bins_dir, exist_ok=True)
+        recovered = (
+            recovered_bins
+            .with_columns(
+                bin_dest = pl.concat_str(pl.lit(recovered_bins_dir + "/"), pl.col("new_name"), pl.lit(".fna")),
+                )
+            .with_columns(
+                copied = pl.struct(["bin_source", "bin_dest"]).map_elements(lambda x: copy_input(x["bin_source"], x["bin_dest"]), return_dtype=pl.Utf8),
+                )
+        )
+
+        (
+            recovered
+            .select("Bin Id", "bin_source", "new_name", "binner")
+            .write_csv(bin_prov_path, separator="\t")
+        )
+
+        (
+            recovered
+            .drop("Bin Id")
+            .rename({"new_name": "Bin Id"})
+            .select(BIN_INFO_COLUMNS.keys())
+            .write_csv(final_bin_info_path, separator="\t")
+        )
+
+        (
+            recovered
+            .rename({
+                "new_name": "Name",
+                "Completeness (CheckM2)": "Completeness",
+                "Contamination (CheckM2)": "Contamination",
+                })
+            .select(CHECKM2_QUALITY_COLUMNS.keys())
+            .write_csv(checkm2_quality_path, separator="\t")
+        )
+
+        logging.info(f"Recovered {recovered_bins.height} bins to {recovered_bins_dir}")
+    else:
+        logging.info("No recovered bins found to extract.")
+
 def coassemble(args):
     logging.info("Loading sample info")
     if args.sra:
@@ -809,91 +891,9 @@ def coassemble(args):
     bin_prov_path = os.path.join(recovered_bins_dir, "bin_provenance.tsv")
     final_bin_info_path = os.path.join(recovered_bins_dir, "bin_info.tsv")
     checkm2_quality_path = os.path.join(recovered_bins_dir, "quality_report.tsv")
+    coassembly_dir = os.path.join(args.output, "coassemble", "coassemble")
     if args.run_aviary and not args.dryrun and os.path.exists(elusive_clusters_path):
-        logging.info("Extracting recovered bins...")
-        try:
-            coassembly_dir = os.path.join(args.output, "coassemble", "coassemble")
-            expected_coassemblies = (
-                pl.read_csv(elusive_clusters_path, separator="\t")
-                .get_column("coassembly")
-                .unique()
-                .to_list()
-            )
-
-            bin_infos = []
-            for coassembly in sorted(expected_coassemblies):
-                bins_dir = os.path.join(coassembly_dir, coassembly, "recover", "bins")
-                if not os.path.isdir(bins_dir):
-                    logging.warning(f"No Aviary outputs found for {coassembly}; expected at {bins_dir}")
-                    continue
-
-                bin_info_path = os.path.join(bins_dir, "bin_info.tsv")
-                if not os.path.isfile(bin_info_path):
-                    logging.warning(f"No Aviary bin_info.tsv found for {coassembly}; expected at {bin_info_path}")
-                    continue
-                try:
-                    bin_info = (
-                        pl.read_csv(bin_info_path, separator="\t", schema_overrides=BIN_INFO_COLUMNS)
-                        .with_row_index("index")
-                        .with_columns(
-                            binner = pl.col("Bin Id").str.extract(r"(^[^_.]+_)").str.replace(r"_", ""),
-                            bin_source = pl.concat_str(pl.lit(bins_dir + "/final_bins/"), pl.col("Bin Id"), pl.lit(".fna")),
-                            new_name = pl.concat_str(pl.lit(f"binchicken_{coassembly}."), (pl.col("index") + 1).cast(pl.Utf8))
-                        )
-                    )
-                except Exception as e:
-                    logging.warning(f"Failed to read Aviary bin_info.tsv for {coassembly} at {bin_info_path}: {e}")
-                    continue
-
-                if bin_info.height == 0:
-                    logging.warning(f"No bins found in Aviary bin_info.tsv for {coassembly} at {bin_info_path}")
-                    continue
-
-                bin_infos.append(bin_info)
-
-            recovered_bins = pl.concat(bin_infos)
-            if recovered_bins.height > 0:
-                os.makedirs(recovered_bins_dir, exist_ok=True)
-                recovered = (
-                    recovered_bins
-                    .with_columns(
-                        bin_dest = pl.concat_str(pl.lit(recovered_bins_dir + "/"), pl.col("new_name"), pl.lit(".fna")),
-                        )
-                    .with_columns(
-                        copied = pl.struct(["bin_source", "bin_dest"]).map_elements(lambda x: copy_input(x["bin_source"], x["bin_dest"]), return_dtype=pl.Utf8),
-                        )
-                )
-
-                (
-                    recovered
-                    .select("Bin Id", "bin_source", "new_name", "binner")
-                    .write_csv(bin_prov_path, separator="\t")
-                )
-
-                (
-                    recovered
-                    .drop("Bin Id")
-                    .rename({"new_name": "Bin Id"})
-                    .select(BIN_INFO_COLUMNS.keys())
-                    .write_csv(final_bin_info_path, separator="\t")
-                )
-
-                (
-                    recovered
-                    .rename({
-                        "new_name": "Name",
-                        "Completeness (CheckM2)": "Completeness",
-                        "Contamination (CheckM2)": "Contamination",
-                        })
-                    .select(CHECKM2_QUALITY_COLUMNS.keys())
-                    .write_csv(checkm2_quality_path, separator="\t")
-                )
-
-                logging.info(f"Recovered {recovered_bins.height} bins to {recovered_bins_dir}")
-            else:
-                logging.info("No recovered bins found to extract.")
-        except Exception as e:
-            logging.warning(f"Failed to collect recovered bins: {e}")
+        extract_recovered_bins(elusive_clusters_path, recovered_bins_dir, bin_prov_path, final_bin_info_path, checkm2_quality_path, coassembly_dir)
 
     logging.info("---- Bin Chicken coassemble ----------------------------------------------------")
     logging.info(f"Bin Chicken coassemble complete.")
