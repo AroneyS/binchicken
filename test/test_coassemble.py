@@ -2538,15 +2538,15 @@ class Tests(unittest.TestCase):
             )
             extern.run(cmd)
 
-            recovered_bins_path = os.path.join("test", "recovered_bins")
+            recovered_bins_path = os.path.join("test", "recovered")
             self.assertTrue(os.path.exists(recovered_bins_path))
 
-            genome1_path = os.path.join(recovered_bins_path, "binchicken_coassembly_0.1.fna")
+            genome1_path = os.path.join(recovered_bins_path, "bins", "binchicken_coassembly_0.1.fna")
             self.assertTrue(os.path.exists(genome1_path))
             with open(genome1_path) as f:
                 self.assertIn(">contigA", f.read())
 
-            genome2_path = os.path.join(recovered_bins_path, "binchicken_coassembly_0.2.fna")
+            genome2_path = os.path.join(recovered_bins_path, "bins", "binchicken_coassembly_0.2.fna")
             self.assertTrue(os.path.exists(genome2_path))
             with open(genome2_path) as f:
                 self.assertIn(">contigB", f.read())

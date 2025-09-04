@@ -613,11 +613,11 @@ def extract_recovered_bins(elusive_clusters_path, recovered_bins_dir, bin_prov_p
 
     if bin_infos:
         recovered_bins = pl.concat(bin_infos)
-        os.makedirs(recovered_bins_dir, exist_ok=True)
+        os.makedirs(os.path.join(recovered_bins_dir, "bins"), exist_ok=True)
         recovered = (
             recovered_bins
             .with_columns(
-                bin_dest = pl.concat_str(pl.lit(recovered_bins_dir + "/"), pl.col("new_name"), pl.lit(".fna")),
+                bin_dest = pl.concat_str(pl.lit(recovered_bins_dir + "/bins/"), pl.col("new_name"), pl.lit(".fna")),
                 )
             .with_columns(
                 copied = pl.struct(["bin_source", "bin_dest"]).map_elements(lambda x: copy_input(x["bin_source"], x["bin_dest"]), return_dtype=pl.Utf8),
@@ -887,7 +887,7 @@ def coassemble(args):
         pass
 
     elusive_clusters_path = os.path.join(args.output, "coassemble", "target", "elusive_clusters.tsv")
-    recovered_bins_dir = os.path.join(args.output, "recovered_bins")
+    recovered_bins_dir = os.path.join(args.output, "recovered")
     bin_prov_path = os.path.join(recovered_bins_dir, "bin_provenance.tsv")
     final_bin_info_path = os.path.join(recovered_bins_dir, "bin_info.tsv")
     checkm2_quality_path = os.path.join(recovered_bins_dir, "quality_report.tsv")
