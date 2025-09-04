@@ -611,8 +611,8 @@ def extract_recovered_bins(elusive_clusters_path, recovered_bins_dir, bin_prov_p
 
         bin_infos.append(bin_info)
 
-    recovered_bins = pl.concat(bin_infos)
-    if recovered_bins.height > 0:
+    if bin_infos:
+        recovered_bins = pl.concat(bin_infos)
         os.makedirs(recovered_bins_dir, exist_ok=True)
         recovered = (
             recovered_bins
