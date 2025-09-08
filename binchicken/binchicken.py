@@ -593,11 +593,11 @@ def list_all_bins_from_recovered(recovered_bins_dir):
         return {}
 
     bins = {}
-    for name in sorted(os.listdir(bins_dir)):
-        if not name.endswith(".fna"):
+    for filename in sorted(os.listdir(bins_dir)):
+        if not filename.endswith(".fna"):
             continue
-        name = os.path.splitext(name)[0]
-        bins[name] = os.path.abspath(os.path.join(bins_dir, name))
+        name = os.path.splitext(filename)[0]
+        bins[name] = os.path.abspath(os.path.join(bins_dir, filename))
     return bins
 
 def check_prior_assemblies(prior_assemblies, inputs):
