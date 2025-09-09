@@ -20,19 +20,20 @@ Note that the databases are very large.
 
 ```bash
 binchicken build \
-  --conda-prefix /path/to/conda/envs/dir \
   --singlem-metapackage /metapackage/dir \
   --gtdbtk-db /gtdb/release/dir \
-  --checkm2-db /checkm2/db/dir
+  --checkm2-db /checkm2/db/dir \
+  # Optional: for use with taxvamb extra binner
+  --metabuli-db /metabuli/db/dir
 ```
 
 Alternatively, set directory to contain subprocess conda environments and environment variables manually.
 Subprocess conda environments will be created when required.
 
 ```bash
-conda env config vars set SNAKEMAKE_CONDA_PREFIX="/path/to/conda/envs"
-conda env config vars set CONDA_ENV_PATH="/path/to/conda/envs"
 conda env config vars set SINGLEM_METAPACKAGE_PATH="/metapackage/dir"
 conda env config vars set GTDBTK_DATA_PATH="/gtdb/release/dir"
 conda env config vars set CHECKM2DB="/checkm2/db/dir"
+# Optional: for use with taxvamb extra binner
+conda env config vars set METABULI_DB_PATH="/metabuli/db/dir"
 ```
