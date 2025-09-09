@@ -1592,7 +1592,7 @@ def main():
         argument_group.add_argument("--output", help="Output directory [default: .]", default="./")
         cores_default = 1
         argument_group.add_argument("--cores", type=int, help=f"Maximum number of cores to use [default: {cores_default}]", default=cores_default)
-        argument_group.add_argument("--dryrun", action="store_true", help="dry run workflow")
+        argument_group.add_argument("--dryrun", "--dry-run", action="store_true", help="dry run workflow")
         argument_group.add_argument("--snakemake-profile", default="",
                                     help="Snakemake profile (see https://snakemake.readthedocs.io/en/v7.32.3/executing/cli.html#profiles).\n"
                                          "Can be used to submit rules as jobs to cluster engine (see https://snakemake.readthedocs.io/en/v7.32.3/executing/cluster.html).")
