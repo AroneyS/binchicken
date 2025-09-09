@@ -21,9 +21,10 @@ Note that the databases are very large.
 ```bash
 binchicken build \
   --singlem-metapackage /metapackage/dir \
-  --gtdbtk-db /gtdb/release/dir \
   --checkm2-db /checkm2/db/dir \
-  # Optional: for use with taxvamb extra binner
+  # Optional: for use with Aviary comprehensive (`--aviary-speed comprehensive`)
+  --gtdbtk-db /gtdb/release/dir \
+  # Optional: for use with taxvamb extra binner (`--aviary-extra-binners taxvamb`)
   --metabuli-db /metabuli/db/dir
 ```
 
@@ -32,8 +33,9 @@ Subprocess conda environments will be created when required.
 
 ```bash
 conda env config vars set SINGLEM_METAPACKAGE_PATH="/metapackage/dir"
-conda env config vars set GTDBTK_DATA_PATH="/gtdb/release/dir"
 conda env config vars set CHECKM2DB="/checkm2/db/dir"
-# Optional: for use with taxvamb extra binner
+# Optional: for use with Aviary comprehensive (`--aviary-speed comprehensive`)
+conda env config vars set GTDBTK_DATA_PATH="/gtdb/release/dir"
+# Optional: for use with taxvamb extra binner (`--aviary-extra-binners taxvamb`)
 conda env config vars set METABULI_DB_PATH="/metabuli/db/dir"
 ```
