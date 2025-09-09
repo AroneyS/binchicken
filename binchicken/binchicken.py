@@ -1466,7 +1466,7 @@ def build(args):
             logging.error("Metabuli download not yet implemented")
             raise NotImplementedError("Metabuli download not yet implemented")
 
-        if not any(download_config.values()):
+        if not any([v for k,v in download_config.items() if k != "tmpdir"]):
             logging.info("All databases already present")
         else:
             logging.info("Downloading databases")
