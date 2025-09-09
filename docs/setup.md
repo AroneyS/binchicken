@@ -16,7 +16,8 @@ The latter databases are required only if you want to run Aviary directly using 
 GTDB-Tk database is the directory containing the GTDB-Tk release (see <https://github.com/Ecogenomics/GTDBTk>).
 CheckM2 database is the directory containing the CheckM2 database (see <https://github.com/chklovski/CheckM2>).
 These can also be downloaded automatically with `--download-databases` flag, which uses Aviary (`aviary configure --download gtdb singlem checkm2`, see <https://github.com/rhysnewell/aviary>).
-Note that the databases are very large.
+If you use this flag, note that it will only download the databases if the provided path does *not* already exist.
+Also note that the databases are very large.
 
 ```bash
 binchicken build \
