@@ -1956,8 +1956,6 @@ def main():
 
     elif args.subparser_name == "update":
         coassemble_output_argument_verification(args)
-        if args.run_aviary and not (args.aviary_gtdbtk_db and args.aviary_checkm2_db):
-            raise Exception("Run Aviary (--run-aviary) requires paths to GTDB-Tk and CheckM2 databases to be provided (--aviary-gtdbtk-db and --aviary-checkm2-db)")
         if args.cluster_submission and not args.snakemake_profile:
             logging.warning("The arg `--cluster-submission` is only a flag and cannot activate cluster submission alone. Please see `--snakemake-profile` for cluster submission.")
         if args.coassemble_output:
