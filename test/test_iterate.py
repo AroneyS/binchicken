@@ -167,7 +167,7 @@ class Tests(unittest.TestCase):
             new_bin_2_path = os.path.join("test", "recovered_bins", "iteration_0-coassembly_0-2.fna")
             self.assertFalse(os.path.exists(new_bin_2_path))
 
-            bin_provenance_path = os.path.join("test", "bin_provenance.tsv")
+            bin_provenance_path = os.path.join("test", "previous_bin_provenance.tsv")
             self.assertTrue(os.path.exists(bin_provenance_path))
 
             original_bin_singlem_path = os.path.join("test", "coassemble", "pipe", os.path.splitext(os.path.basename(GENOMES.split(" ")[0]))[0]+"_bin.otu_table.tsv")
@@ -376,7 +376,7 @@ class Tests(unittest.TestCase):
             )
             extern.run(cmd)
 
-            bin_provenance_path = os.path.join("test", "bin_provenance.tsv")
+            bin_provenance_path = os.path.join("test", "previous_bin_provenance.tsv")
             self.assertTrue(os.path.exists(bin_provenance_path))
             expected = "\n".join(["\t".join([g, os.path.basename(g)]) for g in MOCK_GENOMES.split(" ")])
             with open(bin_provenance_path) as f:
@@ -516,7 +516,7 @@ class Tests(unittest.TestCase):
             output_raw = subprocess.run(cmd, shell=True, check=True, capture_output=True)
             output = output_raw.stderr.decode('ascii')
 
-            bin_provenance_path = os.path.join("test", "bin_provenance.tsv")
+            bin_provenance_path = os.path.join("test", "previous_bin_provenance.tsv")
             self.assertTrue(os.path.exists(bin_provenance_path))
 
             config_path = os.path.join("test", "config.yaml")
@@ -568,7 +568,7 @@ class Tests(unittest.TestCase):
             output_raw = subprocess.run(cmd, shell=True, check=True, capture_output=True)
             output = output_raw.stderr.decode('ascii')
 
-            bin_provenance_path = os.path.join("test", "bin_provenance.tsv")
+            bin_provenance_path = os.path.join("test", "previous_bin_provenance.tsv")
             self.assertTrue(os.path.exists(bin_provenance_path))
 
             config_path = os.path.join("test", "config.yaml")
@@ -608,7 +608,7 @@ class Tests(unittest.TestCase):
             output_raw = subprocess.run(cmd, shell=True, check=True, capture_output=True)
             output = output_raw.stderr.decode('ascii')
 
-            bin_provenance_path = os.path.join("test", "bin_provenance.tsv")
+            bin_provenance_path = os.path.join("test", "previous_bin_provenance.tsv")
             self.assertTrue(os.path.exists(bin_provenance_path))
 
             config_path = os.path.join("test", "config.yaml")
@@ -641,7 +641,7 @@ class Tests(unittest.TestCase):
             )
             extern.run(cmd)
 
-            bin_provenance_path = os.path.join("test", "bin_provenance.tsv")
+            bin_provenance_path = os.path.join("test", "previous_bin_provenance.tsv")
             self.assertTrue(os.path.exists(bin_provenance_path))
 
             config_path = os.path.join("test", "config.yaml")
