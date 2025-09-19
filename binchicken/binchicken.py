@@ -1296,8 +1296,7 @@ def iterate(args):
     if bins is None or bins == {}:
         raise Exception("Programming error: no bins to evaluate")
 
-    os.makedirs(os.path.join(args.output, "recovered_bins"), exist_ok=True)
-    with open(os.path.join(args.output, "recovered_bins", "bin_provenance.tsv"), "w") as f:
+    with open(os.path.join(args.output, "previous_bin_provenance.tsv"), "w") as f:
         f.writelines("\n".join(["\t".join([os.path.abspath(bins[bin]), bin + ".fna"]) for bin in bins]))
 
     if args.coassemble_output:
