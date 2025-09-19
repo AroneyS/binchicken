@@ -166,7 +166,6 @@ rule singlem_pipe_reads:
         mem_mb=get_mem_mb,
         runtime = get_runtime(base_hours = 24),
         log_path=lambda wildcards, attempt: setup_log(f"{logs_dir}/pipe/{wildcards.read}_read", attempt)
-    group: "singlem_pipe"
     shell:
         f"{pixi_run} -e singlem "
         "singlem pipe "
@@ -187,7 +186,6 @@ rule rename_pipe_reads:
     resources:
         mem_mb=get_mem_mb,
         runtime = get_runtime(base_hours = 6),
-    group: "singlem_pipe"
     run:
         (
             pl.scan_csv(input[0], separator="\t")
@@ -217,7 +215,6 @@ rule genome_transcripts:
         mem_mb=get_mem_mb,
         runtime = get_runtime(base_hours = 1),
         log_path=lambda wildcards, attempt: setup_log(f"{logs_dir}/transcripts/{wildcards.genome}_protein", attempt)
-    group: "singlem_bins"
     shell:
         f"{pixi_run} -e prodigal "
         "prodigal "
@@ -240,7 +237,6 @@ rule singlem_pipe_genomes:
         mem_mb=get_mem_mb,
         runtime = get_runtime(base_hours = 1),
         log_path=lambda wildcards, attempt: setup_log(f"{logs_dir}/pipe/{wildcards.genome}_bin", attempt)
-    group: "singlem_bins"
     shell:
         f"{pixi_run} -e singlem "
         "singlem pipe "
@@ -904,7 +900,6 @@ rule qc_reads:
         reads_2 = output_dir + "/qc/{read}_2.fastq.gz",
         json = output_dir + "/qc/{read}.json",
         html = output_dir + "/qc/{read}.html",
-    group: "unmapping"
     params:
         quality_cutoff = 15,
         unqualified_percent_limit = 40,
@@ -978,7 +973,6 @@ rule map_reads:
         genomes = output_dir + "/mapping/{read}_reference.fna",
     output:
         dir = temp(directory(output_dir + "/mapping/{read}_coverm")),
-    group: "unmapping"
     threads: 32
     resources:
         mem_mb=get_mem_mb,
@@ -1001,7 +995,6 @@ rule filter_bam_files:
         output_dir + "/mapping/{read}_coverm",
     output:
         temp(output_dir + "/mapping/{read}_unmapped.bam"),
-    group: "unmapping"
     params:
         genomes = lambda wildcards: os.path.basename(wildcards.read) + "_reference.fna",
         reads_1 = lambda wildcards: os.path.basename(config["reads_1"][wildcards.read]) if not config["run_qc"] else os.path.basename(wildcards.read) + "_1.fastq.gz",
@@ -1031,7 +1024,6 @@ rule bam_to_fastq:
     output:
         reads_1 = output_dir + "/mapping/{read}_unmapped.1.fq.gz",
         reads_2 = output_dir + "/mapping/{read}_unmapped.2.fq.gz",
-    group: "unmapping"
     threads: 32
     resources:
         mem_mb=get_mem_mb,

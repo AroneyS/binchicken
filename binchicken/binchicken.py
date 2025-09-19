@@ -17,7 +17,7 @@ from snakemake.io import load_configfile
 from ruamel.yaml import YAML
 import copy
 import shutil
-from binchicken.common import fasta_to_name, pixi_run, workflow_identifier
+from binchicken.common import fasta_to_name, pixi_run, workflow_identifier, BIN_INFO_COLUMNS, CHECKM2_QUALITY_COLUMNS
 import re
 import threading
 
@@ -554,6 +554,52 @@ def evaluate_bins(aviary_outputs, checkm_version, min_completeness, max_contamin
     else:
         return {"-".join([c, str(i)]): os.path.join(recovered_bins[c], b + ".fna") for c in coassembly_bins for i, b in enumerate(coassembly_bins[c])}
 
+def select_bins_from_recovered(recovered_bins_dir, min_completeness, max_contamination):
+    quality_report_path = os.path.join(recovered_bins_dir, "quality_report.tsv")
+    try:
+        df = (
+            pl.read_csv(quality_report_path, separator="\t", schema_overrides=CHECKM2_QUALITY_COLUMNS)
+            .with_columns(
+                pl.col("Completeness").cast(pl.Float64, strict=False),
+                pl.col("Contamination").cast(pl.Float64, strict=False),
+            )
+        )
+    except Exception as e:
+        logging.warning(f"No recovered_bins metadata found at {recovered_bins_dir}: {e}")
+        return {}
+
+    if df.is_empty():
+        logging.warning(f"No bins passing completeness/contamination cutoffs found at {recovered_bins_dir}")
+        return {}
+
+    passing_genomes = (
+        df
+        .filter(pl.col("Completeness") >= float(min_completeness))
+        .filter(pl.col("Contamination") <= float(max_contamination))
+        .get_column("Name")
+        .to_list()
+    )
+
+    bins = {}
+    for name in passing_genomes:
+        bins[name] = os.path.join(recovered_bins_dir, "bins", name + ".fna")
+
+    return bins
+
+def list_all_bins_from_recovered(recovered_bins_dir):
+    bins_dir = os.path.join(recovered_bins_dir, "bins")
+    if not os.path.isdir(bins_dir):
+        logging.warning(f"No bins directory found at {bins_dir}")
+        return {}
+
+    bins = {}
+    for filename in sorted(os.listdir(bins_dir)):
+        if not filename.endswith(".fna"):
+            continue
+        name = os.path.splitext(filename)[0]
+        bins[name] = os.path.abspath(os.path.join(bins_dir, filename))
+    return bins
+
 def check_prior_assemblies(prior_assemblies, inputs):
     mismatched_groups = (
         prior_assemblies
@@ -571,7 +617,90 @@ def check_prior_assemblies(prior_assemblies, inputs):
 
     return {row[0]: os.path.abspath(row[1]) for row in prior_assemblies.iter_rows()}
 
-def coassemble(args):
+def extract_recovered_bins(elusive_clusters_path, recovered_bins_dir, bin_prov_path, final_bin_info_path, checkm2_quality_path, coassembly_dir, iteration=None):
+    logging.info("Extracting recovered bins...")
+    expected_coassemblies = (
+        pl.read_csv(elusive_clusters_path, separator="\t")
+        .get_column("coassembly")
+        .unique()
+        .to_list()
+    )
+
+    bin_infos = []
+    for coassembly in sorted(expected_coassemblies):
+        bins_dir = os.path.join(coassembly_dir, coassembly, "recover", "bins")
+        if not os.path.isdir(bins_dir):
+            logging.warning(f"No Aviary outputs found for {coassembly}; expected at {bins_dir}")
+            continue
+
+        bin_info_path = os.path.join(bins_dir, "bin_info.tsv")
+        if not os.path.isfile(bin_info_path):
+            logging.warning(f"No Aviary bin_info.tsv found for {coassembly}; expected at {bin_info_path}")
+            continue
+        try:
+            name_prefix = f"binchicken_it{iteration}_{coassembly}." if iteration else f"binchicken_{coassembly}."
+            bin_info = (
+                pl.read_csv(bin_info_path, separator="\t", schema_overrides=BIN_INFO_COLUMNS)
+                .with_row_index("index")
+                .with_columns(
+                    binner = pl.col("Bin Id").str.extract(r"(^[^_.]+_)").str.replace(r"_", ""),
+                    bin_source = pl.concat_str(pl.lit(bins_dir + "/final_bins/"), pl.col("Bin Id"), pl.lit(".fna")),
+                    new_name = pl.concat_str(pl.lit(name_prefix), (pl.col("index") + 1).cast(pl.Utf8))
+                )
+            )
+        except Exception as e:
+            logging.warning(f"Failed to read Aviary bin_info.tsv for {coassembly} at {bin_info_path}: {e}")
+            continue
+
+        if bin_info.height == 0:
+            logging.warning(f"No bins found in Aviary bin_info.tsv for {coassembly} at {bin_info_path}")
+            continue
+
+        bin_infos.append(bin_info)
+
+    if bin_infos:
+        recovered_bins = pl.concat(bin_infos)
+        os.makedirs(os.path.join(recovered_bins_dir, "bins"), exist_ok=True)
+        recovered = (
+            recovered_bins
+            .with_columns(
+                bin_dest = pl.concat_str(pl.lit(recovered_bins_dir + "/bins/"), pl.col("new_name"), pl.lit(".fna")),
+                )
+            .with_columns(
+                copied = pl.struct(["bin_source", "bin_dest"]).map_elements(lambda x: copy_input(x["bin_source"], x["bin_dest"]), return_dtype=pl.Utf8),
+                )
+        )
+
+        (
+            recovered
+            .select("Bin Id", "bin_source", "new_name", "binner")
+            .write_csv(bin_prov_path, separator="\t")
+        )
+
+        (
+            recovered
+            .drop("Bin Id")
+            .rename({"new_name": "Bin Id"})
+            .select(BIN_INFO_COLUMNS.keys())
+            .write_csv(final_bin_info_path, separator="\t")
+        )
+
+        (
+            recovered
+            .rename({
+                "new_name": "Name",
+                "Completeness (CheckM2)": "Completeness",
+                "Contamination (CheckM2)": "Contamination",
+                })
+            .select(CHECKM2_QUALITY_COLUMNS.keys())
+            .write_csv(checkm2_quality_path, separator="\t")
+        )
+
+        logging.info(f"Recovered {recovered_bins.height} bins to {recovered_bins_dir}")
+    else:
+        logging.info("No recovered bins found to extract.")
+
+def coassemble(args, iteration=None):
     logging.info("Loading sample info")
     if args.sra:
         args.forward, args.reverse = download_sra(args)
@@ -804,12 +933,32 @@ def coassemble(args):
     except (FileNotFoundError, NoDataError):
         pass
 
+    elusive_clusters_path = os.path.join(args.output, "coassemble", "target", "elusive_clusters.tsv")
+    recovered_bins_dir = os.path.join(args.output, "recovered")
+    bin_prov_path = os.path.join(recovered_bins_dir, "bin_provenance.tsv")
+    final_bin_info_path = os.path.join(recovered_bins_dir, "bin_info.tsv")
+    checkm2_quality_path = os.path.join(recovered_bins_dir, "quality_report.tsv")
+    coassembly_dir = os.path.join(args.output, "coassemble", "coassemble")
+    if args.run_aviary and not args.dryrun and os.path.exists(elusive_clusters_path):
+        extract_recovered_bins(elusive_clusters_path, recovered_bins_dir, bin_prov_path, final_bin_info_path, checkm2_quality_path, coassembly_dir, iteration)
+
     logging.info("---- Bin Chicken coassemble ----------------------------------------------------")
     logging.info(f"Bin Chicken coassemble complete.")
+    if os.path.exists(elusive_clusters_path):
+        elusive_clusters = pl.read_csv(elusive_clusters_path, separator="\t")
+        sizes = ", ".join([f"{c} {s}-sample" for s,c in elusive_clusters.group_by("length").count().iter_rows()])
+        logging.info(f"Identified {elusive_clusters.height} coassemblies, including {sizes}.")
     logging.info(f"Cluster summary at {os.path.join(args.output, 'coassemble', 'summary.tsv')}")
-    logging.info(f"More details at {os.path.join(args.output, 'coassemble', 'target', 'elusive_clusters.tsv')}")
+    logging.info(f"More details at {elusive_clusters_path}")
     if args.run_aviary:
-        logging.info(f"Aviary outputs at {os.path.join(args.output, 'coassemble', 'coassemble')}")
+        if args.dryrun:
+            logging.info(f"Aviary outputs will be at {os.path.join(args.output, 'coassemble', 'coassemble')}")
+        else:
+            logging.info(f"Bins recovered by Aviary are at {recovered_bins_dir}")
+            logging.info(f"Bin provenance (source paths) at {bin_prov_path}")
+            logging.info(f"Compiled bin info at {final_bin_info_path}")
+            logging.info(f"CheckM2 quality summary at {checkm2_quality_path}")
+            logging.info(f"Aviary outputs at {os.path.join(args.output, 'coassemble', 'coassemble')}")
     else:
         logging.info(f"Aviary commands for coassembly and recovery in shell scripts at {os.path.join(args.output, 'coassemble', 'commands')}")
 
@@ -829,12 +978,22 @@ def evaluate(args):
     if args.new_genomes_list:
         args.new_genomes = read_list(args.new_genomes_list)
 
-    if args.aviary_outputs:
-        bins = evaluate_bins(args.aviary_outputs, args.checkm_version, args.min_completeness, args.max_contamination)
-    elif args.new_genomes:
-        bins = {"-".join([args.coassembly_run, os.path.splitext(os.path.basename(g))[0]]): os.path.abspath(g) for g in args.new_genomes}
-    else:
-        raise Exception("Programming error: no bins to evaluate")
+    # Prefer consolidated recovered_bins when available under prior coassemble_output
+    bins = None
+    if args.coassemble_output:
+        prior_recovered = os.path.join(args.coassemble_output, "..", "recovered")
+        if os.path.isdir(prior_recovered):
+            logging.info("Using recovered dir from prior coassemble run")
+            # For evaluate, include all recovered bins; downstream rules filter as needed
+            bins = list_all_bins_from_recovered(prior_recovered)
+
+    if bins is None or bins == {}:
+        if args.aviary_outputs:
+            bins = evaluate_bins(args.aviary_outputs, args.checkm_version, args.min_completeness, args.max_contamination)
+        elif args.new_genomes:
+            bins = {"-".join([args.coassembly_run, os.path.splitext(os.path.basename(g))[0]]): os.path.abspath(g) for g in args.new_genomes}
+        else:
+            raise Exception("Programming error: no bins to evaluate")
 
     if args.singlem_metapackage:
         metapackage = os.path.abspath(args.singlem_metapackage)
@@ -872,8 +1031,8 @@ def evaluate(args):
     config_path = make_config(
         importlib.resources.files("binchicken.config").joinpath("template_evaluate.yaml"),
         args.output,
-        config_items
-        )
+        config_items,
+    )
 
     run_workflow(
         config = config_path,
@@ -1064,27 +1223,35 @@ def iterate(args):
     if not ((args.genomes or args.genomes_list) and (args.forward or args.forward_list)):
         logging.info("Loading inputs from old config")
         config_path = os.path.join(args.coassemble_output, "..", "config.yaml")
-        old_config = load_config(config_path)
+        old_config = None
+        try:
+            old_config = load_config(config_path)
+        except FileNotFoundError:
+            logging.warning(f"Previous config not found at {config_path}; proceeding without loading prior inputs")
 
-        if not (args.genomes or args.genomes_list):
-            if old_config["no_genomes"]:
-                args.genomes = []
-            else:
-                args.genomes = [os.path.normpath(os.path.join(args.coassemble_output, "..", v)) for _,v in old_config["genomes"].items()]
-            args.no_genomes = False
-        if not (args.forward or args.forward_list):
-            args.forward = [os.path.normpath(os.path.join(args.coassemble_output, "..", v)) for _,v in old_config["reads_1"].items()]
-            args.reverse = [os.path.normpath(os.path.join(args.coassemble_output, "..", v)) for _,v in old_config["reads_2"].items()]
+        if old_config is not None:
+            if not (args.genomes or args.genomes_list):
+                if old_config["no_genomes"]:
+                    args.genomes = []
+                else:
+                    args.genomes = [os.path.normpath(os.path.join(args.coassemble_output, "..", v)) for _,v in old_config["genomes"].items()]
+                args.no_genomes = False
+            if not (args.forward or args.forward_list):
+                args.forward = [os.path.normpath(os.path.join(args.coassemble_output, "..", v)) for _,v in old_config["reads_1"].items()]
+                args.reverse = [os.path.normpath(os.path.join(args.coassemble_output, "..", v)) for _,v in old_config["reads_2"].items()]
 
     if not args.aviary_outputs and not (args.new_genomes or args.new_genomes_list):
         aviary_output_path = os.path.join(args.coassemble_output, "coassemble")
         logging.info(f"Iterating on coassemblies from {aviary_output_path}")
 
-        coassemblies_run = os.listdir(aviary_output_path)
-        args.aviary_outputs = [
-            os.path.join(aviary_output_path, f) for f in coassemblies_run
-            if not os.path.isfile(os.path.join(aviary_output_path, f))
+        if os.path.isdir(aviary_output_path):
+            coassemblies_run = os.listdir(aviary_output_path)
+            args.aviary_outputs = [
+                os.path.join(aviary_output_path, f) for f in coassemblies_run
+                if not os.path.isfile(os.path.join(aviary_output_path, f))
             ]
+        else:
+            raise ValueError(f"Aviary outputs directories not found at {aviary_output_path}.\nEither these must be present, or new genomes must be provided with --new_genomes or --new_genomes_list")
     else:
         coassemblies_run = []
 
@@ -1099,8 +1266,19 @@ def iterate(args):
     if args.new_genomes_list:
         args.new_genomes = read_list(args.new_genomes_list)
 
-    if args.aviary_outputs:
+    bins = None
+    # Prefer recovered_bins from prior coassemble run when available
+    if args.coassemble_output:
+        prior_recovered = os.path.join(args.coassemble_output, "..", "recovered")
+        if os.path.isdir(prior_recovered):
+            logging.info("Using recovered folder from prior coassemble run")
+            bins = select_bins_from_recovered(prior_recovered, args.min_completeness, args.max_contamination)
+            new_genomes = list(bins.values())
+            args.new_genomes = bins
+
+    if bins is None and args.aviary_outputs:
         bins = evaluate_bins(args.aviary_outputs, args.checkm_version, args.min_completeness, args.max_contamination, args.iteration)
+        # Copy selected bins into this run's recovered_bins and wire into config
         for bin in bins:
             copy_input(
                 os.path.abspath(bins[bin]),
@@ -1108,15 +1286,17 @@ def iterate(args):
             )
         new_genomes = [os.path.join(args.output, "recovered_bins", bin + ".fna") for bin in bins]
         args.new_genomes = {os.path.splitext(os.path.basename(g))[0]: os.path.abspath(g) for g in new_genomes}
-    elif args.new_genomes:
+
+    if bins is None and args.new_genomes:
+        # User provided new genomes directly
         bins = {os.path.splitext(os.path.basename(g))[0]: os.path.abspath(g) for g in args.new_genomes}
         new_genomes = list(bins.values())
         args.new_genomes = bins
-    else:
+
+    if bins is None or bins == {}:
         raise Exception("Programming error: no bins to evaluate")
 
-    os.makedirs(os.path.join(args.output, "recovered_bins"), exist_ok=True)
-    with open(os.path.join(args.output, "recovered_bins", "bin_provenance.tsv"), "w") as f:
+    with open(os.path.join(args.output, "previous_bin_provenance.tsv"), "w") as f:
         f.writelines("\n".join(["\t".join([os.path.abspath(bins[bin]), bin + ".fna"]) for bin in bins]))
 
     if args.coassemble_output:
@@ -1131,12 +1311,15 @@ def iterate(args):
             additional_exclude_coassemblies = []
 
         elusive_clusters_path = os.path.join(args.coassemble_output, "target", "elusive_clusters.tsv")
-        new_exclude_coassemblies = (
-            pl.read_csv(elusive_clusters_path, separator="\t")
-            .filter(pl.col("coassembly").is_in(coassemblies_run))
-            .get_column("samples")
-            .to_list()
-        )
+        if os.path.isfile(elusive_clusters_path) and coassemblies_run:
+            new_exclude_coassemblies = (
+                pl.read_csv(elusive_clusters_path, separator="\t")
+                .filter(pl.col("coassembly").is_in(coassemblies_run))
+                .get_column("samples")
+                .to_list()
+            )
+        else:
+            new_exclude_coassemblies = []
 
         cumulative_path = os.path.join(args.coassemble_output, "target", "cumulative_coassemblies.tsv")
         if os.path.isfile(cumulative_path):
@@ -1187,7 +1370,7 @@ def iterate(args):
         args.genomes_list = None
     args.genomes += new_genomes
 
-    coassemble(args)
+    coassemble(args, iteration=args.iteration)
 
     if args.exclude_coassemblies:
         cumulative_coassemblies = args.exclude_coassemblies
@@ -1282,7 +1465,7 @@ def build(args):
             logging.error("Metabuli download not yet implemented")
             raise NotImplementedError("Metabuli download not yet implemented")
 
-        if not any(download_config.values()):
+        if not any([v for k,v in download_config.items() if k != "tmpdir"]):
             logging.info("All databases already present")
         else:
             logging.info("Downloading databases")
@@ -1408,7 +1591,7 @@ def main():
         argument_group.add_argument("--output", help="Output directory [default: .]", default="./")
         cores_default = 1
         argument_group.add_argument("--cores", type=int, help=f"Maximum number of cores to use [default: {cores_default}]", default=cores_default)
-        argument_group.add_argument("--dryrun", action="store_true", help="dry run workflow")
+        argument_group.add_argument("--dryrun", "--dry-run", action="store_true", help="dry run workflow")
         argument_group.add_argument("--snakemake-profile", default="",
                                     help="Snakemake profile (see https://snakemake.readthedocs.io/en/v7.32.3/executing/cli.html#profiles).\n"
                                          "Can be used to submit rules as jobs to cluster engine (see https://snakemake.readthedocs.io/en/v7.32.3/executing/cluster.html).")
@@ -1764,7 +1947,7 @@ def main():
             raise Exception("SingleM metapackage (--singlem-metapackage or SINGLEM_METAPACKAGE_PATH environment variable, see SingleM data) must be provided")
         if args.cluster and not (args.genomes or args.genomes_list):
             raise Exception("Reference genomes must be provided to cluster with new genomes")
-        if not args.aviary_outputs and not (args.new_genomes or args.new_genomes_list):
+        if not args.aviary_outputs and not (args.new_genomes or args.new_genomes_list) and not args.coassemble_output:
             raise Exception("New genomes or aviary outputs must be provided for evaluation")
         if (args.new_genomes or args.new_genomes_list) and not args.coassembly_run:
             raise Exception("Name of coassembly run must be provided to evaluate binning")
@@ -1772,8 +1955,6 @@ def main():
 
     elif args.subparser_name == "update":
         coassemble_output_argument_verification(args)
-        if args.run_aviary and not (args.aviary_gtdbtk_db and args.aviary_checkm2_db):
-            raise Exception("Run Aviary (--run-aviary) requires paths to GTDB-Tk and CheckM2 databases to be provided (--aviary-gtdbtk-db and --aviary-checkm2-db)")
         if args.cluster_submission and not args.snakemake_profile:
             logging.warning("The arg `--cluster-submission` is only a flag and cannot activate cluster submission alone. Please see `--snakemake-profile` for cluster submission.")
         if args.coassemble_output:

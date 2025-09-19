@@ -27,6 +27,7 @@ The suggested assemblies with their respective binning samples can be found at
 
 The actual assembly and binning can be run by adding `--run-aviary`.
 This will produce metagenome-assembled genomes (MAGs) from each sample.
+These will be compiled in `binchicken_single_assembly/recovered_bins`.
 
 ```bash
 binchicken single \
