@@ -95,7 +95,7 @@ class TestsQsub(unittest.TestCase):
             f"--output {output_dir} "
             f"--snakemake-profile aqua "
             f"--local-cores 12 "
-            f"--cluster-retries 1 "
+            f"--retries 1 "
             f"--cluster-submission "
         )
         subprocess.run(cmd, shell=True, check=True)
@@ -135,7 +135,7 @@ class TestsQsub(unittest.TestCase):
             f"--output {output_dir} "
             f"--snakemake-profile aqua "
             f"--local-cores 12 "
-            f"--cluster-retries 1 "
+            f"--retries 1 "
             f"--cluster-submission "
         )
         subprocess.run(cmd, shell=True, check=True)
@@ -310,7 +310,7 @@ class Tests(unittest.TestCase):
                 # f"--gtdbtk-db {path_to_gtdbtk_db} "
                 f"--checkm2-db {path_to_checkm2_db} "
                 f"--download-databases "
-                f"--cluster-retries 0 "
+                f"--retries 0 "
                 f"--output {output_dir} "
             )
             subprocess.run(cmd, shell=True, check=True)
@@ -519,7 +519,7 @@ class Tests(unittest.TestCase):
                 f"--run-aviary "
                 f"--cores 4 "
                 f"--local-cores 2 "
-                f"--cluster-retries 0 "
+                f"--retries 0 "
                 f"--output test "
             )
 
