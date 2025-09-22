@@ -59,6 +59,106 @@ METAPACKAGE = os.path.join(path_to_data, "singlem_metapackage.smpkg")
 PRIOR_ASSEMBLY = os.path.join(path_to_data, "prior_assembly.tsv")
 PRIOR_COASSEMBLY = os.path.join(path_to_data, "prior_coassembly.tsv")
 
+@pytest.mark.qsub
+class TestsQsub(unittest.TestCase):
+    def setup_output_dir(self, output_dir):
+        try:
+            shutil.rmtree(output_dir)
+        except FileNotFoundError:
+            pass
+        os.makedirs(output_dir)
+
+    def test_update_aviary_run_real(self):
+        output_dir = os.path.join("example", "test_update_aviary_run_real")
+        self.setup_output_dir(output_dir)
+
+        cmd = (
+            f"binchicken update "
+            f"--assemble-unmapped "
+            f"--forward SRR8334323 SRR8334324 "
+            f"--sra "
+            f"--run-aviary "
+            f"--aviary-speed fast "
+            f"--cores 32 "
+            f"--assembly-strategy megahit "
+            f"--aviary-gtdbtk-db {GTDBTK_DB} "
+            f"--aviary-checkm2-db {CHECKM2_DB} "
+            f"--aviary-metabuli-db {METABULI_DB} "
+            f"--aviary-extra-binners taxvamb "
+            f"--genomes {GENOMES} "
+            f"--coassemble-unbinned {os.path.join(MOCK_COASSEMBLE, 'appraise', 'unbinned_sra.otu_table.tsv')} "
+            f"--coassemble-binned {os.path.join(MOCK_COASSEMBLE, 'appraise', 'binned_sra.otu_table.tsv')} "
+            f"--coassemble-targets {os.path.join(MOCK_COASSEMBLE, 'target', 'targets.tsv')} "
+            f"--coassemble-elusive-edges {os.path.join(MOCK_COASSEMBLE, 'target', 'elusive_edges.tsv')} "
+            f"--coassemble-elusive-clusters {os.path.join(MOCK_COASSEMBLE, 'target', 'elusive_clusters_sra.tsv')} "
+            f"--coassemble-summary {os.path.join(MOCK_COASSEMBLE, 'summary.tsv')} "
+            f"--output {output_dir} "
+            f"--snakemake-profile aqua "
+            f"--local-cores 12 "
+            f"--cluster-retries 1 "
+            f"--cluster-submission "
+        )
+        subprocess.run(cmd, shell=True, check=True)
+
+        config_path = os.path.join(output_dir, "config.yaml")
+        self.assertTrue(os.path.exists(config_path))
+
+        self.assertTrue(os.path.exists(os.path.join(output_dir, "coassemble", "sra", "SRR8334323_1.fastq.gz")))
+        self.assertTrue(os.path.exists(os.path.join(output_dir, "coassemble", "sra", "SRR8334323_2.fastq.gz")))
+        self.assertTrue(os.path.exists(os.path.join(output_dir, "coassemble", "sra", "SRR8334324_1.fastq.gz")))
+        self.assertTrue(os.path.exists(os.path.join(output_dir, "coassemble", "sra", "SRR8334324_2.fastq.gz")))
+
+        self.assertTrue(os.path.exists(os.path.join(output_dir, "coassemble", "coassemble", "coassembly_0", "assemble", "assembly", "final_contigs.fasta")))
+
+        self.assertTrue(os.path.exists(os.path.join(output_dir, "coassemble", "coassemble", "coassembly_0", "recover", "bins", "checkm_minimal.tsv")))
+
+    def test_update_aviary_run_real_large_assembly(self):
+        output_dir = os.path.join("example", "test_update_aviary_run_real_large_assembly")
+        self.setup_output_dir(output_dir)
+
+        cmd = (
+            f"binchicken update "
+            f"--assemble-unmapped "
+            f"--forward SRR5753868 SRR5753874 "
+            f"--sra "
+            f"--genomes {GENOMES} "
+            f"--run-aviary "
+            f"--cores 32 "
+            f"--aviary-gtdbtk-db {GTDBTK_DB} "
+            f"--aviary-checkm2-db {CHECKM2_DB} "
+            f"--coassemble-unbinned {os.path.join(MOCK_COASSEMBLE, 'appraise', 'unbinned_sra.otu_table.tsv')} "
+            f"--coassemble-binned {os.path.join(MOCK_COASSEMBLE, 'appraise', 'binned_sra.otu_table.tsv')} "
+            f"--coassemble-targets {os.path.join(MOCK_COASSEMBLE, 'target', 'targets.tsv')} "
+            f"--coassemble-elusive-edges {os.path.join(MOCK_COASSEMBLE, 'target', 'elusive_edges.tsv')} "
+            f"--coassemble-elusive-clusters {os.path.join(MOCK_COASSEMBLE, 'target', 'elusive_clusters_sra_large.tsv')} "
+            f"--coassemble-summary {os.path.join(MOCK_COASSEMBLE, 'summary.tsv')} "
+            f"--output {output_dir} "
+            f"--snakemake-profile aqua "
+            f"--local-cores 12 "
+            f"--cluster-retries 1 "
+            f"--cluster-submission "
+        )
+        subprocess.run(cmd, shell=True, check=True)
+
+
+        config_path = os.path.join(output_dir, "config.yaml")
+        self.assertTrue(os.path.exists(config_path))
+
+        self.assertTrue(os.path.exists(os.path.join(output_dir, "coassemble", "sra", "SRR5753868_1.fastq.gz")))
+        self.assertTrue(os.path.exists(os.path.join(output_dir, "coassemble", "sra", "SRR5753868_2.fastq.gz")))
+        self.assertTrue(os.path.exists(os.path.join(output_dir, "coassemble", "sra", "SRR5753874_1.fastq.gz")))
+        self.assertTrue(os.path.exists(os.path.join(output_dir, "coassemble", "sra", "SRR5753874_2.fastq.gz")))
+
+        self.assertTrue(os.path.exists(os.path.join(output_dir, "coassemble", "coassemble", "coassembly_0", "assemble", "assembly", "final_contigs.fasta")))
+
+        config_path = os.path.join(output_dir, "coassemble", "coassemble", "coassembly_0", "assemble", "config.yaml")
+        self.assertTrue(os.path.exists(config_path))
+        with open(config_path) as f:
+            config = YAML().load(f)
+        self.assertTrue(config["use_megahit"])
+
+        self.assertTrue(os.path.exists(os.path.join(output_dir, "coassemble", "coassemble", "coassembly_0", "recover", "bins", "checkm_minimal.tsv")))
+
 @pytest.mark.expensive
 class Tests(unittest.TestCase):
     def setup_output_dir(self, output_dir):
@@ -161,99 +261,6 @@ class Tests(unittest.TestCase):
         self.assertTrue(os.path.exists(os.path.join(output_dir, "coassemble", "sra", "SRR8334323_2.fastq.gz")))
         self.assertTrue(os.path.exists(os.path.join(output_dir, "coassemble", "sra", "SRR8334324_1.fastq.gz")))
         self.assertTrue(os.path.exists(os.path.join(output_dir, "coassemble", "sra", "SRR8334324_2.fastq.gz")))
-
-    @pytest.mark.qsub
-    def test_update_aviary_run_real(self):
-        output_dir = os.path.join("example", "test_update_aviary_run_real")
-        self.setup_output_dir(output_dir)
-
-        cmd = (
-            f"binchicken update "
-            f"--assemble-unmapped "
-            f"--forward SRR8334323 SRR8334324 "
-            f"--sra "
-            f"--run-aviary "
-            f"--aviary-speed fast "
-            f"--cores 32 "
-            f"--assembly-strategy megahit "
-            f"--aviary-gtdbtk-db {GTDBTK_DB} "
-            f"--aviary-checkm2-db {CHECKM2_DB} "
-            f"--aviary-metabuli-db {METABULI_DB} "
-            f"--aviary-extra-binners taxvamb "
-            f"--genomes {GENOMES} "
-            f"--coassemble-unbinned {os.path.join(MOCK_COASSEMBLE, 'appraise', 'unbinned_sra.otu_table.tsv')} "
-            f"--coassemble-binned {os.path.join(MOCK_COASSEMBLE, 'appraise', 'binned_sra.otu_table.tsv')} "
-            f"--coassemble-targets {os.path.join(MOCK_COASSEMBLE, 'target', 'targets.tsv')} "
-            f"--coassemble-elusive-edges {os.path.join(MOCK_COASSEMBLE, 'target', 'elusive_edges.tsv')} "
-            f"--coassemble-elusive-clusters {os.path.join(MOCK_COASSEMBLE, 'target', 'elusive_clusters_sra.tsv')} "
-            f"--coassemble-summary {os.path.join(MOCK_COASSEMBLE, 'summary.tsv')} "
-            f"--output {output_dir} "
-            f"--snakemake-profile aqua "
-            f"--local-cores 12 "
-            f"--cluster-retries 1 "
-            f"--cluster-submission "
-        )
-        subprocess.run(cmd, shell=True, check=True)
-
-        config_path = os.path.join(output_dir, "config.yaml")
-        self.assertTrue(os.path.exists(config_path))
-
-        self.assertTrue(os.path.exists(os.path.join(output_dir, "coassemble", "sra", "SRR8334323_1.fastq.gz")))
-        self.assertTrue(os.path.exists(os.path.join(output_dir, "coassemble", "sra", "SRR8334323_2.fastq.gz")))
-        self.assertTrue(os.path.exists(os.path.join(output_dir, "coassemble", "sra", "SRR8334324_1.fastq.gz")))
-        self.assertTrue(os.path.exists(os.path.join(output_dir, "coassemble", "sra", "SRR8334324_2.fastq.gz")))
-
-        self.assertTrue(os.path.exists(os.path.join(output_dir, "coassemble", "coassemble", "coassembly_0", "assemble", "assembly", "final_contigs.fasta")))
-
-        self.assertTrue(os.path.exists(os.path.join(output_dir, "coassemble", "coassemble", "coassembly_0", "recover", "bins", "checkm_minimal.tsv")))
-
-    @pytest.mark.qsub
-    def test_update_aviary_run_real_large_assembly(self):
-        output_dir = os.path.join("example", "test_update_aviary_run_real_large_assembly")
-        self.setup_output_dir(output_dir)
-
-        cmd = (
-            f"binchicken update "
-            f"--assemble-unmapped "
-            f"--forward SRR5753868 SRR5753874 "
-            f"--sra "
-            f"--genomes {GENOMES} "
-            f"--run-aviary "
-            f"--cores 32 "
-            f"--aviary-gtdbtk-db {GTDBTK_DB} "
-            f"--aviary-checkm2-db {CHECKM2_DB} "
-            f"--coassemble-unbinned {os.path.join(MOCK_COASSEMBLE, 'appraise', 'unbinned_sra.otu_table.tsv')} "
-            f"--coassemble-binned {os.path.join(MOCK_COASSEMBLE, 'appraise', 'binned_sra.otu_table.tsv')} "
-            f"--coassemble-targets {os.path.join(MOCK_COASSEMBLE, 'target', 'targets.tsv')} "
-            f"--coassemble-elusive-edges {os.path.join(MOCK_COASSEMBLE, 'target', 'elusive_edges.tsv')} "
-            f"--coassemble-elusive-clusters {os.path.join(MOCK_COASSEMBLE, 'target', 'elusive_clusters_sra_large.tsv')} "
-            f"--coassemble-summary {os.path.join(MOCK_COASSEMBLE, 'summary.tsv')} "
-            f"--output {output_dir} "
-            f"--snakemake-profile aqua "
-            f"--local-cores 12 "
-            f"--cluster-retries 1 "
-            f"--cluster-submission "
-        )
-        subprocess.run(cmd, shell=True, check=True)
-
-
-        config_path = os.path.join(output_dir, "config.yaml")
-        self.assertTrue(os.path.exists(config_path))
-
-        self.assertTrue(os.path.exists(os.path.join(output_dir, "coassemble", "sra", "SRR5753868_1.fastq.gz")))
-        self.assertTrue(os.path.exists(os.path.join(output_dir, "coassemble", "sra", "SRR5753868_2.fastq.gz")))
-        self.assertTrue(os.path.exists(os.path.join(output_dir, "coassemble", "sra", "SRR5753874_1.fastq.gz")))
-        self.assertTrue(os.path.exists(os.path.join(output_dir, "coassemble", "sra", "SRR5753874_2.fastq.gz")))
-
-        self.assertTrue(os.path.exists(os.path.join(output_dir, "coassemble", "coassemble", "coassembly_0", "assemble", "assembly", "final_contigs.fasta")))
-
-        config_path = os.path.join(output_dir, "coassemble", "coassemble", "coassembly_0", "assemble", "config.yaml")
-        self.assertTrue(os.path.exists(config_path))
-        with open(config_path) as f:
-            config = YAML().load(f)
-        self.assertTrue(config["use_megahit"])
-
-        self.assertTrue(os.path.exists(os.path.join(output_dir, "coassemble", "coassemble", "coassembly_0", "recover", "bins", "checkm_minimal.tsv")))
 
     def test_update_specific_coassembly_sra(self):
         output_dir = os.path.join("example", "test_update_specific_coassembly_sra")
