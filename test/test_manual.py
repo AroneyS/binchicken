@@ -255,8 +255,8 @@ class Tests(unittest.TestCase):
         self.assertTrue(os.path.exists(sra_1_path))
         with gzip.open(sra_1_path) as f:
             file = f.readline().decode()
-            self.assertTrue("@SRR8334323.1 HS2:487:H80UEADXX:1:1101:1148:1986/1" in file)
-            self.assertTrue("@SRR8334323.2 HS2:487:H80UEADXX:1:1101:1148:1986/2" not in file)
+            self.assertTrue("@SRR8334323.1 HS2:487:H80UEADXX:1:1101:1148:1986" in file)
+            self.assertTrue("@SRR8334324.1 HS2:487:H80UEADXX:1:1101:1421:1988" not in file)
 
         self.assertTrue(os.path.exists(os.path.join(output_dir, "coassemble", "sra", "SRR8334323_2.fastq.gz")))
         self.assertTrue(os.path.exists(os.path.join(output_dir, "coassemble", "sra", "SRR8334324_1.fastq.gz")))
