@@ -123,3 +123,19 @@ CHECKM2_QUALITY_COLUMNS = {
     "Max_Contig_Length": str,
     "Additional_Notes": str,
 }
+
+ELUSIVE_EDGES_COLUMNS = {
+    "style": str,
+    "cluster_size": int,
+    "samples": str,
+    "target_ids": str,
+}
+
+ELUSIVE_CLUSTERS_COLUMNS = {
+    "samples": str,
+    "length": int,
+    "total_targets": float,
+    "total_size": int,
+    "recover_samples": str,
+    "coassembly": str,
+}

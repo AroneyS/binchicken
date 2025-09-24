@@ -17,7 +17,7 @@ from snakemake.io import load_configfile
 from ruamel.yaml import YAML
 import copy
 import shutil
-from binchicken.common import fasta_to_name, pixi_run, workflow_identifier, BIN_INFO_COLUMNS, CHECKM2_QUALITY_COLUMNS
+from binchicken.common import fasta_to_name, pixi_run, workflow_identifier, BIN_INFO_COLUMNS, CHECKM2_QUALITY_COLUMNS, ELUSIVE_EDGES_COLUMNS, ELUSIVE_CLUSTERS_COLUMNS
 import re
 import threading
 
@@ -413,7 +413,7 @@ def download_sra(args):
         try:
             elusive_clusters_path = os.path.join(args.output, "coassemble", "target", "elusive_clusters.tsv")
             elusive_clusters = (
-                pl.read_csv(elusive_clusters_path, separator="\t")
+                pl.read_csv(elusive_clusters_path, separator="\t", schema_overrides=ELUSIVE_CLUSTERS_COLUMNS)
                 .with_columns(
                     single_ended = pl.lit(list(single_ended)),
                     single_ended_samples =
@@ -620,7 +620,7 @@ def check_prior_assemblies(prior_assemblies, inputs):
 def extract_recovered_bins(elusive_clusters_path, recovered_bins_dir, bin_prov_path, final_bin_info_path, checkm2_quality_path, coassembly_dir, iteration=None):
     logging.info("Extracting recovered bins...")
     expected_coassemblies = (
-        pl.read_csv(elusive_clusters_path, separator="\t")
+        pl.read_csv(elusive_clusters_path, separator="\t", schema_overrides=ELUSIVE_CLUSTERS_COLUMNS)
         .get_column("coassembly")
         .unique()
         .to_list()
@@ -916,7 +916,7 @@ def coassemble(args, iteration=None):
     elusive_edges_path = os.path.join(args.output, "coassemble", "target", "elusive_edges.tsv")
     try:
         edge_samples = (
-            pl.read_csv(elusive_edges_path, separator="\t")
+            pl.read_csv(elusive_edges_path, separator="\t", schema_overrides=ELUSIVE_EDGES_COLUMNS)
             .select(pl.col("samples").str.split(","))
             .explode("samples")
             .unique()
@@ -945,7 +945,7 @@ def coassemble(args, iteration=None):
     logging.info("---- Bin Chicken coassemble ----------------------------------------------------")
     logging.info(f"Bin Chicken coassemble complete.")
     if os.path.exists(elusive_clusters_path):
-        elusive_clusters = pl.read_csv(elusive_clusters_path, separator="\t")
+        elusive_clusters = pl.read_csv(elusive_clusters_path, separator="\t", schema_overrides=ELUSIVE_CLUSTERS_COLUMNS)
         sizes = ", ".join([f"{c} {s}-sample" for s,c in elusive_clusters.group_by("length").count().iter_rows()])
         logging.info(f"Identified {elusive_clusters.height} coassemblies, including {sizes}.")
     logging.info(f"Cluster summary at {os.path.join(args.output, 'coassemble', 'summary.tsv')}")
@@ -1102,7 +1102,7 @@ def update(args):
             os.path.join(args.output, "coassemble", "target", "elusive_clusters.tsv")
         )
     elif args.coassemble_elusive_clusters and args.coassemblies:
-        elusive_clusters = pl.read_csv(os.path.abspath(args.coassemble_elusive_clusters), separator="\t")
+        elusive_clusters = pl.read_csv(os.path.abspath(args.coassemble_elusive_clusters), separator="\t", schema_overrides=ELUSIVE_CLUSTERS_COLUMNS)
         elusive_clusters = elusive_clusters.filter(pl.col("coassembly").is_in(args.coassemblies))
 
         os.makedirs(os.path.join(args.output, "coassemble", "target"), exist_ok=True)
@@ -1116,7 +1116,7 @@ def update(args):
 
     if args.sra and args.coassemble_elusive_clusters:
         if not args.coassemblies:
-            elusive_clusters = pl.read_csv(os.path.abspath(args.coassemble_elusive_clusters), separator="\t")
+            elusive_clusters = pl.read_csv(os.path.abspath(args.coassemble_elusive_clusters), separator="\t", schema_overrides=ELUSIVE_CLUSTERS_COLUMNS)
 
         sra_samples = (
             elusive_clusters
@@ -1132,7 +1132,7 @@ def update(args):
     if args.prior_assemblies:
         if args.coassemble_elusive_clusters:
             if not args.coassemblies:
-                elusive_clusters = pl.read_csv(os.path.abspath(args.coassemble_elusive_clusters), separator="\t")
+                elusive_clusters = pl.read_csv(os.path.abspath(args.coassemble_elusive_clusters), separator="\t", schema_overrides=ELUSIVE_CLUSTERS_COLUMNS)
 
             logging.info("Preparing prior assemblies")
             prior_assemblies = pl.read_csv(args.prior_assemblies, separator="\t")
@@ -1313,7 +1313,7 @@ def iterate(args):
         elusive_clusters_path = os.path.join(args.coassemble_output, "target", "elusive_clusters.tsv")
         if os.path.isfile(elusive_clusters_path) and coassemblies_run:
             new_exclude_coassemblies = (
-                pl.read_csv(elusive_clusters_path, separator="\t")
+                pl.read_csv(elusive_clusters_path, separator="\t", schema_overrides=ELUSIVE_CLUSTERS_COLUMNS)
                 .filter(pl.col("coassembly").is_in(coassemblies_run))
                 .get_column("samples")
                 .to_list()
@@ -1383,9 +1383,9 @@ def iterate(args):
         f.write("\n".join(cumulative_coassemblies) + "\n")
 
     if args.elusive_clusters and not args.dryrun:
-        new_cluster = pl.read_csv(os.path.join(target_path, "elusive_clusters.tsv"), separator="\t")
+        new_cluster = pl.read_csv(os.path.join(target_path, "elusive_clusters.tsv"), separator="\t", schema_overrides=ELUSIVE_CLUSTERS_COLUMNS)
         for cluster in args.elusive_clusters:
-            old_cluster = pl.read_csv(cluster, separator="\t")
+            old_cluster = pl.read_csv(cluster, separator="\t", schema_overrides=ELUSIVE_CLUSTERS_COLUMNS)
             comb_cluster = new_cluster.join(old_cluster, on="samples", how="inner")
 
             if comb_cluster.height > 0:
