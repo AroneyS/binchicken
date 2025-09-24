@@ -18,7 +18,7 @@ if __name__ == "__main__":
     print("version is {}".format(version))
 
     yes_no = input(
-        "Did you run the non-CI tests first, to make sure everything is OK (y/n)? \n\nmqsub -t 32 -- pixi run -e dev pytest --run-expensive test/test_manual.py\n\npixi run -e dev pytest --run-qsub\n\n"
+        "Did you run the non-CI tests first, to make sure everything is OK (y/n)? \n\nmqsub -t 32 -- pixi run -e dev pytest --run-expensive\n\npixi run -e dev pytest --run-qsub\n\n"
     )
     if yes_no != "y":
         raise Exception("Please run the non-CI tests first")

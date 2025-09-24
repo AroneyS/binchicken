@@ -546,7 +546,7 @@ class Tests(unittest.TestCase):
             expected = "\n".join(
                 [
                     "\t".join(["samples", "length", "total_targets", "total_size", "recover_samples", "coassembly"]),
-                    "\t".join(["SRR8334324,SRR8334323", "2", "2", "0", "SRR8334323,SRR8334324", "coassembly_0"]),
+                    "\t".join(["SRR8334324,SRR8334323", "2", "2.0", "0", "SRR8334323,SRR8334324", "coassembly_0"]),
                     ""
                 ]
             )
@@ -592,7 +592,7 @@ class Tests(unittest.TestCase):
             expected = "\n".join(
                 [
                     "\t".join(["samples", "length", "total_targets", "total_size", "recover_samples", "coassembly"]),
-                    "\t".join(["SRR8334324,SRR8334323", "2", "2", "0", "SRR8334323,SRR8334324", "coassembly_0"]),
+                    "\t".join(["SRR8334324,SRR8334323", "2", "2.0", "0", "SRR8334323,SRR8334324", "coassembly_0"]),
                     ""
                 ]
             )
