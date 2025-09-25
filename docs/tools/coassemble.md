@@ -541,7 +541,7 @@ It is not recommended to set this value lower than the number of requested recov
 
 <!-- -->
 
-**\--dryrun**
+**\--dryrun**, **\--dry-run**
 
   dry run workflow
 
@@ -563,10 +563,9 @@ It is not recommended to set this value lower than the number of requested recov
 
 <!-- -->
 
-**\--cluster-retries** *CLUSTER_RETRIES*
+**\--retries** *RETRIES*
 
-  Number of times to retry a failed job when using cluster submission
-    (see \`\--snakemake-profile\`) [default: 3].
+  Number of times to retry a failed job [default: 3].
 
 <!-- -->
 

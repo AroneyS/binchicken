@@ -71,7 +71,7 @@ Create dependency environments
 
 <!-- -->
 
-**\--dryrun**
+**\--dryrun**, **\--dry-run**
 
   dry run workflow
 
@@ -93,10 +93,9 @@ Create dependency environments
 
 <!-- -->
 
-**\--cluster-retries** *CLUSTER_RETRIES*
+**\--retries** *RETRIES*
 
-  Number of times to retry a failed job when using cluster submission
-    (see \`\--snakemake-profile\`) [default: 3].
+  Number of times to retry a failed job [default: 3].
 
 <!-- -->
 

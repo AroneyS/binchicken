@@ -165,7 +165,7 @@ Defaults to using genomes (from the provided coassemble outputs) with at least 7
 
 <!-- -->
 
-**\--dryrun**
+**\--dryrun**, **\--dry-run**
 
   dry run workflow
 
@@ -187,10 +187,9 @@ Defaults to using genomes (from the provided coassemble outputs) with at least 7
 
 <!-- -->
 
-**\--cluster-retries** *CLUSTER_RETRIES*
+**\--retries** *RETRIES*
 
-  Number of times to retry a failed job when using cluster submission
-    (see \`\--snakemake-profile\`) [default: 3].
+  Number of times to retry a failed job [default: 3].
 
 <!-- -->
 

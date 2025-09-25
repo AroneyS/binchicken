@@ -512,7 +512,7 @@ Kmer preclustering can be disabled with `--kmer-precluster never`.
 
 <!-- -->
 
-**\--dryrun**
+**\--dryrun**, **\--dry-run**
 
   dry run workflow
 
@@ -534,10 +534,9 @@ Kmer preclustering can be disabled with `--kmer-precluster never`.
 
 <!-- -->
 
-**\--cluster-retries** *CLUSTER_RETRIES*
+**\--retries** *RETRIES*
 
-  Number of times to retry a failed job when using cluster submission
-    (see \`\--snakemake-profile\`) [default: 3].
+  Number of times to retry a failed job [default: 3].
 
 <!-- -->
 
