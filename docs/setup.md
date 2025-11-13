@@ -19,10 +19,17 @@ These can also be downloaded automatically with `--download-databases` flag, whi
 If you use this flag, note that it will only download the databases if the provided path does *not* already exist.
 Also note that the databases are very large.
 
+Note that CheckM2 downloading is currently broken (see <https://github.com/chklovski/CheckM2/issues/134>), so it is recommended to download the CheckM2 database manually from <https://zenodo.org/record/14897628> and provide the path using `--checkm2-db` or the `CHECKM2DB` environment variable.
+
 ```bash
+# CheckM2 database manual download example
+mkdir -p /checkm2/db/
+wget https://zenodo.org/api/records/14897628/files/checkm2_database.tar.gz/content -O /checkm2/db/checkm2_database.tar.gz
+tar -xvzf /checkm2/db/checkm2_database.tar.gz -C /checkm2/db/
+
 binchicken build \
   --singlem-metapackage /metapackage/dir \
-  --checkm2-db /checkm2/db/dir \
+  --checkm2-db /checkm2/db/CheckM2_database \
   # Optional: for use with Aviary comprehensive (`--aviary-speed comprehensive`)
   --gtdbtk-db /gtdb/release/dir \
   # Optional: for use with taxvamb extra binner (`--aviary-extra-binners taxvamb`)
@@ -34,7 +41,7 @@ Subprocess conda environments will be created when required.
 
 ```bash
 conda env config vars set SINGLEM_METAPACKAGE_PATH="/metapackage/dir"
-conda env config vars set CHECKM2DB="/checkm2/db/dir"
+conda env config vars set CHECKM2DB="/checkm2/db/CheckM2_database"
 # Optional: for use with Aviary comprehensive (`--aviary-speed comprehensive`)
 conda env config vars set GTDBTK_DATA_PATH="/gtdb/release/dir"
 # Optional: for use with taxvamb extra binner (`--aviary-extra-binners taxvamb`)
