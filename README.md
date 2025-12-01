@@ -19,6 +19,6 @@ Not to be confused with https://gitlab.com/andreassh/binchicken
 
 ## Citation
 
-Samuel T. N. Aroney, Rhys J. P. Newell, Gene W. Tyson and Ben J. Woodcroft.
+Aroney, S.T.N., Newell, R.J.P., Tyson, G.W. and Woodcroft B.J.
 Bin Chicken: targeted metagenomic coassembly for the efficient recovery of novel genomes.
-bioRxiv (2024): 2024-11. https://doi.org/10.1101/2024.11.24.625082
+Nat Methods (2025). https://doi.org/10.1038/s41592-025-02901-1
