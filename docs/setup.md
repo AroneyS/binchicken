@@ -47,3 +47,10 @@ conda env config vars set GTDBTK_DATA_PATH="/gtdb/release/dir"
 # Optional: for use with taxvamb extra binner (`--aviary-extra-binners taxvamb`)
 conda env config vars set METABULI_DB_PATH="/metabuli/db/dir"
 ```
+
+## Common issues
+
+### Too many open files (os error 24)
+
+If you encounter "Too many open files" errors, you may need to increase the maximum number of open file descriptors.
+Try running `ulimit -n 10000` before rerunning Bin Chicken.
