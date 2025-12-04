@@ -34,13 +34,14 @@ HIERARCHY_SIZE_DEP_MODE = "large"
 HIERARCHY_SIZE_CUTOFF = 10000
 HIERARCHY_ALWAYS_MODE = "always"
 
-def build_reads_list(forward, reverse):
+def build_reads_list(forward, reverse, no_sample_sort=False):
     if reverse:
         if len(forward) != len(reverse):
             raise Exception("Number of forward and reverse reads must be equal")
         forward_reads = {}
         reverse_reads = {}
-        for forward, reverse in zip(forward, reverse):
+        samples = zip(forward, reverse) if no_sample_sort else zip(sorted(forward), sorted(reverse))
+        for forward, reverse in samples:
             joint_name = os.path.commonprefix(
                 [os.path.basename(forward), os.path.basename(reverse)]
                 )
@@ -709,7 +710,7 @@ def coassemble(args, iteration=None):
         args.forward = read_list(args.forward_list)
     if args.reverse_list:
         args.reverse = read_list(args.reverse_list)
-    forward_reads, reverse_reads = build_reads_list(args.forward, args.reverse)
+    forward_reads, reverse_reads = build_reads_list(args.forward, args.reverse, args.no_sample_sort)
 
     if args.sample_singlem_list:
         args.sample_singlem = read_list(args.sample_singlem_list)
@@ -1603,10 +1604,11 @@ def main():
         argument_group.add_argument("--tmp-dir", help="Path to temporary directory. [default: no default]")
 
     def add_base_arguments(argument_group):
-        argument_group.add_argument("--forward", "--reads", "--sequences", nargs='+', help="input forward/unpaired nucleotide read sequence(s)")
-        argument_group.add_argument("--forward-list", "--reads-list", "--sequences-list", help="input forward/unpaired nucleotide read sequence(s) newline separated")
-        argument_group.add_argument("--reverse", nargs='+', help="input reverse nucleotide read sequence(s)")
-        argument_group.add_argument("--reverse-list", help="input reverse nucleotide read sequence(s) newline separated")
+        argument_group.add_argument("--forward", "--reads", "--sequences", nargs='+', help="input forward/unpaired nucleotide read sequence(s). Reads will be sorted before matching with reverse reads unless --no-sample-sort is specified.")
+        argument_group.add_argument("--forward-list", "--reads-list", "--sequences-list", help="input forward/unpaired nucleotide read sequence(s) newline separated. Reads will be sorted before matching with reverse reads unless --no-sample-sort is specified.")
+        argument_group.add_argument("--reverse", nargs='+', help="input reverse nucleotide read sequence(s). Reads will be sorted before matching with forward reads unless --no-sample-sort is specified.")
+        argument_group.add_argument("--reverse-list", help="input reverse nucleotide read sequence(s) newline separated. Reads will be sorted before matching with forward reads unless --no-sample-sort is specified.")
+        argument_group.add_argument("--no-sample-sort", action="store_true", help="Do not sort read files by sample name before matching forward and reverse reads.")
         argument_group.add_argument("--genomes", nargs='+', help="Reference genomes for read mapping")
         argument_group.add_argument("--genomes-list", help="Reference genomes for read mapping newline separated")
         argument_group.add_argument("--coassembly-samples", nargs='+', help="Restrict coassembly to these samples. Remaining samples will still be used for recovery [default: use all samples]", default=[])
