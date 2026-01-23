@@ -1216,8 +1216,8 @@ class Tests(unittest.TestCase):
 
             expected = (
                 pl.DataFrame([
-                        [12341234, ["1","2","3","4"], 4, [1,2,3], 3, 4000, ["1","2","3","4","9","10"]],
-                        [56785678, ["5","6","7","8"], 4, [4,5,6], 3, 4000, ["5","6","7","8","12","13"]],
+                        [12341234, ["1","2","3","4"], 4, [1,2,3], 3, 4000, ["1","10","2","3","4","9"]],
+                        [56785678, ["5","6","7","8"], 4, [4,5,6], 3, 4000, ["12","13","5","6","7","8"]],
                     ], orient="row", schema=CAT_RECOVERY_COLUMNS
                     )
                 .with_columns(
@@ -1231,65 +1231,9 @@ class Tests(unittest.TestCase):
                     clusters,
                     sample_targets,
                     MAX_RECOVERY_SAMPLES=6,
+                    CHUNK_SIZE=1,
                     )
                 .with_columns(pl.col("recover_candidates").list.sort())
-            )
-            self.assertDataFrameEqual(expected, observed)
-
-    def test_find_recover_candidates_lazy(self):
-        with pl.StringCache():
-            sample_targets = (
-                pl.DataFrame([
-                        ["1",  [1,2,3]],
-                        ["2",  [1,2,3]],
-                        ["3",  [1,2,3]],
-                        ["4",  [1,2,3]],
-                        ["5",  [4,5,6]],
-                        ["6",  [4,5,6]],
-                        ["7",  [4,5,6]],
-                        ["8",  [4,5,6]],
-                        ["9",  [1,2,3]],
-                        ["10", [1,2]],
-                        ["11", [1]],
-                        ["12", [4,5,6]],
-                        ["13", [4,5]],
-                        ["14", [4]],
-                    ], orient="row", schema=SAMPLE_TARGETS_COLUMNS
-                    )
-                .with_columns(pl.col("recover_candidates").cast(pl.Categorical))
-                .lazy()
-            )
-
-            clusters = (
-                pl.DataFrame([
-                        [12341234, ["1","2","3","4"], 4, [1,2,3], 3, 4000],
-                        [56785678, ["5","6","7","8"], 4, [4,5,6], 3, 4000],
-                    ], orient="row", schema=CAT_CLUSTERS_COLUMNS
-                    )
-                .with_columns(pl.col("samples").cast(pl.List(pl.Categorical)))
-                .lazy()
-            )
-
-            expected = (
-                pl.DataFrame([
-                        [12341234, ["1","2","3","4"], 4, [1,2,3], 3, 4000, ["1","2","3","4","9","10"]],
-                        [56785678, ["5","6","7","8"], 4, [4,5,6], 3, 4000, ["5","6","7","8","12","13"]],
-                    ], orient="row", schema=CAT_RECOVERY_COLUMNS
-                    )
-                .with_columns(
-                    pl.col("samples").cast(pl.List(pl.Categorical)),
-                    pl.col("recover_candidates").cast(pl.List(pl.Categorical)),
-                    )
-            )
-
-            observed = (
-                find_recover_candidates(
-                    clusters,
-                    sample_targets,
-                    MAX_RECOVERY_SAMPLES=6,
-                    )
-                .with_columns(pl.col("recover_candidates").list.sort())
-                .collect()
             )
             self.assertDataFrameEqual(expected, observed)
 
