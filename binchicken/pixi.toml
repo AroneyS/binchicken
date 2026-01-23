@@ -24,7 +24,7 @@ pixi = "*"
 pip = "*"
 
 [feature.main.tasks]
-postinstall = { cmd = "pip install --no-build-isolation --no-deps --disable-pip-version-check -e ..", cwd = "binchicken" }
+postinstall = "pip install --no-build-isolation --no-deps --disable-pip-version-check -e .."
 build_dep_defs = { cmd = "python ../admin/build_dep_defs_from_pixi.py", depends-on = ["postinstall"] }
 
 [feature.dev.dependencies]
