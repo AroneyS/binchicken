@@ -34,12 +34,14 @@ toml = "*"
 pandoc = "*"
 
 [feature.dev.tasks.run-tests]
-cmd = "pytest test"
 depends-on = ["postinstall"]
+cwd = ".."
+cmd = "pytest test"
 
 [feature.dev.tasks.run-a-test]
 args = ["test_name"]
 depends-on = ["postinstall"]
+cwd = ".."
 cmd = "pytest test --run-expensive -k {{ test_name }}"
 
 [environments]
