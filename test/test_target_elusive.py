@@ -962,9 +962,9 @@ class Tests(unittest.TestCase):
                 ["S3.1", "sample_4", "AAC", 1, 3.5, "Root", "6071535188791011068"],
             ], orient="row", schema=TARGETS_COLUMNS)
             expected_edges = pl.DataFrame([
-                ["match", 3, "sample_1,sample_3,sample_4", "4119220645959756749"],
-                ["match", 3, "sample_1,sample_2,sample_4", "4119220645959756749"],
-                ["match", 4, "sample_1,sample_2,sample_3,sample_4", "4119220645959756749"],
+                ["match", 3, "sample_1,sample_3,sample_4", "6071535188791011068"],
+                ["match", 3, "sample_1,sample_2,sample_4", "6071535188791011068"],
+                ["match", 4, "sample_1,sample_2,sample_3,sample_4", "6071535188791011068"],
             ], orient="row", schema=EDGES_COLUMNS)
 
             streaming_pipeline(
@@ -1052,7 +1052,7 @@ class Tests(unittest.TestCase):
                 ["S3.1", "sample_3", "AAC", 5, 10, "Root", "6071535188791011068"],
             ], orient="row", schema=TARGETS_COLUMNS)
             expected_edges = pl.DataFrame([
-                ["match", 2, "sample_1,sample_2", "6753533720934362372,5724869768496956987"],
+                ["match", 2, "sample_1,sample_2", "5724869768496956987,6753533720934362372"],
                 ["match", 2, "sample_1,sample_3", "5724869768496956987"],
                 ["match", 2, "sample_2,sample_3", "5724869768496956987"],
             ], orient="row", schema=EDGES_COLUMNS)
@@ -1086,9 +1086,9 @@ class Tests(unittest.TestCase):
 
             expected_targets = pl.DataFrame([
                 ["S3.1", "sample_1", "AAA", 1, 3, "Root", "5724869768496956987"],
-                ["S3.2", "sample_1", "AAB", 1, 3, "Root", "6071535188791011068"],
+                ["S3.2", "sample_1", "AAB", 1, 3, "Root", "3904995007937252151"],
                 ["S3.1", "sample_2", "AAA", 1, 3, "Root", "5724869768496956987"],
-                ["S3.2", "sample_2", "AAB", 1, 3, "Root", "6071535188791011068"],
+                ["S3.2", "sample_2", "AAB", 1, 3, "Root", "3904995007937252151"],
             ], orient="row", schema=TARGETS_COLUMNS)
             expected_edges = pl.DataFrame([
             ], orient="row", schema=EDGES_COLUMNS)
