@@ -24,7 +24,7 @@ pixi = "*"
 pip = "*"
 
 [feature.main.tasks]
-postinstall = "pip install --no-build-isolation --no-deps --disable-pip-version-check -e .."
+postinstall = "python -m pip install --no-build-isolation --no-deps --disable-pip-version-check -e .."
 build_dep_defs = { cmd = "python ../admin/build_dep_defs_from_pixi.py", depends-on = ["postinstall"] }
 
 [feature.dev.dependencies]
@@ -32,6 +32,17 @@ pytest = "*"
 ipython = "*"
 toml = "*"
 pandoc = "*"
+
+[feature.dev.tasks.run-tests]
+depends-on = ["postinstall"]
+cwd = ".."
+cmd = "python -m pytest test"
+
+[feature.dev.tasks.run-a-test]
+args = ["test_name"]
+depends-on = ["postinstall"]
+cwd = ".."
+cmd = "python -m pytest test --run-expensive -k {{ test_name }}"
 
 [environments]
 default = ["main"]

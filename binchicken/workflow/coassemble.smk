@@ -141,7 +141,7 @@ rule summary:
         script = scripts_dir + "/summarise_coassemblies.py",
     localrule: True
     shell:
-        f"{pixi_run} "
+        f"{pixi_run} -e default "
         "python3 {params.script} "
         "--elusive-clusters {input.elusive_clusters} "
         "--read-size {input.read_size} "
@@ -406,7 +406,7 @@ rule query_processing_split:
         runtime = get_runtime(base_hours = 48),
         log_path=lambda wildcards, attempt: setup_log(f"{logs_dir}/query/processing_split_{wildcards.split}", attempt)
     shell:
-        f"{pixi_run} "
+        f"{pixi_run} -e default "
         "python3 {params.script} "
         "--query-reads {input.query_reads} "
         "--pipe-reads {input.pipe_reads} "
@@ -492,7 +492,7 @@ rule no_genomes:
     params:
         script = scripts_dir + "/no_genomes.py",
     shell:
-        f"{pixi_run} "
+        f"{pixi_run} -e default "
         "python3 {params.script} "
         "--reads {input.reads} "
         "--binned {output.binned} "
@@ -588,7 +588,7 @@ rule abundance_weighting:
     benchmark:
         benchmarks_dir + "/appraise/abundance_weighting.tsv"
     shell:
-        f"{pixi_run} "
+        f"{pixi_run} -e default "
         "python3 {params.script} "
         "--unbinned {input.unbinned} "
         "--binned {input.binned} "
@@ -613,7 +613,7 @@ rule sketch_samples:
         runtime = get_runtime(base_hours = 96),
         log_path=lambda wildcards, attempt: setup_log(f"{logs_dir}/precluster/sketching", attempt)
     shell:
-        f"{pixi_run} "
+        f"{pixi_run} -e default "
         "python3 {params.script} "
         "--unbinned {input.unbinned} "
         "--sketch {output.sketch} "
@@ -646,7 +646,7 @@ rule distance_samples:
     benchmark:
         benchmarks_dir + "/precluster/distance.tsv"
     shell:
-        f"{pixi_run} "
+        f"{pixi_run} -e default "
         "sourmash scripts pairwise "
         "{input.sketch} "
         "-o {output.distance} "
@@ -722,7 +722,7 @@ rule target_elusive:
     benchmark:
         benchmarks_dir + "/target/target_elusive.tsv"
     shell:
-        f"{pixi_run} "
+        f"{pixi_run} -e default "
         "python3 {params.script} "
         "--unbinned {input.unbinned} "
         "--distances {input.distances} "
@@ -753,7 +753,7 @@ rule target_weighting:
         runtime = get_runtime(base_hours = 24),
         log_path=lambda wildcards, attempt: setup_log(f"{logs_dir}/target/target_weighting", attempt)
     shell:
-        f"{pixi_run} "
+        f"{pixi_run} -e default "
         "python3 {params.script} "
         "--targets {input.targets} "
         "--weighting {input.weighting} "
@@ -815,7 +815,7 @@ checkpoint cluster_graph:
     benchmark:
         benchmarks_dir + "/target/cluster_graph.tsv"
     shell:
-        f"{pixi_run} "
+        f"{pixi_run} -e default "
         "python3 {params.script} "
         "--elusive-edges {input.elusive_edges} "
         "--read-size {input.read_size} "
@@ -956,7 +956,7 @@ rule collect_genomes:
         sample = "{read}",
         min_appraised = config["unmapping_min_appraised"],
     shell:
-        f"{pixi_run} "
+        f"{pixi_run} -e default "
         "python3 {params.script} "
         "--appraise-binned {input.appraise_binned} "
         "--appraise-unbinned {input.appraise_unbinned} "
@@ -1105,7 +1105,7 @@ rule aviary_commands:
     resources:
         log_path=lambda wildcards, attempt: setup_log(f"{logs_dir}/aviary_commands", attempt)
     shell:
-        f"{pixi_run} "
+        f"{pixi_run} -e default "
         "python3 {params.script} "
         "--elusive-clusters {input.elusive_clusters} "
         "--coassemble-commands {output.coassemble_commands} "

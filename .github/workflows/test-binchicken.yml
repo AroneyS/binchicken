@@ -16,6 +16,12 @@ jobs:
           curl -fsSL https://pixi.sh/install.sh | bash
           echo "$HOME/.pixi/bin" >> $GITHUB_PATH
 
+      # Needed due to pixi run -e default breaking for import binchicken
+      - name: Create default environment
+        run: |
+          pixi run --manifest-path binchicken/pixi.toml postinstall
+          pixi run --manifest-path binchicken/pixi.toml pixi info
+
       - name: Create dev environment
         run: |
           pixi run --manifest-path binchicken/pixi.toml -e dev postinstall
@@ -49,6 +55,12 @@ jobs:
         run: |
           rm -fv pixi.lock admin/requirements.txt
           touch admin/requirements.txt
+
+      # Needed due to pixi run -e default breaking for import binchicken
+      - name: Create default environment
+        run: |
+          pixi run --manifest-path binchicken/pixi.toml postinstall
+          pixi run --manifest-path binchicken/pixi.toml pixi info
 
       - name: Create dev environment
         run: |

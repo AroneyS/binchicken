@@ -159,7 +159,7 @@ rule evaluate:
     resources:
         log_path=lambda wildcards, attempt: setup_log(f"{logs_dir}/evaluate/evaluate", attempt)
     shell:
-        f"{pixi_run} "
+        f"{pixi_run} -e default "
         "python3 {params.script} "
         "--target-otu-table {params.target_otu_table} "
         "--binned-otu-table {params.binned_otu_table} "

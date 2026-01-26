@@ -1408,7 +1408,7 @@ def iterate(args):
 
 def configure_variable(variable, value):
     os.environ[variable] = value
-    extern.run(f"{pixi_run} conda env config vars set {variable}={value}")
+    extern.run(f"{pixi_run} -e default conda env config vars set {variable}={value}")
     try:
         extern.run(f"pixi run --frozen conda env config vars set {variable}={value}")
     except extern.ExternCalledProcessError:
