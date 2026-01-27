@@ -205,10 +205,10 @@ class Tests(unittest.TestCase):
             elusive_edges_path = os.path.join("test", "coassemble", "target", "elusive_edges.tsv")
             self.assertTrue(os.path.exists(elusive_edges_path))
             expected = pl.DataFrame([
-                    ["match", 2, "sample_1,sample_2", "2416810233479675551,6360827971060584481"],
-                    ["match", 2, "sample_1,sample_5", "2416810233479675551"],
-                    ["match", 2, "sample_2,sample_5", "2416810233479675551"],
-                    ["match", 2, "sample_3,sample_5", "1779956245962588283,5034568815038442683"],
+                    ["match", 2, "sample_1,sample_2", "1599792511324098285,2099872357664929757"],
+                    ["match", 2, "sample_1,sample_5", "2099872357664929757"],
+                    ["match", 2, "sample_2,sample_5", "2099872357664929757"],
+                    ["match", 2, "sample_3,sample_5", "151634836910807220,3420149846979092472"],
                 ],
                 schema = ["style", "cluster_size", "samples", "target_ids"],
                 orient="row",
@@ -299,10 +299,10 @@ class Tests(unittest.TestCase):
             elusive_edges_path = os.path.join("test", "coassemble", "target", "elusive_edges.tsv")
             self.assertTrue(os.path.exists(elusive_edges_path))
             expected = pl.DataFrame([
-                    ["match", 2, "sample_1,sample_2", "2416810233479675551,6360827971060584481"],
-                    ["match", 2, "sample_1,sample_5", "2416810233479675551"],
-                    ["match", 2, "sample_2,sample_5", "2416810233479675551"],
-                    ["match", 2, "sample_3,sample_5", "1779956245962588283,5034568815038442683"],
+                    ["match", 2, "sample_1,sample_2", "1599792511324098285,2099872357664929757"],
+                    ["match", 2, "sample_1,sample_5", "2099872357664929757"],
+                    ["match", 2, "sample_2,sample_5", "2099872357664929757"],
+                    ["match", 2, "sample_3,sample_5", "151634836910807220,3420149846979092472"],
                 ],
                 schema = ["style", "cluster_size", "samples", "target_ids"],
                 orient="row",

@@ -92,22 +92,38 @@ def accumulate_clusters(x):
 
     return pl.Series(choices, dtype=pl.Boolean)
 
-def find_recover_candidates(df, samples_df, MAX_RECOVERY_SAMPLES=20):
+def find_recover_candidates(df, samples_df, MAX_RECOVERY_SAMPLES=20, CHUNK_SIZE=10000):
+    if df.height == 0:
+        return df.with_columns(recover_candidates = pl.lit([]).cast(pl.List(pl.Categorical)))
+
     samples_df = samples_df.explode("target_ids")
 
-    output = (
-        df
-        .select("samples_hash", "target_ids")
-        .explode("target_ids")
-        .join(samples_df, on="target_ids", how="left", coalesce=True)
-        .group_by("samples_hash", "recover_candidates")
-        .agg(pl.len().alias("count"))
-        .sort("count", descending=True)
-        .group_by("samples_hash")
-        .head(MAX_RECOVERY_SAMPLES)
-        .group_by("samples_hash")
-        .agg("recover_candidates")
-    )
+    # Split joining into chunks to avoid Polars row limit
+    def process_chunk(df):
+        candidates = (
+            df
+            .select("samples_hash", "target_ids")
+            .explode("target_ids")
+            .join(samples_df, on="target_ids", how="left", coalesce=True)
+            .group_by("samples_hash", "recover_candidates")
+            .agg(pl.len().alias("count"))
+            .sort("count", descending=True)
+            .group_by("samples_hash")
+            .head(MAX_RECOVERY_SAMPLES)
+            .group_by("samples_hash")
+            .agg("recover_candidates")
+        )
+
+        return(candidates)
+
+    num_chunks = (df.height + CHUNK_SIZE - 1) // CHUNK_SIZE # Ceiling division to include all rows
+    processed_chunks = []
+    for i in range(num_chunks):
+        start_row = i * CHUNK_SIZE
+        chunk = df.slice(start_row, CHUNK_SIZE)
+        processed_chunks.append(process_chunk(chunk))
+
+    output = pl.concat(processed_chunks)
 
     return df.join(output, on="samples_hash", how="left", coalesce=True)
 

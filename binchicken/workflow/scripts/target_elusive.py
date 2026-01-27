@@ -206,7 +206,7 @@ def streaming_pipeline(
             .filter(pl.col("count") == pl.col("cluster_size"))
             .filter(pl.col("coverage") > MIN_COASSEMBLY_COVERAGE)
             .group_by("samples", "cluster_size")
-            .agg(target_ids = pl.col("target").cast(pl.Utf8).sort().str.concat(","))
+            .agg(target_ids = pl.col("target").cast(pl.Utf8).sort().str.join(","))
             .with_columns(style = pl.lit("match"))
             .select("style", "cluster_size", "samples", "target_ids")
         )
@@ -334,7 +334,7 @@ def pipeline(
         .group_by("target")
         .map_groups(process_groups)
         .group_by(["style", "cluster_size", "samples"])
-        .agg(target_ids = pl.col("target").cast(pl.Utf8).sort().str.concat(","))
+        .agg(target_ids = pl.col("target").cast(pl.Utf8).sort().str.join(","))
     )
 
     return unbinned.with_columns(pl.col("target").cast(pl.Utf8)), sparse_edges

@@ -143,7 +143,7 @@ def evaluate(target_otu_table, binned_otu_table, elusive_clusters, elusive_edges
         .join(sample_edges, how="inner", on=["target", "source_samples"])
         .group_by("gene", "sequence", "coassembly", "taxonomy", "found_in", "target")
         .agg(
-            pl.col("source_samples").sort().str.concat(","),
+            pl.col("source_samples").sort().str.join(","),
             source_num_hits = pl.sum("num_hits"),
             source_coverage = pl.sum("coverage"),
             )
@@ -173,7 +173,7 @@ def evaluate(target_otu_table, binned_otu_table, elusive_clusters, elusive_edges
             pl.first("taxonomy"),
             pl.first("found_in"),
             pl.first("target"),
-            pl.col("sample").unique().sort().str.concat(",").alias("source_samples"),
+            pl.col("sample").unique().sort().str.join(",").alias("source_samples"),
             pl.sum("num_hits").alias("source_num_hits"),
             pl.sum("coverage").alias("source_coverage"),
             ])

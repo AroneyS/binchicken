@@ -1659,10 +1659,10 @@ class Tests(unittest.TestCase):
             elusive_edges_path = os.path.join("test", "coassemble", "target", "elusive_edges.tsv")
             self.assertTrue(os.path.exists(elusive_edges_path))
             expected = pl.DataFrame([
-                    ["match", 2, "sample_1,sample_2", "2416810233479675551,6360827971060584481"],
-                    ["match", 2, "sample_1,sample_5", "2416810233479675551"],
-                    ["match", 2, "sample_2,sample_5", "2416810233479675551"],
-                    ["match", 2, "sample_3,sample_5", "1779956245962588283,5034568815038442683"],
+                    ["match", 2, "sample_1,sample_2", "1599792511324098285,2099872357664929757"],
+                    ["match", 2, "sample_1,sample_5", "2099872357664929757"],
+                    ["match", 2, "sample_2,sample_5", "2099872357664929757"],
+                    ["match", 2, "sample_3,sample_5", "151634836910807220,3420149846979092472"],
                 ],
                 schema = ["style", "cluster_size", "samples", "target_ids"],
                 orient="row",
@@ -1733,7 +1733,7 @@ class Tests(unittest.TestCase):
             expected = "\n".join(
                 [
                     "\t".join(["style", "cluster_size", "samples", "target_ids"]),
-                    "\t".join(["match", "2", "sample_2,sample_5", "2416810233479675551"]),
+                    "\t".join(["match", "2", "sample_2,sample_5", "2099872357664929757"]),
                     ""
                 ]
             )
@@ -1762,10 +1762,10 @@ class Tests(unittest.TestCase):
             elusive_edges_path = os.path.join("test", "coassemble", "target", "elusive_edges.tsv")
             self.assertTrue(os.path.exists(elusive_edges_path))
             expected = pl.DataFrame([
-                    ["match", 2, "sample_1,sample_2", "2416810233479675551,6360827971060584481"],
-                    ["match", 2, "sample_1,sample_5", "2416810233479675551"],
-                    ["match", 2, "sample_2,sample_5", "2416810233479675551"],
-                    ["match", 2, "sample_3,sample_5", "1779956245962588283,5034568815038442683"],
+                    ["match", 2, "sample_1,sample_2", "1599792511324098285,2099872357664929757"],
+                    ["match", 2, "sample_1,sample_5", "2099872357664929757"],
+                    ["match", 2, "sample_2,sample_5", "2099872357664929757"],
+                    ["match", 2, "sample_3,sample_5", "151634836910807220,3420149846979092472"],
                 ],
                 schema = ["style", "cluster_size", "samples", "target_ids"],
                 orient="row",
@@ -1868,10 +1868,10 @@ class Tests(unittest.TestCase):
             elusive_edges_path = os.path.join("test", "coassemble", "target", "elusive_edges.tsv")
             self.assertTrue(os.path.exists(elusive_edges_path))
             expected = pl.DataFrame([
-                    ["match", 2, "sample_1,sample_2", "2416810233479675551,6360827971060584481"],
-                    ["match", 2, "sample_1,sample_5", "2416810233479675551"],
-                    ["match", 2, "sample_2,sample_5", "2416810233479675551"],
-                    ["match", 2, "sample_3,sample_5", "1779956245962588283,5034568815038442683"],
+                    ["match", 2, "sample_1,sample_2", "1599792511324098285,2099872357664929757"],
+                    ["match", 2, "sample_1,sample_5", "2099872357664929757"],
+                    ["match", 2, "sample_2,sample_5", "2099872357664929757"],
+                    ["match", 2, "sample_3,sample_5", "151634836910807220,3420149846979092472"],
                 ],
                 schema = ["style", "cluster_size", "samples", "target_ids"],
                 orient="row",
@@ -1954,8 +1954,8 @@ class Tests(unittest.TestCase):
             elusive_edges_path = os.path.join("test", "coassemble", "target", "elusive_edges.tsv")
             self.assertTrue(os.path.exists(elusive_edges_path))
             expected = pl.DataFrame([
-                    ["match", 2, "sample_1,sample_2", "2416810233479675551,6360827971060584481"],
-                    ["match", 2, "sample_1,sample_5", "2416810233479675551"],
+                    ["match", 2, "sample_1,sample_2", "1599792511324098285,2099872357664929757"],
+                    ["match", 2, "sample_1,sample_5", "2099872357664929757"],
                 ],
                 schema = ["style", "cluster_size", "samples", "target_ids"],
                 orient="row",
@@ -2037,7 +2037,7 @@ class Tests(unittest.TestCase):
                 orient="row",
             )
             observed = pl.read_csv(weights_path, separator="\t")
-            assert_frame_equal(expected, observed, check_dtypes=False, check_row_order=False, atol=1e-5)
+            assert_frame_equal(expected, observed, check_dtypes=False, check_row_order=False, abs_tol=1e-5)
 
             target_weights_path = os.path.join("test", "coassemble", "target", "targets_weighted.tsv")
             self.assertTrue(os.path.exists(target_weights_path))
@@ -2055,7 +2055,7 @@ class Tests(unittest.TestCase):
                 orient="row",
             )
             observed = pl.read_csv(target_weights_path, separator="\t")
-            assert_frame_equal(expected, observed, check_dtypes=False, check_row_order=False, atol=1e-5)
+            assert_frame_equal(expected, observed, check_dtypes=False, check_row_order=False, abs_tol=1e-5)
 
             elusive_edges_path = os.path.join("test", "coassemble", "target", "elusive_edges.tsv")
             self.assertTrue(os.path.exists(elusive_edges_path))
@@ -2082,7 +2082,7 @@ class Tests(unittest.TestCase):
                 orient="row",
             )
             observed = pl.read_csv(cluster_path, separator="\t")
-            assert_frame_equal(expected, observed, check_dtypes=False, check_row_order=False, atol=1e-5)
+            assert_frame_equal(expected, observed, check_dtypes=False, check_row_order=False, abs_tol=1e-5)
 
     def test_coassemble_weighted_specific_samples(self):
         with in_tempdir():
@@ -2120,7 +2120,7 @@ class Tests(unittest.TestCase):
                 orient="row",
             )
             observed = pl.read_csv(weights_path, separator="\t")
-            assert_frame_equal(expected, observed, check_dtypes=False, check_row_order=False, atol=1e-5)
+            assert_frame_equal(expected, observed, check_dtypes=False, check_row_order=False, abs_tol=1e-5)
 
     def test_coassemble_weighted_target_taxa(self):
         with in_tempdir():
@@ -2156,7 +2156,7 @@ class Tests(unittest.TestCase):
                 orient="row",
             )
             observed = pl.read_csv(weights_path, separator="\t")
-            assert_frame_equal(expected, observed, check_dtypes=False, check_row_order=False, atol=1e-5)
+            assert_frame_equal(expected, observed, check_dtypes=False, check_row_order=False, abs_tol=1e-5)
 
             target_weights_path = os.path.join("test", "coassemble", "target", "targets_weighted.tsv")
             self.assertTrue(os.path.exists(target_weights_path))
@@ -2171,7 +2171,7 @@ class Tests(unittest.TestCase):
                 orient="row",
             )
             observed = pl.read_csv(target_weights_path, separator="\t")
-            assert_frame_equal(expected, observed, check_dtypes=False, check_row_order=False, atol=1e-5)
+            assert_frame_equal(expected, observed, check_dtypes=False, check_row_order=False, abs_tol=1e-5)
 
             elusive_edges_path = os.path.join("test", "coassemble", "target", "elusive_edges.tsv")
             self.assertTrue(os.path.exists(elusive_edges_path))
@@ -2195,7 +2195,7 @@ class Tests(unittest.TestCase):
                 orient="row",
             )
             observed = pl.read_csv(cluster_path, separator="\t")
-            assert_frame_equal(expected, observed, check_dtypes=False, check_row_order=False, atol=1e-5)
+            assert_frame_equal(expected, observed, check_dtypes=False, check_row_order=False, abs_tol=1e-5)
 
     def test_coassemble_sra_download(self):
         with in_tempdir():
@@ -2564,7 +2564,7 @@ class Tests(unittest.TestCase):
                 schema=["Bin Id", "bin_source", "new_name", "binner"],
                 orient="row",
             )
-            assert_frame_equal(expected, observed, check_dtypes=False, check_row_order=False, atol=1e-5)
+            assert_frame_equal(expected, observed, check_dtypes=False, check_row_order=False, abs_tol=1e-5)
 
             bin_info_path = os.path.join(recovered_bins_path, "bin_info.tsv")
             self.assertTrue(os.path.exists(bin_info_path))
@@ -2578,7 +2578,7 @@ class Tests(unittest.TestCase):
                         )
                     )
             )
-            assert_frame_equal(expected, observed, check_dtypes=False, check_row_order=False, atol=1e-5)
+            assert_frame_equal(expected, observed, check_dtypes=False, check_row_order=False, abs_tol=1e-5)
 
             quality_report_path = os.path.join(recovered_bins_path, "quality_report.tsv")
             self.assertTrue(os.path.exists(quality_report_path))
@@ -2597,7 +2597,7 @@ class Tests(unittest.TestCase):
                     })
                 .select(CHECKM2_QUALITY_COLUMNS.keys())
             )
-            assert_frame_equal(expected, observed, check_dtypes=False, check_row_order=False, atol=1e-5)
+            assert_frame_equal(expected, observed, check_dtypes=False, check_row_order=False, abs_tol=1e-5)
 
 if __name__ == '__main__':
     unittest.main()
