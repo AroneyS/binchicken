@@ -67,7 +67,6 @@ pytest = "*"
 ipython = "*"
 toml = "*"
 pandoc = "*"
-snakemake-executor-plugin-cluster-generic = "*" # for run-tests-at-cmr
 
 [environments]
 default = ["main"]
