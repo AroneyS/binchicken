@@ -74,7 +74,7 @@ def processing(
         .drop(["taxonomy", "num_hits", "coverage"])
         .join(pipe_read, on=["gene", "sample", "sequence"], how="inner")
         .group_by(["gene", "sample", "sequence", "num_hits", "coverage", "taxonomy", "divergence"])
-        .agg(pl.col("found_in").sort().str.concat(","))
+        .agg(pl.col("found_in").sort().str.join(","))
         .with_columns(pl.col("divergence").alias("binned") <= ((1 - SEQUENCE_IDENTITY) * WINDOW_SIZE))
     )
 
