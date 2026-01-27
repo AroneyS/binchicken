@@ -16,6 +16,13 @@ jobs:
           curl -fsSL https://pixi.sh/install.sh | bash
           echo "$HOME/.pixi/bin" >> $GITHUB_PATH
 
+      # Needed due to pixi run -e default breaking for import binchicken
+      - name: Create default environment
+        run: |
+          pixi run postinstall
+          pixi run pixi info
+          pixi run binchicken -h
+
       - name: Create dev environment
         run: |
           pwd
@@ -35,11 +42,6 @@ jobs:
         run: |
           pixi run -e dev binchicken -h
           pixi run -e dev pytest -v
-
-      - name: Ensure main env works
-        run: |
-          pixi run postinstall
-          pixi run binchicken -h
 
   # Run after removing lock file so dependences are unlocked
   pixi_test_dependencies_optimistic:
@@ -61,6 +63,13 @@ jobs:
           rm -fv pixi.lock admin/requirements.txt
           touch admin/requirements.txt
 
+      # Needed due to pixi run -e default breaking for import binchicken
+      - name: Create default environment
+        run: |
+          pixi run postinstall
+          pixi run pixi info
+          pixi run binchicken -h
+
       - name: Create dev environment
         run: |
           pwd
@@ -80,8 +89,3 @@ jobs:
         run: |
           pixi run -e dev binchicken -h
           pixi run -e dev pytest -v
-
-      - name: Ensure main env works
-        run: |
-          pixi run postinstall
-          pixi run binchicken -h
