@@ -70,13 +70,14 @@ Create conda env from `binchicken.yml` and install from source.
 ```bash
 git clone https://github.com/AroneyS/binchicken.git
 cd binchicken
-pixi run --manifest-path binchicken/pixi.toml postinstall
+mkdir -p aviary/.pixi
+pixi run postinstall
 ```
 
 Then binchicken can be run using `pixi run` (or via `pixi shell`).
 
 ```bash
-pixi run --manifest-path binchicken/pixi.toml binchicken --help
+pixi run binchicken --help
 ```
 
 When installed this way, binchicken is installed in an "editable" way (similar to `pip install -e .`),
@@ -86,10 +87,10 @@ This is useful for development and debugging.
 Tests can be run with:
 
 ```bash
-pixi run --manifest-path binchicken/pixi.toml -e dev run-tests
+pixi run -e dev run-tests
 
 # Or a specific test
-pixi run --manifest-path binchicken/pixi.toml -e dev run-a-test test_coassemble_taxa_of_interest
+pixi run -e dev run-a-test test_coassemble_taxa_of_interest
 ```
 
 When run this way, the databases required for binchicken (e.g. `CHECKM2DB`) can be symlinked from a `db/` directory in the binchicken repository.
