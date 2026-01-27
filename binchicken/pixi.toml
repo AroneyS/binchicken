@@ -33,6 +33,11 @@ ipython = "*"
 toml = "*"
 pandoc = "*"
 
+[feature.dev.tasks.pytest]
+depends-on = ["postinstall"]
+cwd = ".."
+cmd = "python -m pytest"
+
 [feature.dev.tasks.run-tests]
 depends-on = ["postinstall"]
 cwd = ".."
