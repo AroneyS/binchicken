@@ -16,6 +16,15 @@ jobs:
           curl -fsSL https://pixi.sh/install.sh | bash
           echo "$HOME/.pixi/bin" >> $GITHUB_PATH
 
+      - name: Prepare pixi folder
+        run: |
+          pwd
+          echo "Contents of current directory:"
+          ls -la
+          mkdir -p binchicken/.pixi
+          echo "Contents of binchicken directory:"
+          ls -la binchicken
+
       # Needed due to pixi run -e default breaking for import binchicken
       - name: Create default environment
         run: |
@@ -25,12 +34,6 @@ jobs:
 
       - name: Create dev environment
         run: |
-          pwd
-          echo "Contents of current directory:"
-          ls -la
-          mkdir -p binchicken/.pixi
-          echo "Contents of binchicken directory:"
-          ls -la binchicken
           pixi run -e dev postinstall
           pixi run -e dev pixi info
 
@@ -58,6 +61,15 @@ jobs:
           curl -fsSL https://pixi.sh/install.sh | bash
           echo "$HOME/.pixi/bin" >> $GITHUB_PATH
 
+      - name: Prepare pixi folder
+        run: |
+          pwd
+          echo "Contents of current directory:"
+          ls -la
+          mkdir -p binchicken/.pixi
+          echo "Contents of binchicken directory:"
+          ls -la binchicken
+
       - name: Remove lock file
         run: |
           rm -fv pixi.lock admin/requirements.txt
@@ -72,12 +84,6 @@ jobs:
 
       - name: Create dev environment
         run: |
-          pwd
-          echo "Contents of current directory:"
-          ls -la
-          mkdir -p binchicken/.pixi
-          echo "Contents of binchicken directory:"
-          ls -la binchicken
           pixi run -e dev postinstall
           pixi run -e dev pixi info
 
