@@ -70,7 +70,7 @@ Create conda env from `binchicken.yml` and install from source.
 ```bash
 git clone https://github.com/AroneyS/binchicken.git
 cd binchicken
-mkdir -p aviary/.pixi
+mkdir -p binchicken/.pixi
 pixi run postinstall
 ```
 
