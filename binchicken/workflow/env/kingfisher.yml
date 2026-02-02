@@ -1,7 +1,0 @@
-channels:
-  - conda-forge
-  - bioconda
-  - rpetit3
-dependencies:
-  - kingfisher=0.3.*
-  - aspera-connect
