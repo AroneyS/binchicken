@@ -25,7 +25,7 @@ binchicken = "binchicken.binchicken:main"
 ibis = "binchicken.binchicken:main"
 
 [tool.setuptools]
-packages = ["binchicken", "binchicken.config", "binchicken.workflow", "binchicken.workflow.env", "binchicken.workflow.scripts"]
+packages = ["binchicken", "binchicken.config", "binchicken.workflow", "binchicken.workflow.scripts"]
 
 [tool.setuptools.dynamic]
 version = {attr = "binchicken.__version__"}
