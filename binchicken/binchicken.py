@@ -646,8 +646,8 @@ def extract_recovered_bins(elusive_clusters_path, recovered_bins_dir, bin_prov_p
                 pl.read_csv(bin_info_path, separator="\t", schema_overrides=BIN_INFO_COLUMNS)
                 .with_row_index("index")
                 .with_columns(
-                    binner = pl.col("Bin Id").str.extract(r"(^[^_.]+_)").str.replace(r"_", ""),
-                    bin_source = pl.concat_str(pl.lit(bins_dir + "/final_bins/"), pl.col("Bin Id"), pl.lit(".fna")),
+                    binner = pl.col("Name").str.extract(r"(^[^_.]+_)").str.replace(r"_", ""),
+                    bin_source = pl.concat_str(pl.lit(bins_dir + "/final_bins/"), pl.col("Name"), pl.lit(".fna")),
                     new_name = pl.concat_str(pl.lit(name_prefix), (pl.col("index") + 1).cast(pl.Utf8))
                 )
             )
@@ -676,14 +676,14 @@ def extract_recovered_bins(elusive_clusters_path, recovered_bins_dir, bin_prov_p
 
         (
             recovered
-            .select("Bin Id", "bin_source", "new_name", "binner")
+            .select("Name", "bin_source", "new_name", "binner")
             .write_csv(bin_prov_path, separator="\t")
         )
 
         (
             recovered
-            .drop("Bin Id")
-            .rename({"new_name": "Bin Id"})
+            .drop("Name")
+            .rename({"new_name": "Name"})
             .select(BIN_INFO_COLUMNS.keys())
             .write_csv(final_bin_info_path, separator="\t")
         )
