@@ -916,6 +916,37 @@ def coassemble(args, iteration=None):
         snakemake_args = args.snakemake_args,
     )
 
+    elusive_clusters_path = os.path.join(args.output, "coassemble", "target", "elusive_clusters.tsv")
+    skip_bin_linking = False
+    if args.immediate_submit and args.run_aviary and not args.dryrun:
+        if os.path.exists(elusive_clusters_path):
+            try:
+                coassemblies = (
+                    pl.read_csv(elusive_clusters_path, separator="\t", schema_overrides=ELUSIVE_CLUSTERS_COLUMNS)
+                    .get_column("coassembly")
+                    .unique()
+                    .to_list()
+                )
+            except (FileNotFoundError, NoDataError):
+                coassemblies = []
+
+            if coassemblies:
+                coassembly_dir = os.path.join(args.output, "coassemble", "coassemble")
+                incomplete_coassemblies = [
+                    c for c in coassemblies
+                    if not os.path.exists(os.path.join(coassembly_dir, c, "recover", "bins", "bin_info.tsv"))
+                ]
+                if incomplete_coassemblies:
+                    commands_done_path = os.path.join(args.output, "coassemble", "commands", "done")
+                    if os.path.exists(commands_done_path):
+                        os.remove(commands_done_path)
+                    for coassembly in incomplete_coassemblies:
+                        recover_done_path = os.path.join(coassembly_dir, coassembly, "recover.done")
+                        if os.path.exists(recover_done_path):
+                            os.remove(recover_done_path)
+                    skip_bin_linking = True
+                    logging.warning(f"Aviary bin_info.tsv not yet available in recover outputs: {incomplete_coassemblies}.")
+
     elusive_edges_path = os.path.join(args.output, "coassemble", "target", "elusive_edges.tsv")
     try:
         edge_samples = (
@@ -936,13 +967,12 @@ def coassemble(args, iteration=None):
     except (FileNotFoundError, NoDataError):
         pass
 
-    elusive_clusters_path = os.path.join(args.output, "coassemble", "target", "elusive_clusters.tsv")
     recovered_bins_dir = os.path.join(args.output, "recovered")
     bin_prov_path = os.path.join(recovered_bins_dir, "bin_provenance.tsv")
     final_bin_info_path = os.path.join(recovered_bins_dir, "bin_info.tsv")
     checkm2_quality_path = os.path.join(recovered_bins_dir, "quality_report.tsv")
     coassembly_dir = os.path.join(args.output, "coassemble", "coassemble")
-    if args.run_aviary and not args.dryrun and os.path.exists(elusive_clusters_path):
+    if args.run_aviary and not args.dryrun and os.path.exists(elusive_clusters_path) and not skip_bin_linking:
         extract_recovered_bins(elusive_clusters_path, recovered_bins_dir, bin_prov_path, final_bin_info_path, checkm2_quality_path, coassembly_dir, iteration)
 
     logging.info("---- Bin Chicken coassemble ----------------------------------------------------")
@@ -956,6 +986,8 @@ def coassemble(args, iteration=None):
     if args.run_aviary:
         if args.dryrun:
             logging.info(f"Aviary outputs will be at {os.path.join(args.output, 'coassemble', 'coassemble')}")
+        elif skip_bin_linking:
+            logging.info(f"Some Aviary recovery jobs are incomplete. Likely due to `--immediate-submit`. Rerun binchicken coassemble when cluster jobs are finished.")
         else:
             logging.info(f"Bins recovered by Aviary are at {recovered_bins_dir}")
             logging.info(f"Bin provenance (source paths) at {bin_prov_path}")
@@ -1630,6 +1662,7 @@ def main():
         argument_group.add_argument("--run-aviary", action="store_true", help="Run Aviary commands for all identified coassemblies (unless specific coassemblies are chosen with --coassemblies) [default: do not]")
         argument_group.add_argument("--prior-assemblies", help="Prior assemblies to use for Aviary recovery. tsv file with header: name [tab] assembly. Only possible with single-sample or update. [default: generate assemblies through Aviary assemble]")
         argument_group.add_argument("--cluster-submission", action="store_true", help="Flag that cluster submission will occur through `--snakemake-profile`. This sets the local threads of Aviary recover to 1, allowing parallel job submission [default: do not]")
+        argument_group.add_argument("--immediate-submit", action="store_true", help="Flag that immediate cluster submission will occur through `--aviary-snakemake-profile` (i.e. without waiting for jobs to finish). Prevents snakemake from setting Aviary as complete, when it has not yet been completed.")
         default_aviary_speed = FAST_AVIARY_MODE
         argument_group.add_argument("--aviary-speed", help=f"Run Aviary recover in 'fast' or 'comprehensive' mode. Fast mode skips slow binners and refinement steps. [default: {default_aviary_speed}]",
                                     default=default_aviary_speed, choices=[FAST_AVIARY_MODE, COMPREHENSIVE_AVIARY_MODE])
