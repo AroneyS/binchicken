@@ -47,6 +47,12 @@ The source code is available at [https://github.com/AroneyS/binchicken](https://
 
 ## Citation
 
-Aroney, S.T.N., Newell, R.J.P., Tyson, G.W. and Woodcroft B.J.
-Bin Chicken: targeted metagenomic coassembly for the efficient recovery of novel genomes.
-Nat Methods (2025). https://doi.org/10.1038/s41592-025-02901-1
+<!-- NOTE: Citations should manually be kept in sync between the repo README and the docs README -->
+
+Aroney, S.T.N., Newell, R.J.P., Tyson, G.W. and Woodcroft B.J. _Bin Chicken: targeted metagenomic coassembly for the efficient recovery of novel genomes._ Nat Methods (2025). [https://doi.org/10.1038/s41592-025-02901-1](https://doi.org/10.1038/s41592-025-02901-1).
+
+Bin Chicken is built on the SingleM tool, which is described in the following publication:
+
+Woodcroft B.J., Aroney, S.T.N., Zhao, R., Cunningham, M., Mitchell, J.A.M., Nurdiansyah, R., Blackall, L. & Tyson, G.W. _Comprehensive taxonomic identification of microbial species in metagenomic data using SingleM and Sandpiper._ Nat Biotechnol (2025). [https://doi.org/10.1038/s41587-025-02738-1](https://doi.org/10.1038/s41587-025-02738-1).
+
+If you use Aviary (through `--run-aviary`), please see the [Aviary documentation](https://github.com/rhysnewell/aviary/#Citations) for how to cite Aviary and its underlying dependencies.
