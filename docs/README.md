@@ -45,7 +45,7 @@ If you have any questions or need help, please [open an issue](https://github.co
 Bin Chicken is licensed under [GPL3 or later](https://gnu.org/licenses/gpl.html).
 The source code is available at [https://github.com/AroneyS/binchicken](https://github.com/AroneyS/binchicken).
 
-## Citation
+## Citations
 
 <!-- NOTE: Citations should manually be kept in sync between the repo README and the docs README -->
 

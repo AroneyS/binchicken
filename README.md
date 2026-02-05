@@ -17,7 +17,7 @@ Logo by Georgina H. Joyce | www.georginajoyce.com
 
 Not to be confused with https://gitlab.com/andreassh/binchicken
 
-## Citation
+## Citations
 
 <!-- NOTE: Citations should manually be kept in sync between the repo README and the docs README -->
 
