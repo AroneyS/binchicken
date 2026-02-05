@@ -532,11 +532,10 @@ def evaluate_bins(aviary_outputs, checkm_version, min_completeness, max_contamin
         }
 
     if checkm_version == 1:
-        completeness_col = "Completeness (CheckM1)"
-        contamination_col = "Contamination (CheckM1)"
+        raise ValueError("CheckM1 is no longer supported. Please use CheckM2 for evaluation.")
     elif checkm_version == 2:
-        completeness_col = "Completeness (CheckM2)"
-        contamination_col = "Contamination (CheckM2)"
+        completeness_col = "Completeness"
+        contamination_col = "Contamination"
     elif checkm_version == "build":
         logging.info("Mock bins for Bin Chicken build")
         return {"iteration_0-coassembly_0-0": os.path.join(aviary_outputs[0], "iteration_0-coassembly_0-0.fna")}
@@ -548,7 +547,7 @@ def evaluate_bins(aviary_outputs, checkm_version, min_completeness, max_contamin
         checkm_out = pl.read_csv(checkm_out_dict[coassembly], separator="\t")
         passed_bins = checkm_out.filter(
             (pl.col(completeness_col) >= min_completeness) & (pl.col(contamination_col) <= max_contamination),
-        ).get_column("Bin Id"
+        ).get_column("Name"
         ).to_list()
         coassembly_bins[coassembly] = passed_bins
 
@@ -690,11 +689,8 @@ def extract_recovered_bins(elusive_clusters_path, recovered_bins_dir, bin_prov_p
 
         (
             recovered
-            .rename({
-                "new_name": "Name",
-                "Completeness (CheckM2)": "Completeness",
-                "Contamination (CheckM2)": "Contamination",
-                })
+            .drop("Name")
+            .rename({"new_name": "Name"})
             .select(CHECKM2_QUALITY_COLUMNS.keys())
             .write_csv(checkm2_quality_path, separator="\t")
         )

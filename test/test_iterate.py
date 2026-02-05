@@ -687,11 +687,6 @@ class Tests(unittest.TestCase):
 
             (
                 bin_info
-                .rename({
-                    "Bin Id": "Name",
-                    "Completeness (CheckM2)": "Completeness",
-                    "Contamination (CheckM2)": "Contamination",
-                    })
                 .select(CHECKM2_QUALITY_COLUMNS.keys())
                 .write_csv(os.path.join(output_bins_path, "quality_report.tsv"), separator="\t")
             )

@@ -2529,7 +2529,7 @@ class Tests(unittest.TestCase):
                     ["metabat2_refined_bins.tsv.005", os.path.abspath(source_genome1_path), "binchicken_coassembly_0.1", "metabat2"],
                     ["semibin_refined_bins.tsv.072_sub", os.path.abspath(source_genome2_path), "binchicken_coassembly_0.2", "semibin"],
                 ],
-                schema=["Bin Id", "bin_source", "new_name", "binner"],
+                schema=["Name", "bin_source", "new_name", "binner"],
                 orient="row",
             )
             assert_frame_equal(expected, observed, check_dtypes=False, check_row_order=False, abs_tol=1e-5)
@@ -2540,7 +2540,7 @@ class Tests(unittest.TestCase):
             expected = (
                 bin_info
                 .with_columns(
-                    pl.col("Bin Id").replace_strict(
+                    pl.col("Name").replace_strict(
                         ["metabat2_refined_bins.tsv.005", "semibin_refined_bins.tsv.072_sub"],
                         ["binchicken_coassembly_0.1", "binchicken_coassembly_0.2"]
                         )
@@ -2554,15 +2554,11 @@ class Tests(unittest.TestCase):
             expected = (
                 bin_info
                 .with_columns(
-                    Name = pl.col("Bin Id").replace_strict(
+                    Name = pl.col("Name").replace_strict(
                         ["metabat2_refined_bins.tsv.005", "semibin_refined_bins.tsv.072_sub"],
                         ["binchicken_coassembly_0.1", "binchicken_coassembly_0.2"]
                         )
                     )
-                .rename({
-                    "Completeness (CheckM2)": "Completeness",
-                    "Contamination (CheckM2)": "Contamination",
-                    })
                 .select(CHECKM2_QUALITY_COLUMNS.keys())
             )
             assert_frame_equal(expected, observed, check_dtypes=False, check_row_order=False, abs_tol=1e-5)

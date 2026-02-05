@@ -1,4 +1,4 @@
-Bin Id	Marker lineage	# genomes	# markers	# marker sets	0	1	2	3	4	5+	Completeness (CheckM1)	Contamination (CheckM1)	Completeness (CheckM2)	Contamination (CheckM2)	Strain heterogeneity
-bin_1	k__Bacteria (UID1452)	924	151	101	41	110	0	0	0	0	99.53	0.0	99.53	2.03	0.0
-bin_2	k__Bacteria (UID1452)	924	151	101	41	110	0	0	0	0	63.86	0.0	63.86	2.03	0.0
-bin_3	k__Bacteria (UID1452)	924	151	101	41	110	0	0	0	0	63.86	0.0	99.53	2.03	0.0
+Name	Completeness	Contamination
+bin_1	99.53	2.03
+bin_2	63.86	2.03
+bin_3	99.53	2.03
