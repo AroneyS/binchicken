@@ -1,0 +1,263 @@
+<!doctype html>
+
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+
+    <title>demo</title>
+    <meta name="description" content="Documentation for Bin Chicken">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Source+Sans+Pro:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&display=swap"
+        rel="stylesheet">
+
+    <link rel="stylesheet" type="text/css" href="/binchicken/assets/normalize.css?v=1770330212"
+        media="screen" />
+    <link rel="stylesheet" type="text/css" href="/binchicken/assets/doctave-style.css?v=1770330212"
+        media="screen" />
+    <link rel="stylesheet" type="text/css" href="/binchicken/assets/katex.css?v=1770330212" media="screen" />
+    <link rel="stylesheet" type="text/css" href="/binchicken/assets/prism-ghcolors.css?v=1770330212"
+        media="screen" />
+
+    <script>
+        var DOCTAVE_TIMESTAMP = "1770330212";
+        var BASE_PATH = "/binchicken/";
+        var color = localStorage.getItem('doctave-color')
+
+        if (color === 'dark') {
+            document.getElementsByTagName('html')[0].classList.remove('light');
+            document.getElementsByTagName('html')[0].classList.add('dark');
+        } else {
+            document.getElementsByTagName('html')[0].classList.remove('dark');
+            document.getElementsByTagName('html')[0].classList.add('light');
+        }
+    </script>
+
+    
+</head>
+
+<body>
+    <label for='menu-toggle-switch' class='menu-toggle-button'>
+        ☰
+    </label>
+    <input type="checkbox" id="menu-toggle-switch" value='0' />
+    <div class='page'>
+        <div class='header'>
+            <div class='logo'>
+                
+                <a href="/binchicken/">
+                    <img src="/binchicken/binchicken_logo.png" alt='Bin Chicken logo'></img>
+                </a>
+                
+                <h2 class='project-name'>
+                    <a href="/binchicken/">
+                        Bin Chicken
+                    </a>
+                </h2>
+            </div>
+            <div class='search'>
+                <form id='search-form'>
+    <input type='text' id='search-box' autocomplete="off" placeholder="Search..."></input>
+    <span class='search-icon'>S</span>
+    <ul id='search-results'></ul>
+</form>
+
+            </div>
+            <div class='header-dummy-right'>
+            </div>
+        </div>
+        <div class='container'>
+            <div class='sidebar-left'>
+                <nav class='site-nav'>
+    <ul>
+        
+            <li><a href="/binchicken/installation">installation</a></li>
+            
+        
+            <li><a href="/binchicken/setup">setup</a></li>
+            
+        
+            <li><a href="/binchicken/usage">usage</a></li>
+            
+        
+            <li><a class="active" href="/binchicken/demo">demo</a></li>
+            
+        
+            <li><a href="/binchicken/tools">tools</a></li>
+            
+                <ul>
+    
+        <li><a href="/binchicken/tools/coassemble">Bin Chicken coassemble</a></li>
+        
+    
+        <li><a href="/binchicken/tools/single">Bin Chicken single</a></li>
+        
+    
+        <li><a href="/binchicken/tools/update">Bin Chicken update</a></li>
+        
+    
+        <li><a href="/binchicken/tools/iterate">Bin Chicken iterate</a></li>
+        
+    
+        <li><a href="/binchicken/tools/evaluate">Bin Chicken evaluate</a></li>
+        
+    
+        <li><a href="/binchicken/tools/build">Bin Chicken build</a></li>
+        
+    
+</ul>
+
+            
+        
+    </ul>
+    <span id='light-dark-mode-switch'>
+        <svg xmlns="http://www.w3.org/2000/svg" id="dark-mode-icon" viewBox="0 0 20 20" fill="currentColor">
+            <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z" />
+        </svg>
+
+        <svg xmlns="http://www.w3.org/2000/svg" id="light-mode-icon" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clip-rule="evenodd" />
+        </svg>
+    </span>
+</nav>
+
+            </div>
+            <div class='doctave-content'>
+                <h1 id="demo">Demo</h1>
+<p>This demo will guide you through the process of running Bin Chicken on a small set of samples.
+The only prerequisite is that Bin Chicken is fully installed and setup as per the <a href="/binchicken/installation">installation</a> and <a href="/binchicken/setup">setup</a> instructions.
+With 64 CPUs and at least 100GB of RAM, the demo should take a few days of running time to complete, primarily due to the assembly and binning steps.</p>
+<h2 id="single-sample-assembly-with-co-binning">Single-sample assembly with co-binning</h2>
+<p>Download 4 SRA samples and run single-sample assembly with co-binning.</p>
+<pre><code class="language-bash">mkdir ~/binchicken_demo
+cd ~/binchicken_demo
+
+binchicken single \
+  --forward SRR14271365 SRR14271372 ERR2281802 ERR2281803 --sra \
+  --cores 16 --output binchicken_single_assembly
+</code></pre>
+<p>The suggested assemblies with their respective binning samples can be found at
+<code>binchicken_single_assembly/coassemble/target/elusive_clusters.tsv</code>.</p>
+<p>The actual assembly and binning can be run by adding <code>--run-aviary</code>.
+This will produce metagenome-assembled genomes (MAGs) from each sample.
+These will be compiled in <code>binchicken_single_assembly/recovered_bins</code>.</p>
+<pre><code class="language-bash">binchicken single \
+  --forward SRR14271365 SRR14271372 ERR2281802 ERR2281803 --sra \
+  --run-aviary --cores 64 --output binchicken_single_assembly
+</code></pre>
+<h2 id="iterative-coassembly-with-co-binning">Iterative coassembly with co-binning</h2>
+<p>The outputs from the previous command can be used as inputs to perform iterative coassembly.
+This means that coassembly will be prioritised for combinations of samples with the most unrecovered diversity
+(i.e. the most marker genes not present in previously recovered genomes).</p>
+<p>We can start with 2-sample coassembly, then move to 3-sample coassembly.</p>
+<pre><code class="language-bash"># Assemble and recover from 2-sample coassemblies
+binchicken iterate \
+  --coassemble-output binchicken_single_assembly \
+  --run-aviary --cores 64 --output binchicken_2_coassembly
+
+# Perform another iteration of coassembly, with 3-samples this time
+binchicken iterate \
+  --coassembly-samples 3 --coassemble-output binchicken_2_coassembly \
+  --run-aviary --cores 64 --output binchicken_3_coassembly
+</code></pre>
+<p>As you might expect from checking the sample sources (e.g. <a href="https://sandpiper.qut.edu.au/run/SRR14271365">SRR14271365</a>),
+the SRR14271365/SRR14271372 and ERR2281802/ERR2281803 pairs are suggested for coassembly.</p>
+<p>And, since we only have 2 samples from each group with no overlap, there are no suggested 3-sample coassemblies.</p>
+<h2 id="taxonomy-targeting">Taxonomy targeting</h2>
+<p>Bin Chicken can also be used to target recovery of genomes from a particular taxonomic group of interest.
+The taxa of interest can be specified using the <code>--taxa-of-interest</code> option, and must match GTDB taxonomy (e.g. p__Planctomycetota, or 'p__Bacillota|p__Bacteroidota').
+Bin Chicken will filter the marker gene database to only include sequences from the specified taxa, thus only using marker genes from these taxa to choose coassemblies.</p>
+<pre><code class="language-bash"># Choose 2-sample coassemblies containing Mucilaginibacter
+binchicken iterate \
+  --coassemble-output binchicken_single_assembly \
+  --cores 64 --output binchicken_2_targeting \
+  --taxa-of-interest "g__Mucilaginibacter"
+</code></pre>
+<p>Both SRR14271365 and SRR14271372 samples contain matching Mucilaginibacter OTUs, so Bin Chicken suggests coassembly with these samples.
+Since this would be the same coassembly as above, we will not run assembly/recovery here (i.e. <code>--run-aviary</code> is not used).</p>
+<p>On the other hand, the ERR2281802 and ERR2281803 samples do not contain Mucilaginibacter OTUs with sufficient coverage, Bin Chicken does not suggest any coassemblies with these samples.
+You can peruse the targets at <code>binchicken_2_targeting/coassemble/target/targets.tsv</code> to confirm this manually.</p>
+<h2 id="coassembly-with-co-binning">Coassembly with co-binning</h2>
+<p>Alternatively, you can start with coassembly, optionally providing your own genomes.
+Provided genomes will be used to determine the novelty of marker gene sequences in the provided metagenomes.</p>
+<pre><code class="language-bash">binchicken coassemble \
+  --forward SRR14271365 SRR14271372 ERR2281802 ERR2281803 --sra \
+  --genomes-list genomes.txt \
+  --run-aviary --cores 64 --output binchicken_coassembly
+</code></pre>
+<h2 id="testing">Testing</h2>
+<p>Tests can be run if installed from source to ensure Bin Chicken is installed correctly.
+The subcommand tests can take upwards of 30 minutes to complete using a single thread.
+The manual tests can take multiple days to complete, using 64 threads.</p>
+<pre><code class="language-bash"># Test single subcommand
+python test/test_single.py
+# Test coassemble subcommand
+python test/test_coassemble.py
+# Test iterate subcommand
+python test/test_iterate.py
+
+# Test downloading and coassembly/recovery with Aviary. Results stored in example/test_* directories.
+python test/test_manual.py
+</code></pre>
+
+            </div>
+            <div class='sidebar-right'>
+                <div class='page-nav' id='page-nav'>
+                    <p class='page-nav-header'>On this page</p>
+                    <ul>
+                        
+                        <li class='page-nav-level-1'>
+                            <a href='#demo'>Demo</a>
+                        </li>
+                        
+                        <li class='page-nav-level-2'>
+                            <a href='#single-sample-assembly-with-co-binning'>Single-sample assembly with co-binning</a>
+                        </li>
+                        
+                        <li class='page-nav-level-2'>
+                            <a href='#iterative-coassembly-with-co-binning'>Iterative coassembly with co-binning</a>
+                        </li>
+                        
+                        <li class='page-nav-level-2'>
+                            <a href='#taxonomy-targeting'>Taxonomy targeting</a>
+                        </li>
+                        
+                        <li class='page-nav-level-2'>
+                            <a href='#coassembly-with-co-binning'>Coassembly with co-binning</a>
+                        </li>
+                        
+                        <li class='page-nav-level-2'>
+                            <a href='#testing'>Testing</a>
+                        </li>
+                        
+                    </ul>
+                </div>
+            </div>
+            <div class='wave-container'>
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320">
+                    <path fill-opacity="0.35"
+                        d="M0,192L60,213.3C120,235,240,277,360,277.3C480,277,600,235,720,192C840,149,960,107,1080,122.7C1200,139,1320,213,1380,250.7L1440,288L1440,320L1380,320C1320,320,1200,320,1080,320C960,320,840,320,720,320C600,320,480,320,360,320C240,320,120,320,60,320L0,320Z">
+                    </path>
+                    <path fill-opacity="0.5"
+                        d="M0,160L60,181.3C120,203,240,245,360,229.3C480,213,600,139,720,138.7C840,139,960,213,1080,229.3C1200,245,1320,203,1380,181.3L1440,160L1440,320L1380,320C1320,320,1200,320,1080,320C960,320,840,320,720,320C600,320,480,320,360,320C240,320,120,320,60,320L0,320Z">
+                    </path>
+                    <path fill-opacity="0.2"
+                        d="M0,224L60,197.3C120,171,240,117,360,117.3C480,117,600,171,720,186.7C840,203,960,181,1080,186.7C1200,192,1320,224,1380,240L1440,256L1440,320L1380,320C1320,320,1200,320,1080,320C960,320,840,320,720,320C600,320,480,320,360,320C240,320,120,320,60,320L0,320Z">
+                    </path>
+                </svg>
+                <p>Powered by <a href='https://cli.doctave.com' target='_blank'>Doctave</a></p>
+            </div>
+        </div>
+    </div>
+    <script type="text/javascript" src="/binchicken/assets/katex.js?v=1770330212"></script>
+    <script type="text/javascript" src="/binchicken/assets/mermaid.js?v=1770330212"></script>
+    <script type="text/javascript" src="/binchicken/assets/elasticlunr.js?v=1770330212"></script>
+    <script type="text/javascript" src="/binchicken/assets/prism.js?v=1770330212"></script>
+    <script type="text/javascript" src="/binchicken/assets/doctave-app.js?v=1770330212"></script>
+
+    
+</body>
+
+</html>

@@ -1,0 +1,548 @@
+<!doctype html>
+
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+
+    <title>Bin Chicken single</title>
+    <meta name="description" content="Documentation for Bin Chicken">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Source+Sans+Pro:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&display=swap"
+        rel="stylesheet">
+
+    <link rel="stylesheet" type="text/css" href="/binchicken/assets/normalize.css?v=1770330212"
+        media="screen" />
+    <link rel="stylesheet" type="text/css" href="/binchicken/assets/doctave-style.css?v=1770330212"
+        media="screen" />
+    <link rel="stylesheet" type="text/css" href="/binchicken/assets/katex.css?v=1770330212" media="screen" />
+    <link rel="stylesheet" type="text/css" href="/binchicken/assets/prism-ghcolors.css?v=1770330212"
+        media="screen" />
+
+    <script>
+        var DOCTAVE_TIMESTAMP = "1770330212";
+        var BASE_PATH = "/binchicken/";
+        var color = localStorage.getItem('doctave-color')
+
+        if (color === 'dark') {
+            document.getElementsByTagName('html')[0].classList.remove('light');
+            document.getElementsByTagName('html')[0].classList.add('dark');
+        } else {
+            document.getElementsByTagName('html')[0].classList.remove('dark');
+            document.getElementsByTagName('html')[0].classList.add('light');
+        }
+    </script>
+
+    
+</head>
+
+<body>
+    <label for='menu-toggle-switch' class='menu-toggle-button'>
+        ☰
+    </label>
+    <input type="checkbox" id="menu-toggle-switch" value='0' />
+    <div class='page'>
+        <div class='header'>
+            <div class='logo'>
+                
+                <a href="/binchicken/">
+                    <img src="/binchicken/binchicken_logo.png" alt='Bin Chicken logo'></img>
+                </a>
+                
+                <h2 class='project-name'>
+                    <a href="/binchicken/">
+                        Bin Chicken
+                    </a>
+                </h2>
+            </div>
+            <div class='search'>
+                <form id='search-form'>
+    <input type='text' id='search-box' autocomplete="off" placeholder="Search..."></input>
+    <span class='search-icon'>S</span>
+    <ul id='search-results'></ul>
+</form>
+
+            </div>
+            <div class='header-dummy-right'>
+            </div>
+        </div>
+        <div class='container'>
+            <div class='sidebar-left'>
+                <nav class='site-nav'>
+    <ul>
+        
+            <li><a href="/binchicken/installation">installation</a></li>
+            
+        
+            <li><a href="/binchicken/setup">setup</a></li>
+            
+        
+            <li><a href="/binchicken/usage">usage</a></li>
+            
+        
+            <li><a href="/binchicken/demo">demo</a></li>
+            
+        
+            <li><a href="/binchicken/tools">tools</a></li>
+            
+                <ul>
+    
+        <li><a href="/binchicken/tools/coassemble">Bin Chicken coassemble</a></li>
+        
+    
+        <li><a class="active" href="/binchicken/tools/single">Bin Chicken single</a></li>
+        
+    
+        <li><a href="/binchicken/tools/update">Bin Chicken update</a></li>
+        
+    
+        <li><a href="/binchicken/tools/iterate">Bin Chicken iterate</a></li>
+        
+    
+        <li><a href="/binchicken/tools/evaluate">Bin Chicken evaluate</a></li>
+        
+    
+        <li><a href="/binchicken/tools/build">Bin Chicken build</a></li>
+        
+    
+</ul>
+
+            
+        
+    </ul>
+    <span id='light-dark-mode-switch'>
+        <svg xmlns="http://www.w3.org/2000/svg" id="dark-mode-icon" viewBox="0 0 20 20" fill="currentColor">
+            <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z" />
+        </svg>
+
+        <svg xmlns="http://www.w3.org/2000/svg" id="light-mode-icon" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clip-rule="evenodd" />
+        </svg>
+    </span>
+</nav>
+
+            </div>
+            <div class='doctave-content'>
+                <h1 id="binchicken-single">binchicken single</h1>
+<p>Snakemake pipeline to discover samples for differential abundance binning for single-sample assembly based on co-occurrence of single-copy marker genes, excluding those genes present in reference genomes (e.g. previously recovered genomes).</p>
+<pre><code class="language-bash"># Example: find relevant samples for differential coverage binning (no coassembly)
+binchicken single --forward reads_1.1.fq ... --reverse reads_1.2.fq ...
+
+# Example: run proposed assemblies through aviary with cluster submission
+# Create snakemake profile at ~/.config/snakemake/qsub with cluster, cluster-status, cluster-cancel, etc.
+# See https://snakemake.readthedocs.io/en/stable/executing/cli.html#profiles
+binchicken single --forward reads_1.1.fq ... --reverse reads_1.2.fq ... --run-aviary \
+  --snakemake-profile qsub --cluster-submission --local-cores 64 --cores 64
+</code></pre>
+<p>Important options:</p>
+<ul>
+<li>Maximum number of recovery samples for differential-abundance binning can be specified (<code>--max-recovery-samples</code>, default 20)</li>
+<li>Genomes can be provided and matching marker genes will be excluded (<code>--genomes</code>)</li>
+<li>Reads can be mapped to the matched bins with only unmapped reads being assembled (<code>--assemble-unmapped</code>).</li>
+<li>Assembly and recovery running options:
+<ul>
+<li>Run directly through Aviary (<code>--run-aviary</code>)</li>
+<li>Run Aviary commands manually (see <code>coassemble/commands</code> in output)</li>
+<li>Run assemblies with differential-abundance-binning samples with the tool of your choice (see <code>coassemble/target/elusive_clusters.tsv</code> in output)</li>
+</ul>
+</li>
+<li>The taxa of the considered sequences can be filtered to target a specific taxon (e.g. <code>--taxa-of-interest "p__Planctomycetota"</code>).</li>
+</ul>
+<p>Paired end reads of form *.1.fq, *_1.fq and *_R1.fq, where * represents the sample name are automatically detected and matched to their basename.
+Most intermediate files can be provided to skip intermediate steps (e.g. SingleM otu tables, read sizes or genome transcripts; see <code>binchicken coassemble --full-help</code>).</p>
+<h2 id="kmer-preclustering">Kmer preclustering</h2>
+<p>Clustering groups of more than 1000 samples quickly leads to memory issues due to combinatorics.
+Kmer preclustering can be used (default if &gt;1000 samples are provided, or use <code>--kmer-precluster always</code>) to reduce the number of combinations that are considered.
+This greatly reduces memory usage and allows scaling up to at least 250k samples.
+Kmer preclustering can be disabled with <code>--kmer-precluster never</code>.</p>
+<h1 id="options">OPTIONS</h1>
+<h1 id="base-input-arguments">BASE INPUT ARGUMENTS</h1>
+<p><strong>--forward</strong>, <strong>--reads</strong>, <strong>--sequences</strong> <em>FORWARD</em> [<em>FORWARD</em> ...]</p>
+<p>input forward/unpaired nucleotide read sequence(s)</p>
+
+<p><strong>--forward-list</strong>, <strong>--reads-list</strong>, <strong>--sequences-list</strong> <em>FORWARD_LIST</em></p>
+<p>input forward/unpaired nucleotide read sequence(s) newline separated</p>
+
+<p><strong>--reverse</strong> <em>REVERSE</em> [<em>REVERSE</em> ...]</p>
+<p>input reverse nucleotide read sequence(s)</p>
+
+<p><strong>--reverse-list</strong> <em>REVERSE_LIST</em></p>
+<p>input reverse nucleotide read sequence(s) newline separated</p>
+
+<p><strong>--genomes</strong> <em>GENOMES</em> [<em>GENOMES</em> ...]</p>
+<p>Reference genomes for read mapping</p>
+
+<p><strong>--genomes-list</strong> <em>GENOMES_LIST</em></p>
+<p>Reference genomes for read mapping newline separated</p>
+
+<p><strong>--coassembly-samples</strong> <em>COASSEMBLY_SAMPLES</em> [<em>COASSEMBLY_SAMPLES</em> ...]</p>
+<p>Restrict coassembly to these samples. Remaining samples will still
+be used for recovery [default: use all samples]</p>
+
+<p><strong>--coassembly-samples-list</strong> <em>COASSEMBLY_SAMPLES_LIST</em></p>
+<p>Restrict coassembly to these samples, newline separated. Remaining
+samples will still be used for recovery [default: use all samples]</p>
+
+<p><strong>--anchor-samples</strong> <em>ANCHOR_SAMPLES</em> [<em>ANCHOR_SAMPLES</em> ...]</p>
+<p>Samples to use as anchors for coassembly, all coassemblies will
+contain at least one anchor sample. [default: no restriction]</p>
+
+<p><strong>--anchor-samples-list</strong> <em>ANCHOR_SAMPLES_LIST</em></p>
+<p>Samples to use as anchors for coassembly, all coassemblies will
+contain at least one anchor sample, newline separated. [default: no
+restriction]</p>
+
+<p><strong>--singlem-metapackage</strong> <em>SINGLEM_METAPACKAGE</em></p>
+<p>SingleM metapackage for sequence searching. [default: use path from
+SINGLEM_METAPACKAGE_PATH env variable]</p>
+<h1 id="intermediate-results-input-arguments">INTERMEDIATE RESULTS INPUT ARGUMENTS</h1>
+<p><strong>--sample-singlem</strong> <em>SAMPLE_SINGLEM</em> [<em>SAMPLE_SINGLEM</em> ...]</p>
+<p>SingleM otu tables for each sample, in the form "[sample
+name]_read.otu_table.tsv". If provided, SingleM pipe sample is
+skipped</p>
+
+<p><strong>--sample-singlem-list</strong> <em>SAMPLE_SINGLEM_LIST</em></p>
+<p>SingleM otu tables for each sample, in the form "[sample
+name]_read.otu_table.tsv" newline separated. If provided, SingleM
+pipe sample is skipped</p>
+
+<p><strong>--sample-singlem-dir</strong> <em>SAMPLE_SINGLEM_DIR</em></p>
+<p>Directory containing SingleM otu tables for each sample, in the form
+"[sample name]_read.otu_table.tsv". If provided, SingleM pipe
+sample is skipped</p>
+
+<p><strong>--sample-query</strong> <em>SAMPLE_QUERY</em> [<em>SAMPLE_QUERY</em> ...]</p>
+<p>Queried SingleM otu tables for each sample against genome database,
+in the form "[sample name]_query.otu_table.tsv". If provided,
+SingleM pipe and appraise are skipped</p>
+
+<p><strong>--sample-query-list</strong> <em>SAMPLE_QUERY_LIST</em></p>
+<p>Queried SingleM otu tables for each sample against genome database,
+in the form "[sample name]_query.otu_table.tsv" newline
+separated. If provided, SingleM pipe and appraise are skipped</p>
+
+<p><strong>--sample-query-dir</strong> <em>SAMPLE_QUERY_DIR</em></p>
+<p>Directory containing Queried SingleM otu tables for each sample
+against genome database, in the form "[sample
+name]_query.otu_table.tsv". If provided, SingleM pipe and
+appraise are skipped</p>
+
+<p><strong>--sample-read-size</strong> <em>SAMPLE_READ_SIZE</em></p>
+<p>Comma separated list of sample name and size (bp). If provided,
+sample read counting is skipped</p>
+
+<p><strong>--genome-transcripts</strong> <em>GENOME_TRANSCRIPTS</em> [<em>GENOME_TRANSCRIPTS</em> ...]</p>
+<p>Genome transcripts for reference database, in the form
+"[genome]_protein.fna"</p>
+
+<p><strong>--genome-transcripts-list</strong> <em>GENOME_TRANSCRIPTS_LIST</em></p>
+<p>Genome transcripts for reference database, in the form
+"[genome]_protein.fna" newline separated</p>
+
+<p><strong>--genome-singlem</strong> <em>GENOME_SINGLEM</em></p>
+<p>Combined SingleM otu tables for genome transcripts. If provided,
+genome SingleM is skipped</p>
+<h1 id="clustering-options">CLUSTERING OPTIONS</h1>
+<p><strong>--taxa-of-interest</strong> <em>TAXA_OF_INTEREST</em></p>
+<p>Only consider sequences from this GTDB taxa (e.g.
+p__Planctomycetota, or</p>
+
+<p><strong>--appraise-sequence-identity</strong> <em>APPRAISE_SEQUENCE_IDENTITY</em></p>
+<p>Minimum sequence identity for SingleM appraise against reference
+database. e.g. 96% for Species-level or 86% Genus-level [default:
+0.96]</p>
+
+<p><strong>--min-sequence-coverage</strong> <em>MIN_SEQUENCE_COVERAGE</em></p>
+<p>Minimum combined coverage for sequence inclusion [default: 10]</p>
+
+<p><strong>--single-assembly</strong></p>
+<p>Skip appraise to discover samples to differential abundance binning.
+Forces --num-coassembly-samples and --max-coassembly-samples to 1
+and sets --max- coassembly-size to None</p>
+
+<p><strong>--exclude-coassemblies</strong> <em>EXCLUDE_COASSEMBLIES</em> [<em>EXCLUDE_COASSEMBLIES</em> ...]</p>
+<p>List of coassemblies to exclude, space separated, in the form
+"sample_1,sample_2"</p>
+
+<p><strong>--exclude-coassemblies-list</strong> <em>EXCLUDE_COASSEMBLIES_LIST</em></p>
+<p>List of coassemblies to exclude, space separated, in the form
+"sample_1,sample_2", newline separated</p>
+
+<p><strong>--num-coassembly-samples</strong> <em>NUM_COASSEMBLY_SAMPLES</em></p>
+<p>Number of samples per coassembly cluster [default: 2]</p>
+
+<p><strong>--max-coassembly-samples</strong> <em>MAX_COASSEMBLY_SAMPLES</em></p>
+<p>Upper bound for number of samples per coassembly cluster [default:
+--num- coassembly-samples]</p>
+
+<p><strong>--max-coassembly-size</strong> <em>MAX_COASSEMBLY_SIZE</em></p>
+<p>Maximum size (Gbp) of coassembly cluster [default: 50Gbp]</p>
+
+<p><strong>--max-recovery-samples</strong> <em>MAX_RECOVERY_SAMPLES</em></p>
+<p>Upper bound for number of related samples to use for differential
+abundance binning [default: 20]</p>
+
+<p><strong>--max-sample-combinations</strong> <em>MAX_SAMPLE_COMBINATIONS</em></p>
+<p>Maximum number of samples per target to consider for pooled clusters
+(reduces combinatorial explosions). Set to a smaller number if you
+have a polars idx error. [default: starts at 100, reducing by 20
+with retries]</p>
+
+<p><strong>--abundance-weighted</strong></p>
+<p>Weight sequences by mean sample abundance when ranking clusters
+[default: False]</p>
+
+<p><strong>--abundance-weighted-samples</strong> <em>ABUNDANCE_WEIGHTED_SAMPLES</em> [<em>ABUNDANCE_WEIGHTED_SAMPLES</em> ...]</p>
+<p>Restrict sequence weighting to these samples. Remaining samples will
+still be used for coassembly [default: use all samples]</p>
+
+<p><strong>--abundance-weighted-samples-list</strong> <em>ABUNDANCE_WEIGHTED_SAMPLES_LIST</em></p>
+<p>Restrict sequence weighting to these samples, newline separated.
+Remaining samples will still be used for coassembly [default: use
+all samples]</p>
+
+<p><strong>--kmer-precluster</strong> {never,large,always}</p>
+<p>Run kmer preclustering using unbinned window sequences as kmers.
+[default: large; perform preclustering when given &gt;1000 samples]</p>
+
+<p><strong>--precluster-distances</strong> <em>PRECLUSTER_DISTANCES</em></p>
+<p>Distance file in the format of `sourmash scripts pairwise`. If
+provided, kmer sketching and clustering is skipped.</p>
+
+<p><strong>--precluster-size</strong> <em>PRECLUSTER_SIZE</em></p>
+<p># of samples within each sample's precluster [default: 5 *
+max-recovery- samples]</p>
+
+<p><strong>--file-hierarchy</strong> {never,large,always}</p>
+<p>Split sample outputs into subdirectories based on sample name.
+[default: large; use when given &gt;10000 samples]</p>
+
+<p><strong>--file-hierarchy-depth</strong> <em>FILE_HIERARCHY_DEPTH</em></p>
+<p>Maximum depth of subdirectory hierarchy. [default: 3]</p>
+
+<p><strong>--file-hierarchy-chars</strong> <em>FILE_HIERARCHY_CHARS</em></p>
+<p>Number of characters to use for subdirectory hierarchy. [default:
+4]</p>
+
+<p><strong>--prodigal-meta</strong></p>
+<p>Use prodigal "-p meta" argument (for testing)</p>
+<h1 id="coassembly-options">COASSEMBLY OPTIONS</h1>
+<p><strong>--assemble-unmapped</strong></p>
+<p>Only assemble reads that do not map to reference genomes</p>
+
+<p><strong>--sra</strong></p>
+<p>Download reads from SRA (forward read argument intepreted as SRA
+IDs). Also sets --run-qc.</p>
+
+<p><strong>--download-limit</strong> <em>DOWNLOAD_LIMIT</em></p>
+<p>Parallel download limit [default: 3]</p>
+
+<p><strong>--run-qc</strong></p>
+<p>Run Fastp QC on reads</p>
+
+<p><strong>--unmapping-min-appraised</strong> <em>UNMAPPING_MIN_APPRAISED</em></p>
+<p>Minimum fraction of sequences binned to justify unmapping [default:
+0.1]</p>
+
+<p><strong>--unmapping-max-identity</strong> <em>UNMAPPING_MAX_IDENTITY</em></p>
+<p>Maximum sequence identity of mapped sequences kept for coassembly
+[default: 99%]</p>
+
+<p><strong>--unmapping-max-alignment</strong> <em>UNMAPPING_MAX_ALIGNMENT</em></p>
+<p>Maximum percent alignment of mapped sequences kept for coassembly
+[default: 99%]</p>
+
+<p><strong>--run-aviary</strong></p>
+<p>Run Aviary commands for all identified coassemblies (unless specific
+coassemblies are chosen with --coassemblies) [default: do not]</p>
+
+<p><strong>--prior-assemblies</strong> <em>PRIOR_ASSEMBLIES</em></p>
+<p>Prior assemblies to use for Aviary recovery. tsv file with header:
+name [tab] assembly. Only possible with single-sample or update.
+[default: generate assemblies through Aviary assemble]</p>
+
+<p><strong>--cluster-submission</strong></p>
+<p>Flag that cluster submission will occur through
+`--snakemake-profile`. This sets the local threads of Aviary
+recover to 1, allowing parallel job submission [default: do not]</p>
+
+<p><strong>--aviary-speed</strong> {fast,comprehensive}</p>
+<p>Run Aviary recover in 'fast' or 'comprehensive' mode. Fast mode
+skips slow binners and refinement steps. [default: fast]</p>
+
+<p><strong>--assembly-strategy</strong> {dynamic,metaspades,megahit}</p>
+<p>Assembly strategy to use with Aviary. [default: dynamic; attempts
+metaspades and if fails, switches to megahit]</p>
+
+<p><strong>--aviary-gtdbtk-db</strong> <em>AVIARY_GTDBTK_DB</em></p>
+<p>Path to GTDB-Tk database directory for Aviary. Only required if
+--aviary-speed is set to comprehensive [default: use path from
+GTDBTK_DATA_PATH env variable]</p>
+
+<p><strong>--aviary-checkm2-db</strong> <em>AVIARY_CHECKM2_DB</em></p>
+<p>Path to CheckM2 database directory for Aviary. [default: use path
+from CHECKM2DB env variable]</p>
+
+<p><strong>--aviary-metabuli-db</strong> <em>AVIARY_METABULI_DB</em></p>
+<p>Path to MetaBuli database directory for Aviary, specifically for
+TaxVAMB. [default: use path from METABULI_DB_PATH env variable]</p>
+
+<p><strong>--aviary-snakemake-profile</strong> <em>AVIARY_SNAKEMAKE_PROFILE</em></p>
+<p>Snakemake profile (see
+https://snakemake.readthedocs.io/en/v7.32.3/executing/cli.html#profiles).
+Can be used to submit rules as jobs to cluster engine (see
+https://snakemake.readthedocs.io/en/v7.32.3/executing/cluster.html).
+[default: same as `--snakemake-profile`]</p>
+
+<p><strong>--aviary-assemble-cores</strong> <em>AVIARY_ASSEMBLE_CORES</em></p>
+<p>Maximum number of cores for Aviary assemble to use. [default: 64]</p>
+
+<p><strong>--aviary-assemble-memory</strong> <em>AVIARY_ASSEMBLE_MEMORY</em></p>
+<p>Maximum amount of memory for Aviary assemble to use (Gigabytes).
+[default: 500]</p>
+
+<p><strong>--aviary-recover-cores</strong> <em>AVIARY_RECOVER_CORES</em></p>
+<p>Maximum number of cores for Aviary recover to use. [default: 32]</p>
+
+<p><strong>--aviary-recover-memory</strong> <em>AVIARY_RECOVER_MEMORY</em></p>
+<p>Maximum amount of memory for Aviary recover to use (Gigabytes).
+[default: 250]</p>
+
+<p><strong>--aviary-extra-binners</strong> [{maxbin,maxbin2,concoct,comebin,taxvamb} ...]</p>
+<p>Optional list of extra binning algorithms to run. Can be any
+combination of: maxbin, maxbin2, concoct, comebin, taxvamb</p>
+
+<p><strong>--aviary-skip-binners</strong> [{rosella,semibin,metabat1,metabat2,metabat,vamb} ...]</p>
+<p>Optional list of binning algorithms to skip. Can be any combination
+of: rosella, semibin, metabat1, metabat2, metabat, vamb. Note that
+specifying</p>
+
+<p><strong>--aviary-request-gpu</strong></p>
+<p>Request GPU resources for certain binners in Aviary recovery
+[default: do not].</p>
+<h1 id="general-options">GENERAL OPTIONS</h1>
+<p><strong>--output</strong> <em>OUTPUT</em></p>
+<p>Output directory [default: .]</p>
+
+<p><strong>--cores</strong> <em>CORES</em></p>
+<p>Maximum number of cores to use [default: 1]</p>
+
+<p><strong>--dryrun</strong>, <strong>--dry-run</strong></p>
+<p>dry run workflow</p>
+
+<p><strong>--snakemake-profile</strong> <em>SNAKEMAKE_PROFILE</em></p>
+<p>Snakemake profile (see
+https://snakemake.readthedocs.io/en/v7.32.3/executing/cli.html#profiles).
+Can be used to submit rules as jobs to cluster engine (see
+https://snakemake.readthedocs.io/en/v7.32.3/executing/cluster.html).</p>
+
+<p><strong>--local-cores</strong> <em>LOCAL_CORES</em></p>
+<p>Maximum number of cores to use on localrules when running in cluster
+mode [default: 1]</p>
+
+<p><strong>--retries</strong> <em>RETRIES</em></p>
+<p>Number of times to retry a failed job [default: 3].</p>
+
+<p><strong>--snakemake-args</strong> <em>SNAKEMAKE_ARGS</em></p>
+<p>Additional commands to be supplied to snakemake in the form of a
+space- prefixed single string e.g. " --quiet"</p>
+
+<p><strong>--tmp-dir</strong> <em>TMP_DIR</em></p>
+<p>Path to temporary directory. [default: no default]</p>
+<h1 id="other-general-options">OTHER GENERAL OPTIONS</h1>
+<p><strong>--debug</strong></p>
+<p>output debug information</p>
+
+<p><strong>--version</strong></p>
+<p>output version information and quit</p>
+
+<p><strong>--quiet</strong></p>
+<p>only output errors</p>
+
+<p><strong>--full-help</strong></p>
+<p>print longer help message</p>
+
+<p><strong>--full-help-roff</strong></p>
+<p>print longer help message in ROFF (manpage) format</p>
+<h1 id="examples">EXAMPLES</h1>
+<p>find relevant samples for differential coverage binning (no coassembly)</p>
+<p><strong>$ binchicken single --forward reads_1.1.fq ... --reverse
+reads_1.2.fq ...</strong></p>
+
+            </div>
+            <div class='sidebar-right'>
+                <div class='page-nav' id='page-nav'>
+                    <p class='page-nav-header'>On this page</p>
+                    <ul>
+                        
+                        <li class='page-nav-level-1'>
+                            <a href='#binchicken-single'>binchicken single</a>
+                        </li>
+                        
+                        <li class='page-nav-level-2'>
+                            <a href='#kmer-preclustering'>Kmer preclustering</a>
+                        </li>
+                        
+                        <li class='page-nav-level-1'>
+                            <a href='#options'>OPTIONS</a>
+                        </li>
+                        
+                        <li class='page-nav-level-1'>
+                            <a href='#base-input-arguments'>BASE INPUT ARGUMENTS</a>
+                        </li>
+                        
+                        <li class='page-nav-level-1'>
+                            <a href='#intermediate-results-input-arguments'>INTERMEDIATE RESULTS INPUT ARGUMENTS</a>
+                        </li>
+                        
+                        <li class='page-nav-level-1'>
+                            <a href='#clustering-options'>CLUSTERING OPTIONS</a>
+                        </li>
+                        
+                        <li class='page-nav-level-1'>
+                            <a href='#coassembly-options'>COASSEMBLY OPTIONS</a>
+                        </li>
+                        
+                        <li class='page-nav-level-1'>
+                            <a href='#general-options'>GENERAL OPTIONS</a>
+                        </li>
+                        
+                        <li class='page-nav-level-1'>
+                            <a href='#other-general-options'>OTHER GENERAL OPTIONS</a>
+                        </li>
+                        
+                        <li class='page-nav-level-1'>
+                            <a href='#examples'>EXAMPLES</a>
+                        </li>
+                        
+                    </ul>
+                </div>
+            </div>
+            <div class='wave-container'>
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320">
+                    <path fill-opacity="0.35"
+                        d="M0,192L60,213.3C120,235,240,277,360,277.3C480,277,600,235,720,192C840,149,960,107,1080,122.7C1200,139,1320,213,1380,250.7L1440,288L1440,320L1380,320C1320,320,1200,320,1080,320C960,320,840,320,720,320C600,320,480,320,360,320C240,320,120,320,60,320L0,320Z">
+                    </path>
+                    <path fill-opacity="0.5"
+                        d="M0,160L60,181.3C120,203,240,245,360,229.3C480,213,600,139,720,138.7C840,139,960,213,1080,229.3C1200,245,1320,203,1380,181.3L1440,160L1440,320L1380,320C1320,320,1200,320,1080,320C960,320,840,320,720,320C600,320,480,320,360,320C240,320,120,320,60,320L0,320Z">
+                    </path>
+                    <path fill-opacity="0.2"
+                        d="M0,224L60,197.3C120,171,240,117,360,117.3C480,117,600,171,720,186.7C840,203,960,181,1080,186.7C1200,192,1320,224,1380,240L1440,256L1440,320L1380,320C1320,320,1200,320,1080,320C960,320,840,320,720,320C600,320,480,320,360,320C240,320,120,320,60,320L0,320Z">
+                    </path>
+                </svg>
+                <p>Powered by <a href='https://cli.doctave.com' target='_blank'>Doctave</a></p>
+            </div>
+        </div>
+    </div>
+    <script type="text/javascript" src="/binchicken/assets/katex.js?v=1770330212"></script>
+    <script type="text/javascript" src="/binchicken/assets/mermaid.js?v=1770330212"></script>
+    <script type="text/javascript" src="/binchicken/assets/elasticlunr.js?v=1770330212"></script>
+    <script type="text/javascript" src="/binchicken/assets/prism.js?v=1770330212"></script>
+    <script type="text/javascript" src="/binchicken/assets/doctave-app.js?v=1770330212"></script>
+
+    
+</body>
+
+</html>

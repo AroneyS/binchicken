@@ -1,0 +1,330 @@
+<!doctype html>
+
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+
+    <title>Bin Chicken evaluate</title>
+    <meta name="description" content="Documentation for Bin Chicken">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Source+Sans+Pro:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&display=swap"
+        rel="stylesheet">
+
+    <link rel="stylesheet" type="text/css" href="/binchicken/assets/normalize.css?v=1770330212"
+        media="screen" />
+    <link rel="stylesheet" type="text/css" href="/binchicken/assets/doctave-style.css?v=1770330212"
+        media="screen" />
+    <link rel="stylesheet" type="text/css" href="/binchicken/assets/katex.css?v=1770330212" media="screen" />
+    <link rel="stylesheet" type="text/css" href="/binchicken/assets/prism-ghcolors.css?v=1770330212"
+        media="screen" />
+
+    <script>
+        var DOCTAVE_TIMESTAMP = "1770330212";
+        var BASE_PATH = "/binchicken/";
+        var color = localStorage.getItem('doctave-color')
+
+        if (color === 'dark') {
+            document.getElementsByTagName('html')[0].classList.remove('light');
+            document.getElementsByTagName('html')[0].classList.add('dark');
+        } else {
+            document.getElementsByTagName('html')[0].classList.remove('dark');
+            document.getElementsByTagName('html')[0].classList.add('light');
+        }
+    </script>
+
+    
+</head>
+
+<body>
+    <label for='menu-toggle-switch' class='menu-toggle-button'>
+        ☰
+    </label>
+    <input type="checkbox" id="menu-toggle-switch" value='0' />
+    <div class='page'>
+        <div class='header'>
+            <div class='logo'>
+                
+                <a href="/binchicken/">
+                    <img src="/binchicken/binchicken_logo.png" alt='Bin Chicken logo'></img>
+                </a>
+                
+                <h2 class='project-name'>
+                    <a href="/binchicken/">
+                        Bin Chicken
+                    </a>
+                </h2>
+            </div>
+            <div class='search'>
+                <form id='search-form'>
+    <input type='text' id='search-box' autocomplete="off" placeholder="Search..."></input>
+    <span class='search-icon'>S</span>
+    <ul id='search-results'></ul>
+</form>
+
+            </div>
+            <div class='header-dummy-right'>
+            </div>
+        </div>
+        <div class='container'>
+            <div class='sidebar-left'>
+                <nav class='site-nav'>
+    <ul>
+        
+            <li><a href="/binchicken/installation">installation</a></li>
+            
+        
+            <li><a href="/binchicken/setup">setup</a></li>
+            
+        
+            <li><a href="/binchicken/usage">usage</a></li>
+            
+        
+            <li><a href="/binchicken/demo">demo</a></li>
+            
+        
+            <li><a href="/binchicken/tools">tools</a></li>
+            
+                <ul>
+    
+        <li><a href="/binchicken/tools/coassemble">Bin Chicken coassemble</a></li>
+        
+    
+        <li><a href="/binchicken/tools/single">Bin Chicken single</a></li>
+        
+    
+        <li><a href="/binchicken/tools/update">Bin Chicken update</a></li>
+        
+    
+        <li><a href="/binchicken/tools/iterate">Bin Chicken iterate</a></li>
+        
+    
+        <li><a class="active" href="/binchicken/tools/evaluate">Bin Chicken evaluate</a></li>
+        
+    
+        <li><a href="/binchicken/tools/build">Bin Chicken build</a></li>
+        
+    
+</ul>
+
+            
+        
+    </ul>
+    <span id='light-dark-mode-switch'>
+        <svg xmlns="http://www.w3.org/2000/svg" id="dark-mode-icon" viewBox="0 0 20 20" fill="currentColor">
+            <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z" />
+        </svg>
+
+        <svg xmlns="http://www.w3.org/2000/svg" id="light-mode-icon" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clip-rule="evenodd" />
+        </svg>
+    </span>
+</nav>
+
+            </div>
+            <div class='doctave-content'>
+                <h1 id="binchicken-evaluate">binchicken evaluate</h1>
+<p>Evaluates the recovery of target genes by coassemblies suggested by above, finding the number of target genes present in the newly recovered genomes.
+Compares the recovery by phyla and by single-copy marker gene.</p>
+<pre><code class="language-bash"># Example: evaluate a completed coassembly
+binchicken evaluate --coassemble-output coassemble_dir \
+    --aviary-outputs coassembly_0_dir ...
+
+# Example: evaluate a completed coassembly by providing genomes directly
+binchicken evaluate --coassemble-output coassemble_dir \
+    --new-genomes genome_1.fna ... --coassembly-run coassembly_0
+</code></pre>
+<p>Defaults to using genomes (from the provided coassemble outputs) with at least 70% complete and at most 10% contamination as estimated by CheckM2.</p>
+<h1 id="options">OPTIONS</h1>
+<h1 id="base-input-arguments">BASE INPUT ARGUMENTS</h1>
+<p><strong>--coassemble-output</strong> <em>COASSEMBLE_OUTPUT</em></p>
+<p>Output dir from coassemble subcommand</p>
+
+<p><strong>--coassemble-unbinned</strong> <em>COASSEMBLE_UNBINNED</em></p>
+<p>SingleM appraise unbinned output from Bin Chicken coassemble
+(alternative to --coassemble-output)</p>
+
+<p><strong>--coassemble-binned</strong> <em>COASSEMBLE_BINNED</em></p>
+<p>SingleM appraise binned output from Bin Chicken coassemble
+(alternative to --coassemble-output)</p>
+
+<p><strong>--coassemble-targets</strong> <em>COASSEMBLE_TARGETS</em></p>
+<p>Target sequences output from Bin Chicken coassemble (alternative to
+--coassemble-output)</p>
+
+<p><strong>--coassemble-elusive-edges</strong> <em>COASSEMBLE_ELUSIVE_EDGES</em></p>
+<p>Elusive edges output from Bin Chicken coassemble (alternative to
+--coassemble- output)</p>
+
+<p><strong>--coassemble-elusive-clusters</strong> <em>COASSEMBLE_ELUSIVE_CLUSTERS</em></p>
+<p>Elusive clusters output from Bin Chicken coassemble (alternative to
+--coassemble-output)</p>
+
+<p><strong>--coassemble-summary</strong> <em>COASSEMBLE_SUMMARY</em></p>
+<p>Summary output from Bin Chicken coassemble (alternative to
+--coassemble- output)</p>
+
+<p><strong>--aviary-outputs</strong> <em>AVIARY_OUTPUTS</em> [<em>AVIARY_OUTPUTS</em> ...]</p>
+<p>Output dir from Aviary coassembly and recover commands produced by
+coassemble subcommand</p>
+
+<p><strong>--new-genomes</strong> <em>NEW_GENOMES</em> [<em>NEW_GENOMES</em> ...]</p>
+<p>New genomes to evaluate (alternative to --aviary-outputs, also
+requires --coassembly-run)</p>
+
+<p><strong>--new-genomes-list</strong> <em>NEW_GENOMES_LIST</em></p>
+<p>New genomes to evaluate (alternative to --aviary-outputs, also
+requires --coassembly-run) newline separated</p>
+
+<p><strong>--coassembly-run</strong> <em>COASSEMBLY_RUN</em></p>
+<p>Name of coassembly run to produce new genomes (alternative to
+--aviary- outputs, also requires --new-genomes)</p>
+
+<p><strong>--singlem-metapackage</strong> <em>SINGLEM_METAPACKAGE</em></p>
+<p>SingleM metapackage for sequence searching</p>
+
+<p><strong>--prodigal-meta</strong></p>
+<p>Use prodigal "-p meta" argument (for testing)</p>
+<h1 id="evaluation-options">EVALUATION OPTIONS</h1>
+<p><strong>--checkm-version</strong> <em>CHECKM_VERSION</em></p>
+<p>CheckM version to use to quality cutoffs [default: 2]</p>
+
+<p><strong>--min-completeness</strong> <em>MIN_COMPLETENESS</em></p>
+<p>Include bins with at least this minimum completeness [default: 70]</p>
+
+<p><strong>--max-contamination</strong> <em>MAX_CONTAMINATION</em></p>
+<p>Include bins with at most this maximum contamination [default: 10]</p>
+<h1 id="cluster-options">CLUSTER OPTIONS</h1>
+<p><strong>--cluster</strong></p>
+<p>Cluster new and original genomes and report number of new clusters</p>
+
+<p><strong>--cluster-ani</strong> <em>CLUSTER_ANI</em></p>
+<p>Cluster using this sequence identity [default: 86%]</p>
+
+<p><strong>--genomes</strong> <em>GENOMES</em> [<em>GENOMES</em> ...]</p>
+<p>Original genomes used as references for coassemble subcommand</p>
+
+<p><strong>--genomes-list</strong> <em>GENOMES_LIST</em></p>
+<p>Original genomes used as references for coassemble subcommand
+newline separated</p>
+<h1 id="general-options">GENERAL OPTIONS</h1>
+<p><strong>--output</strong> <em>OUTPUT</em></p>
+<p>Output directory [default: .]</p>
+
+<p><strong>--cores</strong> <em>CORES</em></p>
+<p>Maximum number of cores to use [default: 1]</p>
+
+<p><strong>--dryrun</strong>, <strong>--dry-run</strong></p>
+<p>dry run workflow</p>
+
+<p><strong>--snakemake-profile</strong> <em>SNAKEMAKE_PROFILE</em></p>
+<p>Snakemake profile (see
+https://snakemake.readthedocs.io/en/v7.32.3/executing/cli.html#profiles).
+Can be used to submit rules as jobs to cluster engine (see
+https://snakemake.readthedocs.io/en/v7.32.3/executing/cluster.html).</p>
+
+<p><strong>--local-cores</strong> <em>LOCAL_CORES</em></p>
+<p>Maximum number of cores to use on localrules when running in cluster
+mode [default: 1]</p>
+
+<p><strong>--retries</strong> <em>RETRIES</em></p>
+<p>Number of times to retry a failed job [default: 3].</p>
+
+<p><strong>--snakemake-args</strong> <em>SNAKEMAKE_ARGS</em></p>
+<p>Additional commands to be supplied to snakemake in the form of a
+space- prefixed single string e.g. " --quiet"</p>
+
+<p><strong>--tmp-dir</strong> <em>TMP_DIR</em></p>
+<p>Path to temporary directory. [default: no default]</p>
+<h1 id="other-general-options">OTHER GENERAL OPTIONS</h1>
+<p><strong>--debug</strong></p>
+<p>output debug information</p>
+
+<p><strong>--version</strong></p>
+<p>output version information and quit</p>
+
+<p><strong>--quiet</strong></p>
+<p>only output errors</p>
+
+<p><strong>--full-help</strong></p>
+<p>print longer help message</p>
+
+<p><strong>--full-help-roff</strong></p>
+<p>print longer help message in ROFF (manpage) format</p>
+<h1 id="examples">EXAMPLES</h1>
+<p>evaluate a completed coassembly</p>
+<p><strong>$ binchicken evaluate --coassemble-output coassemble_dir
+--aviary-outputs coassembly_0_dir ...</strong></p>
+<p>evaluate a completed coassembly by providing genomes directly</p>
+<p><strong>$ binchicken evaluate --coassemble-output coassemble_dir
+--new-genomes genome_1.fna ... --coassembly-run coassembly_0</strong></p>
+
+            </div>
+            <div class='sidebar-right'>
+                <div class='page-nav' id='page-nav'>
+                    <p class='page-nav-header'>On this page</p>
+                    <ul>
+                        
+                        <li class='page-nav-level-1'>
+                            <a href='#binchicken-evaluate'>binchicken evaluate</a>
+                        </li>
+                        
+                        <li class='page-nav-level-1'>
+                            <a href='#options'>OPTIONS</a>
+                        </li>
+                        
+                        <li class='page-nav-level-1'>
+                            <a href='#base-input-arguments'>BASE INPUT ARGUMENTS</a>
+                        </li>
+                        
+                        <li class='page-nav-level-1'>
+                            <a href='#evaluation-options'>EVALUATION OPTIONS</a>
+                        </li>
+                        
+                        <li class='page-nav-level-1'>
+                            <a href='#cluster-options'>CLUSTER OPTIONS</a>
+                        </li>
+                        
+                        <li class='page-nav-level-1'>
+                            <a href='#general-options'>GENERAL OPTIONS</a>
+                        </li>
+                        
+                        <li class='page-nav-level-1'>
+                            <a href='#other-general-options'>OTHER GENERAL OPTIONS</a>
+                        </li>
+                        
+                        <li class='page-nav-level-1'>
+                            <a href='#examples'>EXAMPLES</a>
+                        </li>
+                        
+                    </ul>
+                </div>
+            </div>
+            <div class='wave-container'>
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320">
+                    <path fill-opacity="0.35"
+                        d="M0,192L60,213.3C120,235,240,277,360,277.3C480,277,600,235,720,192C840,149,960,107,1080,122.7C1200,139,1320,213,1380,250.7L1440,288L1440,320L1380,320C1320,320,1200,320,1080,320C960,320,840,320,720,320C600,320,480,320,360,320C240,320,120,320,60,320L0,320Z">
+                    </path>
+                    <path fill-opacity="0.5"
+                        d="M0,160L60,181.3C120,203,240,245,360,229.3C480,213,600,139,720,138.7C840,139,960,213,1080,229.3C1200,245,1320,203,1380,181.3L1440,160L1440,320L1380,320C1320,320,1200,320,1080,320C960,320,840,320,720,320C600,320,480,320,360,320C240,320,120,320,60,320L0,320Z">
+                    </path>
+                    <path fill-opacity="0.2"
+                        d="M0,224L60,197.3C120,171,240,117,360,117.3C480,117,600,171,720,186.7C840,203,960,181,1080,186.7C1200,192,1320,224,1380,240L1440,256L1440,320L1380,320C1320,320,1200,320,1080,320C960,320,840,320,720,320C600,320,480,320,360,320C240,320,120,320,60,320L0,320Z">
+                    </path>
+                </svg>
+                <p>Powered by <a href='https://cli.doctave.com' target='_blank'>Doctave</a></p>
+            </div>
+        </div>
+    </div>
+    <script type="text/javascript" src="/binchicken/assets/katex.js?v=1770330212"></script>
+    <script type="text/javascript" src="/binchicken/assets/mermaid.js?v=1770330212"></script>
+    <script type="text/javascript" src="/binchicken/assets/elasticlunr.js?v=1770330212"></script>
+    <script type="text/javascript" src="/binchicken/assets/prism.js?v=1770330212"></script>
+    <script type="text/javascript" src="/binchicken/assets/doctave-app.js?v=1770330212"></script>
+
+    
+</body>
+
+</html>

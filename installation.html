@@ -1,0 +1,251 @@
+<!doctype html>
+
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+
+    <title>installation</title>
+    <meta name="description" content="Documentation for Bin Chicken">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Source+Sans+Pro:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&display=swap"
+        rel="stylesheet">
+
+    <link rel="stylesheet" type="text/css" href="/binchicken/assets/normalize.css?v=1770330212"
+        media="screen" />
+    <link rel="stylesheet" type="text/css" href="/binchicken/assets/doctave-style.css?v=1770330212"
+        media="screen" />
+    <link rel="stylesheet" type="text/css" href="/binchicken/assets/katex.css?v=1770330212" media="screen" />
+    <link rel="stylesheet" type="text/css" href="/binchicken/assets/prism-ghcolors.css?v=1770330212"
+        media="screen" />
+
+    <script>
+        var DOCTAVE_TIMESTAMP = "1770330212";
+        var BASE_PATH = "/binchicken/";
+        var color = localStorage.getItem('doctave-color')
+
+        if (color === 'dark') {
+            document.getElementsByTagName('html')[0].classList.remove('light');
+            document.getElementsByTagName('html')[0].classList.add('dark');
+        } else {
+            document.getElementsByTagName('html')[0].classList.remove('dark');
+            document.getElementsByTagName('html')[0].classList.add('light');
+        }
+    </script>
+
+    
+</head>
+
+<body>
+    <label for='menu-toggle-switch' class='menu-toggle-button'>
+        ☰
+    </label>
+    <input type="checkbox" id="menu-toggle-switch" value='0' />
+    <div class='page'>
+        <div class='header'>
+            <div class='logo'>
+                
+                <a href="/binchicken/">
+                    <img src="/binchicken/binchicken_logo.png" alt='Bin Chicken logo'></img>
+                </a>
+                
+                <h2 class='project-name'>
+                    <a href="/binchicken/">
+                        Bin Chicken
+                    </a>
+                </h2>
+            </div>
+            <div class='search'>
+                <form id='search-form'>
+    <input type='text' id='search-box' autocomplete="off" placeholder="Search..."></input>
+    <span class='search-icon'>S</span>
+    <ul id='search-results'></ul>
+</form>
+
+            </div>
+            <div class='header-dummy-right'>
+            </div>
+        </div>
+        <div class='container'>
+            <div class='sidebar-left'>
+                <nav class='site-nav'>
+    <ul>
+        
+            <li><a class="active" href="/binchicken/installation">installation</a></li>
+            
+        
+            <li><a href="/binchicken/setup">setup</a></li>
+            
+        
+            <li><a href="/binchicken/usage">usage</a></li>
+            
+        
+            <li><a href="/binchicken/demo">demo</a></li>
+            
+        
+            <li><a href="/binchicken/tools">tools</a></li>
+            
+                <ul>
+    
+        <li><a href="/binchicken/tools/coassemble">Bin Chicken coassemble</a></li>
+        
+    
+        <li><a href="/binchicken/tools/single">Bin Chicken single</a></li>
+        
+    
+        <li><a href="/binchicken/tools/update">Bin Chicken update</a></li>
+        
+    
+        <li><a href="/binchicken/tools/iterate">Bin Chicken iterate</a></li>
+        
+    
+        <li><a href="/binchicken/tools/evaluate">Bin Chicken evaluate</a></li>
+        
+    
+        <li><a href="/binchicken/tools/build">Bin Chicken build</a></li>
+        
+    
+</ul>
+
+            
+        
+    </ul>
+    <span id='light-dark-mode-switch'>
+        <svg xmlns="http://www.w3.org/2000/svg" id="dark-mode-icon" viewBox="0 0 20 20" fill="currentColor">
+            <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z" />
+        </svg>
+
+        <svg xmlns="http://www.w3.org/2000/svg" id="light-mode-icon" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clip-rule="evenodd" />
+        </svg>
+    </span>
+</nav>
+
+            </div>
+            <div class='doctave-content'>
+                <h1 id="installation">Installation</h1>
+<p>There are several ways to install Bin Chicken</p>
+<h2 id="system-requirements">System requirements</h2>
+<p>The purpose of Bin Chicken is to suggest sets of samples for coassembly.
+The coassembly process can use upwards of 250GB of RAM and 32 cores, so we recommend running on a HPC system if you intend to assemble and recover genomes.</p>
+<p>Bin Chicken is supported for Linux (tested on SUSE 12.5). Specific dependencies are listed in <a href="https://github.com/AroneyS/binchicken/blob/master/binchicken.yml">binchicken.yml</a>.
+Bin Chicken uses many independent pixi environments for different tasks. These environments are listed in <a href="https://github.com/AroneyS/binchicken/blob/master/binchicken/pixi.toml">pixi.toml</a>.
+See <a href="/binchicken/setup">setup</a> for environment and database setup.</p>
+<h2 id="install-from-bioconda-via-pixi">Install from Bioconda via Pixi</h2>
+<p>Create pixi.toml file:</p>
+<pre><code class="language-toml">[workspace]
+channels = ["conda-forge", "bioconda"]
+name = "binchicken"
+platforms = ["linux-64"]
+
+[dependencies]
+binchicken = "*"
+</code></pre>
+<p>Create pixi environment.</p>
+<pre><code class="language-bash">pixi install
+
+# Either run within your current environment
+pixi run binchicken -h
+# Or enter the environment
+pixi shell
+</code></pre>
+<h2 id="install-from-bioconda-via-conda">Install from Bioconda via Conda</h2>
+<p>Install latest release via conda.</p>
+<pre><code class="language-bash">conda create -n binchicken -c bioconda -c conda-forge binchicken
+
+# Activate the environment
+conda activate binchicken
+</code></pre>
+<h2 id="install-from-pip">Install from pip</h2>
+<p>Create the environment using the <code>binchicken.yml</code> file then install from pip.</p>
+<pre><code class="language-bash">conda env create -n binchicken -f binchicken.yml
+conda activate binchicken
+pip install binchicken
+</code></pre>
+<h2 id="install-from-source">Install from source</h2>
+<p>To install from source, we recommend using <a href="https://pixi.sh/">pixi</a>.
+Create conda env from <code>binchicken.yml</code> and install from source.</p>
+<pre><code class="language-bash">git clone https://github.com/AroneyS/binchicken.git
+cd binchicken
+mkdir -p binchicken/.pixi
+pixi run postinstall
+</code></pre>
+<p>Then binchicken can be run using <code>pixi run</code> (or via <code>pixi shell</code>).</p>
+<pre><code class="language-bash">pixi run binchicken --help
+</code></pre>
+<p>When installed this way, binchicken is installed in an "editable" way (similar to <code>pip install -e .</code>),
+meaning that any changes made to binchicken source are immediately available via the <code>binchicken</code> command.
+This is useful for development and debugging.</p>
+<p>Tests can be run with:</p>
+<pre><code class="language-bash">pixi run -e dev run-tests
+
+# Or a specific test
+pixi run -e dev run-a-test test_coassemble_taxa_of_interest
+</code></pre>
+<p>When run this way, the databases required for binchicken (e.g. <code>CHECKM2DB</code>) can be symlinked from a <code>db/</code> directory in the binchicken repository.
+An activation hook then ensures that these are available when in the pixi environments.
+To do this, create a <code>db/</code> directory in the binchicken repository and symlink the required databases into it.</p>
+<p>To check the expected database symlink names, see <code>admin/set_env_vars.sh</code> in the binchicken repository.
+The advantage of this approach is that locations of the databases are not tracked in the repository, since they are specific to the computing cluster of the user.</p>
+
+            </div>
+            <div class='sidebar-right'>
+                <div class='page-nav' id='page-nav'>
+                    <p class='page-nav-header'>On this page</p>
+                    <ul>
+                        
+                        <li class='page-nav-level-1'>
+                            <a href='#installation'>Installation</a>
+                        </li>
+                        
+                        <li class='page-nav-level-2'>
+                            <a href='#system-requirements'>System requirements</a>
+                        </li>
+                        
+                        <li class='page-nav-level-2'>
+                            <a href='#install-from-bioconda-via-pixi'>Install from Bioconda via Pixi</a>
+                        </li>
+                        
+                        <li class='page-nav-level-2'>
+                            <a href='#install-from-bioconda-via-conda'>Install from Bioconda via Conda</a>
+                        </li>
+                        
+                        <li class='page-nav-level-2'>
+                            <a href='#install-from-pip'>Install from pip</a>
+                        </li>
+                        
+                        <li class='page-nav-level-2'>
+                            <a href='#install-from-source'>Install from source</a>
+                        </li>
+                        
+                    </ul>
+                </div>
+            </div>
+            <div class='wave-container'>
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320">
+                    <path fill-opacity="0.35"
+                        d="M0,192L60,213.3C120,235,240,277,360,277.3C480,277,600,235,720,192C840,149,960,107,1080,122.7C1200,139,1320,213,1380,250.7L1440,288L1440,320L1380,320C1320,320,1200,320,1080,320C960,320,840,320,720,320C600,320,480,320,360,320C240,320,120,320,60,320L0,320Z">
+                    </path>
+                    <path fill-opacity="0.5"
+                        d="M0,160L60,181.3C120,203,240,245,360,229.3C480,213,600,139,720,138.7C840,139,960,213,1080,229.3C1200,245,1320,203,1380,181.3L1440,160L1440,320L1380,320C1320,320,1200,320,1080,320C960,320,840,320,720,320C600,320,480,320,360,320C240,320,120,320,60,320L0,320Z">
+                    </path>
+                    <path fill-opacity="0.2"
+                        d="M0,224L60,197.3C120,171,240,117,360,117.3C480,117,600,171,720,186.7C840,203,960,181,1080,186.7C1200,192,1320,224,1380,240L1440,256L1440,320L1380,320C1320,320,1200,320,1080,320C960,320,840,320,720,320C600,320,480,320,360,320C240,320,120,320,60,320L0,320Z">
+                    </path>
+                </svg>
+                <p>Powered by <a href='https://cli.doctave.com' target='_blank'>Doctave</a></p>
+            </div>
+        </div>
+    </div>
+    <script type="text/javascript" src="/binchicken/assets/katex.js?v=1770330212"></script>
+    <script type="text/javascript" src="/binchicken/assets/mermaid.js?v=1770330212"></script>
+    <script type="text/javascript" src="/binchicken/assets/elasticlunr.js?v=1770330212"></script>
+    <script type="text/javascript" src="/binchicken/assets/prism.js?v=1770330212"></script>
+    <script type="text/javascript" src="/binchicken/assets/doctave-app.js?v=1770330212"></script>
+
+    
+</body>
+
+</html>
