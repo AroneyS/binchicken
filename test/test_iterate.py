@@ -61,37 +61,9 @@ GENOME_TRANSCRIPTS = ' '.join([os.path.join(path_to_data, "GB_GCA_013286235.1_pr
 GENOME_SINGLEM = os.path.join(MOCK_COASSEMBLE, "coassemble", "summarise", "bins_summarised.otu_table2.tsv")
 
 BIN_INFO_COLUMNS = {
-    "Bin Id": str,
-    "Marker lineage": str,
-    "# genomes": str,
-    "# markers": str,
-    "# marker sets": str,
-    "Completeness (CheckM1)": str,
-    "Contamination (CheckM1)": str,
-    "Strain heterogeneity": str,
-    "Genome size (bp)": str,
-    "# ambiguous bases": str,
-    "# scaffolds": str,
-    "# contigs": str,
-    "N50 (scaffolds)": str,
-    "N50 (contigs)": str,
-    "Mean scaffold length (bp)": str,
-    "Mean contig length (bp)": str,
-    "Longest scaffold (bp)": str,
-    "Longest contig (bp)": str,
-    "GC": str,
-    "GC std (scaffolds > 1kbp)": str,
-    "Coding density": str,
-    "Translation table": str,
-    "# predicted genes": str,
-    "0": str,
-    "1": str,
-    "2": str,
-    "3": str,
-    "4": str,
-    "5+": str,
-    "Completeness (CheckM2)": str,
-    "Contamination (CheckM2)": str,
+    "Name": str,
+    "Completeness": str,
+    "Contamination": str,
     "Completeness_Model_Used": str,
     "Translation_Table_Used": str,
     "Coding_Density": str,
@@ -701,14 +673,10 @@ class Tests(unittest.TestCase):
             bin_info = pl.DataFrame([
                     [
                         "binchicken_coassembly_0.1",
-                        "p__Bacteroidetes (UID2605)", "350", "314", "208", "86.44", "1.8", "12.5", "1705643", "0", "315", "315", "6824", "6824", "5414", "5414", "25260", "25260", "59.9", "3.41", "90.22", "11",
-                        "1669", "37", "269", "8", "0", "0", "0",
                         "83.86", "1.14", "Neural Network (Specific Model)", "11", "0.902", "6824", "307.7531455961654", "1705643", "0.6", "1669", "315", "25260", ""
                     ],
                     [
                         "binchicken_coassembly_0.2",
-                        "o__Clostridiales (UID1212)", "172", "257", "149", "44.16", "1.03", "33.33", "980304", "0", "399", "399", "2442", "2442", "2456", "2456", "7735", "7735", "60.2", "2.97", "90.94", "11",
-                        "1244", "143", "111", "3", "0", "0", "0",
                         "36.49", "0.24", "Neural Network (Specific Model)", "11", "0.909", "2442", "239.274115755627", "980304", "0.6", "1244", "399", "7735", ""
                     ],
                 ], orient="row", schema=BIN_INFO_COLUMNS)
@@ -719,11 +687,6 @@ class Tests(unittest.TestCase):
 
             (
                 bin_info
-                .rename({
-                    "Bin Id": "Name",
-                    "Completeness (CheckM2)": "Completeness",
-                    "Contamination (CheckM2)": "Contamination",
-                    })
                 .select(CHECKM2_QUALITY_COLUMNS.keys())
                 .write_csv(os.path.join(output_bins_path, "quality_report.tsv"), separator="\t")
             )
@@ -752,14 +715,10 @@ class Tests(unittest.TestCase):
             bin_info = pl.DataFrame([
                     [
                         "metabat2_refined_bins.tsv.005",
-                        "p__Bacteroidetes (UID2605)", "350", "314", "208", "86.44", "1.8", "12.5", "1705643", "0", "315", "315", "6824", "6824", "5414", "5414", "25260", "25260", "59.9", "3.41", "90.22", "11",
-                        "1669", "37", "269", "8", "0", "0", "0",
                         "83.86", "1.14", "Neural Network (Specific Model)", "11", "0.902", "6824", "307.7531455961654", "1705643", "0.6", "1669", "315", "25260", ""
                     ],
                     [
                         "semibin_refined_bins.tsv.072_sub",
-                        "o__Clostridiales (UID1212)", "172", "257", "149", "44.16", "1.03", "33.33", "980304", "0", "399", "399", "2442", "2442", "2456", "2456", "7735", "7735", "60.2", "2.97", "90.94", "11",
-                        "1244", "143", "111", "3", "0", "0", "0",
                         "36.49", "0.24", "Neural Network (Specific Model)", "11", "0.909", "2442", "239.274115755627", "980304", "0.6", "1244", "399", "7735", ""
                     ],
                 ], orient="row", schema=BIN_INFO_COLUMNS)
