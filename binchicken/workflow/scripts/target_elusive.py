@@ -5,6 +5,7 @@
 # Author: Samuel Aroney
 
 import os
+import glob
 import polars as pl
 import logging
 import numpy as np
@@ -214,10 +215,12 @@ def streaming_pipeline(
         return(sparse_edges)
 
     num_chunks = (sample_preclusters.height + CHUNK_SIZE - 1) // CHUNK_SIZE # Ceiling division to include all rows
-    # Check if any edges_path_* files exist and remove them
-    if os.path.exists(edges_path + "_*"):
+    # Remove any existing chunk files so stale data is not merged into output
+    chunk_paths = glob.glob(edges_path + "_*")
+    if chunk_paths:
         logging.info(f"Removing existing files: {edges_path}_*")
-        os.system(f"rm {edges_path}_*")
+        for chunk_path in chunk_paths:
+            os.remove(chunk_path)
 
     with pl.StringCache():
         logging.info("Processing clusters in chunks")

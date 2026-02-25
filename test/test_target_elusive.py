@@ -1180,6 +1180,38 @@ class Tests(unittest.TestCase):
             self.assertDataFrameEqual(expected_targets, observed_targets)
             self.assertDataFrameEqual(expected_edges, observed_edges)
 
+    def test_streaming_pipeline_clears_stale_edge_chunks(self):
+        with in_tempdir():
+            unbinned = pl.LazyFrame([
+                ["S3.1", "sample_1", "AAA", 1, 12, "Root", ""],
+                ["S3.1", "sample_1", "AAB", 1, 5, "Root", ""],
+            ], orient="row", schema=APPRAISE_COLUMNS)
+            samples = set(["sample_1"])
+            preclusters = pl.DataFrame([
+                ["sample_1"],
+            ], orient="row", schema=CLUSTERS_COLUMNS)
+
+            stale_edges = pl.DataFrame([
+                ["match", 1, "sample_1", "999"],
+            ], orient="row", schema=EDGES_COLUMNS)
+            stale_edges.write_csv("edges.tsv_5", separator="\t")
+
+            expected_edges = pl.DataFrame([
+                ["match", 1, "sample_1", "5724869768496956987"],
+            ], orient="row", schema=EDGES_COLUMNS)
+
+            streaming_pipeline(
+                unbinned,
+                samples,
+                sample_preclusters=preclusters,
+                targets_path="targets.tsv",
+                edges_path="edges.tsv",
+                MIN_COASSEMBLY_COVERAGE=10,
+                CHUNK_SIZE=100,
+                )
+            observed_edges = pl.read_csv("edges.tsv", schema_overrides=EDGES_COLUMNS, separator="\t")
+            self.assertDataFrameEqual(expected_edges, observed_edges)
+
 
 if __name__ == '__main__':
     unittest.main()
