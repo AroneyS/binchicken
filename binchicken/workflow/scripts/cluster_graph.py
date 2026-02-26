@@ -164,15 +164,16 @@ def pipeline(
                     )
                 .with_columns(
                     source_sample = pl.col("samples").list.first(),
-                    dest_sample = pl.col("samples").list.get(1),
+                    dest_sample = pl.col("samples").list.get(1, null_on_oob=True),
                     samples_hash = pl.col("samples").list.sort().hash(),
                     length = pl.col("samples").list.len()
                     )
             )
 
             directional_rows = elusive_edges.filter(pl.col("style") == "directional").height
-            if directional_rows == 0:
-                raise ValueError("Directional edges now required for single-sample clusters. Please rerun with a clean output folder.")
+            singleton_rows = elusive_edges.filter(pl.col("style") == "singleton").height
+            if directional_rows == 0 and singleton_rows == 0:
+                raise ValueError("Directional or singleton edges required for single-sample clusters. Please rerun with a clean output folder.")
         else:
             elusive_edges = (
                 elusive_edges
@@ -295,6 +296,7 @@ def pipeline(
             sample_targets = (
                 elusive_edges
                 .select("target_ids", recover_candidates = pl.col("dest_sample"))
+                .filter(pl.col("recover_candidates").is_not_null())
                 .explode("target_ids")
                 .unique()
                 .group_by("recover_candidates")
@@ -374,7 +376,7 @@ def pipeline(
                     .then(pl.col("total_targets"))
                     .otherwise(pl.col("target_ids").list.len()),
                 )
-            .sort("total_targets", "total_size", descending=[True, False])
+            .sort("total_targets", "total_size", "samples", descending=[True, False, True])
             .with_row_index("coassembly")
             .select(
                 "samples", "length", "total_targets", "total_size", "recover_samples",

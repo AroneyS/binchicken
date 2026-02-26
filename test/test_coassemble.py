@@ -1744,6 +1744,8 @@ class Tests(unittest.TestCase):
                     ["directional", 2, "sample_5,sample_2", "2099872357664929757"],
                     ["directional", 2, "sample_3,sample_5", "151634836910807220,3420149846979092472"],
                     ["directional", 2, "sample_5,sample_3", "151634836910807220,3420149846979092472"],
+                    ["singleton", 1, "sample_3", "2104372308545519507"],
+                    ["singleton", 1, "sample_1", "3991516532042415735"],
                 ],
                 schema = ["style", "cluster_size", "samples", "target_ids"],
                 orient="row",
@@ -1774,10 +1776,18 @@ class Tests(unittest.TestCase):
                     "\t".join([
                         "sample_3",
                         "1",
-                        "2",
+                        "3",
                         "3624",
                         "sample_3,sample_5",
                         "sample_3"
+                    ]),
+                    "\t".join([
+                        "sample_1",
+                        "1",
+                        "3",
+                        "4832",
+                        "sample_1,sample_2",
+                        "sample_1"
                     ]),
                     "\t".join([
                         "sample_2",
@@ -1786,14 +1796,6 @@ class Tests(unittest.TestCase):
                         "3926",
                         "sample_1,sample_2",
                         "sample_2"
-                    ]),
-                    "\t".join([
-                        "sample_1",
-                        "1",
-                        "2",
-                        "4832",
-                        "sample_1,sample_2",
-                        "sample_1"
                     ]),
                     ""
                 ]

@@ -925,6 +925,7 @@ class Tests(unittest.TestCase):
             ["directional", 2, "sample_3,sample_1", "0"],
             ["directional", 2, "sample_2,sample_3", "0"],
             ["directional", 2, "sample_3,sample_2", "0"],
+            ["singleton", 1, "sample_3", "2"],
         ], orient="row", schema=EDGES_COLUMNS)
 
         observed_targets, observed_edges = pipeline(unbinned, samples, MAX_COASSEMBLY_SAMPLES=1)
@@ -957,6 +958,7 @@ class Tests(unittest.TestCase):
             ["directional", 2, "sample_3,sample_1", "0"],
             # ["directional", 2, "sample_2,sample_3", "0"],
             ["directional", 2, "sample_3,sample_2", "0"],
+            ["singleton", 1, "sample_3", "2"],
         ], orient="row", schema=EDGES_COLUMNS)
 
         observed_targets, observed_edges = pipeline(unbinned, samples, MAX_COASSEMBLY_SAMPLES=1)
@@ -1044,10 +1046,13 @@ class Tests(unittest.TestCase):
             expected_edges = pl.DataFrame([
                 # ["directional", 2, "sample_1,sample_2", "5724869768496956987,6753533720934362372"],
                 # ["directional", 2, "sample_2,sample_1", "5724869768496956987,6753533720934362372"],
+                ["singleton", 1, "sample_1", "6753533720934362372"],
+                ["singleton", 1, "sample_2", "6753533720934362372"],
                 ["directional", 2, "sample_1,sample_3", "5724869768496956987"],
                 ["directional", 2, "sample_3,sample_1", "5724869768496956987"],
                 ["directional", 2, "sample_2,sample_3", "5724869768496956987"],
                 ["directional", 2, "sample_3,sample_2", "5724869768496956987"],
+                ["singleton", 1, "sample_3", "6071535188791011068"],
             ], orient="row", schema=EDGES_COLUMNS)
 
             streaming_pipeline(
@@ -1092,10 +1097,12 @@ class Tests(unittest.TestCase):
             expected_edges = pl.DataFrame([
                 # ["directional", 2, "sample_1,sample_2", "5724869768496956987,6753533720934362372"],
                 # ["directional", 2, "sample_2,sample_1", "5724869768496956987,6753533720934362372"],
+                ["singleton", 1, "sample_1", "6753533720934362372"],
                 ["directional", 2, "sample_1,sample_3", "5724869768496956987"],
                 ["directional", 2, "sample_3,sample_1", "5724869768496956987"],
                 # ["directional", 2, "sample_2,sample_3", "5724869768496956987"],
                 ["directional", 2, "sample_3,sample_2", "5724869768496956987"],
+                ["singleton", 1, "sample_3", "6071535188791011068"],
             ], orient="row", schema=EDGES_COLUMNS)
 
             streaming_pipeline(
@@ -1144,6 +1151,7 @@ class Tests(unittest.TestCase):
                 ["directional", 2, "sample_3,sample_1", "5724869768496956987"],
                 ["directional", 2, "sample_2,sample_3", "5724869768496956987"],
                 ["directional", 2, "sample_3,sample_2", "5724869768496956987"],
+                ["singleton", 1, "sample_3", "6071535188791011068"],
             ], orient="row", schema=EDGES_COLUMNS)
 
             streaming_pipeline(
@@ -1192,6 +1200,7 @@ class Tests(unittest.TestCase):
                 ["directional", 2, "sample_3,sample_1", "5724869768496956987"],
                 # ["directional", 2, "sample_2,sample_3", "5724869768496956987"],
                 ["directional", 2, "sample_3,sample_2", "5724869768496956987"],
+                ["singleton", 1, "sample_3", "6071535188791011068"],
             ], orient="row", schema=EDGES_COLUMNS)
 
             streaming_pipeline(

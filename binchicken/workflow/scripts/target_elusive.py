@@ -49,6 +49,10 @@ def get_clusters(
     if sample_distances.height == 0:
         return pl.DataFrame(schema={"samples": str})
 
+    if MAX_COASSEMBLY_SAMPLES < 2:
+        # Set to 2 to produce paired edges
+        MAX_COASSEMBLY_SAMPLES = 2
+
     logging.info("Converting to sparse array")
     samples = np.unique(np.concatenate([
         sample_distances.select("query_name").to_numpy().flatten(),
@@ -180,64 +184,95 @@ def streaming_pipeline(
         pl.DataFrame(schema=EDGES_COLUMNS).write_csv(edges_path, separator="\t")
         return
 
-    if MAX_COASSEMBLY_SAMPLES == 1:
-        precluster_keys = []
-        if sample_preclusters.height > 0:
-            precluster_keys = (
-                sample_preclusters
-                .select(pl.col("samples").str.split(",").list.sort().list.join(",").alias("pair_key"))
-                .get_column("pair_key")
-                .to_list()
-            )
-
-        source = (
-            targets
-            .filter(pl.col("coverage") > MIN_COASSEMBLY_COVERAGE)
-            .select(
-                source_sample = pl.col("sample"),
-                target = pl.col("target"),
-                )
-            .unique()
-        )
-        dest = (
-            targets
-            .select(
-                dest_sample = pl.col("sample"),
-                target = pl.col("target"),
-                )
-            .unique()
-        )
-
-        directional_edges = (
-            source
-            .join(dest, on="target")
-            .filter(pl.col("source_sample") != pl.col("dest_sample"))
-        )
-        if precluster_keys:
-            directional_edges = directional_edges.filter(
-                pl.concat_list([pl.col("source_sample"), pl.col("dest_sample")])
-                .list.sort()
-                .list.join(",")
-                .is_in(precluster_keys)
-            )
-
-        (
-            directional_edges
-            .group_by("source_sample", "dest_sample")
-            .agg(target_ids = pl.col("target").cast(pl.Utf8).unique().sort().str.join(","))
-            .with_columns(
-                style = pl.lit("directional"),
-                cluster_size = pl.lit(2),
-                samples = pl.concat_str(["source_sample", "dest_sample"], separator=","),
-                )
-            .select("style", "cluster_size", "samples", "target_ids")
-            .sink_csv(edges_path, separator="\t")
-        )
-        return
-
     if sample_preclusters.height == 0:
         logging.warning("No preclusters found")
         pl.DataFrame(schema=EDGES_COLUMNS).write_csv(edges_path, separator="\t")
+        return
+
+    # Remove any existing chunk files so stale data is not merged into output
+    chunk_paths = glob.glob(edges_path + "_*")
+    if chunk_paths:
+        logging.info(f"Removing existing files: {edges_path}_*")
+        for chunk_path in chunk_paths:
+            os.remove(chunk_path)
+
+    if MAX_COASSEMBLY_SAMPLES == 1:
+        sample_list = sorted(list(samples))
+        filtered_targets = (
+            targets
+            .filter(pl.col("coverage") > MIN_COASSEMBLY_COVERAGE)
+            .select(sample = pl.col("sample"), target = pl.col("target"))
+            .unique()
+        )
+
+        sample_preclusters = (
+            sample_preclusters
+            .with_columns(pl.col("samples").str.split(",").cast(pl.List(pl.Categorical)))
+            .select(
+                source_sample = pl.col("samples").list.first(),
+                dest_sample = pl.col("samples").list.get(1, null_on_oob=True)
+                )
+        )
+
+        SINGLE_CHUNK_SIZE = CHUNK_SIZE // 100 + 1
+        num_chunks = (len(sample_list) + SINGLE_CHUNK_SIZE - 1) // SINGLE_CHUNK_SIZE
+
+        logging.info("Processing samples in chunks")
+        with pl.StringCache():
+            for i in range(num_chunks):
+                logging.info(f"Processing cluster {str(i+1)} of {str(num_chunks)}")
+                start_row = i * SINGLE_CHUNK_SIZE
+                chunk_samples = (
+                    pl.DataFrame({"source_sample": sample_list[start_row:start_row + SINGLE_CHUNK_SIZE]})
+                    .with_columns(pl.col("source_sample").cast(pl.Categorical))
+                )
+
+                chunk_targets = (
+                    pl.concat([
+                        sample_preclusters,
+                        sample_preclusters.select(source_sample = "dest_sample", dest_sample = "source_sample")
+                        ])
+                    .join(chunk_samples, on="source_sample")
+                    .lazy()
+                    .join(filtered_targets.select("target", source_sample=pl.col("sample").cast(pl.Categorical)), on="source_sample")
+                    .join(targets.select("target", dest_sample=pl.col("sample").cast(pl.Categorical)), on=["dest_sample", "target"])
+                )
+
+                directional_edges = (
+                    chunk_targets
+                    .group_by("source_sample", "dest_sample")
+                    .agg(target_ids = pl.col("target").cast(pl.Utf8).unique().sort().str.join(","))
+                    .with_columns(
+                        style = pl.lit("directional"),
+                        cluster_size = pl.lit(2),
+                        samples = pl.concat_str(["source_sample", "dest_sample"], separator=","),
+                        )
+                    .select("style", "cluster_size", "samples", "target_ids")
+                )
+
+                singleton_edges = (
+                    filtered_targets
+                    .select("target", source_sample=pl.col("sample").cast(pl.Categorical))
+                    .join(chunk_samples.lazy(), on="source_sample")
+                    .join(chunk_targets, on=["source_sample", "target"], how="anti")
+                    .group_by("source_sample")
+                    .agg(target_ids = pl.col("target").cast(pl.Utf8).unique().sort().str.join(","))
+                    .with_columns(
+                        style = pl.lit("singleton"),
+                        cluster_size = pl.lit(1),
+                        samples = pl.col("source_sample").cast(pl.Utf8),
+                        )
+                    .select("style", "cluster_size", "samples", "target_ids")
+                )
+
+                pl.concat([directional_edges, singleton_edges]).sink_csv(edges_path + f"_{i}", separator="\t")
+
+        (
+            pl.scan_csv(edges_path + "_*", separator="\t", schema_overrides=EDGES_COLUMNS)
+            .sink_csv(edges_path, separator="\t")
+        )
+
+        logging.info("Done")
         return
 
     logging.info("Using chosen clusters to find appropriate targets")
@@ -262,18 +297,10 @@ def streaming_pipeline(
         return(sparse_edges)
 
     num_chunks = (sample_preclusters.height + CHUNK_SIZE - 1) // CHUNK_SIZE # Ceiling division to include all rows
-    # Remove any existing chunk files so stale data is not merged into output
-    chunk_paths = glob.glob(edges_path + "_*")
-    if chunk_paths:
-        logging.info(f"Removing existing files: {edges_path}_*")
-        for chunk_path in chunk_paths:
-            os.remove(chunk_path)
-
     with pl.StringCache():
         logging.info("Processing clusters in chunks")
         for i in range(num_chunks):
-            if True: #i % 100 == 0:
-                logging.info(f"Processing cluster {str(i+1)} of {str(num_chunks)}")
+            logging.info(f"Processing cluster {str(i+1)} of {str(num_chunks)}")
             start_row = i * CHUNK_SIZE
             chunk = sample_preclusters.slice(start_row, CHUNK_SIZE)
             processed_chunk = process_chunk(chunk)
@@ -325,25 +352,19 @@ def pipeline(
         return unbinned.with_columns(pl.col("target").cast(pl.Utf8)), pl.DataFrame(schema=EDGES_COLUMNS)
 
     if MAX_COASSEMBLY_SAMPLES == 1:
-        source = (
+        filtered_targets = (
             unbinned
             .filter(pl.col("coverage") > MIN_COASSEMBLY_COVERAGE)
             .select(
-                source_sample = pl.col("sample"),
+                sample = pl.col("sample"),
                 target = pl.col("target"),
                 )
             .unique()
         )
-        dest = (
-            unbinned
-            .select(
-                dest_sample = pl.col("sample"),
-                target = pl.col("target"),
-                )
-            .unique()
-        )
+        source = filtered_targets.select(pl.col("target"), source_sample = pl.col("sample"))
+        dest = unbinned.select(pl.col("target"), dest_sample = pl.col("sample")).unique()
 
-        sparse_edges = (
+        directional_edges = (
             source
             .join(dest, on="target")
             .filter(pl.col("source_sample") != pl.col("dest_sample"))
@@ -356,6 +377,28 @@ def pipeline(
                 )
             .select("style", "cluster_size", "samples", "target_ids")
         )
+
+        singleton_edges = (
+            filtered_targets
+            .join(
+                dest
+                .group_by("target")
+                .agg(sample_count = pl.n_unique("dest_sample"))
+                .filter(pl.col("sample_count") == 1)
+                .select("target"),
+                on="target",
+            )
+            .group_by("sample")
+            .agg(target_ids = pl.col("target").cast(pl.Utf8).unique().sort().str.join(","))
+            .with_columns(
+                style = pl.lit("singleton"),
+                cluster_size = pl.lit(1),
+                samples = pl.col("sample"),
+                )
+            .select("style", "cluster_size", "samples", "target_ids")
+        )
+
+        sparse_edges = pl.concat([directional_edges, singleton_edges])
 
         return unbinned.with_columns(pl.col("target").cast(pl.Utf8)), sparse_edges
 

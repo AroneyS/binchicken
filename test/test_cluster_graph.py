@@ -118,6 +118,7 @@ class Tests(unittest.TestCase):
             ["directional", 2, "4,3", "3,4"],
             ["directional", 2, "4,5", "5"],
             ["directional", 2, "5,4", "5"],
+            ["singleton", 1, "4", "6"],
         ], orient="row", schema=ELUSIVE_EDGES_COLUMNS)
         read_size = pl.DataFrame([
             ["1", 1000],
@@ -128,7 +129,7 @@ class Tests(unittest.TestCase):
         ], orient="row", schema=READ_SIZE_COLUMNS)
 
         expected = pl.DataFrame([
-            ["4", 1, 5, 4000, "1,2,3,4", "coassembly_0"],
+            ["4", 1, 6, 4000, "1,2,3,4", "coassembly_0"],
             ["1", 1, 4, 1000, "1,2,3,4", "coassembly_1"],
             ["2", 1, 4, 2000, "1,2,3,4", "coassembly_2"],
             ["3", 1, 4, 3000, "1,2,3,4", "coassembly_3"],
@@ -151,6 +152,7 @@ class Tests(unittest.TestCase):
             ["directional", 2, "1,3", "5"],
             ["directional", 2, "3,2", "6,7"],
             ["directional", 2, "2,3", "6,7"],
+            ["singleton", 1, "3", "8"],
         ], orient="row", schema=ELUSIVE_EDGES_COLUMNS)
         read_size = pl.DataFrame([
             ["1", 1000],
@@ -161,7 +163,7 @@ class Tests(unittest.TestCase):
         expected = pl.DataFrame([
             ["2", 1, 6, 1000, "1,2", "coassembly_0"],
             ["1", 1, 5, 1000, "1,2", "coassembly_1"],
-            ["3", 1, 3, 1000, "2,3", "coassembly_2"],
+            ["3", 1, 4, 1000, "2,3", "coassembly_2"],
         ], orient="row", schema=ELUSIVE_CLUSTERS_COLUMNS)
         observed = pipeline(
             elusive_edges,
@@ -199,6 +201,7 @@ class Tests(unittest.TestCase):
         elusive_edges = pl.DataFrame([
             ["directional", 2, "1,2", "1,2,3,4,5,6,7,8,9,10"],
             ["directional", 2, "2,1", "2,3"],
+            ["singleton", 1, "1", "11"],
         ], orient="row", schema=ELUSIVE_EDGES_COLUMNS)
         read_size = pl.DataFrame([
             ["1", 1000],
@@ -206,8 +209,31 @@ class Tests(unittest.TestCase):
         ], orient="row", schema=READ_SIZE_COLUMNS)
 
         expected = pl.DataFrame([
-            ["1", 1, 10, 1000, "1,2", "coassembly_0"],
+            ["1", 1, 11, 1000, "1,2", "coassembly_0"],
             ["2", 1, 2, 2000, "1,2", "coassembly_1"],
+        ], orient="row", schema=ELUSIVE_CLUSTERS_COLUMNS)
+        observed = pipeline(
+            elusive_edges,
+            read_size,
+            MAX_COASSEMBLY_SAMPLES=1,
+            MIN_COASSEMBLY_SAMPLES=1,
+            MAX_RECOVERY_SAMPLES=2,
+            )
+        self.assertDataFrameEqual(expected, observed)
+
+    def test_cluster_single_singleton_only(self):
+        elusive_edges = pl.DataFrame([
+            ["singleton", 1, "1", "1,2"],
+            ["singleton", 1, "2", "3,4"],
+        ], orient="row", schema=ELUSIVE_EDGES_COLUMNS)
+        read_size = pl.DataFrame([
+            ["1", 1000],
+            ["2", 2000],
+        ], orient="row", schema=READ_SIZE_COLUMNS)
+
+        expected = pl.DataFrame([
+            ["1", 1, 2, 1000, "1", "coassembly_0"],
+            ["2", 1, 2, 2000, "2", "coassembly_1"],
         ], orient="row", schema=ELUSIVE_CLUSTERS_COLUMNS)
         observed = pipeline(
             elusive_edges,
