@@ -901,27 +901,62 @@ class Tests(unittest.TestCase):
 
     def test_target_elusive_single_assembly(self):
         unbinned = pl.DataFrame([
-            ["S3.1", "sample_1", "AAA", 5, 10, "Root", ""],
-            ["S3.1", "sample_1", "AAB", 5, 10, "Root", ""],
-            ["S3.1", "sample_2", "AAA", 5, 10, "Root", ""],
-            ["S3.1", "sample_2", "AAB", 5, 10, "Root", ""],
-            ["S3.1", "sample_3", "AAA", 5, 10, "Root", ""],
-            ["S3.1", "sample_3", "AAC", 5, 10, "Root", ""],
+            ["S3.1", "sample_1", "AAA", 5, 11, "Root", ""],
+            ["S3.1", "sample_1", "AAB", 5, 11, "Root", ""],
+            ["S3.1", "sample_2", "AAA", 5, 11, "Root", ""],
+            ["S3.1", "sample_2", "AAB", 5, 11, "Root", ""],
+            ["S3.1", "sample_3", "AAA", 5, 11, "Root", ""],
+            ["S3.1", "sample_3", "AAC", 5, 11, "Root", ""],
         ], orient="row", schema=APPRAISE_COLUMNS)
         samples = set(["sample_1", "sample_2", "sample_3"])
 
         expected_targets = pl.DataFrame([
-            ["S3.1", "sample_1", "AAA", 5, 10, "Root", "0"],
-            ["S3.1", "sample_1", "AAB", 5, 10, "Root", "1"],
-            ["S3.1", "sample_2", "AAA", 5, 10, "Root", "0"],
-            ["S3.1", "sample_2", "AAB", 5, 10, "Root", "1"],
-            ["S3.1", "sample_3", "AAA", 5, 10, "Root", "0"],
-            ["S3.1", "sample_3", "AAC", 5, 10, "Root", "2"],
+            ["S3.1", "sample_1", "AAA", 5, 11, "Root", "0"],
+            ["S3.1", "sample_1", "AAB", 5, 11, "Root", "1"],
+            ["S3.1", "sample_2", "AAA", 5, 11, "Root", "0"],
+            ["S3.1", "sample_2", "AAB", 5, 11, "Root", "1"],
+            ["S3.1", "sample_3", "AAA", 5, 11, "Root", "0"],
+            ["S3.1", "sample_3", "AAC", 5, 11, "Root", "2"],
         ], orient="row", schema=TARGETS_COLUMNS)
         expected_edges = pl.DataFrame([
-            ["match", 2, "sample_1,sample_2", "0,1"],
-            ["match", 2, "sample_1,sample_3", "0"],
-            ["match", 2, "sample_2,sample_3", "0"],
+            ["directional", 2, "sample_1,sample_2", "0,1"],
+            ["directional", 2, "sample_2,sample_1", "0,1"],
+            ["directional", 2, "sample_1,sample_3", "0"],
+            ["directional", 2, "sample_3,sample_1", "0"],
+            ["directional", 2, "sample_2,sample_3", "0"],
+            ["directional", 2, "sample_3,sample_2", "0"],
+        ], orient="row", schema=EDGES_COLUMNS)
+
+        observed_targets, observed_edges = pipeline(unbinned, samples, MAX_COASSEMBLY_SAMPLES=1)
+        self.assertDataFrameEqual(expected_targets, observed_targets)
+        self.assertDataFrameEqual(expected_edges, observed_edges)
+
+    def test_target_elusive_single_assembly_imbalanced(self):
+        unbinned = pl.DataFrame([
+            ["S3.1", "sample_1", "AAA", 5, 11, "Root", ""],
+            ["S3.1", "sample_1", "AAB", 5, 11, "Root", ""],
+            ["S3.1", "sample_2", "AAA", 4, 8, "Root", ""],
+            ["S3.1", "sample_2", "AAB", 4, 8, "Root", ""],
+            ["S3.1", "sample_3", "AAA", 5, 11, "Root", ""],
+            ["S3.1", "sample_3", "AAC", 5, 11, "Root", ""],
+        ], orient="row", schema=APPRAISE_COLUMNS)
+        samples = set(["sample_1", "sample_2", "sample_3"])
+
+        expected_targets = pl.DataFrame([
+            ["S3.1", "sample_1", "AAA", 5, 11, "Root", "0"],
+            ["S3.1", "sample_1", "AAB", 5, 11, "Root", "1"],
+            ["S3.1", "sample_2", "AAA", 4, 8, "Root", "0"],
+            ["S3.1", "sample_2", "AAB", 4, 8, "Root", "1"],
+            ["S3.1", "sample_3", "AAA", 5, 11, "Root", "0"],
+            ["S3.1", "sample_3", "AAC", 5, 11, "Root", "2"],
+        ], orient="row", schema=TARGETS_COLUMNS)
+        expected_edges = pl.DataFrame([
+            ["directional", 2, "sample_1,sample_2", "0,1"],
+            # ["directional", 2, "sample_2,sample_1", "0,1"],
+            ["directional", 2, "sample_1,sample_3", "0"],
+            ["directional", 2, "sample_3,sample_1", "0"],
+            # ["directional", 2, "sample_2,sample_3", "0"],
+            ["directional", 2, "sample_3,sample_2", "0"],
         ], orient="row", schema=EDGES_COLUMNS)
 
         observed_targets, observed_edges = pipeline(unbinned, samples, MAX_COASSEMBLY_SAMPLES=1)
@@ -984,12 +1019,12 @@ class Tests(unittest.TestCase):
     def test_target_elusive_preclustered_single_assembly(self):
         with in_tempdir():
             unbinned = pl.LazyFrame([
-                ["S3.1", "sample_1", "AAA", 5, 10, "Root", ""],
-                ["S3.1", "sample_1", "AAB", 5, 10, "Root", ""],
-                ["S3.1", "sample_2", "AAA", 5, 10, "Root", ""],
-                ["S3.1", "sample_2", "AAB", 5, 10, "Root", ""],
-                ["S3.1", "sample_3", "AAA", 5, 10, "Root", ""],
-                ["S3.1", "sample_3", "AAC", 5, 10, "Root", ""],
+                ["S3.1", "sample_1", "AAA", 5, 11, "Root", ""],
+                ["S3.1", "sample_1", "AAB", 5, 11, "Root", ""],
+                ["S3.1", "sample_2", "AAA", 5, 11, "Root", ""],
+                ["S3.1", "sample_2", "AAB", 5, 11, "Root", ""],
+                ["S3.1", "sample_3", "AAA", 5, 11, "Root", ""],
+                ["S3.1", "sample_3", "AAC", 5, 11, "Root", ""],
             ], orient="row", schema=APPRAISE_COLUMNS)
             samples = set(["sample_1", "sample_2", "sample_3"])
             preclusters = pl.DataFrame([
@@ -999,17 +1034,68 @@ class Tests(unittest.TestCase):
             ], orient="row", schema=CLUSTERS_COLUMNS)
 
             expected_targets = pl.DataFrame([
-                ["S3.1", "sample_1", "AAA", 5, 10, "Root", "5724869768496956987"],
-                ["S3.1", "sample_1", "AAB", 5, 10, "Root", "6753533720934362372"],
-                ["S3.1", "sample_2", "AAA", 5, 10, "Root", "5724869768496956987"],
-                ["S3.1", "sample_2", "AAB", 5, 10, "Root", "6753533720934362372"],
-                ["S3.1", "sample_3", "AAA", 5, 10, "Root", "5724869768496956987"],
-                ["S3.1", "sample_3", "AAC", 5, 10, "Root", "6071535188791011068"],
+                ["S3.1", "sample_1", "AAA", 5, 11, "Root", "5724869768496956987"],
+                ["S3.1", "sample_1", "AAB", 5, 11, "Root", "6753533720934362372"],
+                ["S3.1", "sample_2", "AAA", 5, 11, "Root", "5724869768496956987"],
+                ["S3.1", "sample_2", "AAB", 5, 11, "Root", "6753533720934362372"],
+                ["S3.1", "sample_3", "AAA", 5, 11, "Root", "5724869768496956987"],
+                ["S3.1", "sample_3", "AAC", 5, 11, "Root", "6071535188791011068"],
             ], orient="row", schema=TARGETS_COLUMNS)
             expected_edges = pl.DataFrame([
-                # ["match", 2, "sample_1,sample_2", "5724869768496956987,6753533720934362372"],
-                ["match", 2, "sample_1,sample_3", "5724869768496956987"],
-                ["match", 2, "sample_2,sample_3", "5724869768496956987"],
+                # ["directional", 2, "sample_1,sample_2", "5724869768496956987,6753533720934362372"],
+                # ["directional", 2, "sample_2,sample_1", "5724869768496956987,6753533720934362372"],
+                ["directional", 2, "sample_1,sample_3", "5724869768496956987"],
+                ["directional", 2, "sample_3,sample_1", "5724869768496956987"],
+                ["directional", 2, "sample_2,sample_3", "5724869768496956987"],
+                ["directional", 2, "sample_3,sample_2", "5724869768496956987"],
+            ], orient="row", schema=EDGES_COLUMNS)
+
+            streaming_pipeline(
+                unbinned,
+                samples,
+                sample_preclusters=preclusters,
+                targets_path="targets.tsv",
+                edges_path="edges.tsv",
+                MAX_COASSEMBLY_SAMPLES=1,
+                CHUNK_SIZE=2,
+                )
+            observed_targets = pl.read_csv("targets.tsv", schema_overrides=TARGETS_COLUMNS, separator="\t")
+            observed_edges = pl.read_csv("edges.tsv", schema_overrides=EDGES_COLUMNS, separator="\t")
+            self.assertDataFrameEqual(expected_targets, observed_targets)
+            self.assertDataFrameEqual(expected_edges, observed_edges)
+
+    def test_target_elusive_preclustered_single_assembly_imbalanced(self):
+        with in_tempdir():
+            unbinned = pl.LazyFrame([
+                ["S3.1", "sample_1", "AAA", 5, 11, "Root", ""],
+                ["S3.1", "sample_1", "AAB", 5, 11, "Root", ""],
+                ["S3.1", "sample_2", "AAA", 4, 8, "Root", ""],
+                ["S3.1", "sample_2", "AAB", 4, 8, "Root", ""],
+                ["S3.1", "sample_3", "AAA", 5, 11, "Root", ""],
+                ["S3.1", "sample_3", "AAC", 5, 11, "Root", ""],
+            ], orient="row", schema=APPRAISE_COLUMNS)
+            samples = set(["sample_1", "sample_2", "sample_3"])
+            preclusters = pl.DataFrame([
+                # ["sample_1,sample_2"],
+                ["sample_1,sample_3"],
+                ["sample_2,sample_3"],
+            ], orient="row", schema=CLUSTERS_COLUMNS)
+
+            expected_targets = pl.DataFrame([
+                ["S3.1", "sample_1", "AAA", 5, 11, "Root", "5724869768496956987"],
+                ["S3.1", "sample_1", "AAB", 5, 11, "Root", "6753533720934362372"],
+                ["S3.1", "sample_2", "AAA", 4, 8, "Root", "5724869768496956987"],
+                ["S3.1", "sample_2", "AAB", 4, 8, "Root", "6753533720934362372"],
+                ["S3.1", "sample_3", "AAA", 5, 11, "Root", "5724869768496956987"],
+                ["S3.1", "sample_3", "AAC", 5, 11, "Root", "6071535188791011068"],
+            ], orient="row", schema=TARGETS_COLUMNS)
+            expected_edges = pl.DataFrame([
+                # ["directional", 2, "sample_1,sample_2", "5724869768496956987,6753533720934362372"],
+                # ["directional", 2, "sample_2,sample_1", "5724869768496956987,6753533720934362372"],
+                ["directional", 2, "sample_1,sample_3", "5724869768496956987"],
+                ["directional", 2, "sample_3,sample_1", "5724869768496956987"],
+                # ["directional", 2, "sample_2,sample_3", "5724869768496956987"],
+                ["directional", 2, "sample_3,sample_2", "5724869768496956987"],
             ], orient="row", schema=EDGES_COLUMNS)
 
             streaming_pipeline(
@@ -1029,12 +1115,12 @@ class Tests(unittest.TestCase):
     def test_target_elusive_preclustered_coalesce_target(self):
         with in_tempdir():
             unbinned = pl.LazyFrame([
-                ["S3.1", "sample_1", "AAA", 5, 10, "Root", ""],
-                ["S3.1", "sample_1", "AAB", 5, 10, "Root", ""],
-                ["S3.1", "sample_2", "AAA", 5, 10, "Root", ""],
-                ["S3.1", "sample_2", "AAB", 5, 10, "Root", ""],
-                ["S3.1", "sample_3", "AAA", 5, 10, "Root", ""],
-                ["S3.1", "sample_3", "AAC", 5, 10, "Root", ""],
+                ["S3.1", "sample_1", "AAA", 5, 11, "Root", ""],
+                ["S3.1", "sample_1", "AAB", 5, 11, "Root", ""],
+                ["S3.1", "sample_2", "AAA", 5, 11, "Root", ""],
+                ["S3.1", "sample_2", "AAB", 5, 11, "Root", ""],
+                ["S3.1", "sample_3", "AAA", 5, 11, "Root", ""],
+                ["S3.1", "sample_3", "AAC", 5, 11, "Root", ""],
             ], orient="row", schema=APPRAISE_COLUMNS)
             samples = set(["sample_1", "sample_2", "sample_3"])
             preclusters = pl.DataFrame([
@@ -1044,17 +1130,68 @@ class Tests(unittest.TestCase):
             ], orient="row", schema=CLUSTERS_COLUMNS)
 
             expected_targets = pl.DataFrame([
-                ["S3.1", "sample_1", "AAA", 5, 10, "Root", "5724869768496956987"],
-                ["S3.1", "sample_1", "AAB", 5, 10, "Root", "6753533720934362372"],
-                ["S3.1", "sample_2", "AAA", 5, 10, "Root", "5724869768496956987"],
-                ["S3.1", "sample_2", "AAB", 5, 10, "Root", "6753533720934362372"],
-                ["S3.1", "sample_3", "AAA", 5, 10, "Root", "5724869768496956987"],
-                ["S3.1", "sample_3", "AAC", 5, 10, "Root", "6071535188791011068"],
+                ["S3.1", "sample_1", "AAA", 5, 11, "Root", "5724869768496956987"],
+                ["S3.1", "sample_1", "AAB", 5, 11, "Root", "6753533720934362372"],
+                ["S3.1", "sample_2", "AAA", 5, 11, "Root", "5724869768496956987"],
+                ["S3.1", "sample_2", "AAB", 5, 11, "Root", "6753533720934362372"],
+                ["S3.1", "sample_3", "AAA", 5, 11, "Root", "5724869768496956987"],
+                ["S3.1", "sample_3", "AAC", 5, 11, "Root", "6071535188791011068"],
             ], orient="row", schema=TARGETS_COLUMNS)
             expected_edges = pl.DataFrame([
-                ["match", 2, "sample_1,sample_2", "5724869768496956987,6753533720934362372"],
-                ["match", 2, "sample_1,sample_3", "5724869768496956987"],
-                ["match", 2, "sample_2,sample_3", "5724869768496956987"],
+                ["directional", 2, "sample_1,sample_2", "5724869768496956987,6753533720934362372"],
+                ["directional", 2, "sample_2,sample_1", "5724869768496956987,6753533720934362372"],
+                ["directional", 2, "sample_1,sample_3", "5724869768496956987"],
+                ["directional", 2, "sample_3,sample_1", "5724869768496956987"],
+                ["directional", 2, "sample_2,sample_3", "5724869768496956987"],
+                ["directional", 2, "sample_3,sample_2", "5724869768496956987"],
+            ], orient="row", schema=EDGES_COLUMNS)
+
+            streaming_pipeline(
+                unbinned,
+                samples,
+                sample_preclusters=preclusters,
+                targets_path="targets.tsv",
+                edges_path="edges.tsv",
+                MAX_COASSEMBLY_SAMPLES=1,
+                CHUNK_SIZE=2,
+                )
+            observed_targets = pl.read_csv("targets.tsv", schema_overrides=TARGETS_COLUMNS, separator="\t")
+            observed_edges = pl.read_csv("edges.tsv", schema_overrides=EDGES_COLUMNS, separator="\t")
+            self.assertDataFrameEqual(expected_targets, observed_targets)
+            self.assertDataFrameEqual(expected_edges, observed_edges)
+
+    def test_target_elusive_preclustered_coalesce_target_imbalanced(self):
+        with in_tempdir():
+            unbinned = pl.LazyFrame([
+                ["S3.1", "sample_1", "AAA", 5, 11, "Root", ""],
+                ["S3.1", "sample_1", "AAB", 5, 11, "Root", ""],
+                ["S3.1", "sample_2", "AAA", 4, 8, "Root", ""],
+                ["S3.1", "sample_2", "AAB", 4, 8, "Root", ""],
+                ["S3.1", "sample_3", "AAA", 5, 11, "Root", ""],
+                ["S3.1", "sample_3", "AAC", 5, 11, "Root", ""],
+            ], orient="row", schema=APPRAISE_COLUMNS)
+            samples = set(["sample_1", "sample_2", "sample_3"])
+            preclusters = pl.DataFrame([
+                ["sample_1,sample_2"],
+                ["sample_1,sample_3"],
+                ["sample_2,sample_3"],
+            ], orient="row", schema=CLUSTERS_COLUMNS)
+
+            expected_targets = pl.DataFrame([
+                ["S3.1", "sample_1", "AAA", 5, 11, "Root", "5724869768496956987"],
+                ["S3.1", "sample_1", "AAB", 5, 11, "Root", "6753533720934362372"],
+                ["S3.1", "sample_2", "AAA", 4, 8, "Root", "5724869768496956987"],
+                ["S3.1", "sample_2", "AAB", 4, 8, "Root", "6753533720934362372"],
+                ["S3.1", "sample_3", "AAA", 5, 11, "Root", "5724869768496956987"],
+                ["S3.1", "sample_3", "AAC", 5, 11, "Root", "6071535188791011068"],
+            ], orient="row", schema=TARGETS_COLUMNS)
+            expected_edges = pl.DataFrame([
+                ["directional", 2, "sample_1,sample_2", "5724869768496956987,6753533720934362372"],
+                # ["directional", 2, "sample_2,sample_1", "5724869768496956987,6753533720934362372"],
+                ["directional", 2, "sample_1,sample_3", "5724869768496956987"],
+                ["directional", 2, "sample_3,sample_1", "5724869768496956987"],
+                # ["directional", 2, "sample_2,sample_3", "5724869768496956987"],
+                ["directional", 2, "sample_3,sample_2", "5724869768496956987"],
             ], orient="row", schema=EDGES_COLUMNS)
 
             streaming_pipeline(

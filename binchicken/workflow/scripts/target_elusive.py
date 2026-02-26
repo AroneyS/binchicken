@@ -49,10 +49,6 @@ def get_clusters(
     if sample_distances.height == 0:
         return pl.DataFrame(schema={"samples": str})
 
-    if MAX_COASSEMBLY_SAMPLES < 2:
-        # Set to 2 to produce paired edges
-        MAX_COASSEMBLY_SAMPLES = 2
-
     logging.info("Converting to sparse array")
     samples = np.unique(np.concatenate([
         sample_distances.select("query_name").to_numpy().flatten(),
@@ -151,10 +147,6 @@ def streaming_pipeline(
         pl.DataFrame(schema=EDGES_COLUMNS).write_csv(edges_path, separator="\t")
         return
 
-    if MAX_COASSEMBLY_SAMPLES < 2:
-        # Set to 2 to produce paired edges
-        MAX_COASSEMBLY_SAMPLES = 2
-
     # Filter TAXA_OF_INTEREST
     if TAXA_OF_INTEREST:
         logging.info(f"Filtering for taxa of interest: {TAXA_OF_INTEREST}")
@@ -186,6 +178,61 @@ def streaming_pipeline(
     if targets.limit(1).collect().is_empty():
         logging.warning("No SingleM sequences found for the given samples")
         pl.DataFrame(schema=EDGES_COLUMNS).write_csv(edges_path, separator="\t")
+        return
+
+    if MAX_COASSEMBLY_SAMPLES == 1:
+        precluster_keys = []
+        if sample_preclusters.height > 0:
+            precluster_keys = (
+                sample_preclusters
+                .select(pl.col("samples").str.split(",").list.sort().list.join(",").alias("pair_key"))
+                .get_column("pair_key")
+                .to_list()
+            )
+
+        source = (
+            targets
+            .filter(pl.col("coverage") > MIN_COASSEMBLY_COVERAGE)
+            .select(
+                source_sample = pl.col("sample"),
+                target = pl.col("target"),
+                )
+            .unique()
+        )
+        dest = (
+            targets
+            .select(
+                dest_sample = pl.col("sample"),
+                target = pl.col("target"),
+                )
+            .unique()
+        )
+
+        directional_edges = (
+            source
+            .join(dest, on="target")
+            .filter(pl.col("source_sample") != pl.col("dest_sample"))
+        )
+        if precluster_keys:
+            directional_edges = directional_edges.filter(
+                pl.concat_list([pl.col("source_sample"), pl.col("dest_sample")])
+                .list.sort()
+                .list.join(",")
+                .is_in(precluster_keys)
+            )
+
+        (
+            directional_edges
+            .group_by("source_sample", "dest_sample")
+            .agg(target_ids = pl.col("target").cast(pl.Utf8).unique().sort().str.join(","))
+            .with_columns(
+                style = pl.lit("directional"),
+                cluster_size = pl.lit(2),
+                samples = pl.concat_str(["source_sample", "dest_sample"], separator=","),
+                )
+            .select("style", "cluster_size", "samples", "target_ids")
+            .sink_csv(edges_path, separator="\t")
+        )
         return
 
     if sample_preclusters.height == 0:
@@ -254,10 +301,6 @@ def pipeline(
         logging.warning("No unbinned sequences found")
         return unbinned.rename({"found_in": "target"}), pl.DataFrame(schema=EDGES_COLUMNS)
 
-    if MAX_COASSEMBLY_SAMPLES < 2:
-        # Set to 2 to produce paired edges
-        MAX_COASSEMBLY_SAMPLES = 2
-
     # Filter TAXA_OF_INTEREST
     if TAXA_OF_INTEREST:
         logging.info(f"Filtering for taxa of interest: {TAXA_OF_INTEREST}")
@@ -280,6 +323,41 @@ def pipeline(
     if unbinned.height == 0:
         logging.warning("No SingleM sequences found for the given samples")
         return unbinned.with_columns(pl.col("target").cast(pl.Utf8)), pl.DataFrame(schema=EDGES_COLUMNS)
+
+    if MAX_COASSEMBLY_SAMPLES == 1:
+        source = (
+            unbinned
+            .filter(pl.col("coverage") > MIN_COASSEMBLY_COVERAGE)
+            .select(
+                source_sample = pl.col("sample"),
+                target = pl.col("target"),
+                )
+            .unique()
+        )
+        dest = (
+            unbinned
+            .select(
+                dest_sample = pl.col("sample"),
+                target = pl.col("target"),
+                )
+            .unique()
+        )
+
+        sparse_edges = (
+            source
+            .join(dest, on="target")
+            .filter(pl.col("source_sample") != pl.col("dest_sample"))
+            .group_by("source_sample", "dest_sample")
+            .agg(target_ids = pl.col("target").cast(pl.Utf8).unique().sort().str.join(","))
+            .with_columns(
+                style = pl.lit("directional"),
+                cluster_size = pl.lit(2),
+                samples = pl.concat_str(["source_sample", "dest_sample"], separator=","),
+                )
+            .select("style", "cluster_size", "samples", "target_ids")
+        )
+
+        return unbinned.with_columns(pl.col("target").cast(pl.Utf8)), sparse_edges
 
     def process_groups(df):
         if df.height == 1:
