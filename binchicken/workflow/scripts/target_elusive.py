@@ -214,7 +214,7 @@ def streaming_pipeline(
                 )
         )
 
-        SINGLE_CHUNK_SIZE = CHUNK_SIZE // 100 + 1
+        SINGLE_CHUNK_SIZE = CHUNK_SIZE // 5 + 1
         num_chunks = (len(sample_list) + SINGLE_CHUNK_SIZE - 1) // SINGLE_CHUNK_SIZE
 
         logging.info("Processing samples in chunks")
