@@ -831,6 +831,36 @@ class Tests(unittest.TestCase):
             )
         self.assertDataFrameEqual(expected, observed)
 
+    def test_cluster_restrict_coassembly_samples_single_assembly_asymmetric(self):
+        elusive_edges = pl.DataFrame([
+            ["directional", 2, "1,2", "1"],
+            ["directional", 2, "2,1", "1,2,3,4"],
+            ["directional", 2, "3,1", "5"],
+            ["directional", 2, "1,3", "5,6"],
+            ["directional", 2, "3,2", "6,7"],
+            ["directional", 2, "2,3", "6,7"],
+        ], orient="row", schema=ELUSIVE_EDGES_COLUMNS)
+        read_size = pl.DataFrame([
+            ["1", 1000],
+            ["2", 1000],
+            ["3", 1000],
+        ], orient="row", schema=READ_SIZE_COLUMNS)
+
+        expected = pl.DataFrame([
+            ["2", 1, 6, 1000, "1,2", "2"],
+            ["1", 1, 3, 1000, "1,3", "1"],
+        ], orient="row", schema=ELUSIVE_CLUSTERS_COLUMNS)
+        observed = pipeline(
+            elusive_edges,
+            read_size,
+            MAX_COASSEMBLY_SAMPLES=1,
+            MIN_COASSEMBLY_SAMPLES=1,
+            MAX_RECOVERY_SAMPLES=2,
+            COASSEMBLY_SAMPLES=["1", "2"],
+            single_assembly=True
+            )
+        self.assertDataFrameEqual(expected, observed, check_row_order=False)
+
     def test_cluster_restrict_coassembly_samples_changed_len(self):
         elusive_edges = pl.DataFrame([
             ["pool", 3, "1,2,3,4,5,6", "1,3"],
