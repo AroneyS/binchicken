@@ -861,6 +861,7 @@ class Tests(unittest.TestCase):
                 f"--reverse {SAMPLE_READS_REVERSE} "
                 f"--singlem-metapackage {METAPACKAGE} "
                 f"--single-assembly "
+                f"--min-sequence-coverage 1 "
                 f"--coassembly-samples sample_1 sample_2 "
                 f"--output test "
                 f"--snakemake-args \"cluster_graph\" "
@@ -886,7 +887,7 @@ class Tests(unittest.TestCase):
                     "\t".join([
                         "sample_1",
                         "1",
-                        "4",
+                        "5",
                         "4832",
                         "sample_1,sample_2,sample_3",
                         "sample_1"
@@ -894,7 +895,7 @@ class Tests(unittest.TestCase):
                     "\t".join([
                         "sample_2",
                         "1",
-                        "3",
+                        "4",
                         "3926",
                         "sample_1,sample_2,sample_3",
                         "sample_2"
@@ -1721,6 +1722,7 @@ class Tests(unittest.TestCase):
                 f"--sample-singlem {SAMPLE_SINGLEM_PRE} "
                 f"--single-assembly "
                 f"--singlem-metapackage {METAPACKAGE} "
+                f"--min-sequence-coverage 1 "
                 f"--kmer-precluster always "
                 f"--precluster-size 3 "
                 f"--max-recovery-samples 2 "
@@ -1734,10 +1736,16 @@ class Tests(unittest.TestCase):
             elusive_edges_path = os.path.join("test", "coassemble", "target", "elusive_edges.tsv")
             self.assertTrue(os.path.exists(elusive_edges_path))
             expected = pl.DataFrame([
-                    ["match", 2, "sample_1,sample_2", "1599792511324098285,2099872357664929757"],
-                    ["match", 2, "sample_1,sample_5", "2099872357664929757"],
-                    ["match", 2, "sample_2,sample_5", "2099872357664929757"],
-                    ["match", 2, "sample_3,sample_5", "151634836910807220,3420149846979092472"],
+                    ["directional", 2, "sample_1,sample_2", "1599792511324098285,2099872357664929757"],
+                    ["directional", 2, "sample_2,sample_1", "1599792511324098285,2099872357664929757"],
+                    ["directional", 2, "sample_1,sample_5", "2099872357664929757"],
+                    ["directional", 2, "sample_5,sample_1", "2099872357664929757"],
+                    ["directional", 2, "sample_2,sample_5", "2099872357664929757"],
+                    ["directional", 2, "sample_5,sample_2", "2099872357664929757"],
+                    ["directional", 2, "sample_3,sample_5", "151634836910807220,3420149846979092472"],
+                    ["directional", 2, "sample_5,sample_3", "151634836910807220,3420149846979092472"],
+                    ["singleton", 1, "sample_3", "2104372308545519507"],
+                    ["singleton", 1, "sample_1", "3991516532042415735"],
                 ],
                 schema = ["style", "cluster_size", "samples", "target_ids"],
                 orient="row",
@@ -1768,10 +1776,18 @@ class Tests(unittest.TestCase):
                     "\t".join([
                         "sample_3",
                         "1",
-                        "2",
+                        "3",
                         "3624",
                         "sample_3,sample_5",
                         "sample_3"
+                    ]),
+                    "\t".join([
+                        "sample_1",
+                        "1",
+                        "3",
+                        "4832",
+                        "sample_1,sample_2",
+                        "sample_1"
                     ]),
                     "\t".join([
                         "sample_2",
@@ -1780,14 +1796,6 @@ class Tests(unittest.TestCase):
                         "3926",
                         "sample_1,sample_2",
                         "sample_2"
-                    ]),
-                    "\t".join([
-                        "sample_1",
-                        "1",
-                        "2",
-                        "4832",
-                        "sample_1,sample_2",
-                        "sample_1"
                     ]),
                     ""
                 ]

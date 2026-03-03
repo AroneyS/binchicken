@@ -151,21 +151,45 @@ def pipeline(
     is_pooled = any(elusive_edges["style"] == "pool")
 
     with pl.StringCache():
-        elusive_edges = (
-            elusive_edges
-            .with_columns(
-                pl.col("samples")
-                    .str.split(",")
-                    .cast(pl.List(pl.Categorical)),
-                pl.col("target_ids")
-                    .str.split(",")
-                    .cast(pl.List(pl.UInt64)),
-                )
-            .with_columns(
-                samples_hash = pl.col("samples").list.sort().hash(),
-                length = pl.col("samples").list.len()
-                )
-        )
+        if MAX_COASSEMBLY_SAMPLES == 1:
+            elusive_edges = (
+                elusive_edges
+                .with_columns(
+                    pl.col("samples")
+                        .str.split(",")
+                        .cast(pl.List(pl.Categorical)),
+                    pl.col("target_ids")
+                        .str.split(",")
+                        .cast(pl.List(pl.UInt64)),
+                    )
+                .with_columns(
+                    source_sample = pl.col("samples").list.first(),
+                    dest_sample = pl.col("samples").list.get(1, null_on_oob=True),
+                    samples_hash = pl.col("samples").list.sort().hash(),
+                    length = pl.col("samples").list.len()
+                    )
+            )
+
+            directional_rows = elusive_edges.filter(pl.col("style") == "directional").height
+            singleton_rows = elusive_edges.filter(pl.col("style") == "singleton").height
+            if directional_rows == 0 and singleton_rows == 0:
+                raise ValueError("Directional or singleton edges required for single-sample clusters. Please rerun with a clean output folder.")
+        else:
+            elusive_edges = (
+                elusive_edges
+                .with_columns(
+                    pl.col("samples")
+                        .str.split(",")
+                        .cast(pl.List(pl.Categorical)),
+                    pl.col("target_ids")
+                        .str.split(",")
+                        .cast(pl.List(pl.UInt64)),
+                    )
+                .with_columns(
+                    samples_hash = pl.col("samples").list.sort().hash(),
+                    length = pl.col("samples").list.len()
+                    )
+            )
 
         if weightings is not None:
             if weightings.height == 0:
@@ -180,7 +204,12 @@ def pipeline(
         else:
             weightings_dict = {}
 
-        if COASSEMBLY_SAMPLES:
+        if COASSEMBLY_SAMPLES and MAX_COASSEMBLY_SAMPLES == 1:
+            coassembly_edges = (
+                elusive_edges
+                .filter(pl.col("source_sample").is_in(COASSEMBLY_SAMPLES))
+            )
+        elif COASSEMBLY_SAMPLES:
             coassembly_edges = (
                 elusive_edges
                 .with_columns(
@@ -217,14 +246,13 @@ def pipeline(
             logging.info("Skipping clustering, using single-sample clusters")
             clusters = [
                 elusive_edges
-                .explode("samples")
-                .filter((not COASSEMBLY_SAMPLES) | pl.col("samples").is_in(COASSEMBLY_SAMPLES))
-                .group_by("samples")
+                .filter((not COASSEMBLY_SAMPLES) | pl.col("source_sample").is_in(COASSEMBLY_SAMPLES))
+                .group_by("source_sample")
                 .agg(pl.col("target_ids").flatten())
                 .with_columns(
-                    pl.concat_list(pl.col("samples")),
-                    pl.col("target_ids").list.sort().list.unique(),
-                    samples_hash = pl.concat_list(pl.col("samples")).list.sort().hash(),
+                    samples = pl.concat_list(pl.col("source_sample")),
+                    target_ids = pl.col("target_ids").list.sort().list.unique(),
+                    samples_hash = pl.concat_list(pl.col("source_sample")).list.sort().hash(),
                 )
             ]
         else:
@@ -264,15 +292,26 @@ def pipeline(
                     .select("samples", "target_ids", "samples_hash")
                 )
 
-        sample_targets = (
-            elusive_edges
-            .select("target_ids", recover_candidates = pl.col("samples"))
-            .explode("recover_candidates")
-            .explode("target_ids")
-            .unique()
-            .group_by("recover_candidates")
-            .agg("target_ids")
-        )
+        if MAX_COASSEMBLY_SAMPLES == 1:
+            sample_targets = (
+                elusive_edges
+                .select("target_ids", recover_candidates = pl.col("dest_sample"))
+                .filter(pl.col("recover_candidates").is_not_null())
+                .explode("target_ids")
+                .unique()
+                .group_by("recover_candidates")
+                .agg("target_ids")
+            )
+        else:
+            sample_targets = (
+                elusive_edges
+                .select("target_ids", recover_candidates = pl.col("samples"))
+                .explode("recover_candidates")
+                .explode("target_ids")
+                .unique()
+                .group_by("recover_candidates")
+                .agg("target_ids")
+            )
 
         def filter_max_coassembly_size(df, MAX_COASSEMBLY_SIZE):
             if MAX_COASSEMBLY_SIZE is None:
@@ -337,7 +376,7 @@ def pipeline(
                     .then(pl.col("total_targets"))
                     .otherwise(pl.col("target_ids").list.len()),
                 )
-            .sort("total_targets", "total_size", descending=[True, False])
+            .sort("total_targets", "total_size", "samples", descending=[True, False, True])
             .with_row_index("coassembly")
             .select(
                 "samples", "length", "total_targets", "total_size", "recover_samples",
