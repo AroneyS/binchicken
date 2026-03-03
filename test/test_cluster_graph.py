@@ -836,7 +836,7 @@ class Tests(unittest.TestCase):
             ["directional", 2, "1,2", "1"],
             ["directional", 2, "2,1", "1,2,3,4"],
             ["directional", 2, "3,1", "5"],
-            ["directional", 2, "1,3", "5,6"],
+            ["directional", 2, "1,3", "5,8"],
             ["directional", 2, "3,2", "6,7"],
             ["directional", 2, "2,3", "6,7"],
         ], orient="row", schema=ELUSIVE_EDGES_COLUMNS)
