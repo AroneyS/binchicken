@@ -87,7 +87,7 @@ parallel = "==20230522"
 aviary = "0.13.*"
 
 [feature.coverm.dependencies]
-coverm = "0.6.*"
+coverm = "0.7.*"
 
 [feature.fastp.dependencies]
 fastp = "0.23.*"
