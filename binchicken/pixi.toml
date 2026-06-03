@@ -30,7 +30,7 @@ build_dep_defs = { cmd = "python ../admin/build_dep_defs_from_pixi.py", depends-
 [tasks.postinstall]
 # install into both standard and dev envs
 depends-on = [
-    { task = "postinstall-base", environment = "main" },
+    { task = "postinstall-base", environment = "default" },
     { task = "postinstall-base", environment = "dev" }
 ]
 
@@ -38,7 +38,8 @@ depends-on = [
 args = ["test_name"]
 cmd = "pytest test --run-expensive -k {{ test_name }}"
 depends-on = [
-    {task = "postinstall-base", environment = "dev" }
+    {task = "postinstall-base", environment = "default" },
+    {task = "postinstall-base", environment = "dev" },
 ]
 
 [tasks.run-a-test]
@@ -53,7 +54,8 @@ depends-on = [
 [tasks.run-quick-tests-base]
 cmd = "pytest test"
 depends-on = [
-    {task="postinstall-base", environment = "dev"}
+    {task="postinstall-base", environment = "default"},
+    {task="postinstall-base", environment = "dev"},
 ]
 
 [tasks.run-quick-tests]
