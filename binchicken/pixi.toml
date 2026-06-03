@@ -84,21 +84,7 @@ singlem = ["singlem"]
 parallel = "==20230522"
 
 [feature.aviary.dependencies]
-python = ">=3.8,<=3.11"
-snakemake = ">=7.0.0,<=7.32.3"
-"ruamel.yaml" = "==0.18.11"
-numpy = "==2.2.6"
-pandas = "==2.2.3"
-biopython = "==1.85"
-conda = "==25.1.1"
-pigz = ">=2.6"
-parallel = "*"
-extern = "==0.4.1"
-pyopenssl = "==25.1.0"
-pixi = "*"
-
-[feature.aviary.pypi-dependencies]
-"aviary-genome" = { git = "https://github.com/rhysnewell/aviary.git", rev = "544fe3fd4967cded7b519dbf0557d78deba4c025" }
+aviary = "0.13.*"
 
 [feature.coverm.dependencies]
 coverm = "0.6.*"
