@@ -792,7 +792,7 @@ rule get_exclude_coassemblies:
 checkpoint cluster_graph:
     input:
         elusive_edges = output_dir + "/target/elusive_edges.tsv",
-        read_size = output_dir + "/read_size.csv",
+        read_size = ancient(output_dir + "/read_size.csv"),
         targets_weighted = output_dir + "/target/targets_weighted.tsv" if config["abundance_weighted"] else [],
         anchor_samples = output_dir + "/lists/anchor_samples_list.tsv" if config["anchor_samples"] else [],
         coassembly_samples = output_dir + "/lists/coassembly_samples_list.tsv" if config["coassembly_samples"] else [],

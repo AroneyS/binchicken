@@ -1124,6 +1124,23 @@ def update(args):
                     os.path.join(args.output, "coassemble", "qc")
                 )
 
+    copy_input(
+        os.path.abspath(args.coassemble_unbinned),
+        os.path.join(args.output, "coassemble", "appraise", "unbinned.otu_table.tsv")
+    )
+    copy_input(
+        os.path.abspath(args.coassemble_binned),
+        os.path.join(args.output, "coassemble", "appraise", "binned.otu_table.tsv")
+    )
+    copy_input(
+        os.path.abspath(args.coassemble_elusive_edges),
+        os.path.join(args.output, "coassemble", "target", "elusive_edges.tsv")
+    )
+    copy_input(
+        os.path.abspath(args.coassemble_targets),
+        os.path.join(args.output, "coassemble", "target", "targets.tsv")
+    )
+
     if args.coassemblies_list:
         args.coassemblies = read_list(args.coassemblies_list)
 
@@ -1173,23 +1190,6 @@ def update(args):
             args.prior_assemblies = prior_assemblies
         else:
             raise ValueError("Prior assemblies require elusive clusters")
-
-    copy_input(
-        os.path.abspath(args.coassemble_unbinned),
-        os.path.join(args.output, "coassemble", "appraise", "unbinned.otu_table.tsv")
-    )
-    copy_input(
-        os.path.abspath(args.coassemble_binned),
-        os.path.join(args.output, "coassemble", "appraise", "binned.otu_table.tsv")
-    )
-    copy_input(
-        os.path.abspath(args.coassemble_elusive_edges),
-        os.path.join(args.output, "coassemble", "target", "elusive_edges.tsv")
-    )
-    copy_input(
-        os.path.abspath(args.coassemble_targets),
-        os.path.join(args.output, "coassemble", "target", "targets.tsv")
-    )
 
     if hasattr(args, "sample_read_size") and args.sample_read_size:
         sample_read_size = args.sample_read_size
