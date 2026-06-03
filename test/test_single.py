@@ -290,9 +290,9 @@ class Tests(unittest.TestCase):
             output_raw = subprocess.run(cmd, shell=True, check=True, capture_output=True)
             output = output_raw.stderr.decode('ascii')
 
-            self.assertTrue("sketch_samples" not in output)
-            self.assertTrue("distance_samples" not in output)
-            self.assertTrue("provided_distances" in output)
+            self.assertTrue("\nsketch_samples" not in output)
+            self.assertTrue("\ndistance_samples" not in output)
+            self.assertTrue("\nprovided_distances" in output)
 
             config_path = os.path.join("test", "config.yaml")
             self.assertTrue(os.path.exists(config_path))

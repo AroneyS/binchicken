@@ -197,7 +197,7 @@ class Tests(unittest.TestCase):
             output_raw = subprocess.run(cmd, shell=True, check=True, capture_output=True)
             output = output_raw.stderr.decode('ascii')
 
-            self.assertTrue("count_bp_reads" not in output)
+            self.assertTrue("\ncount_bp_reads" not in output)
 
             config_path = os.path.join("test", "config.yaml")
             self.assertTrue(os.path.exists(config_path))
@@ -270,7 +270,7 @@ class Tests(unittest.TestCase):
             output_raw = subprocess.run(cmd, shell=True, check=True, capture_output=True)
             output = output_raw.stderr.decode('ascii')
 
-            self.assertTrue("count_bp_reads" not in output)
+            self.assertTrue("\ncount_bp_reads" not in output)
 
             config_path = os.path.join("test", "config.yaml")
             self.assertTrue(os.path.exists(config_path))
@@ -410,21 +410,21 @@ class Tests(unittest.TestCase):
                 f"--singlem-metapackage {METAPACKAGE} "
                 f"--output test "
                 f"--dryrun "
-                f"--snakemake-args \" --quiet\" "
+                f"--snakemake-args \" --quiet rules\" "
             )
             output = extern.run(cmd)
 
-            self.assertTrue("count_bp_reads" not in output)
-            self.assertTrue("singlem_pipe_reads" not in output)
-            self.assertTrue("genome_transcripts" in output)
-            self.assertTrue("singlem_pipe_genomes" in output)
-            self.assertTrue("singlem_summarise_genomes" in output)
-            self.assertTrue("update_appraise" in output)
-            self.assertTrue("singlem_appraise_filtered" in output)
-            self.assertTrue("target_elusive" in output)
-            self.assertTrue("cluster_graph" in output)
-            self.assertTrue("aviary_commands" in output)
-            self.assertTrue("summary" in output)
+            self.assertTrue("\ncount_bp_reads" not in output)
+            self.assertTrue("\nsinglem_pipe_reads" not in output)
+            self.assertTrue("\ngenome_transcripts" in output)
+            self.assertTrue("\nsinglem_pipe_genomes" in output)
+            self.assertTrue("\nsinglem_summarise_genomes" in output)
+            self.assertTrue("\nupdate_appraise" in output)
+            self.assertTrue("\nsinglem_appraise_filtered" in output)
+            self.assertTrue("\ntarget_elusive" in output)
+            self.assertTrue("\ncluster_graph" in output)
+            self.assertTrue("\naviary_commands" in output)
+            self.assertTrue("\nsummary" in output)
 
             config_path = os.path.join("test", "config.yaml")
             self.assertTrue(os.path.exists(config_path))
@@ -733,7 +733,7 @@ class Tests(unittest.TestCase):
                 f"--singlem-metapackage {METAPACKAGE} "
                 f"--output test "
                 f"--dryrun "
-                f"--snakemake-args \" --quiet\" "
+                f"--snakemake-args \" --quiet rules\" "
             )
             extern.run(cmd)
 

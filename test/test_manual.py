@@ -416,10 +416,10 @@ class Tests(unittest.TestCase):
             self.assertEqual(">NODE_1_length_138944_cov_12.417585\n", lines[0])
             self.assertEqual(9693, len(lines))
 
-        self.assertTrue("aviary_assemble" not in output)
-        self.assertTrue("prior_assemble" in output)
-        self.assertTrue("aviary_recover" in output)
-        self.assertTrue("aviary_combine" in output)
+        self.assertTrue("\naviary_assemble" not in output)
+        self.assertTrue("\nprior_assemble" in output)
+        self.assertTrue("\naviary_recover" in output)
+        self.assertTrue("\naviary_combine" in output)
 
         print(output)
 
@@ -495,10 +495,10 @@ class Tests(unittest.TestCase):
             self.assertEqual(">NODE_1_length_138944_cov_12.417585\n", lines[0])
             self.assertEqual(9700, len(lines))
 
-        self.assertTrue("aviary_assemble" not in output)
-        self.assertTrue("prior_assemble" in output)
-        self.assertTrue("aviary_recover" in output)
-        self.assertTrue("aviary_combine" in output)
+        self.assertTrue("\naviary_assemble" not in output)
+        self.assertTrue("\nprior_assemble" in output)
+        self.assertTrue("\naviary_recover" in output)
+        self.assertTrue("\naviary_combine" in output)
 
         print(output)
 
