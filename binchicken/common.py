@@ -1,5 +1,5 @@
 import os
-from importlib_resources import files, as_file
+from importlib.resources import files, as_file
 import re
 import ast
 import time
