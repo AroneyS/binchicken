@@ -71,6 +71,17 @@ Create conda env from `binchicken.yml` and install from source.
 git clone https://github.com/AroneyS/binchicken.git
 cd binchicken
 mkdir -p binchicken/.pixi
+```
+
+Disable detached environments so that pixi shares environments between the root and inner manifests:
+
+```bash
+echo 'detached-environments = false' > binchicken/.pixi/config.toml
+```
+
+Then run postinstall:
+
+```bash
 pixi run postinstall
 ```
 
