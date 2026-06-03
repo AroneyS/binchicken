@@ -4,7 +4,7 @@ import unittest
 import os
 from bird_tool_utils import in_tempdir
 import extern
-from snakemake.io import load_configfile
+from snakemake.common.configfile import load_configfile
 import polars as pl
 
 path_to_data = os.path.join(os.path.dirname(os.path.realpath(__file__)),'data')
