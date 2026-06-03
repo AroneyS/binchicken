@@ -110,4 +110,4 @@ r-webshot = "<=0.5.4"
 r-optparse = "*"
 
 [feature.singlem.dependencies]
-singlem = "0.20.*"
+singlem = "0.21.*"
