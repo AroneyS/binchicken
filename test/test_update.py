@@ -300,8 +300,8 @@ class Tests(unittest.TestCase):
             output_comb = extern.run(cmd)
 
             output_sra = output_comb.split("Building DAG of jobs...")[1]
-            self.assertTrue("download_sra" in output_sra)
-            self.assertTrue("aviary_commands" not in output_sra)
+            self.assertTrue("\ndownload_sra" in output_sra)
+            self.assertTrue("\naviary_commands" not in output_sra)
             self.assertTrue("test/coassemble/sra/SRR8334323.done" in output_sra)
             self.assertTrue("test/coassemble/sra/SRR8334324.done" in output_sra)
             self.assertTrue("test/coassemble/sra/SRR8334325.done" in output_sra)
@@ -321,8 +321,8 @@ class Tests(unittest.TestCase):
             output_comb = extern.run(cmd)
 
             output_sra = output_comb.split("Building DAG of jobs...")[1]
-            self.assertTrue("download_sra" in output_sra)
-            self.assertTrue("aviary_commands" not in output_sra)
+            self.assertTrue("\ndownload_sra" in output_sra)
+            self.assertTrue("\naviary_commands" not in output_sra)
             self.assertTrue("test/coassemble/sra/SRR8334323.done" in output_sra)
             self.assertTrue("test/coassemble/sra/SRR8334324.done" in output_sra)
             self.assertTrue("test/coassemble/sra/SRR8334325.done" not in output_sra)
@@ -343,8 +343,8 @@ class Tests(unittest.TestCase):
             output_comb = extern.run(cmd)
 
             output_sra = output_comb.split("Building DAG of jobs...")[1]
-            self.assertTrue("download_sra" in output_sra)
-            self.assertTrue("aviary_commands" not in output_sra)
+            self.assertTrue("\ndownload_sra" in output_sra)
+            self.assertTrue("\naviary_commands" not in output_sra)
             self.assertTrue("test/coassemble/sra/SRR8334323.done" in output_sra)
             self.assertTrue("test/coassemble/sra/SRR8334324.done" in output_sra)
             self.assertTrue("test/coassemble/sra/SRR8334325.done" not in output_sra)
@@ -437,8 +437,8 @@ class Tests(unittest.TestCase):
             output_comb = extern.run(cmd)
 
             output_sra = output_comb.split("Building DAG of jobs...")[1]
-            self.assertTrue("download_sra" in output_sra)
-            self.assertTrue("aviary_commands" not in output_sra)
+            self.assertTrue("\ndownload_sra" in output_sra)
+            self.assertTrue("\naviary_commands" not in output_sra)
 
             output = output_comb.split("Building DAG of jobs...")[2]
             self.assertTrue("\nsinglem_pipe_reads" not in output)
@@ -640,8 +640,8 @@ class Tests(unittest.TestCase):
             output_comb = extern.run(cmd)
 
             output_sra = output_comb.split("Building DAG of jobs...")[1]
-            self.assertTrue("download_sra" in output_sra)
-            self.assertTrue("aviary_commands" not in output_sra)
+            self.assertTrue("\ndownload_sra" in output_sra)
+            self.assertTrue("\naviary_commands" not in output_sra)
 
             output = output_comb.split("Building DAG of jobs...")[2]
             self.assertTrue("\nsinglem_pipe_reads" not in output)
