@@ -1684,7 +1684,7 @@ def main():
         aviary_recover_default_memory = 250
         argument_group.add_argument("--aviary-recover-memory", type=int, help=f"Maximum amount of memory for Aviary recover to use (Gigabytes). [default: {aviary_recover_default_memory}]",
                                     default=aviary_recover_default_memory)
-        argument_group.add_argument("--aviary-extra-binners", nargs='*', choices=["maxbin", "maxbin2", "concoct", "comebin", "taxvamb"], help="Optional list of extra binning algorithms to run. Can be any combination of: maxbin, maxbin2, concoct, comebin, taxvamb")
+        argument_group.add_argument("--aviary-extra-binners", nargs='*', choices=["maxbin", "maxbin2", "concoct", "comebin", "taxvamb", "quickbin"], help="Optional list of extra binning algorithms to run. Can be any combination of: maxbin, maxbin2, concoct, comebin, taxvamb, quickbin")
         argument_group.add_argument("--aviary-skip-binners", nargs='*', choices=["rosella", "semibin", "metabat1", "metabat2", "metabat", "vamb"], help="Optional list of binning algorithms to skip. Can be any combination of: rosella, semibin, metabat1, metabat2, metabat, vamb. Note that specifying 'metabat' will skip both MetaBAT1 and MetaBAT2.")
         argument_group.add_argument("--aviary-request-gpu", action="store_true", help="Request GPU resources for certain binners in Aviary recovery [default: do not].")
 
