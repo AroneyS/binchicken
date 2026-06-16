@@ -112,6 +112,56 @@ class TestsQsub(unittest.TestCase):
 
         self.assertTrue(os.path.exists(os.path.join(output_dir, "coassemble", "coassemble", "coassembly_0", "recover", "bins", "checkm_minimal.tsv")))
 
+    def test_update_run_immediate_submit(self):
+        output_dir = os.path.join("example", "test_update_run_immediate_submit")
+        self.setup_output_dir(output_dir)
+
+        cmd = (
+            f"binchicken update "
+            f"--forward {SAMPLE_READS_FORWARD} "
+            f"--reverse {SAMPLE_READS_REVERSE} "
+            f"--run-aviary "
+            f"--aviary-speed fast "
+            f"--cores 32 "
+            f"--assembly-strategy megahit "
+            f"--aviary-gtdbtk-db {GTDBTK_DB} "
+            f"--aviary-checkm2-db {CHECKM2_DB} "
+            f"--genomes {GENOMES} "
+            f"--coassemble-unbinned {os.path.join(MOCK_COASSEMBLE, 'coassemble', 'appraise', 'unbinned.otu_table.tsv')} "
+            f"--coassemble-binned {os.path.join(MOCK_COASSEMBLE, 'coassemble', 'appraise', 'binned.otu_table.tsv')} "
+            f"--coassemble-targets {os.path.join(MOCK_COASSEMBLE, 'coassemble', 'target', 'targets.tsv')} "
+            f"--coassemble-elusive-edges {os.path.join(MOCK_COASSEMBLE, 'coassemble', 'target', 'elusive_edges.tsv')} "
+            f"--coassemble-elusive-clusters {os.path.join(MOCK_COASSEMBLE, 'coassemble', 'target', 'elusive_clusters.tsv')} "
+            f"--coassemble-summary {os.path.join(MOCK_COASSEMBLE, 'coassemble', 'summary.tsv')} "
+            f"--prior-assemblies {PRIOR_COASSEMBLY} "
+            f"--output {output_dir} "
+            f"--aviary-snakemake-profile aqua-immediate-submit "
+            f"--local-cores 12 "
+            f"--cluster-submission --immediate-submit "
+        )
+        output_raw = subprocess.run(cmd, shell=True, check=True, capture_output=True)
+        output = output_raw.stderr.decode('ascii')
+
+        config_path = os.path.join(output_dir, "config.yaml")
+        self.assertTrue(os.path.exists(config_path))
+
+        self.assertTrue(os.path.exists(os.path.join(output_dir, "coassemble", "coassemble", "coassembly_0", "assemble", "assembly", "final_contigs.fasta")))
+
+        self.assertFalse(os.path.exists(os.path.join(output_dir, "coassemble", "coassemble", "coassembly_0", "recover", "bins", "checkm_minimal.tsv")))
+
+        self.assertTrue("bin_info.tsv not yet available in recover outputs: ['coassembly_0']." in output)
+
+        recover_log_path = glob.glob(os.path.join(output_dir, "coassemble", "logs", "aviary", "coassembly_0_recover", "*", "attempt1.log"))[0]
+        self.assertTrue(os.path.exists(recover_log_path))
+
+        with open(recover_log_path) as f:
+            log_content = f.read()
+            jobids = re.findall(r"\d+.aqua", log_content)
+
+        self.assertTrue(len(jobids) > 15)
+        for jobid in jobids:
+            subprocess.run(f"qdel {jobid}", shell=True)
+
     def test_update_aviary_run_real_large_assembly(self):
         output_dir = os.path.join("example", "test_update_aviary_run_real_large_assembly")
         self.setup_output_dir(output_dir)
