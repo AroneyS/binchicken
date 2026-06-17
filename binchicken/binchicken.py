@@ -1488,8 +1488,6 @@ def build(args):
             download_config["checkm2_db"] = args.checkm2_db
 
         if args.gtdbtk_db and not os.path.exists(args.gtdbtk_db):
-            logging.error("GTDBtk download not yet implemented")
-            raise NotImplementedError("GTDBtk download not yet implemented")
             download_config["gtdbtk_db"] = args.gtdbtk_db
 
         if args.metabuli_db and not os.path.exists(args.metabuli_db):
