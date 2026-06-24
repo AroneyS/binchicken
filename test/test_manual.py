@@ -81,6 +81,7 @@ class TestsQsub(unittest.TestCase):
             f"--aviary-speed fast "
             f"--cores 32 "
             f"--assembly-strategy megahit "
+            f"--aviary-request-gpu "
             f"--aviary-gtdbtk-db {GTDBTK_DB} "
             f"--aviary-checkm2-db {CHECKM2_DB} "
             f"--aviary-metabuli-db {METABULI_DB} "
@@ -124,6 +125,7 @@ class TestsQsub(unittest.TestCase):
             f"--aviary-speed fast "
             f"--cores 32 "
             f"--assembly-strategy megahit "
+            f"--aviary-request-gpu "
             f"--aviary-gtdbtk-db {GTDBTK_DB} "
             f"--aviary-checkm2-db {CHECKM2_DB} "
             f"--genomes {GENOMES} "
@@ -173,6 +175,7 @@ class TestsQsub(unittest.TestCase):
             f"--sra "
             f"--genomes {GENOMES} "
             f"--run-aviary "
+            f"--aviary-request-gpu "
             f"--cores 32 "
             f"--aviary-gtdbtk-db {GTDBTK_DB} "
             f"--aviary-checkm2-db {CHECKM2_DB} "
@@ -227,7 +230,7 @@ class Tests(unittest.TestCase):
             f"--forward SRR8334323 SRR8334324 SRR6797127 SRR6797128 "
             f"--singlem-metapackage {SINGLEM_METAPACKAGE} "
             f"--sra "
-            f"--cores 32 "
+            f"--cores 16 "
             f"--output {output_dir} "
         )
         subprocess.run(cmd, shell=True, check=True)

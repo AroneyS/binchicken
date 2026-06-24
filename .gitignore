@@ -13,3 +13,6 @@ site/
 # pixi environments
 .pixi
 *.egg-info
+
+mqsub.out
+test/*.txt
