@@ -16,7 +16,7 @@ path_to_data = os.path.join(os.path.dirname(os.path.realpath(__file__)),'data')
 
 SINGLEM_METAPACKAGE = "/work/microbiome/db/singlem/S5.4.0.GTDB_r226.metapackage_20250331.smpkg.zb"
 GTDBTK_DB = "/work/microbiome/db/gtdb/gtdb_release207_v2"
-CHECKM2_DB = "/work/microbiome/db/CheckM2_database"
+CHECKM2_DB = "/work/microbiome/db/CheckM2_database/uniref100.KO.1.dmnd"
 METABULI_DB = "/work/microbiome/abisko/aroneys/db/metabuli"
 
 SAMPLE_READS_FORWARD = " ".join([
@@ -188,7 +188,7 @@ class TestsQsub(unittest.TestCase):
             f"--output {output_dir} "
             f"--snakemake-profile aqua "
             f"--local-cores 12 "
-            f"--retries 1 "
+            f"--retries 2 "
             f"--cluster-submission "
         )
         subprocess.run(cmd, shell=True, check=True)
@@ -393,6 +393,7 @@ class Tests(unittest.TestCase):
             f"--singlem-metapackage {METAPACKAGE} "
             f"--coassembly-samples sample_1 sample_2 "
             f"--prior-assemblies {PRIOR_ASSEMBLY} "
+            f"--min-sequence-coverage 1 "
             f"--output {output_dir} "
         )
         subprocess.run(cmd, shell=True, check=True)
@@ -415,7 +416,7 @@ class Tests(unittest.TestCase):
                 "\t".join([
                     "sample_1",
                     "1",
-                    "4",
+                    "5",
                     "4832",
                     "sample_1,sample_2,sample_3",
                     "sample_1"
@@ -423,7 +424,7 @@ class Tests(unittest.TestCase):
                 "\t".join([
                     "sample_2",
                     "1",
-                    "3",
+                    "4",
                     "3926",
                     "sample_1,sample_2,sample_3",
                     "sample_2"

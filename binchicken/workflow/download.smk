@@ -68,5 +68,6 @@ rule aviary_download:
         "{params.checkm2_db} "
         "{params.gtdbtk_db} "
         "{params.download_arg} "
+        "--snakemake-cmds \"--config skip_reads_check=True\" "
         "&> {resources.log_path} "
         "&& touch {output} "

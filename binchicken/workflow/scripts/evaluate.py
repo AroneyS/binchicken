@@ -363,6 +363,7 @@ def main():
 
     if args.log:
         import logging
+        os.makedirs(os.path.dirname(os.path.abspath(args.log)), exist_ok=True)
         logging.basicConfig(
             filename=args.log,
             level=logging.INFO,
