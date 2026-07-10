@@ -442,7 +442,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/linux-64/perl-5.32.1-7_hd590300_perl5.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/pigz-2.3.4-hed695b0_1.tar.bz2
       - conda: https://conda.anaconda.org/conda-forge/linux-64/pillow-10.3.0-py311h18e6fac_0.conda
-      - conda: https://conda.anaconda.org/conda-forge/linux-64/pixi-0.70.2-ha759004_0.conda
+      - conda: https://conda.anaconda.org/conda-forge/linux-64/pixi-0.72.2-ha759004_0.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/polars-runtime-32-1.36.1-py310hffdcd12_0.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/psutil-7.2.2-py311haee01d2_0.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/pthread-stubs-0.4-hb9d3cd8_1002.conda
@@ -691,7 +691,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/linux-64/perl-5.32.1-7_hd590300_perl5.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/pigz-2.3.4-hed695b0_1.tar.bz2
       - conda: https://conda.anaconda.org/conda-forge/linux-64/pillow-10.3.0-py311h18e6fac_0.conda
-      - conda: https://conda.anaconda.org/conda-forge/linux-64/pixi-0.70.2-ha759004_0.conda
+      - conda: https://conda.anaconda.org/conda-forge/linux-64/pixi-0.72.2-ha759004_0.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/polars-runtime-32-1.36.1-py310hffdcd12_0.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/psutil-7.2.2-py311haee01d2_0.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/pthread-stubs-0.4-hb9d3cd8_1002.conda
@@ -7167,20 +7167,20 @@ packages:
   license: HPND
   size: 1039561
   timestamp: 1775060059882
-- conda: https://conda.anaconda.org/conda-forge/linux-64/pixi-0.70.2-ha759004_0.conda
-  sha256: 839c97871486bab0b5348da3f578b2da94aa9a7220f1b599cc7bd626c3c4f2c7
-  md5: 93508e9c1d94e41c9e1b5ca72c897933
+- conda: https://conda.anaconda.org/conda-forge/linux-64/pixi-0.72.2-ha759004_0.conda
+  sha256: a118db7544e7798b4d17ea9ce15526d8484bd94a88833a83ee155a799ec8b391
+  md5: 99d09e0770a125141899f627e5960abb
   depends:
-  - libgcc >=14
   - __glibc >=2.17,<3.0.a0
+  - libgcc >=14
   - libstdcxx >=14
-  - openssl >=3.5.6,<4.0a0
+  - openssl >=3.5.7,<4.0a0
   constrains:
   - __glibc >=2.17
   license: BSD-3-Clause
-  license_family: BSD
-  size: 32090169
-  timestamp: 1780945103131
+  run_exports: {}
+  size: 32876072
+  timestamp: 1783617764114
 - conda: https://conda.anaconda.org/conda-forge/linux-64/pixman-0.46.4-h54a6638_1.conda
   sha256: 43d37bc9ca3b257c5dd7bf76a8426addbdec381f6786ff441dc90b1a49143b6a
   md5: c01af13bdc553d1a8fbfff6e8db075f0

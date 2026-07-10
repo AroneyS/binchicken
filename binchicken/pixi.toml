@@ -19,7 +19,7 @@ sourmash = "4.8.*"
 sourmash_plugin_branchwater = "0.9.*"
 # see https://github.com/pyca/cryptography/issues/7959#issuecomment-1368711852
 pyopenssl = ">22.1.0"
-pixi = "*"
+pixi = ">=0.72.1"
 conda = "*"
 pip = "*"
 
