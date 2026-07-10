@@ -988,6 +988,7 @@ rule map_reads:
         "-2 {input.reads_2} "
         "-o {output.dir} "
         "-t {threads} "
+        "--mapper minimap2-sr "
         "&> {resources.log_path} "
 
 rule filter_bam_files:
