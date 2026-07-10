@@ -120,12 +120,12 @@ singlem = ["singlem"]
 parallel = "==20230522"
 
 [feature.aviary.dependencies]
-aviary = "0.13.*"
+aviary = ">=0.13.1"
 snakemake-executor-plugin-cluster-generic = ">=1"
 conda = "*"
 
 [feature.coverm.dependencies]
-coverm = "0.7.*"
+coverm = ">=0.8.0"
 
 [feature.fastp.dependencies]
 fastp = "1.3.*"
