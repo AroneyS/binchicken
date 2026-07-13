@@ -7,6 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- `quickbin` to `--aviary-extra-binners` choices
+- GTDB-Tk database downloading support
+- `--immediate-submit` argument for immediate cluster submission mode
+
+### Changed
+- Updated Aviary to v0.13.1, ensuring internal pixi ≥ 0.72.1
+- Updated CoverM to v0.8.0
+- Updated SingleM to v0.21.3, restricting diamond to ≤2.2.1 for compatibility
+- Updated Snakemake to v9.22
+- Updated fastp to v1.3.3
+- Updated Kingfisher to v0.5.0
+- Pinned sra-tools to 3.2.* for compatibility
+- Upgraded pixi.lock to v7 format (requires pixi ≥ 0.70)
+
+### Fixed
+- Sort read names before matching (#199). Thanks @magicprotoss for reporting
+- Fix various issues stemming from CheckM1 (#193, #208). Thanks @liaohu1231 and @michoug for reporting
+- Fix Aviary bin info changes due to dropping CheckM1 (#210)
+- Fix single-sample target counts being incorrect (#212)
+- Use proper conda packages for dependecies to avoid git clone (#196). Thanks @Asa12138 for reporting
+
 ## [0.13.5] - 2025-09-26
 
 ### Added
