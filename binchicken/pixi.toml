@@ -123,6 +123,7 @@ parallel = "==20230522"
 aviary = ">=0.13.1"
 snakemake-executor-plugin-cluster-generic = ">=1"
 conda = "*"
+pixi = ">=0.72.1"
 
 [feature.coverm.dependencies]
 coverm = ">=0.8.0"
