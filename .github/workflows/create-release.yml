@@ -1,0 +1,45 @@
+name: Create GitHub Release
+
+on:
+  push:
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Extract changelog section
+        id: changelog
+        run: |
+          python3 - <<'EOF'
+          import re, sys, os
+
+          version = os.environ["GITHUB_REF_NAME"].lstrip("v")
+
+          with open("CHANGELOG.md") as f:
+              content = f.read()
+
+          # Match ## [version] - date ... up to next ## [
+          pattern = rf'(?m)^## \[{re.escape(version)}\][^\n]*\n(.*?)(?=\n^## \[|\Z)'
+          m = re.search(pattern, content, re.DOTALL | re.MULTILINE)
+          if not m:
+              print(f"No CHANGELOG section found for {version}", file=sys.stderr)
+              sys.exit(1)
+
+          body = m.group(1).strip()
+          with open(os.environ["GITHUB_OUTPUT"], "a") as out:
+              # GitHub output supports multiline via heredoc syntax
+              out.write(f"body<<CHANGELOG_EOF\n{body}\nCHANGELOG_EOF\n")
+          EOF
+
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          body: ${{ steps.changelog.outputs.body }}
+          prerelease: ${{ contains(github.ref_name, 'alpha') || contains(github.ref_name, 'beta') || contains(github.ref_name, 'rc') }}
