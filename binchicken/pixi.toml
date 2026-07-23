@@ -120,7 +120,7 @@ singlem = ["singlem"]
 parallel = "==20230522"
 
 [feature.aviary.dependencies]
-aviary = ">=0.13.1"
+aviary = ">=0.13.2"
 snakemake-executor-plugin-cluster-generic = ">=1"
 conda = "*"
 pixi = ">=0.72.1"

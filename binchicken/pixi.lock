@@ -17,7 +17,7 @@ environments:
       - conda: https://conda.anaconda.org/bioconda/linux-64/bbmap-39.81-h9b5c0a0_1.conda
       - conda: https://conda.anaconda.org/bioconda/linux-64/htslib-1.23.1-h633afcb_0.conda
       - conda: https://conda.anaconda.org/bioconda/linux-64/samtools-1.23.1-ha83d96e_0.conda
-      - conda: https://conda.anaconda.org/bioconda/noarch/aviary-0.13.1-pyhdfd78af_0.conda
+      - conda: https://conda.anaconda.org/bioconda/noarch/aviary-0.13.2-pyhdfd78af_0.conda
       - conda: https://conda.anaconda.org/bioconda/noarch/bird_tool_utils_python-0.6.0-pyh7e72e81_0.conda
       - conda: https://conda.anaconda.org/bioconda/noarch/snakemake-executor-plugin-cluster-generic-1.0.9-pyhdfd78af_0.tar.bz2
       - conda: https://conda.anaconda.org/bioconda/noarch/snakemake-interface-common-1.23.0-pyhdfd78af_1.conda
@@ -2155,9 +2155,9 @@ packages:
   license: MIT
   size: 280227
   timestamp: 1766053299578
-- conda: https://conda.anaconda.org/bioconda/noarch/aviary-0.13.1-pyhdfd78af_0.conda
-  sha256: 81e1dc6d208dbd95abeb71d43924e590cba65009b77f69cbca758b10bf4a8e46
-  md5: 0976bb94eae2b2ee264fd8df2f266252
+- conda: https://conda.anaconda.org/bioconda/noarch/aviary-0.13.2-pyhdfd78af_0.conda
+  sha256: e6d6599a8cb9dd82ddfd25dceb031d71bbaef0378f7a4c1155f7d9ca6ced8cf8
+  md5: 56eeaae21c0a7d622a828a8500c87b62
   depends:
   - bbmap
   - biopython
@@ -2174,8 +2174,8 @@ packages:
   - snakemake-minimal 9.*
   license: GPL-3.0-only
   license_family: GPL3
-  size: 248371
-  timestamp: 1783477709465
+  size: 248361
+  timestamp: 1784769390209
 - conda: https://conda.anaconda.org/bioconda/noarch/bird_tool_utils_python-0.6.0-pyh7e72e81_0.conda
   sha256: 3ef95588442ad126cef9a8a57552c764d89841b35b2a957e7865547a6684c2f7
   md5: e7ae9773e36507a6715eacd5207a6a9c
