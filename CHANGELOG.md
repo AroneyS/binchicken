@@ -28,6 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix Aviary bin info changes due to dropping CheckM1 (#210)
 - Fix single-sample target counts being incorrect (#212)
 - Use proper conda packages for dependecies to avoid git clone (#196). Thanks @Asa12138 for reporting
+- Fix `is_in` Categorical/Int64 crash in `cluster_graph` and `target_elusive` when sample names are purely numeric (#221). Thanks @AmaliT for reporting
 
 ## [0.13.5] - 2025-09-26
 

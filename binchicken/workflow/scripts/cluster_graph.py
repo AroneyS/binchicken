@@ -432,13 +432,13 @@ def main():
     MIN_COASSEMBLY_SAMPLES = args.num_coassembly_samples
     MAX_RECOVERY_SAMPLES = args.max_recovery_samples
     MAX_SAMPLES_COMBINATIONS = args.max_samples_combinations
-    COASSEMBLY_SAMPLES = pl.read_csv(args.coassembly_samples, has_header=False, new_columns=["sample"]).get_column("sample").to_list() if args.coassembly_samples else []
-    EXCLUDE_COASSEMBLIES = pl.read_csv(args.exclude_coassemblies, separator="\t", has_header=False, new_columns=["coassembly"]).get_column("coassembly").to_list() if args.exclude_coassemblies else []
+    COASSEMBLY_SAMPLES = pl.read_csv(args.coassembly_samples, has_header=False, new_columns=["sample"], schema_overrides={"sample": str}).get_column("sample").to_list() if args.coassembly_samples else []
+    EXCLUDE_COASSEMBLIES = pl.read_csv(args.exclude_coassemblies, separator="\t", has_header=False, new_columns=["coassembly"], schema_overrides={"coassembly": str}).get_column("coassembly").to_list() if args.exclude_coassemblies else []
     single_assembly = args.single_assembly
-    anchor_samples = set(pl.read_csv(args.anchor_samples, has_header=False, new_columns=["sample"]).get_column("sample").to_list()) if args.anchor_samples else set()
+    anchor_samples = set(pl.read_csv(args.anchor_samples, has_header=False, new_columns=["sample"], schema_overrides={"sample": str}).get_column("sample").to_list()) if args.anchor_samples else set()
 
     elusive_edges = pl.read_csv(args.elusive_edges, separator="\t", schema_overrides={"target_ids": str})
-    read_size = pl.read_csv(args.read_size, has_header=False, new_columns=["sample", "read_size"])
+    read_size = pl.read_csv(args.read_size, has_header=False, new_columns=["sample", "read_size"], schema_overrides={"sample": str})
 
     if args.targets_weighted:
         weightings = pl.read_csv(args.targets_weighted, separator="\t", schema_overrides=TARGET_WEIGHTING_COLUMNS)

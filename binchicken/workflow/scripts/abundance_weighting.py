@@ -112,7 +112,7 @@ def main():
     elif os.path.getsize(args.samples) == 0:
         samples = None
     else:
-        samples = pl.read_csv(args.samples, has_header=False, new_columns=["sample"]).get_column("sample").to_list()
+        samples = pl.read_csv(args.samples, has_header=False, new_columns=["sample"], schema_overrides={"sample": str}).get_column("sample").to_list()
 
     weighted = pipeline(unbinned, binned, samples)
     weighted.write_csv(args.weighted, separator="\t")

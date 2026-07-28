@@ -51,7 +51,7 @@ def main():
 
     elusive_clusters = pl.read_csv(args.elusive_clusters, separator="\t")
     if args.read_size:
-        read_size = pl.read_csv(args.read_size, has_header=False, new_columns=["sample", "read_size"])
+        read_size = pl.read_csv(args.read_size, has_header=False, new_columns=["sample", "read_size"], schema_overrides={"sample": str})
     else:
         read_size = None
 

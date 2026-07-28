@@ -504,8 +504,8 @@ def main():
     distances_path = args.distances
     targets_path = args.output_targets
     edges_path = args.output_edges
-    samples = set(pl.read_csv(args.samples, has_header=False, new_columns=["sample"]).get_column("sample").to_list())
-    anchor_samples = set(pl.read_csv(args.anchor_samples, has_header=False, new_columns=["sample"]).get_column("sample").to_list()) if args.anchor_samples else set()
+    samples = set(pl.read_csv(args.samples, has_header=False, new_columns=["sample"], schema_overrides={"sample": str}).get_column("sample").to_list())
+    anchor_samples = set(pl.read_csv(args.anchor_samples, has_header=False, new_columns=["sample"], schema_overrides={"sample": str}).get_column("sample").to_list()) if args.anchor_samples else set()
 
     if distances_path:
         unbinned = pl.scan_csv(unbinned_path, separator="\t")
