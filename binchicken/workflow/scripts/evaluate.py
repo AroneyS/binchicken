@@ -207,7 +207,7 @@ def evaluate(target_otu_table, binned_otu_table, elusive_clusters, elusive_edges
                 .alias("taxonomy"),
             )
         .filter(
-            (pl.col("coassembly").is_in(pl.lit(recovered_otu_table["coassembly"]))) &
+            (pl.col("coassembly").is_in(recovered_otu_table["coassembly"])) &
             # Choose sequences where genome is present (from recovered) and/or target is present (from unbinned targets)
             ((pl.col("genome").is_not_null()) | (pl.col("target").is_not_null()))
             )
