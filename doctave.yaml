@@ -5,6 +5,7 @@ logo: binchicken_logo.png
 colors:
   main: "#555555"
 navigation:
+  - path: docs/why.md
   - path: docs/installation.md
   - path: docs/setup.md
   - path: docs/usage.md

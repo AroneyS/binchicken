@@ -16,7 +16,7 @@ path_to_data = os.path.join(os.path.dirname(os.path.realpath(__file__)),'data')
 
 SINGLEM_METAPACKAGE = "/work/microbiome/db/singlem/S5.4.0.GTDB_r226.metapackage_20250331.smpkg.zb"
 GTDBTK_DB = "/work/microbiome/db/gtdb/gtdb_release207_v2"
-CHECKM2_DB = "/work/microbiome/db/CheckM2_database"
+CHECKM2_DB = "/work/microbiome/db/CheckM2_database/uniref100.KO.1.dmnd"
 METABULI_DB = "/work/microbiome/abisko/aroneys/db/metabuli"
 
 SAMPLE_READS_FORWARD = " ".join([
@@ -81,6 +81,7 @@ class TestsQsub(unittest.TestCase):
             f"--aviary-speed fast "
             f"--cores 32 "
             f"--assembly-strategy megahit "
+            f"--aviary-request-gpu "
             f"--aviary-gtdbtk-db {GTDBTK_DB} "
             f"--aviary-checkm2-db {CHECKM2_DB} "
             f"--aviary-metabuli-db {METABULI_DB} "
@@ -112,6 +113,57 @@ class TestsQsub(unittest.TestCase):
 
         self.assertTrue(os.path.exists(os.path.join(output_dir, "coassemble", "coassemble", "coassembly_0", "recover", "bins", "checkm_minimal.tsv")))
 
+    def test_update_run_immediate_submit(self):
+        output_dir = os.path.join("example", "test_update_run_immediate_submit")
+        self.setup_output_dir(output_dir)
+
+        cmd = (
+            f"binchicken update "
+            f"--forward {SAMPLE_READS_FORWARD} "
+            f"--reverse {SAMPLE_READS_REVERSE} "
+            f"--run-aviary "
+            f"--aviary-speed fast "
+            f"--cores 32 "
+            f"--assembly-strategy megahit "
+            f"--aviary-request-gpu "
+            f"--aviary-gtdbtk-db {GTDBTK_DB} "
+            f"--aviary-checkm2-db {CHECKM2_DB} "
+            f"--genomes {GENOMES} "
+            f"--coassemble-unbinned {os.path.join(MOCK_COASSEMBLE, 'coassemble', 'appraise', 'unbinned.otu_table.tsv')} "
+            f"--coassemble-binned {os.path.join(MOCK_COASSEMBLE, 'coassemble', 'appraise', 'binned.otu_table.tsv')} "
+            f"--coassemble-targets {os.path.join(MOCK_COASSEMBLE, 'coassemble', 'target', 'targets.tsv')} "
+            f"--coassemble-elusive-edges {os.path.join(MOCK_COASSEMBLE, 'coassemble', 'target', 'elusive_edges.tsv')} "
+            f"--coassemble-elusive-clusters {os.path.join(MOCK_COASSEMBLE, 'coassemble', 'target', 'elusive_clusters.tsv')} "
+            f"--coassemble-summary {os.path.join(MOCK_COASSEMBLE, 'coassemble', 'summary.tsv')} "
+            f"--prior-assemblies {PRIOR_COASSEMBLY} "
+            f"--output {output_dir} "
+            f"--aviary-snakemake-profile aqua-immediate-submit "
+            f"--local-cores 12 "
+            f"--cluster-submission --immediate-submit "
+        )
+        output_raw = subprocess.run(cmd, shell=True, check=True, capture_output=True)
+        output = output_raw.stderr.decode('ascii')
+
+        config_path = os.path.join(output_dir, "config.yaml")
+        self.assertTrue(os.path.exists(config_path))
+
+        self.assertTrue(os.path.exists(os.path.join(output_dir, "coassemble", "coassemble", "coassembly_0", "assemble", "assembly", "final_contigs.fasta")))
+
+        self.assertFalse(os.path.exists(os.path.join(output_dir, "coassemble", "coassemble", "coassembly_0", "recover", "bins", "checkm_minimal.tsv")))
+
+        self.assertTrue("bin_info.tsv not yet available in recover outputs: ['coassembly_0']." in output)
+
+        recover_log_path = glob.glob(os.path.join(output_dir, "coassemble", "logs", "aviary", "coassembly_0_recover", "*", "attempt1.log"))[0]
+        self.assertTrue(os.path.exists(recover_log_path))
+
+        with open(recover_log_path) as f:
+            log_content = f.read()
+            jobids = re.findall(r"\d+.aqua", log_content)
+
+        self.assertTrue(len(jobids) > 15)
+        for jobid in jobids:
+            subprocess.run(f"qdel {jobid}", shell=True)
+
     def test_update_aviary_run_real_large_assembly(self):
         output_dir = os.path.join("example", "test_update_aviary_run_real_large_assembly")
         self.setup_output_dir(output_dir)
@@ -123,6 +175,7 @@ class TestsQsub(unittest.TestCase):
             f"--sra "
             f"--genomes {GENOMES} "
             f"--run-aviary "
+            f"--aviary-request-gpu "
             f"--cores 32 "
             f"--aviary-gtdbtk-db {GTDBTK_DB} "
             f"--aviary-checkm2-db {CHECKM2_DB} "
@@ -135,7 +188,7 @@ class TestsQsub(unittest.TestCase):
             f"--output {output_dir} "
             f"--snakemake-profile aqua "
             f"--local-cores 12 "
-            f"--retries 1 "
+            f"--retries 2 "
             f"--cluster-submission "
         )
         subprocess.run(cmd, shell=True, check=True)
@@ -177,7 +230,7 @@ class Tests(unittest.TestCase):
             f"--forward SRR8334323 SRR8334324 SRR6797127 SRR6797128 "
             f"--singlem-metapackage {SINGLEM_METAPACKAGE} "
             f"--sra "
-            f"--cores 32 "
+            f"--cores 16 "
             f"--output {output_dir} "
         )
         subprocess.run(cmd, shell=True, check=True)
@@ -307,7 +360,7 @@ class Tests(unittest.TestCase):
             cmd = (
                 f"binchicken build "
                 f"--singlem-metapackage {path_to_metapackage} "
-                # f"--gtdbtk-db {path_to_gtdbtk_db} "
+                f"--gtdbtk-db {path_to_gtdbtk_db} "
                 f"--checkm2-db {path_to_checkm2_db} "
                 f"--download-databases "
                 f"--retries 0 "
@@ -320,13 +373,13 @@ class Tests(unittest.TestCase):
             output = extern.run(cmd).strip().split("\n")
 
             self.assertTrue(f"SINGLEM_METAPACKAGE_PATH = {path_to_metapackage}" in output)
-            # self.assertTrue(f"GTDBTK_DATA_PATH = {path_to_gtdbtk_db}" in output)
+            self.assertTrue(f"GTDBTK_DATA_PATH = {path_to_gtdbtk_db}" in output)
             self.assertTrue(f"CHECKM2DB = {path_to_checkm2_db}" in output)
             self.assertTrue(f"TMPDIR = /tmp" in output)
 
             # Check databases downloaded
             self.assertTrue(os.path.exists(path_to_metapackage))
-            # self.assertTrue(os.path.exists(path_to_gtdbtk_db))
+            self.assertTrue(os.path.exists(path_to_gtdbtk_db))
             self.assertTrue(os.path.exists(path_to_checkm2_db))
 
     def test_single_assembly_provided(self):
@@ -340,6 +393,7 @@ class Tests(unittest.TestCase):
             f"--singlem-metapackage {METAPACKAGE} "
             f"--coassembly-samples sample_1 sample_2 "
             f"--prior-assemblies {PRIOR_ASSEMBLY} "
+            f"--min-sequence-coverage 1 "
             f"--output {output_dir} "
         )
         subprocess.run(cmd, shell=True, check=True)
@@ -362,7 +416,7 @@ class Tests(unittest.TestCase):
                 "\t".join([
                     "sample_1",
                     "1",
-                    "4",
+                    "5",
                     "4832",
                     "sample_1,sample_2,sample_3",
                     "sample_1"
@@ -370,7 +424,7 @@ class Tests(unittest.TestCase):
                 "\t".join([
                     "sample_2",
                     "1",
-                    "3",
+                    "4",
                     "3926",
                     "sample_1,sample_2,sample_3",
                     "sample_2"
@@ -416,10 +470,10 @@ class Tests(unittest.TestCase):
             self.assertEqual(">NODE_1_length_138944_cov_12.417585\n", lines[0])
             self.assertEqual(9693, len(lines))
 
-        self.assertTrue("aviary_assemble" not in output)
-        self.assertTrue("prior_assemble" in output)
-        self.assertTrue("aviary_recover" in output)
-        self.assertTrue("aviary_combine" in output)
+        self.assertTrue("\naviary_assemble" not in output)
+        self.assertTrue("\nprior_assemble" in output)
+        self.assertTrue("\naviary_recover" in output)
+        self.assertTrue("\naviary_combine" in output)
 
         print(output)
 
@@ -495,10 +549,10 @@ class Tests(unittest.TestCase):
             self.assertEqual(">NODE_1_length_138944_cov_12.417585\n", lines[0])
             self.assertEqual(9700, len(lines))
 
-        self.assertTrue("aviary_assemble" not in output)
-        self.assertTrue("prior_assemble" in output)
-        self.assertTrue("aviary_recover" in output)
-        self.assertTrue("aviary_combine" in output)
+        self.assertTrue("\naviary_assemble" not in output)
+        self.assertTrue("\nprior_assemble" in output)
+        self.assertTrue("\naviary_recover" in output)
+        self.assertTrue("\naviary_combine" in output)
 
         print(output)
 

@@ -4,7 +4,7 @@ import unittest
 import os
 from bird_tool_utils import in_tempdir
 import extern
-from snakemake.io import load_configfile
+from snakemake.common.configfile import load_configfile
 import polars as pl
 
 path_to_data = os.path.join(os.path.dirname(os.path.realpath(__file__)),'data')
@@ -194,18 +194,18 @@ class Tests(unittest.TestCase):
                 f"--singlem-metapackage {METAPACKAGE} "
                 f"--output test "
                 f"--dryrun "
-                f"--snakemake-args \" --quiet\" "
+                f"--snakemake-args \" --quiet rules\" "
             )
             output = extern.run(cmd)
 
-            self.assertTrue("prodigal_bins" in output)
-            self.assertTrue("singlem_pipe_bins" in output)
-            self.assertTrue("singlem_summarise_bins" in output)
-            self.assertTrue("cluster_original_bins" not in output)
-            self.assertTrue("cluster_updated_bins" not in output)
-            self.assertTrue("summarise_clusters" not in output)
-            self.assertTrue("evaluate" in output)
-            self.assertTrue("evaluate_plots" in output)
+            self.assertTrue("\nprodigal_bins" in output)
+            self.assertTrue("\nsinglem_pipe_bins" in output)
+            self.assertTrue("\nsinglem_summarise_bins" in output)
+            self.assertTrue("\ncluster_original_bins" not in output)
+            self.assertTrue("\ncluster_updated_bins" not in output)
+            self.assertTrue("\nsummarise_clusters" not in output)
+            self.assertTrue("\nevaluate" in output)
+            self.assertTrue("\nevaluate_plots" in output)
 
     def test_evaluate_genome_input(self):
         with in_tempdir():
@@ -322,18 +322,18 @@ class Tests(unittest.TestCase):
                 f"--singlem-metapackage {METAPACKAGE} "
                 f"--output test "
                 f"--dryrun "
-                f"--snakemake-args \" --quiet\" "
+                f"--snakemake-args \" --quiet rules\" "
             )
             output = extern.run(cmd)
 
-            self.assertTrue("prodigal_bins" in output)
-            self.assertTrue("singlem_pipe_bins" in output)
-            self.assertTrue("singlem_summarise_bins" in output)
-            self.assertTrue("cluster_original_bins" not in output)
-            self.assertTrue("cluster_updated_bins" not in output)
-            self.assertTrue("summarise_clusters" not in output)
-            self.assertTrue("evaluate" in output)
-            self.assertTrue("evaluate_plots" in output)
+            self.assertTrue("\nprodigal_bins" in output)
+            self.assertTrue("\nsinglem_pipe_bins" in output)
+            self.assertTrue("\nsinglem_summarise_bins" in output)
+            self.assertTrue("\ncluster_original_bins" not in output)
+            self.assertTrue("\ncluster_updated_bins" not in output)
+            self.assertTrue("\nsummarise_clusters" not in output)
+            self.assertTrue("\nevaluate" in output)
+            self.assertTrue("\nevaluate_plots" in output)
 
     def test_evaluate_default_config(self):
         with in_tempdir():
@@ -510,12 +510,12 @@ class Tests(unittest.TestCase):
                 f"--singlem-metapackage {METAPACKAGE} "
                 f"--output test "
                 f"--dryrun "
-                f"--snakemake-args \" --quiet\" "
+                f"--snakemake-args \" --quiet rules\" "
             )
             output = extern.run(cmd)
 
             # Assert: pipeline stages that consume recovered bins are present
-            self.assertTrue("singlem_summarise_bins" in output)
+            self.assertTrue("\nsinglem_summarise_bins" in output)
             config = load_configfile(os.path.join("test", "config.yaml"))
             self.assertIn("recovered_bins", config)
             self.assertEqual(sorted(config["recovered_bins"].keys()), ["binchicken_coassembly_0.1","binchicken_coassembly_0.2"])

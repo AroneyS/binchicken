@@ -7,7 +7,7 @@ import gzip
 from bird_tool_utils import in_tempdir
 import extern
 import subprocess
-from snakemake.io import load_configfile
+from snakemake.common.configfile import load_configfile
 import polars as pl
 from polars.testing import assert_frame_equal
 
@@ -1098,29 +1098,29 @@ class Tests(unittest.TestCase):
                 f"--singlem-metapackage {METAPACKAGE} "
                 f"--output test "
                 f"--dryrun "
-                f"--snakemake-args \" --quiet\" "
+                f"--snakemake-args \" --quiet rules\" "
             )
             output = extern.run(cmd)
 
-            self.assertTrue("singlem_pipe_reads" not in output)
-            self.assertTrue("genome_transcripts" not in output)
-            self.assertTrue("singlem_pipe_genomes" not in output)
-            self.assertTrue("singlem_summarise_genomes" not in output)
-            self.assertTrue("singlem_appraise" in output)
-            self.assertTrue("query_processing" not in output)
-            self.assertTrue("single_assembly" not in output)
-            self.assertTrue("count_bp_reads" not in output)
-            self.assertTrue("abundance_weighting" not in output)
-            self.assertTrue("sketch_samples" not in output)
-            self.assertTrue("distance_samples" not in output)
-            self.assertTrue("target_elusive" in output)
-            self.assertTrue("target_weighting" not in output)
-            self.assertTrue("cluster_graph" in output)
-            self.assertTrue("qc_reads" not in output)
-            self.assertTrue("collect_genomes" not in output)
-            self.assertTrue("map_reads" not in output)
-            self.assertTrue("finish_mapping" not in output)
-            self.assertTrue("aviary_commands" in output)
+            self.assertTrue("\nsinglem_pipe_reads" not in output)
+            self.assertTrue("\ngenome_transcripts" not in output)
+            self.assertTrue("\nsinglem_pipe_genomes" not in output)
+            self.assertTrue("\nsinglem_summarise_genomes" not in output)
+            self.assertTrue("\nsinglem_appraise" in output)
+            self.assertTrue("\nquery_processing" not in output)
+            self.assertTrue("\nsingle_assembly" not in output)
+            self.assertTrue("\ncount_bp_reads" not in output)
+            self.assertTrue("\nabundance_weighting" not in output)
+            self.assertTrue("\nsketch_samples" not in output)
+            self.assertTrue("\ndistance_samples" not in output)
+            self.assertTrue("\ntarget_elusive" in output)
+            self.assertTrue("\ntarget_weighting" not in output)
+            self.assertTrue("\ncluster_graph" in output)
+            self.assertTrue("\nqc_reads" not in output)
+            self.assertTrue("\ncollect_genomes" not in output)
+            self.assertTrue("\nmap_reads" not in output)
+            self.assertTrue("\nfinish_mapping" not in output)
+            self.assertTrue("\naviary_commands" in output)
 
     def test_coassemble_run_aviary(self):
         with in_tempdir():
@@ -1139,32 +1139,32 @@ class Tests(unittest.TestCase):
                 f"--singlem-metapackage {METAPACKAGE} "
                 f"--output test "
                 f"--dryrun "
-                f"--snakemake-args \" --quiet\" "
+                f"--snakemake-args \" --quiet rules\" "
             )
             output = extern.run(cmd)
 
-            self.assertTrue("singlem_pipe_reads" not in output)
-            self.assertTrue("genome_transcripts" not in output)
-            self.assertTrue("singlem_pipe_genomes" not in output)
-            self.assertTrue("singlem_summarise_genomes" not in output)
-            self.assertTrue("singlem_appraise" in output)
-            self.assertTrue("query_processing" not in output)
-            self.assertTrue("single_assembly" not in output)
-            self.assertTrue("count_bp_reads" not in output)
-            self.assertTrue("abundance_weighting" not in output)
-            self.assertTrue("sketch_samples" not in output)
-            self.assertTrue("distance_samples" not in output)
-            self.assertTrue("target_elusive" in output)
-            self.assertTrue("target_weighting" not in output)
-            self.assertTrue("cluster_graph" in output)
-            self.assertTrue("qc_reads" not in output)
-            self.assertTrue("collect_genomes" not in output)
-            self.assertTrue("map_reads" not in output)
-            self.assertTrue("finish_mapping" not in output)
-            self.assertTrue("aviary_commands" not in output)
-            self.assertTrue("aviary_assemble" not in output)
-            self.assertTrue("aviary_recover" not in output)
-            self.assertTrue("aviary_combine" in output)
+            self.assertTrue("\nsinglem_pipe_reads" not in output)
+            self.assertTrue("\ngenome_transcripts" not in output)
+            self.assertTrue("\nsinglem_pipe_genomes" not in output)
+            self.assertTrue("\nsinglem_summarise_genomes" not in output)
+            self.assertTrue("\nsinglem_appraise" in output)
+            self.assertTrue("\nquery_processing" not in output)
+            self.assertTrue("\nsingle_assembly" not in output)
+            self.assertTrue("\ncount_bp_reads" not in output)
+            self.assertTrue("\nabundance_weighting" not in output)
+            self.assertTrue("\nsketch_samples" not in output)
+            self.assertTrue("\ndistance_samples" not in output)
+            self.assertTrue("\ntarget_elusive" in output)
+            self.assertTrue("\ntarget_weighting" not in output)
+            self.assertTrue("\ncluster_graph" in output)
+            self.assertTrue("\nqc_reads" not in output)
+            self.assertTrue("\ncollect_genomes" not in output)
+            self.assertTrue("\nmap_reads" not in output)
+            self.assertTrue("\nfinish_mapping" not in output)
+            self.assertTrue("\naviary_commands" not in output)
+            self.assertTrue("\naviary_assemble" not in output)
+            self.assertTrue("\naviary_recover" not in output)
+            self.assertTrue("\naviary_combine" in output)
 
     def test_coassemble_run_aviary_unmapped(self):
         with in_tempdir():
@@ -1184,32 +1184,32 @@ class Tests(unittest.TestCase):
                 f"--singlem-metapackage {METAPACKAGE} "
                 f"--output test "
                 f"--dryrun "
-                f"--snakemake-args \" --quiet\" "
+                f"--snakemake-args \" --quiet rules\" "
             )
             output = extern.run(cmd)
 
-            self.assertTrue("singlem_pipe_reads" not in output)
-            self.assertTrue("genome_transcripts" not in output)
-            self.assertTrue("singlem_pipe_genomes" not in output)
-            self.assertTrue("singlem_summarise_genomes" not in output)
-            self.assertTrue("singlem_appraise" in output)
-            self.assertTrue("query_processing" not in output)
-            self.assertTrue("single_assembly" not in output)
-            self.assertTrue("count_bp_reads" in output)
-            self.assertTrue("abundance_weighting" not in output)
-            self.assertTrue("sketch_samples" not in output)
-            self.assertTrue("distance_samples" not in output)
-            self.assertTrue("target_elusive" in output)
-            self.assertTrue("target_weighting" not in output)
-            self.assertTrue("cluster_graph" in output)
-            self.assertTrue("qc_reads" not in output)
-            self.assertTrue("collect_genomes" in output)
-            self.assertTrue("map_reads" in output)
-            self.assertTrue("finish_mapping" in output)
-            self.assertTrue("aviary_commands" not in output)
-            self.assertTrue("aviary_assemble" not in output)
-            self.assertTrue("aviary_recover" not in output)
-            self.assertTrue("aviary_combine" in output)
+            self.assertTrue("\nsinglem_pipe_reads" not in output)
+            self.assertTrue("\ngenome_transcripts" not in output)
+            self.assertTrue("\nsinglem_pipe_genomes" not in output)
+            self.assertTrue("\nsinglem_summarise_genomes" not in output)
+            self.assertTrue("\nsinglem_appraise" in output)
+            self.assertTrue("\nquery_processing" not in output)
+            self.assertTrue("\nsingle_assembly" not in output)
+            self.assertTrue("\ncount_bp_reads" in output)
+            self.assertTrue("\nabundance_weighting" not in output)
+            self.assertTrue("\nsketch_samples" not in output)
+            self.assertTrue("\ndistance_samples" not in output)
+            self.assertTrue("\ntarget_elusive" in output)
+            self.assertTrue("\ntarget_weighting" not in output)
+            self.assertTrue("\ncluster_graph" in output)
+            self.assertTrue("\nqc_reads" not in output)
+            self.assertTrue("\ncollect_genomes" in output)
+            self.assertTrue("\nmap_reads" in output)
+            self.assertTrue("\nfinish_mapping" in output)
+            self.assertTrue("\naviary_commands" not in output)
+            self.assertTrue("\naviary_assemble" not in output)
+            self.assertTrue("\naviary_recover" not in output)
+            self.assertTrue("\naviary_combine" in output)
 
     def test_coassemble_run_aviary_unmapped_qc(self):
         with in_tempdir():
@@ -1230,32 +1230,32 @@ class Tests(unittest.TestCase):
                 f"--singlem-metapackage {METAPACKAGE} "
                 f"--output test "
                 f"--dryrun "
-                f"--snakemake-args \" --quiet\" "
+                f"--snakemake-args \" --quiet rules\" "
             )
             output = extern.run(cmd)
 
-            self.assertTrue("singlem_pipe_reads" not in output)
-            self.assertTrue("genome_transcripts" not in output)
-            self.assertTrue("singlem_pipe_genomes" not in output)
-            self.assertTrue("singlem_summarise_genomes" not in output)
-            self.assertTrue("singlem_appraise" in output)
-            self.assertTrue("query_processing" not in output)
-            self.assertTrue("single_assembly" not in output)
-            self.assertTrue("count_bp_reads" in output)
-            self.assertTrue("abundance_weighting" not in output)
-            self.assertTrue("sketch_samples" not in output)
-            self.assertTrue("distance_samples" not in output)
-            self.assertTrue("target_elusive" in output)
-            self.assertTrue("target_weighting" not in output)
-            self.assertTrue("cluster_graph" in output)
-            self.assertTrue("qc_reads" in output)
-            self.assertTrue("collect_genomes" in output)
-            self.assertTrue("map_reads" in output)
-            self.assertTrue("finish_mapping" in output)
-            self.assertTrue("aviary_commands" not in output)
-            self.assertTrue("aviary_assemble" not in output)
-            self.assertTrue("aviary_recover" not in output)
-            self.assertTrue("aviary_combine" in output)
+            self.assertTrue("\nsinglem_pipe_reads" not in output)
+            self.assertTrue("\ngenome_transcripts" not in output)
+            self.assertTrue("\nsinglem_pipe_genomes" not in output)
+            self.assertTrue("\nsinglem_summarise_genomes" not in output)
+            self.assertTrue("\nsinglem_appraise" in output)
+            self.assertTrue("\nquery_processing" not in output)
+            self.assertTrue("\nsingle_assembly" not in output)
+            self.assertTrue("\ncount_bp_reads" in output)
+            self.assertTrue("\nabundance_weighting" not in output)
+            self.assertTrue("\nsketch_samples" not in output)
+            self.assertTrue("\ndistance_samples" not in output)
+            self.assertTrue("\ntarget_elusive" in output)
+            self.assertTrue("\ntarget_weighting" not in output)
+            self.assertTrue("\ncluster_graph" in output)
+            self.assertTrue("\nqc_reads" in output)
+            self.assertTrue("\ncollect_genomes" in output)
+            self.assertTrue("\nmap_reads" in output)
+            self.assertTrue("\nfinish_mapping" in output)
+            self.assertTrue("\naviary_commands" not in output)
+            self.assertTrue("\naviary_assemble" not in output)
+            self.assertTrue("\naviary_recover" not in output)
+            self.assertTrue("\naviary_combine" in output)
 
     def test_coassemble_files_of_paths(self):
         with in_tempdir():
@@ -1283,29 +1283,29 @@ class Tests(unittest.TestCase):
                 f"--assembly-strategy megahit "
                 f"--output test "
                 f"--dryrun "
-                f"--snakemake-args \" --quiet\" "
+                f"--snakemake-args \" --quiet rules\" "
             )
             output = extern.run(cmd)
 
-            self.assertTrue("singlem_pipe_reads" in output)
-            self.assertTrue("genome_transcripts" not in output)
-            self.assertTrue("singlem_pipe_genomes" in output)
-            self.assertTrue("singlem_summarise_genomes" in output)
-            self.assertTrue("singlem_appraise" in output)
-            self.assertTrue("query_processing" not in output)
-            self.assertTrue("single_assembly" not in output)
-            self.assertTrue("count_bp_reads" in output)
-            self.assertTrue("abundance_weighting" not in output)
-            self.assertTrue("sketch_samples" not in output)
-            self.assertTrue("distance_samples" not in output)
-            self.assertTrue("target_elusive" in output)
-            self.assertTrue("target_weighting" not in output)
-            self.assertTrue("cluster_graph" in output)
-            self.assertTrue("qc_reads" not in output)
-            self.assertTrue("collect_genomes" in output)
-            self.assertTrue("map_reads" in output)
-            self.assertTrue("finish_mapping" in output)
-            self.assertTrue("aviary_commands" in output)
+            self.assertTrue("\nsinglem_pipe_reads" in output)
+            self.assertTrue("\ngenome_transcripts" not in output)
+            self.assertTrue("\nsinglem_pipe_genomes" in output)
+            self.assertTrue("\nsinglem_summarise_genomes" in output)
+            self.assertTrue("\nsinglem_appraise" in output)
+            self.assertTrue("\nquery_processing" not in output)
+            self.assertTrue("\nsingle_assembly" not in output)
+            self.assertTrue("\ncount_bp_reads" in output)
+            self.assertTrue("\nabundance_weighting" not in output)
+            self.assertTrue("\nsketch_samples" not in output)
+            self.assertTrue("\ndistance_samples" not in output)
+            self.assertTrue("\ntarget_elusive" in output)
+            self.assertTrue("\ntarget_weighting" not in output)
+            self.assertTrue("\ncluster_graph" in output)
+            self.assertTrue("\nqc_reads" not in output)
+            self.assertTrue("\ncollect_genomes" in output)
+            self.assertTrue("\nmap_reads" in output)
+            self.assertTrue("\nfinish_mapping" in output)
+            self.assertTrue("\naviary_commands" in output)
 
             config = load_configfile(os.path.join("test", "config.yaml"))
             self.assertEqual(config["genomes"], {os.path.splitext(os.path.basename(g))[0]: g for g in GENOMES.split(" ")})
@@ -1337,29 +1337,29 @@ class Tests(unittest.TestCase):
                 f"--singlem-metapackage {METAPACKAGE} "
                 f"--output test "
                 f"--dryrun "
-                f"--snakemake-args \" --quiet\" "
+                f"--snakemake-args \" --quiet rules\" "
             )
             output = extern.run(cmd)
 
-            self.assertTrue("singlem_pipe_reads" not in output)
-            self.assertTrue("genome_transcripts" not in output)
-            self.assertTrue("singlem_pipe_genomes" not in output)
-            self.assertTrue("singlem_summarise_genomes" not in output)
-            self.assertTrue("singlem_appraise" in output)
-            self.assertTrue("query_processing" not in output)
-            self.assertTrue("single_assembly" not in output)
-            self.assertTrue("count_bp_reads" not in output)
-            self.assertTrue("abundance_weighting" not in output)
-            self.assertTrue("sketch_samples" not in output)
-            self.assertTrue("distance_samples" not in output)
-            self.assertTrue("target_elusive" in output)
-            self.assertTrue("target_weighting" not in output)
-            self.assertTrue("cluster_graph" in output)
-            self.assertTrue("qc_reads" not in output)
-            self.assertTrue("collect_genomes" not in output)
-            self.assertTrue("map_reads" not in output)
-            self.assertTrue("finish_mapping" not in output)
-            self.assertTrue("aviary_commands" in output)
+            self.assertTrue("\nsinglem_pipe_reads" not in output)
+            self.assertTrue("\ngenome_transcripts" not in output)
+            self.assertTrue("\nsinglem_pipe_genomes" not in output)
+            self.assertTrue("\nsinglem_summarise_genomes" not in output)
+            self.assertTrue("\nsinglem_appraise" in output)
+            self.assertTrue("\nquery_processing" not in output)
+            self.assertTrue("\nsingle_assembly" not in output)
+            self.assertTrue("\ncount_bp_reads" not in output)
+            self.assertTrue("\nabundance_weighting" not in output)
+            self.assertTrue("\nsketch_samples" not in output)
+            self.assertTrue("\ndistance_samples" not in output)
+            self.assertTrue("\ntarget_elusive" in output)
+            self.assertTrue("\ntarget_weighting" not in output)
+            self.assertTrue("\ncluster_graph" in output)
+            self.assertTrue("\nqc_reads" not in output)
+            self.assertTrue("\ncollect_genomes" not in output)
+            self.assertTrue("\nmap_reads" not in output)
+            self.assertTrue("\nfinish_mapping" not in output)
+            self.assertTrue("\naviary_commands" in output)
 
     def test_coassemble_singlem_inputs_dir(self):
         with in_tempdir():
@@ -1376,29 +1376,29 @@ class Tests(unittest.TestCase):
                 f"--sample-read-size {SAMPLE_READ_SIZE} "
                 f"--output test "
                 f"--dryrun "
-                f"--snakemake-args \" --quiet\" "
+                f"--snakemake-args \" --quiet rules\" "
             )
             output = extern.run(cmd)
 
-            self.assertTrue("singlem_pipe_reads" not in output)
-            self.assertTrue("genome_transcripts" not in output)
-            self.assertTrue("singlem_pipe_genomes" not in output)
-            self.assertTrue("singlem_summarise_genomes" not in output)
-            self.assertTrue("singlem_appraise " not in output)
-            self.assertTrue("query_processing" in output)
-            self.assertTrue("single_assembly" not in output)
-            self.assertTrue("count_bp_reads" not in output)
-            self.assertTrue("abundance_weighting" not in output)
-            self.assertTrue("sketch_samples" not in output)
-            self.assertTrue("distance_samples" not in output)
-            self.assertTrue("target_elusive" in output)
-            self.assertTrue("target_weighting" not in output)
-            self.assertTrue("cluster_graph" in output)
-            self.assertTrue("qc_reads" not in output)
-            self.assertTrue("collect_genomes" not in output)
-            self.assertTrue("map_reads" not in output)
-            self.assertTrue("finish_mapping" not in output)
-            self.assertTrue("aviary_commands" in output)
+            self.assertTrue("\nsinglem_pipe_reads" not in output)
+            self.assertTrue("\ngenome_transcripts" not in output)
+            self.assertTrue("\nsinglem_pipe_genomes" not in output)
+            self.assertTrue("\nsinglem_summarise_genomes" not in output)
+            self.assertTrue("\nsinglem_appraise " not in output)
+            self.assertTrue("\nquery_processing" in output)
+            self.assertTrue("\nsingle_assembly" not in output)
+            self.assertTrue("\ncount_bp_reads" not in output)
+            self.assertTrue("\nabundance_weighting" not in output)
+            self.assertTrue("\nsketch_samples" not in output)
+            self.assertTrue("\ndistance_samples" not in output)
+            self.assertTrue("\ntarget_elusive" in output)
+            self.assertTrue("\ntarget_weighting" not in output)
+            self.assertTrue("\ncluster_graph" in output)
+            self.assertTrue("\nqc_reads" not in output)
+            self.assertTrue("\ncollect_genomes" not in output)
+            self.assertTrue("\nmap_reads" not in output)
+            self.assertTrue("\nfinish_mapping" not in output)
+            self.assertTrue("\naviary_commands" in output)
 
     def test_coassemble_anchored(self):
         with in_tempdir():
@@ -1465,29 +1465,29 @@ class Tests(unittest.TestCase):
                 f"--singlem-metapackage {METAPACKAGE} "
                 f"--output test "
                 f"--dryrun "
-                f"--snakemake-args \" --quiet\" "
+                f"--snakemake-args \" --quiet rules\" "
             )
             output = extern.run(cmd)
 
-            self.assertTrue("singlem_pipe_reads" not in output)
-            self.assertTrue("genome_transcripts" not in output)
-            self.assertTrue("singlem_pipe_genomes" not in output)
-            self.assertTrue("singlem_summarise_genomes" not in output)
-            self.assertTrue("singlem_appraise" in output)
-            self.assertTrue("query_processing" not in output)
-            self.assertTrue("single_assembly" not in output)
-            self.assertTrue("count_bp_reads" not in output)
-            self.assertTrue("abundance_weighting" not in output)
-            self.assertTrue("sketch_samples" in output)
-            self.assertTrue("distance_samples" in output)
-            self.assertTrue("target_elusive" in output)
-            self.assertTrue("target_weighting" not in output)
-            self.assertTrue("cluster_graph" in output)
-            self.assertTrue("qc_reads" not in output)
-            self.assertTrue("collect_genomes" not in output)
-            self.assertTrue("map_reads" not in output)
-            self.assertTrue("finish_mapping" not in output)
-            self.assertTrue("aviary_commands" in output)
+            self.assertTrue("\nsinglem_pipe_reads" not in output)
+            self.assertTrue("\ngenome_transcripts" not in output)
+            self.assertTrue("\nsinglem_pipe_genomes" not in output)
+            self.assertTrue("\nsinglem_summarise_genomes" not in output)
+            self.assertTrue("\nsinglem_appraise" in output)
+            self.assertTrue("\nquery_processing" not in output)
+            self.assertTrue("\nsingle_assembly" not in output)
+            self.assertTrue("\ncount_bp_reads" not in output)
+            self.assertTrue("\nabundance_weighting" not in output)
+            self.assertTrue("\nsketch_samples" in output)
+            self.assertTrue("\ndistance_samples" in output)
+            self.assertTrue("\ntarget_elusive" in output)
+            self.assertTrue("\ntarget_weighting" not in output)
+            self.assertTrue("\ncluster_graph" in output)
+            self.assertTrue("\nqc_reads" not in output)
+            self.assertTrue("\ncollect_genomes" not in output)
+            self.assertTrue("\nmap_reads" not in output)
+            self.assertTrue("\nfinish_mapping" not in output)
+            self.assertTrue("\naviary_commands" in output)
 
     def test_coassemble_weighted_dryrun(self):
         with in_tempdir():
@@ -1504,29 +1504,29 @@ class Tests(unittest.TestCase):
                 f"--singlem-metapackage {METAPACKAGE} "
                 f"--output test "
                 f"--dryrun "
-                f"--snakemake-args \" --quiet\" "
+                f"--snakemake-args \" --quiet rules\" "
             )
             output = extern.run(cmd)
 
-            self.assertTrue("singlem_pipe_reads" not in output)
-            self.assertTrue("genome_transcripts" not in output)
-            self.assertTrue("singlem_pipe_genomes" not in output)
-            self.assertTrue("singlem_summarise_genomes" not in output)
-            self.assertTrue("singlem_appraise" in output)
-            self.assertTrue("query_processing" not in output)
-            self.assertTrue("single_assembly" not in output)
-            self.assertTrue("count_bp_reads" not in output)
-            self.assertTrue("abundance_weighting" in output)
-            self.assertTrue("sketch_samples" not in output)
-            self.assertTrue("distance_samples" not in output)
-            self.assertTrue("target_elusive" in output)
-            self.assertTrue("target_weighting" in output)
-            self.assertTrue("cluster_graph" in output)
-            self.assertTrue("qc_reads" not in output)
-            self.assertTrue("collect_genomes" not in output)
-            self.assertTrue("map_reads" not in output)
-            self.assertTrue("finish_mapping" not in output)
-            self.assertTrue("aviary_commands" in output)
+            self.assertTrue("\nsinglem_pipe_reads" not in output)
+            self.assertTrue("\ngenome_transcripts" not in output)
+            self.assertTrue("\nsinglem_pipe_genomes" not in output)
+            self.assertTrue("\nsinglem_summarise_genomes" not in output)
+            self.assertTrue("\nsinglem_appraise" in output)
+            self.assertTrue("\nquery_processing" not in output)
+            self.assertTrue("\nsingle_assembly" not in output)
+            self.assertTrue("\ncount_bp_reads" not in output)
+            self.assertTrue("\nabundance_weighting" in output)
+            self.assertTrue("\nsketch_samples" not in output)
+            self.assertTrue("\ndistance_samples" not in output)
+            self.assertTrue("\ntarget_elusive" in output)
+            self.assertTrue("\ntarget_weighting" in output)
+            self.assertTrue("\ncluster_graph" in output)
+            self.assertTrue("\nqc_reads" not in output)
+            self.assertTrue("\ncollect_genomes" not in output)
+            self.assertTrue("\nmap_reads" not in output)
+            self.assertTrue("\nfinish_mapping" not in output)
+            self.assertTrue("\naviary_commands" in output)
 
     def test_coassemble_metapackage_env_variable(self):
         with in_tempdir():
@@ -1819,8 +1819,8 @@ class Tests(unittest.TestCase):
             output_raw = subprocess.run(cmd, shell=True, check=True, capture_output=True)
             output = output_raw.stderr.decode('ascii')
 
-            self.assertTrue("sketch_samples" not in output)
-            self.assertTrue("distance_samples" not in output)
+            self.assertTrue("\nsketch_samples" not in output)
+            self.assertTrue("\ndistance_samples" not in output)
 
             config_path = os.path.join("test", "config.yaml")
             self.assertTrue(os.path.exists(config_path))
@@ -2186,34 +2186,34 @@ class Tests(unittest.TestCase):
                 f"--genomes {GENOMES} "
                 f"--output test "
                 f"--dryrun "
-                f"--snakemake-args \" --quiet\" "
+                f"--snakemake-args \" --quiet rules\" "
             )
             output_comb = extern.run(cmd)
 
             output_sra = output_comb.split("Building DAG of jobs...")[1]
-            self.assertTrue("download_sra" in output_sra)
-            self.assertTrue("aviary_commands" not in output_sra)
+            self.assertTrue("\ndownload_sra" in output_sra)
+            self.assertTrue("\naviary_commands" not in output_sra)
 
             output = output_comb.split("Building DAG of jobs...")[2]
-            self.assertTrue("singlem_pipe_reads" in output)
-            self.assertTrue("genome_transcripts" in output)
-            self.assertTrue("singlem_pipe_genomes" in output)
-            self.assertTrue("singlem_summarise_genomes" in output)
-            self.assertTrue("singlem_appraise" in output)
-            self.assertTrue("query_processing" not in output)
-            self.assertTrue("single_assembly" not in output)
-            self.assertTrue("count_bp_reads" in output)
-            self.assertTrue("abundance_weighting" not in output)
-            self.assertTrue("sketch_samples" not in output)
-            self.assertTrue("distance_samples" not in output)
-            self.assertTrue("target_elusive" in output)
-            self.assertTrue("target_weighting" not in output)
-            self.assertTrue("cluster_graph" in output)
-            self.assertTrue("qc_reads" in output)
-            self.assertTrue("collect_genomes" not in output)
-            self.assertTrue("map_reads" not in output)
-            self.assertTrue("finish_mapping" not in output)
-            self.assertTrue("aviary_commands" in output)
+            self.assertTrue("\nsinglem_pipe_reads" in output)
+            self.assertTrue("\ngenome_transcripts" in output)
+            self.assertTrue("\nsinglem_pipe_genomes" in output)
+            self.assertTrue("\nsinglem_summarise_genomes" in output)
+            self.assertTrue("\nsinglem_appraise" in output)
+            self.assertTrue("\nquery_processing" not in output)
+            self.assertTrue("\nsingle_assembly" not in output)
+            self.assertTrue("\ncount_bp_reads" in output)
+            self.assertTrue("\nabundance_weighting" not in output)
+            self.assertTrue("\nsketch_samples" not in output)
+            self.assertTrue("\ndistance_samples" not in output)
+            self.assertTrue("\ntarget_elusive" in output)
+            self.assertTrue("\ntarget_weighting" not in output)
+            self.assertTrue("\ncluster_graph" in output)
+            self.assertTrue("\nqc_reads" in output)
+            self.assertTrue("\ncollect_genomes" not in output)
+            self.assertTrue("\nmap_reads" not in output)
+            self.assertTrue("\nfinish_mapping" not in output)
+            self.assertTrue("\naviary_commands" in output)
 
     def test_coassemble_sra_download_mock(self):
         with in_tempdir():

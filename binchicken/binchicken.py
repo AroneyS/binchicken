@@ -13,7 +13,7 @@ import bird_tool_utils as btu
 import polars as pl
 import polars.selectors as cs
 from polars.exceptions import NoDataError
-from snakemake.io import load_configfile
+from snakemake.common.configfile import load_configfile
 from ruamel.yaml import YAML
 import copy
 import shutil
@@ -1124,6 +1124,23 @@ def update(args):
                     os.path.join(args.output, "coassemble", "qc")
                 )
 
+    copy_input(
+        os.path.abspath(args.coassemble_unbinned),
+        os.path.join(args.output, "coassemble", "appraise", "unbinned.otu_table.tsv")
+    )
+    copy_input(
+        os.path.abspath(args.coassemble_binned),
+        os.path.join(args.output, "coassemble", "appraise", "binned.otu_table.tsv")
+    )
+    copy_input(
+        os.path.abspath(args.coassemble_elusive_edges),
+        os.path.join(args.output, "coassemble", "target", "elusive_edges.tsv")
+    )
+    copy_input(
+        os.path.abspath(args.coassemble_targets),
+        os.path.join(args.output, "coassemble", "target", "targets.tsv")
+    )
+
     if args.coassemblies_list:
         args.coassemblies = read_list(args.coassemblies_list)
 
@@ -1173,23 +1190,6 @@ def update(args):
             args.prior_assemblies = prior_assemblies
         else:
             raise ValueError("Prior assemblies require elusive clusters")
-
-    copy_input(
-        os.path.abspath(args.coassemble_unbinned),
-        os.path.join(args.output, "coassemble", "appraise", "unbinned.otu_table.tsv")
-    )
-    copy_input(
-        os.path.abspath(args.coassemble_binned),
-        os.path.join(args.output, "coassemble", "appraise", "binned.otu_table.tsv")
-    )
-    copy_input(
-        os.path.abspath(args.coassemble_elusive_edges),
-        os.path.join(args.output, "coassemble", "target", "elusive_edges.tsv")
-    )
-    copy_input(
-        os.path.abspath(args.coassemble_targets),
-        os.path.join(args.output, "coassemble", "target", "targets.tsv")
-    )
 
     if hasattr(args, "sample_read_size") and args.sample_read_size:
         sample_read_size = args.sample_read_size
@@ -1488,8 +1488,6 @@ def build(args):
             download_config["checkm2_db"] = args.checkm2_db
 
         if args.gtdbtk_db and not os.path.exists(args.gtdbtk_db):
-            logging.error("GTDBtk download not yet implemented")
-            raise NotImplementedError("GTDBtk download not yet implemented")
             download_config["gtdbtk_db"] = args.gtdbtk_db
 
         if args.metabuli_db and not os.path.exists(args.metabuli_db):
@@ -1684,7 +1682,7 @@ def main():
         aviary_recover_default_memory = 250
         argument_group.add_argument("--aviary-recover-memory", type=int, help=f"Maximum amount of memory for Aviary recover to use (Gigabytes). [default: {aviary_recover_default_memory}]",
                                     default=aviary_recover_default_memory)
-        argument_group.add_argument("--aviary-extra-binners", nargs='*', choices=["maxbin", "maxbin2", "concoct", "comebin", "taxvamb"], help="Optional list of extra binning algorithms to run. Can be any combination of: maxbin, maxbin2, concoct, comebin, taxvamb")
+        argument_group.add_argument("--aviary-extra-binners", nargs='*', choices=["maxbin", "maxbin2", "concoct", "comebin", "taxvamb", "quickbin"], help="Optional list of extra binning algorithms to run. Can be any combination of: maxbin, maxbin2, concoct, comebin, taxvamb, quickbin")
         argument_group.add_argument("--aviary-skip-binners", nargs='*', choices=["rosella", "semibin", "metabat1", "metabat2", "metabat", "vamb"], help="Optional list of binning algorithms to skip. Can be any combination of: rosella, semibin, metabat1, metabat2, metabat, vamb. Note that specifying 'metabat' will skip both MetaBAT1 and MetaBAT2.")
         argument_group.add_argument("--aviary-request-gpu", action="store_true", help="Request GPU resources for certain binners in Aviary recovery [default: do not].")
 

@@ -9,7 +9,11 @@ example/
 dist/
 site/
 *.sif
+*.log
 
 # pixi environments
 .pixi
 *.egg-info
+
+mqsub.out
+test/*.txt

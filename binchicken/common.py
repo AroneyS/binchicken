@@ -1,5 +1,5 @@
 import os
-import importlib.resources
+from importlib.resources import files, as_file
 import re
 import ast
 import time
@@ -28,7 +28,9 @@ def parse_snake_dict(s):
     return ast.literal_eval(s)
 
 def pixi_run_func():
-    with importlib.resources.path("binchicken", "pixi.toml") as manifest_path:
+    pixi_source = files("binchicken").joinpath("pixi.toml")
+
+    with as_file(pixi_source) as manifest_path:
         return f"pixi run --frozen --manifest-path {manifest_path}"
 
 pixi_run = pixi_run_func()
