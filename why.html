@@ -1,0 +1,207 @@
+<!doctype html>
+
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+
+    <title>why</title>
+    <meta name="description" content="Documentation for Bin Chicken">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Source+Sans+Pro:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&display=swap"
+        rel="stylesheet">
+
+    <link rel="stylesheet" type="text/css" href="/binchicken/assets/normalize.css?v=1785211716"
+        media="screen" />
+    <link rel="stylesheet" type="text/css" href="/binchicken/assets/doctave-style.css?v=1785211716"
+        media="screen" />
+    <link rel="stylesheet" type="text/css" href="/binchicken/assets/katex.css?v=1785211716" media="screen" />
+    <link rel="stylesheet" type="text/css" href="/binchicken/assets/prism-ghcolors.css?v=1785211716"
+        media="screen" />
+
+    <script>
+        var DOCTAVE_TIMESTAMP = "1785211716";
+        var BASE_PATH = "/binchicken/";
+        var color = localStorage.getItem('doctave-color')
+
+        if (color === 'dark') {
+            document.getElementsByTagName('html')[0].classList.remove('light');
+            document.getElementsByTagName('html')[0].classList.add('dark');
+        } else {
+            document.getElementsByTagName('html')[0].classList.remove('dark');
+            document.getElementsByTagName('html')[0].classList.add('light');
+        }
+    </script>
+
+    
+</head>
+
+<body>
+    <label for='menu-toggle-switch' class='menu-toggle-button'>
+        ☰
+    </label>
+    <input type="checkbox" id="menu-toggle-switch" value='0' />
+    <div class='page'>
+        <div class='header'>
+            <div class='logo'>
+                
+                <a href="/binchicken/">
+                    <img src="/binchicken/binchicken_logo.png" alt='Bin Chicken logo'></img>
+                </a>
+                
+                <h2 class='project-name'>
+                    <a href="/binchicken/">
+                        Bin Chicken
+                    </a>
+                </h2>
+            </div>
+            <div class='search'>
+                <form id='search-form'>
+    <input type='text' id='search-box' autocomplete="off" placeholder="Search..."></input>
+    <span class='search-icon'>S</span>
+    <ul id='search-results'></ul>
+</form>
+
+            </div>
+            <div class='header-dummy-right'>
+            </div>
+        </div>
+        <div class='container'>
+            <div class='sidebar-left'>
+                <nav class='site-nav'>
+    <ul>
+        
+            <li><a class="active" href="/binchicken/why">why</a></li>
+            
+        
+            <li><a href="/binchicken/installation">installation</a></li>
+            
+        
+            <li><a href="/binchicken/setup">setup</a></li>
+            
+        
+            <li><a href="/binchicken/usage">usage</a></li>
+            
+        
+            <li><a href="/binchicken/demo">demo</a></li>
+            
+        
+            <li><a href="/binchicken/tools">tools</a></li>
+            
+                <ul>
+    
+        <li><a href="/binchicken/tools/coassemble">Bin Chicken coassemble</a></li>
+        
+    
+        <li><a href="/binchicken/tools/single">Bin Chicken single</a></li>
+        
+    
+        <li><a href="/binchicken/tools/update">Bin Chicken update</a></li>
+        
+    
+        <li><a href="/binchicken/tools/iterate">Bin Chicken iterate</a></li>
+        
+    
+        <li><a href="/binchicken/tools/evaluate">Bin Chicken evaluate</a></li>
+        
+    
+        <li><a href="/binchicken/tools/build">Bin Chicken build</a></li>
+        
+    
+</ul>
+
+            
+        
+    </ul>
+    <span id='light-dark-mode-switch'>
+        <svg xmlns="http://www.w3.org/2000/svg" id="dark-mode-icon" viewBox="0 0 20 20" fill="currentColor">
+            <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z" />
+        </svg>
+
+        <svg xmlns="http://www.w3.org/2000/svg" id="light-mode-icon" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clip-rule="evenodd" />
+        </svg>
+    </span>
+</nav>
+
+            </div>
+            <div class='doctave-content'>
+                <h1 id="why-use-bin-chicken?">Why use Bin Chicken?</h1>
+<p>Coassembly — pooling reads from multiple samples before assembly — recovers more and better-quality genomes than assembling each sample individually.
+Bin Chicken automates the selection of which samples to coassemble, making this benefit practical at scale.</p>
+<h2 id="more-genomes-recovered">More genomes recovered</h2>
+<p>In a benchmarking study across 800 coassemblies (Aroney et al., 2025), targeted coassembly with Bin Chicken recovered <strong>39% more species-level genome bins on average</strong> compared to single-sample assembly of the same data.</p>
+<h2 id="efficiency-at-scale">Efficiency at scale</h2>
+<p>Relative to SPIRE — which recovered 83,000 novel species from 500 Tbp across 99,146 samples — Bin Chicken recovered 24,000 novel species from only 17.8 Tbp across 800 coassemblies: <strong>more than 20× the novel species yield per assembled metagenome</strong>.</p>
+<h2 id="better-genome-quality">Better genome quality</h2>
+<p>Where both approaches recovered the same species, coassembled genomes were higher quality (<code>completeness − 5× contamination</code>): <strong>2.8% higher quality</strong> on average (P &lt; 0.001, n = 2,170).
+This is consistent with coassembly providing greater depth over shared low-abundance organisms, producing more contiguous assemblies.</p>
+<h2 id="no-increase-in-chimerism">No increase in chimerism</h2>
+<p>A common concern with coassembly is that mixing reads from multiple samples will produce chimeric bins.
+In practice, Bin Chicken's use of exact matching of marker gene sequences (ensuring samples share lineages with at least species-level resolution) and exclusion of reads that map to known reference genomes substantially reduces this risk.
+Chimera rates in recovered genomes (9.8%) were comparable to those found in GTDB reference databases (8.0%), showing <strong>no discernible increase in chimerism</strong> attributable to coassembly.</p>
+<p>These results are shown in Extended Data Fig. 3 of the Bin Chicken paper:</p>
+<p><img src="/binchicken/figureS3.png" alt="Extended Data Fig. 3 — coassembly outperforms single-sample assembly in genome recovery, quality, and chimerism"></p>
+<p><strong>Extended Data Fig. 3 Benchmarking genomes recovered from coassembly against single-sample assembly with co-binning.</strong>
+(a) Comparison of genomes recovered from 30 randomly selected coassemblies and 70 single-sample assemblies from each of the samples that were coassembled. Single only vs coassembly only p = 7.86e-7, n = 30 sample-sets. (b,c,d,e,f) Comparison of genomes recovered from coassembly and single-sample from within 95% ANI species clusters. Columns represent mean ± standard deviation of (b) genome quality (CheckM2 completeness – 5 × contamination) with p = 8e-34, n = 2170 genome-pairs, (c) completeness with p = 2e-19, n = 2170 genome-pairs, (d) contamination with p = 1e-3, n = 2170 genome-pairs, (e) length-weighted contig covered fraction from one sample with p = 0.818, n = 2170 genome-pairs, and (f) proportion of genomes with GUNC detected chimerism per sample-set with p = 0.002, n = 30 sample-sets. Points represent genomes (b, c, d, e) or sample-sets (f). Data were modelled using two-sided ANOVA. NS: not significant, ** p &lt; 0.01, *** p &lt; 0.001.</p>
+<blockquote>
+<p>Aroney, S.T.N., Newell, R.J.P., Tyson, G.W. and Woodcroft B.J. <em>Bin Chicken: targeted metagenomic coassembly for the efficient recovery of novel genomes.</em> Nat Methods (2025). <a href="https://doi.org/10.1038/s41592-025-02901-1">https://doi.org/10.1038/s41592-025-02901-1</a></p>
+</blockquote>
+
+            </div>
+            <div class='sidebar-right'>
+                <div class='page-nav' id='page-nav'>
+                    <p class='page-nav-header'>On this page</p>
+                    <ul>
+                        
+                        <li class='page-nav-level-1'>
+                            <a href='#why-use-bin-chicken?'>Why use Bin Chicken?</a>
+                        </li>
+                        
+                        <li class='page-nav-level-2'>
+                            <a href='#more-genomes-recovered'>More genomes recovered</a>
+                        </li>
+                        
+                        <li class='page-nav-level-2'>
+                            <a href='#efficiency-at-scale'>Efficiency at scale</a>
+                        </li>
+                        
+                        <li class='page-nav-level-2'>
+                            <a href='#better-genome-quality'>Better genome quality</a>
+                        </li>
+                        
+                        <li class='page-nav-level-2'>
+                            <a href='#no-increase-in-chimerism'>No increase in chimerism</a>
+                        </li>
+                        
+                    </ul>
+                </div>
+            </div>
+            <div class='wave-container'>
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320">
+                    <path fill-opacity="0.35"
+                        d="M0,192L60,213.3C120,235,240,277,360,277.3C480,277,600,235,720,192C840,149,960,107,1080,122.7C1200,139,1320,213,1380,250.7L1440,288L1440,320L1380,320C1320,320,1200,320,1080,320C960,320,840,320,720,320C600,320,480,320,360,320C240,320,120,320,60,320L0,320Z">
+                    </path>
+                    <path fill-opacity="0.5"
+                        d="M0,160L60,181.3C120,203,240,245,360,229.3C480,213,600,139,720,138.7C840,139,960,213,1080,229.3C1200,245,1320,203,1380,181.3L1440,160L1440,320L1380,320C1320,320,1200,320,1080,320C960,320,840,320,720,320C600,320,480,320,360,320C240,320,120,320,60,320L0,320Z">
+                    </path>
+                    <path fill-opacity="0.2"
+                        d="M0,224L60,197.3C120,171,240,117,360,117.3C480,117,600,171,720,186.7C840,203,960,181,1080,186.7C1200,192,1320,224,1380,240L1440,256L1440,320L1380,320C1320,320,1200,320,1080,320C960,320,840,320,720,320C600,320,480,320,360,320C240,320,120,320,60,320L0,320Z">
+                    </path>
+                </svg>
+                <p>Powered by <a href='https://cli.doctave.com' target='_blank'>Doctave</a></p>
+            </div>
+        </div>
+    </div>
+    <script type="text/javascript" src="/binchicken/assets/katex.js?v=1785211716"></script>
+    <script type="text/javascript" src="/binchicken/assets/mermaid.js?v=1785211716"></script>
+    <script type="text/javascript" src="/binchicken/assets/elasticlunr.js?v=1785211716"></script>
+    <script type="text/javascript" src="/binchicken/assets/prism.js?v=1785211716"></script>
+    <script type="text/javascript" src="/binchicken/assets/doctave-app.js?v=1785211716"></script>
+
+    
+</body>
+
+</html>
