@@ -36,393 +36,308 @@ binchicken update --coassemble-output coassemble_dir --sra \
 
 **\--forward**, **\--reads**, **\--sequences** *FORWARD* [*FORWARD* \...]
 
-  input forward/unpaired nucleotide read sequence(s)
-
-<!-- -->
+input forward/unpaired nucleotide read sequence(s). Reads will be
+  sorted before matching with reverse reads unless \--no-sample-sort is
+  specified.
 
 **\--forward-list**, **\--reads-list**, **\--sequences-list** *FORWARD_LIST*
 
-  input forward/unpaired nucleotide read sequence(s) newline separated
-
-<!-- -->
+input forward/unpaired nucleotide read sequence(s) newline separated.
+  Reads will be sorted before matching with reverse reads unless
+  \--no-sample-sort is specified.
 
 **\--reverse** *REVERSE* [*REVERSE* \...]
 
-  input reverse nucleotide read sequence(s)
-
-<!-- -->
+input reverse nucleotide read sequence(s). Reads will be sorted before
+  matching with forward reads unless \--no-sample-sort is specified.
 
 **\--reverse-list** *REVERSE_LIST*
 
-  input reverse nucleotide read sequence(s) newline separated
+input reverse nucleotide read sequence(s) newline separated. Reads
+  will be sorted before matching with forward reads unless
+  \--no-sample-sort is specified.
 
-<!-- -->
+**\--no-sample-sort**
+
+Do not sort read files by sample name before matching forward and
+  reverse reads.
 
 **\--genomes** *GENOMES* [*GENOMES* \...]
 
-  Reference genomes for read mapping
-
-<!-- -->
+Reference genomes for read mapping
 
 **\--genomes-list** *GENOMES_LIST*
 
-  Reference genomes for read mapping newline separated
-
-<!-- -->
+Reference genomes for read mapping newline separated
 
 **\--coassembly-samples** *COASSEMBLY_SAMPLES* [*COASSEMBLY_SAMPLES* \...]
 
-  Restrict coassembly to these samples. Remaining samples will still
-    be used for recovery [default: use all samples]
-
-<!-- -->
+Restrict coassembly to these samples. Remaining samples will still be
+  used for recovery [default: use all samples]
 
 **\--coassembly-samples-list** *COASSEMBLY_SAMPLES_LIST*
 
-  Restrict coassembly to these samples, newline separated. Remaining
-    samples will still be used for recovery [default: use all samples]
-
-<!-- -->
+Restrict coassembly to these samples, newline separated. Remaining
+  samples will still be used for recovery [default: use all samples]
 
 **\--anchor-samples** *ANCHOR_SAMPLES* [*ANCHOR_SAMPLES* \...]
 
-  Samples to use as anchors for coassembly, all coassemblies will
-    contain at least one anchor sample. [default: no restriction]
-
-<!-- -->
+Samples to use as anchors for coassembly, all coassemblies will
+  contain at least one anchor sample. [default: no restriction]
 
 **\--anchor-samples-list** *ANCHOR_SAMPLES_LIST*
 
-  Samples to use as anchors for coassembly, all coassemblies will
-    contain at least one anchor sample, newline separated. [default: no
-    restriction]
-
-<!-- -->
+Samples to use as anchors for coassembly, all coassemblies will
+  contain at least one anchor sample, newline separated. [default: no
+  restriction]
 
 **\--sra**
 
-  Download reads from SRA (forward read argument intepreted as SRA
-    IDs). Also sets \--run-qc.
-
-<!-- -->
+Download reads from SRA (forward read argument intepreted as SRA IDs).
+  Also sets \--run-qc.
 
 **\--download-limit** *DOWNLOAD_LIMIT*
 
-  Parallel download limit [default: 3]
+Parallel download limit [default: 3]
 
 # COASSEMBLY OPTIONS
 
 **\--coassemble-output** *COASSEMBLE_OUTPUT*
 
-  Output dir from coassemble subcommand
-
-<!-- -->
+Output dir from coassemble subcommand
 
 **\--coassemble-unbinned** *COASSEMBLE_UNBINNED*
 
-  SingleM appraise unbinned output from Bin Chicken coassemble
-    (alternative to \--coassemble-output)
-
-<!-- -->
+SingleM appraise unbinned output from Bin Chicken coassemble
+  (alternative to \--coassemble-output)
 
 **\--coassemble-binned** *COASSEMBLE_BINNED*
 
-  SingleM appraise binned output from Bin Chicken coassemble
-    (alternative to \--coassemble-output)
-
-<!-- -->
+SingleM appraise binned output from Bin Chicken coassemble
+  (alternative to \--coassemble-output)
 
 **\--coassemble-targets** *COASSEMBLE_TARGETS*
 
-  Target sequences output from Bin Chicken coassemble (alternative to
-    \--coassemble-output)
-
-<!-- -->
+Target sequences output from Bin Chicken coassemble (alternative to
+  \--coassemble-output)
 
 **\--coassemble-elusive-edges** *COASSEMBLE_ELUSIVE_EDGES*
 
-  Elusive edges output from Bin Chicken coassemble (alternative to
-    \--coassemble- output)
-
-<!-- -->
+Elusive edges output from Bin Chicken coassemble (alternative to
+  \--coassemble- output)
 
 **\--coassemble-elusive-clusters** *COASSEMBLE_ELUSIVE_CLUSTERS*
 
-  Elusive clusters output from Bin Chicken coassemble (alternative to
-    \--coassemble-output)
-
-<!-- -->
+Elusive clusters output from Bin Chicken coassemble (alternative to
+  \--coassemble-output)
 
 **\--coassemble-summary** *COASSEMBLE_SUMMARY*
 
-  Summary output from Bin Chicken coassemble (alternative to
-    \--coassemble- output)
-
-<!-- -->
+Summary output from Bin Chicken coassemble (alternative to
+  \--coassemble- output)
 
 **\--coassemblies** *COASSEMBLIES* [*COASSEMBLIES* \...]
 
-  Choose specific coassemblies from elusive clusters (e.g.
-    coassembly_0)
-
-<!-- -->
+Choose specific coassemblies from elusive clusters (e.g. coassembly_0)
 
 **\--coassemblies-list** *COASSEMBLIES_LIST*
 
-  Choose specific coassemblies from elusive clusters newline separated
-    (e.g. coassembly_0)
-
-<!-- -->
+Choose specific coassemblies from elusive clusters newline separated
+  (e.g. coassembly_0)
 
 **\--assemble-unmapped**
 
-  Only assemble reads that do not map to reference genomes
-
-<!-- -->
+Only assemble reads that do not map to reference genomes
 
 **\--run-qc**
 
-  Run Fastp QC on reads
-
-<!-- -->
+Run Fastp QC on reads
 
 **\--unmapping-min-appraised** *UNMAPPING_MIN_APPRAISED*
 
-  Minimum fraction of sequences binned to justify unmapping [default:
-    0.1]
-
-<!-- -->
+Minimum fraction of sequences binned to justify unmapping [default:
+  0.1]
 
 **\--unmapping-max-identity** *UNMAPPING_MAX_IDENTITY*
 
-  Maximum sequence identity of mapped sequences kept for coassembly
-    [default: 99%]
-
-<!-- -->
+Maximum sequence identity of mapped sequences kept for coassembly
+  [default: 99%]
 
 **\--unmapping-max-alignment** *UNMAPPING_MAX_ALIGNMENT*
 
-  Maximum percent alignment of mapped sequences kept for coassembly
-    [default: 99%]
-
-<!-- -->
+Maximum percent alignment of mapped sequences kept for coassembly
+  [default: 99%]
 
 **\--run-aviary**
 
-  Run Aviary commands for all identified coassemblies (unless specific
-    coassemblies are chosen with \--coassemblies) [default: do not]
-
-<!-- -->
+Run Aviary commands for all identified coassemblies (unless specific
+  coassemblies are chosen with \--coassemblies) [default: do not]
 
 **\--prior-assemblies** *PRIOR_ASSEMBLIES*
 
-  Prior assemblies to use for Aviary recovery. tsv file with header:
-    name [tab] assembly. Only possible with single-sample or update.
-    [default: generate assemblies through Aviary assemble]
-
-<!-- -->
+Prior assemblies to use for Aviary recovery. tsv file with header:
+  name [tab] assembly. Only possible with single-sample or update.
+  [default: generate assemblies through Aviary assemble]
 
 **\--cluster-submission**
 
-  Flag that cluster submission will occur through
-    \`\--snakemake-profile\`. This sets the local threads of Aviary
-    recover to 1, allowing parallel job submission [default: do not]
+Flag that cluster submission will occur through
+  \`\--snakemake-profile\`. This sets the local threads of Aviary
+  recover to 1, allowing parallel job submission [default: do not]
 
-<!-- -->
+**\--immediate-submit**
+
+Flag that immediate cluster submission will occur through
+  \`\--aviary-snakemake- profile\` (i.e. without waiting for jobs to
+  finish). Prevents snakemake from setting Aviary as complete, when it
+  has not yet been completed.
 
 **\--aviary-speed** {fast,comprehensive}
 
-  Run Aviary recover in \'fast\' or \'comprehensive\' mode. Fast mode
-    skips slow binners and refinement steps. [default: fast]
-
-<!-- -->
+Run Aviary recover in \'fast\' or \'comprehensive\' mode. Fast mode
+  skips slow binners and refinement steps. [default: fast]
 
 **\--assembly-strategy** {dynamic,metaspades,megahit}
 
-  Assembly strategy to use with Aviary. [default: dynamic; attempts
-    metaspades and if fails, switches to megahit]
-
-<!-- -->
+Assembly strategy to use with Aviary. [default: dynamic; attempts
+  metaspades and if fails, switches to megahit]
 
 **\--aviary-gtdbtk-db** *AVIARY_GTDBTK_DB*
 
-  Path to GTDB-Tk database directory for Aviary. Only required if
-    \--aviary-speed is set to comprehensive [default: use path from
-    GTDBTK_DATA_PATH env variable]
-
-<!-- -->
+Path to GTDB-Tk database directory for Aviary. Only required if
+  \--aviary-speed is set to comprehensive [default: use path from
+  GTDBTK_DATA_PATH env variable]
 
 **\--aviary-checkm2-db** *AVIARY_CHECKM2_DB*
 
-  Path to CheckM2 database directory for Aviary. [default: use path
-    from CHECKM2DB env variable]
-
-<!-- -->
+Path to CheckM2 database directory for Aviary. [default: use path
+  from CHECKM2DB env variable]
 
 **\--aviary-metabuli-db** *AVIARY_METABULI_DB*
 
-  Path to MetaBuli database directory for Aviary, specifically for
-    TaxVAMB. [default: use path from METABULI_DB_PATH env variable]
-
-<!-- -->
+Path to MetaBuli database directory for Aviary, specifically for
+  TaxVAMB. [default: use path from METABULI_DB_PATH env variable]
 
 **\--aviary-snakemake-profile** *AVIARY_SNAKEMAKE_PROFILE*
 
-  Snakemake profile (see
-    https://snakemake.readthedocs.io/en/v7.32.3/executing/cli.html#profiles).
-    Can be used to submit rules as jobs to cluster engine (see
-    https://snakemake.readthedocs.io/en/v7.32.3/executing/cluster.html).
-    [default: same as \`\--snakemake-profile\`]
-
-<!-- -->
+Snakemake profile (see
+  https://snakemake.readthedocs.io/en/v7.32.3/executing/cli.html#profiles).
+  Can be used to submit rules as jobs to cluster engine (see
+  https://snakemake.readthedocs.io/en/v7.32.3/executing/cluster.html).
+  [default: same as \`\--snakemake-profile\`]
 
 **\--aviary-assemble-cores** *AVIARY_ASSEMBLE_CORES*
 
-  Maximum number of cores for Aviary assemble to use. [default: 64]
-
-<!-- -->
+Maximum number of cores for Aviary assemble to use. [default: 64]
 
 **\--aviary-assemble-memory** *AVIARY_ASSEMBLE_MEMORY*
 
-  Maximum amount of memory for Aviary assemble to use (Gigabytes).
-    [default: 500]
-
-<!-- -->
+Maximum amount of memory for Aviary assemble to use (Gigabytes).
+  [default: 500]
 
 **\--aviary-recover-cores** *AVIARY_RECOVER_CORES*
 
-  Maximum number of cores for Aviary recover to use. [default: 32]
-
-<!-- -->
+Maximum number of cores for Aviary recover to use. [default: 32]
 
 **\--aviary-recover-memory** *AVIARY_RECOVER_MEMORY*
 
-  Maximum amount of memory for Aviary recover to use (Gigabytes).
-    [default: 250]
+Maximum amount of memory for Aviary recover to use (Gigabytes).
+  [default: 250]
 
-<!-- -->
+**\--aviary-extra-binners** [{maxbin,maxbin2,concoct,comebin,taxvamb,quickbin} \...]
 
-**\--aviary-extra-binners** [{maxbin,maxbin2,concoct,comebin,taxvamb} \...]
-
-  Optional list of extra binning algorithms to run. Can be any
-    combination of: maxbin, maxbin2, concoct, comebin, taxvamb
-
-<!-- -->
+Optional list of extra binning algorithms to run. Can be any
+  combination of: maxbin, maxbin2, concoct, comebin, taxvamb, quickbin
 
 **\--aviary-skip-binners** [{rosella,semibin,metabat1,metabat2,metabat,vamb} \...]
 
-  Optional list of binning algorithms to skip. Can be any combination
-    of: rosella, semibin, metabat1, metabat2, metabat, vamb. Note that
-    specifying
-
-<!-- -->
+Optional list of binning algorithms to skip. Can be any combination
+  of: rosella, semibin, metabat1, metabat2, metabat, vamb. Note that
+  specifying
 
 **\--aviary-request-gpu**
 
-  Request GPU resources for certain binners in Aviary recovery
-    [default: do not].
+Request GPU resources for certain binners in Aviary recovery
+  [default: do not].
 
 # GENERAL OPTIONS
 
 **\--output** *OUTPUT*
 
-  Output directory [default: .]
-
-<!-- -->
+Output directory [default: .]
 
 **\--cores** *CORES*
 
-  Maximum number of cores to use [default: 1]
-
-<!-- -->
+Maximum number of cores to use [default: 1]
 
 **\--dryrun**, **\--dry-run**
 
-  dry run workflow
-
-<!-- -->
+dry run workflow
 
 **\--snakemake-profile** *SNAKEMAKE_PROFILE*
 
-  Snakemake profile (see
-    https://snakemake.readthedocs.io/en/v7.32.3/executing/cli.html#profiles).
-    Can be used to submit rules as jobs to cluster engine (see
-    https://snakemake.readthedocs.io/en/v7.32.3/executing/cluster.html).
-
-<!-- -->
+Snakemake profile (see
+  https://snakemake.readthedocs.io/en/v7.32.3/executing/cli.html#profiles).
+  Can be used to submit rules as jobs to cluster engine (see
+  https://snakemake.readthedocs.io/en/v7.32.3/executing/cluster.html).
 
 **\--local-cores** *LOCAL_CORES*
 
-  Maximum number of cores to use on localrules when running in cluster
-    mode [default: 1]
-
-<!-- -->
+Maximum number of cores to use on localrules when running in cluster
+  mode [default: 1]
 
 **\--retries** *RETRIES*
 
-  Number of times to retry a failed job [default: 3].
-
-<!-- -->
+Number of times to retry a failed job [default: 3].
 
 **\--snakemake-args** *SNAKEMAKE_ARGS*
 
-  Additional commands to be supplied to snakemake in the form of a
-    space- prefixed single string e.g. \" \--quiet\"
-
-<!-- -->
+Additional commands to be supplied to snakemake in the form of a
+  space- prefixed single string e.g. \" \--quiet\"
 
 **\--tmp-dir** *TMP_DIR*
 
-  Path to temporary directory. [default: no default]
+Path to temporary directory. [default: no default]
 
 # OTHER GENERAL OPTIONS
 
 **\--debug**
 
-  output debug information
-
-<!-- -->
+output debug information
 
 **\--version**
 
-  output version information and quit
-
-<!-- -->
+output version information and quit
 
 **\--quiet**
 
-  only output errors
-
-<!-- -->
+only output errors
 
 **\--full-help**
 
-  print longer help message
-
-<!-- -->
+print longer help message
 
 **\--full-help-roff**
 
-  print longer help message in ROFF (manpage) format
+print longer help message in ROFF (manpage) format
 
 # EXAMPLES
 
 update previous run to run specific coassemblies
 
-  **\$ binchicken update \--coassemble-output coassemble_dir
-    \--run-aviary \--coassemblies coassembly_0 \...**
+**\$ binchicken update \--coassemble-output coassemble_dir
+  \--run-aviary \--coassemblies coassembly_0 \...**
 
 update previous run to perform unmapping
 
-  **\$ binchicken update \--coassemble-output coassemble_dir
-    \--assemble-unmapped**
+**\$ binchicken update \--coassemble-output coassemble_dir
+  \--assemble-unmapped**
 
 update previous run to download SRA reads
 
-  **\$ binchicken update \--coassemble-output coassemble_dir \--sra**
+**\$ binchicken update \--coassemble-output coassemble_dir \--sra**
 
 update previous run to download SRA reads, perform unmapping and run specific coassemblies
 
-  **\$ binchicken update \--coassemble-output coassemble_dir \--sra
-    \--assemble-unmapped \--run-aviary \--coassemblies coassembly_0
-    \...**
+**\$ binchicken update \--coassemble-output coassemble_dir \--sra
+  \--assemble-unmapped \--run-aviary \--coassemblies coassembly_0 \...**
