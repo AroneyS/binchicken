@@ -25,7 +25,7 @@ pip = "*"
 
 [feature.main.tasks]
 postinstall-base = { cmd = "pip uninstall -y binchicken || true && pip install --no-build-isolation --no-deps --disable-pip-version-check -e ..", cwd = "binchicken" }
-build_dep_defs = { cmd = "python ../admin/build_dep_defs_from_pixi.py", depends-on = ["postinstall"] }
+build_dep_defs = { cmd = "python admin/build_dep_defs_from_pixi.py", depends-on = ["postinstall"] }
 
 [tasks.postinstall]
 # install into both standard and dev envs
