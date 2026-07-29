@@ -211,7 +211,6 @@ def run_workflow(config, workflow, output_dir, cores=16, dryrun=False,
     load_configfile(config)
 
     cmd = (
-        "{pixi_run} -e default "
         "snakemake --snakefile {snakefile} --configfile '{config}' --directory {output_dir} "
         "{jobs} --rerun-triggers mtime --rerun-incomplete --keep-going --nolock "
         "{snakemake_args} "
