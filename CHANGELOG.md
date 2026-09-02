@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Minimum Aviary version bumped to 0.13.3, which updates CoverM to 0.8.0 and fixes long-read coverage calculation failing with "Cannot continue without minimap2" during Aviary recovery
+- Updated SingleM to v0.21.4, fixing a DIAMOND hanging bug (#223). Thanks @megan-a-wallace for reporting
 
 ## [0.14.1] - 2026-07-30
 
