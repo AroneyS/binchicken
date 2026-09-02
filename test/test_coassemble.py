@@ -28,6 +28,11 @@ SAMPLE_READS_REVERSE_EMPTY = " ".join([SAMPLE_READS_REVERSE, os.path.join(path_t
 SAMPLE_READS_FORWARD_PRE = " ".join([SAMPLE_READS_FORWARD, os.path.join(path_to_data, "sample_5.1.fq")])
 SAMPLE_READS_REVERSE_PRE = " ".join([SAMPLE_READS_REVERSE, os.path.join(path_to_data, "sample_5.2.fq")])
 
+SAMPLE_LONG_READS = " ".join([
+    os.path.join(path_to_data, "sample_1.fq"),
+    os.path.join(path_to_data, "sample_3.fq"),
+])
+
 GENOMES = " ".join([os.path.join(path_to_data, "GB_GCA_013286235.1.fna")])
 TWO_GENOMES = " ".join([
     os.path.join(path_to_data, "GB_GCA_013286235.1.fna"),
@@ -294,6 +299,184 @@ class Tests(unittest.TestCase):
             )
             with open(summary_path) as f:
                 self.assertEqual(expected, f.read())
+
+    def test_coassemble_long_reads(self):
+        with in_tempdir():
+            cmd = (
+                f"binchicken coassemble "
+                f"--forward {SAMPLE_READS_FORWARD_EMPTY} "
+                f"--reverse {SAMPLE_READS_REVERSE_EMPTY} "
+                f"--long-reads {SAMPLE_LONG_READS} "
+                f"--long-read-type hifi "
+                f"--genomes {GENOMES} "
+                f"--singlem-metapackage {METAPACKAGE} "
+                f"--assemble-unmapped "
+                f"--unmapping-max-identity 99 "
+                f"--unmapping-max-alignment 90 "
+                f"--prodigal-meta "
+                f"--output test "
+            )
+            extern.run(cmd)
+
+            config_path = os.path.join("test", "config.yaml")
+            self.assertTrue(os.path.exists(config_path))
+            config = load_configfile(config_path)
+            self.assertEqual(
+                {
+                    "sample_1": os.path.abspath(os.path.join(path_to_data, "sample_1.fq")),
+                    "sample_3": os.path.abspath(os.path.join(path_to_data, "sample_3.fq")),
+                },
+                config["long_reads"],
+            )
+            self.assertEqual("hifi", config["long_read_type"])
+
+            cluster_path = os.path.join("test", "coassemble", "target", "elusive_clusters.tsv")
+            self.assertTrue(os.path.exists(cluster_path))
+
+            test_dir = os.path.abspath("test")
+            sample_1_long = os.path.abspath(os.path.join(path_to_data, "sample_1.fq"))
+            sample_3_long = os.path.abspath(os.path.join(path_to_data, "sample_3.fq"))
+
+            coassemble_path = os.path.join("test", "coassemble", "commands", "coassemble_commands.sh")
+            self.assertTrue(os.path.exists(coassemble_path))
+            expected = "\n".join(
+                [
+                    " ".join([
+                        "aviary assemble --coassemble -1",
+                        os.path.join(test_dir, "coassemble", "mapping", "sample_1_unmapped.1.fq.gz"),
+                        os.path.join(test_dir, "coassemble", "mapping", "sample_2_unmapped.1.fq.gz"),
+                        "-2",
+                        os.path.join(test_dir, "coassemble", "mapping", "sample_1_unmapped.2.fq.gz"),
+                        os.path.join(test_dir, "coassemble", "mapping", "sample_2_unmapped.2.fq.gz"),
+                        "--longreads", sample_1_long, "--long-read-type hifi",
+                        "--output", os.path.join(test_dir, "coassemble", "coassemble", "coassembly_0", "assemble"),
+                        "-n 64 -t 64 -m 500 --skip-qc &>",
+                        os.path.join(test_dir, "coassemble", "coassemble", "logs", "coassembly_0_assemble.log"),
+                        ""
+                    ]),
+                    ""
+                ]
+            )
+            with open(coassemble_path) as f:
+                self.assertEqual(expected, f.read())
+
+            recover_path = os.path.join("test", "coassemble", "commands", "recover_commands.sh")
+            self.assertTrue(os.path.exists(recover_path))
+            expected = "\n".join(
+                [
+                    " ".join([
+                        "aviary recover --assembly", os.path.join(test_dir, "coassemble", "coassemble", "coassembly_0", "assemble", "assembly", "final_contigs.fasta"),
+                        "-1",
+                        os.path.join(test_dir, "coassemble", "mapping", "sample_1_unmapped.1.fq.gz"),
+                        os.path.join(test_dir, "coassemble", "mapping", "sample_2_unmapped.1.fq.gz"),
+                        os.path.join(test_dir, "coassemble", "mapping", "sample_3_unmapped.1.fq.gz"),
+                        "-2",
+                        os.path.join(test_dir, "coassemble", "mapping", "sample_1_unmapped.2.fq.gz"),
+                        os.path.join(test_dir, "coassemble", "mapping", "sample_2_unmapped.2.fq.gz"),
+                        os.path.join(test_dir, "coassemble", "mapping", "sample_3_unmapped.2.fq.gz"),
+                        "--longreads", sample_1_long, sample_3_long, "--long-read-type hifi",
+                        "--output", os.path.join(test_dir, "coassemble", "coassemble", "coassembly_0", "recover"),
+                        "--binning-only --refinery-max-iterations 0 "
+                        "-n 32 -t 32 -m 250 --skip-qc &>",
+                        os.path.join(test_dir, "coassemble", "coassemble", "logs", "coassembly_0_recover.log"),
+                        ""
+                    ]),
+                    ""
+                ]
+            )
+            with open(recover_path) as f:
+                self.assertEqual(expected, f.read())
+
+    def test_coassemble_long_reads_unmatched_sample(self):
+        with in_tempdir():
+            cmd = (
+                f"binchicken coassemble "
+                f"--forward {SAMPLE_READS_FORWARD} "
+                f"--reverse {SAMPLE_READS_REVERSE} "
+                f"--long-reads {os.path.join(path_to_data, 'sample_4.1.fq')} "
+                f"--genomes {GENOMES} "
+                f"--singlem-metapackage {METAPACKAGE} "
+                f"--prodigal-meta "
+                f"--output test "
+            )
+            extern.run(cmd)
+
+            config_path = os.path.join("test", "config.yaml")
+            self.assertTrue(os.path.exists(config_path))
+            config = load_configfile(config_path)
+            self.assertEqual(
+                {"sample_4.1": os.path.abspath(os.path.join(path_to_data, "sample_4.1.fq"))},
+                config["long_reads"],
+            )
+
+            samples_list_path = os.path.join("test", "coassemble", "lists", "samples_list.tsv")
+            self.assertTrue(os.path.exists(samples_list_path))
+            with open(samples_list_path) as f:
+                samples = f.read().splitlines()
+            self.assertTrue("sample_4.1" in samples)
+
+            pipe_long_path = os.path.join("test", "coassemble", "pipe_long", "sample_4.1_read.otu_table.tsv")
+            self.assertTrue(os.path.exists(pipe_long_path))
+
+            cluster_path = os.path.join("test", "coassemble", "target", "elusive_clusters.tsv")
+            self.assertTrue(os.path.exists(cluster_path))
+
+    def test_coassemble_combine_pipe_reads(self):
+        with in_tempdir():
+            short_otu_table = "sample_1_read.otu_table.tsv"
+            with open(short_otu_table, "w") as f:
+                f.write(
+                    "\n".join([
+                        "\t".join(["gene", "sample", "sequence", "num_hits", "coverage", "taxonomy"]),
+                        "\t".join(["gene1", "sample_1", "AAAA", "3", "4.92", "Root; taxon1"]),
+                        "\t".join(["gene1", "sample_1", "CCCC", "2", "1.5", "Root; taxon2"]),
+                        "",
+                    ])
+                )
+
+            base_cmd = (
+                f"binchicken coassemble "
+                f"--forward {os.path.join(path_to_data, 'sample_1.1.fq')} "
+                f"--reverse {os.path.join(path_to_data, 'sample_1.2.fq')} "
+                f"--sample-singlem {short_otu_table} "
+                f"--singlem-metapackage {METAPACKAGE} "
+                f"--output test "
+            )
+
+            # Materialise config.yaml and symlink the short-read otu table into
+            # coassemble/pipe/ without executing any rules.
+            extern.run(base_cmd + "--dryrun --snakemake-args \" --quiet rules\" ")
+
+            long_otu_dir = os.path.join("test", "coassemble", "pipe_long")
+            os.makedirs(long_otu_dir, exist_ok=True)
+            with open(os.path.join(long_otu_dir, "sample_1_read.otu_table.tsv"), "w") as f:
+                f.write(
+                    "\n".join([
+                        "\t".join(["gene", "sample", "sequence", "num_hits", "coverage", "taxonomy"]),
+                        "\t".join(["gene1", "sample_1", "AAAA", "5", "2.08", "Root; taxon1"]),
+                        "\t".join(["gene1", "sample_1", "TTTT", "1", "0.5", "Root; taxon3"]),
+                        "",
+                    ])
+                )
+
+            combined_path = os.path.abspath(os.path.join("test", "coassemble", "pipe", "sample_1_read_combined.otu_table.tsv"))
+            extern.run(base_cmd + f"--snakemake-args \"{combined_path} --rerun-triggers mtime\" ")
+
+            self.assertTrue(os.path.exists(combined_path))
+            observed = pl.read_csv(combined_path, separator="\t")
+            expected = pl.DataFrame(
+                [
+                    # AAAA present in both short (3/4.92) and long (5/2.08) tables, so
+                    # num_hits/coverage should be summed across the two sources.
+                    ["gene1", "sample_1", "AAAA", 8, 7.0, "Root; taxon1"],
+                    # CCCC (short-only) and TTTT (long-only) should pass through unchanged.
+                    ["gene1", "sample_1", "CCCC", 2, 1.5, "Root; taxon2"],
+                    ["gene1", "sample_1", "TTTT", 1, 0.5, "Root; taxon3"],
+                ],
+                schema=["gene", "sample", "sequence", "num_hits", "coverage", "taxonomy"],
+                orient="row",
+            )
+            assert_frame_equal(expected, observed, check_dtypes=False, check_row_order=False)
 
     def test_coassemble_taxa_of_interest(self):
         with in_tempdir():
@@ -2259,6 +2442,150 @@ class Tests(unittest.TestCase):
                 self.assertTrue("SRR3309137" in file)
                 self.assertTrue("SRR8334323" in file)
                 self.assertTrue("SRR8334324" in file)
+
+    def test_coassemble_sra_long_reads_mock(self):
+        with in_tempdir():
+            cmd = (
+                f"binchicken coassemble "
+                f"--forward {SAMPLE_READS_FORWARD} "
+                f"--reverse {SAMPLE_READS_REVERSE} "
+                f"--sra-long-reads SRR3309137 "
+                f"--genomes {GENOMES} "
+                f"--singlem-metapackage {METAPACKAGE} "
+                f"--prodigal-meta "
+                f"--output test "
+                f"--snakemake-args \" --config mock_sra=True\" "
+            )
+            extern.run(cmd)
+
+            config_path = os.path.join("test", "config.yaml")
+            self.assertTrue(os.path.exists(config_path))
+            config = load_configfile(config_path)
+            self.assertEqual(
+                {"SRR3309137": os.path.join(os.path.abspath("test"), "coassemble", "sra", "SRR3309137.fastq.gz")},
+                config["long_reads"],
+            )
+
+            sra_path = os.path.join("test", "coassemble", "sra", "SRR3309137.fastq.gz")
+            self.assertTrue(os.path.exists(sra_path))
+
+            samples_list_path = os.path.join("test", "coassemble", "lists", "samples_list.tsv")
+            self.assertTrue(os.path.exists(samples_list_path))
+            with open(samples_list_path) as f:
+                samples = f.read().splitlines()
+            self.assertTrue("SRR3309137" in samples)
+
+            pipe_long_path = os.path.join("test", "coassemble", "pipe_long", "SRR3309137_read.otu_table.tsv")
+            self.assertTrue(os.path.exists(pipe_long_path))
+
+    def test_coassemble_short_long_read_pairs_mock(self):
+        with in_tempdir():
+            pairs_path = os.path.abspath("short_long_read_pairs.tsv")
+            with open(pairs_path, "w") as f:
+                f.write("sample\tlong_reads\n")
+                f.write("sample_1\tSRR3309137\n")
+
+            cmd = (
+                f"binchicken coassemble "
+                f"--forward {SAMPLE_READS_FORWARD} "
+                f"--reverse {SAMPLE_READS_REVERSE} "
+                f"--short-long-read-pairs {pairs_path} "
+                f"--genomes {GENOMES} "
+                f"--singlem-metapackage {METAPACKAGE} "
+                f"--prodigal-meta "
+                f"--output test "
+                f"--snakemake-args \" --config mock_sra=True\" "
+            )
+            output = extern.run(cmd)
+
+            self.assertTrue("Long reads sample name(s) do not match" not in output)
+
+            config_path = os.path.join("test", "config.yaml")
+            self.assertTrue(os.path.exists(config_path))
+            config = load_configfile(config_path)
+            self.assertEqual(
+                {"sample_1": os.path.join(os.path.abspath("test"), "coassemble", "sra", "SRR3309137.fastq.gz")},
+                config["long_reads"],
+            )
+
+            long_read_path = os.path.join("test", "coassemble", "sra", "SRR3309137.fastq.gz")
+            self.assertTrue(os.path.exists(long_read_path))
+
+            combined_path = os.path.join("test", "coassemble", "pipe", "sample_1_read_combined.otu_table.tsv")
+            self.assertTrue(os.path.exists(combined_path))
+
+    def test_coassemble_short_long_read_pairs_local_file(self):
+        # Explicit pairing must work with a plain local file too (agnostic to --sra), and
+        # must bypass filename-based auto-matching even when the filename doesn't match.
+        with in_tempdir():
+            local_long_reads = os.path.abspath("unrelated_filename.fq")
+            shutil.copy(os.path.join(path_to_data, "sample_1.fq"), local_long_reads)
+
+            pairs_path = os.path.abspath("short_long_read_pairs.tsv")
+            with open(pairs_path, "w") as f:
+                f.write("sample\tlong_reads\n")
+                f.write(f"sample_1\t{local_long_reads}\n")
+
+            cmd = (
+                f"binchicken coassemble "
+                f"--forward {SAMPLE_READS_FORWARD} "
+                f"--reverse {SAMPLE_READS_REVERSE} "
+                f"--short-long-read-pairs {pairs_path} "
+                f"--genomes {GENOMES} "
+                f"--singlem-metapackage {METAPACKAGE} "
+                f"--prodigal-meta "
+                f"--output test "
+            )
+            output = extern.run(cmd)
+
+            self.assertTrue("Long reads sample name(s) do not match" not in output)
+
+            config_path = os.path.join("test", "config.yaml")
+            self.assertTrue(os.path.exists(config_path))
+            config = load_configfile(config_path)
+            self.assertEqual({"sample_1": local_long_reads}, config["long_reads"])
+
+    def test_coassemble_short_long_read_pairs_with_sra_forward_mock(self):
+        # Regression test: combining --sra (short reads) with --short-long-read-pairs (long
+        # reads downloaded via SRA) in the same run. Each triggers its own download_long_sra
+        # snakemake invocation against the shared coassemble/sra/ directory; the second one
+        # used to be silently skipped ("Nothing to be done") because it targeted the generic
+        # download_sra/mock_download_sra rule, whose output the first call already left
+        # looking up to date.
+        with in_tempdir():
+            pairs_path = os.path.abspath("short_long_read_pairs.tsv")
+            with open(pairs_path, "w") as f:
+                f.write("sample\tlong_reads\n")
+                f.write("SRR8334323\tSRR1234567\n")
+
+            cmd = (
+                f"binchicken coassemble "
+                f"--forward SRR3309137 SRR8334323 SRR8334324 "
+                f"--sra "
+                f"--short-long-read-pairs {pairs_path} "
+                f"--genomes {GENOMES} "
+                f"--singlem-metapackage {METAPACKAGE} "
+                f"--prodigal-meta "
+                f"--output test "
+                f"--snakemake-args \" --config mock_sra=True\" "
+            )
+            extern.run(cmd)
+
+            config_path = os.path.join("test", "config.yaml")
+            self.assertTrue(os.path.exists(config_path))
+            config = load_configfile(config_path)
+            self.assertEqual(
+                {"SRR8334323": os.path.join(os.path.abspath("test"), "coassemble", "sra", "SRR1234567.fastq.gz")},
+                config["long_reads"],
+            )
+
+            # Both downloads must actually have happened -- previously the second (long-read)
+            # download was silently skipped, leaving this file missing.
+            self.assertTrue(os.path.exists(os.path.join("test", "coassemble", "sra", "SRR1234567.fastq.gz")))
+            self.assertTrue(os.path.exists(os.path.join("test", "coassemble", "sra", "SRR3309137_1.fastq.gz")))
+
+            combined_path = os.path.join("test", "coassemble", "pipe", "SRR8334323_read_combined.otu_table.tsv")
+            self.assertTrue(os.path.exists(combined_path))
 
     def test_coassemble_hierarchy(self):
         with in_tempdir():

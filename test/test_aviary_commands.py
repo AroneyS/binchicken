@@ -141,6 +141,56 @@ class Tests(unittest.TestCase):
         observed_commands = pipeline(elusive_clusters, reads_1, reads_2, output_dir, assemble_threads, assemble_memory, recover_threads, recover_memory, fast=True)
         self.assertDataFrameEqual(expected_commands, observed_commands)
 
+    def test_aviary_commands_long_read_only_sample(self):
+        # "7" has no entry in reads_1/reads_2 (long-read-only sample)
+        long_reads = {"1": "1_long.fq.gz", "7": "7_long.fq.gz"}
+        elusive_clusters = pl.DataFrame([
+            ["1,7", 2, 2, 2000, "1,7", "coassembly_0"],
+            ["7", 1, 1, 1000, "7", "coassembly_1"],
+        ], orient="row", schema=ELUSIVE_CLUSTERS_COLUMNS)
+        output_dir = "test_output_dir"
+        assemble_threads = 10
+        assemble_memory = 50
+        recover_threads = 5
+        recover_memory = 25
+
+        expected_commands = pl.DataFrame([
+            [
+                f"aviary assemble --coassemble "
+                f"-1 1_1.fq.gz -2 1_2.fq.gz "
+                f"--longreads 1_long.fq.gz 7_long.fq.gz --long-read-type ont "
+                f"--output {output_dir}/coassemble/coassembly_0/assemble "
+                f"-n {assemble_threads} -t {assemble_threads} -m {assemble_memory} --skip-qc "
+                f"&> {output_dir}/coassemble/logs/coassembly_0_assemble.log ",
+
+                f"aviary recover --assembly {output_dir}/coassemble/coassembly_0/assemble/assembly/final_contigs.fasta "
+                f"-1 1_1.fq.gz -2 1_2.fq.gz "
+                f"--longreads 1_long.fq.gz 7_long.fq.gz --long-read-type ont "
+                f"--output {output_dir}/coassemble/coassembly_0/recover "
+                f"-n {recover_threads} -t {recover_threads} -m {recover_memory} --skip-qc "
+                f"&> {output_dir}/coassemble/logs/coassembly_0_recover.log ",
+            ],
+            [
+                f"aviary assemble --coassemble "
+                f"--longreads 7_long.fq.gz --long-read-type ont "
+                f"--output {output_dir}/coassemble/coassembly_1/assemble "
+                f"-n {assemble_threads} -t {assemble_threads} -m {assemble_memory} --skip-qc "
+                f"&> {output_dir}/coassemble/logs/coassembly_1_assemble.log ",
+
+                f"aviary recover --assembly {output_dir}/coassemble/coassembly_1/assemble/assembly/final_contigs.fasta "
+                f"--longreads 7_long.fq.gz --long-read-type ont "
+                f"--output {output_dir}/coassemble/coassembly_1/recover "
+                f"-n {recover_threads} -t {recover_threads} -m {recover_memory} --skip-qc "
+                f"&> {output_dir}/coassemble/logs/coassembly_1_recover.log ",
+            ],
+        ], orient="row", schema=COMMANDS_COLUMNS)
+
+        observed_commands = pipeline(
+            elusive_clusters, reads_1, reads_2, output_dir, assemble_threads, assemble_memory, recover_threads, recover_memory,
+            long_reads=long_reads,
+            )
+        self.assertDataFrameEqual(expected_commands, observed_commands)
+
 
 if __name__ == '__main__':
     unittest.main()

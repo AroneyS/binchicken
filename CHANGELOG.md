@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- `--long-reads`/`--long-reads-list` and `--long-read-type` arguments for supplying long-read (e.g. Nanopore) sequences alongside short reads. Long reads are piped through SingleM and merged into the matched short-read sample's marker gene profile, contributing to coassembly clustering decisions, then are combined with the matched short reads for Aviary assembly and recovery. Long-read samples without a matching short-read sample are also supported, contributing to clustering and being assembled/recovered with Aviary using long reads alone
+- `--sra-long-reads`/`--sra-long-reads-list` arguments for downloading long-read-only samples directly from SRA/ENA by run accession, and `--short-long-read-pairs` (a TSV file of sample/long_reads pairs, each value a local file or SRA/ENA accession) for explicitly matching a long read to an existing `--forward`/`--reverse`/`--sra` sample, bypassing the automatic filename-based matching used by `--long-reads`
+
+### Changed
+- Minimum Aviary version bumped to 0.13.3, which updates CoverM to 0.8.0 and fixes long-read coverage calculation failing with "Cannot continue without minimap2" during Aviary recovery
+- Updated SingleM to v0.21.4, fixing a DIAMOND hanging bug (#223). Thanks @megan-a-wallace for reporting
+
 ## [0.14.1] - 2026-07-30
 
 ### Fixed

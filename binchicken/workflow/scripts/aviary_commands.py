@@ -23,6 +23,8 @@ except Exception:
 #   --recover-commands {output.recover_commands} \
 #   --reads-1 {input.reads_1} \
 #   --reads-2 {input.reads_2} \
+#   --long-reads {input.long_reads} \
+#   --long-read-type {params.long_read_type} \
 #   --dir {params.dir} \
 #   --assemble-threads {params.assemble_threads} \
 #   --assemble-memory {params.assemble_memory} \
@@ -33,7 +35,9 @@ except Exception:
 #   --log {log}
 # """
 
-def pipeline(coassemblies, reads_1, reads_2, output_dir, assemble_threads, assemble_memory, recover_threads, recover_memory, fast=False):
+def pipeline(coassemblies, reads_1, reads_2, output_dir, assemble_threads, assemble_memory, recover_threads, recover_memory, fast=False, long_reads=None, long_read_type="ont"):
+    long_reads = long_reads if long_reads else {}
+
     output = (
         coassemblies
         .with_columns(
@@ -41,17 +45,31 @@ def pipeline(coassemblies, reads_1, reads_2, output_dir, assemble_threads, assem
             pl.col("recover_samples").str.split(","),
             )
         .with_columns(
-            coassembly_samples_1 = pl.col("samples").list.eval(pl.element().replace(reads_1)),
-            coassembly_samples_2 = pl.col("samples").list.eval(pl.element().replace(reads_2)),
-            recover_samples_1 = pl.col("recover_samples").list.eval(pl.element().replace(reads_1)),
-            recover_samples_2 = pl.col("recover_samples").list.eval(pl.element().replace(reads_2)),
+            coassembly_samples_1 = pl.col("samples").list.eval(pl.element().replace_strict(reads_1, default=None, return_dtype=pl.Utf8)).list.drop_nulls(),
+            coassembly_samples_2 = pl.col("samples").list.eval(pl.element().replace_strict(reads_2, default=None, return_dtype=pl.Utf8)).list.drop_nulls(),
+            coassembly_samples_long = pl.col("samples").list.eval(pl.element().replace_strict(long_reads, default=None, return_dtype=pl.Utf8)).list.drop_nulls(),
+            recover_samples_1 = pl.col("recover_samples").list.eval(pl.element().replace_strict(reads_1, default=None, return_dtype=pl.Utf8)).list.drop_nulls(),
+            recover_samples_2 = pl.col("recover_samples").list.eval(pl.element().replace_strict(reads_2, default=None, return_dtype=pl.Utf8)).list.drop_nulls(),
+            recover_samples_long = pl.col("recover_samples").list.eval(pl.element().replace_strict(long_reads, default=None, return_dtype=pl.Utf8)).list.drop_nulls(),
             )
         .with_columns(
             assemble = pl.concat_str(
-                pl.lit("aviary assemble --coassemble -1 "),
-                pl.col("coassembly_samples_1").list.join(" "),
-                pl.lit(" -2 "),
-                pl.col("coassembly_samples_2").list.join(" "),
+                pl.lit("aviary assemble --coassemble"),
+                pl.when(pl.col("coassembly_samples_1").list.len() > 0).then(
+                    pl.concat_str(
+                        pl.lit(" -1 "),
+                        pl.col("coassembly_samples_1").list.join(" "),
+                        pl.lit(" -2 "),
+                        pl.col("coassembly_samples_2").list.join(" "),
+                        )
+                    ).otherwise(pl.lit("")),
+                pl.when(pl.col("coassembly_samples_long").list.len() > 0).then(
+                    pl.concat_str(
+                        pl.lit(" --longreads "),
+                        pl.col("coassembly_samples_long").list.join(" "),
+                        pl.lit(f" --long-read-type {long_read_type}"),
+                        )
+                    ).otherwise(pl.lit("")),
                 pl.lit(" --output "),
                 pl.lit(output_dir),
                 pl.lit("/coassemble/"),
@@ -73,10 +91,22 @@ def pipeline(coassemblies, reads_1, reads_2, output_dir, assemble_threads, assem
                 pl.lit(output_dir),
                 pl.lit("/coassemble/"),
                 pl.col("coassembly"),
-                pl.lit("/assemble/assembly/final_contigs.fasta -1 "),
-                pl.col("recover_samples_1").list.join(" "),
-                pl.lit(" -2 "),
-                pl.col("recover_samples_2").list.join(" "),
+                pl.lit("/assemble/assembly/final_contigs.fasta"),
+                pl.when(pl.col("recover_samples_1").list.len() > 0).then(
+                    pl.concat_str(
+                        pl.lit(" -1 "),
+                        pl.col("recover_samples_1").list.join(" "),
+                        pl.lit(" -2 "),
+                        pl.col("recover_samples_2").list.join(" "),
+                        )
+                    ).otherwise(pl.lit("")),
+                pl.when(pl.col("recover_samples_long").list.len() > 0).then(
+                    pl.concat_str(
+                        pl.lit(" --longreads "),
+                        pl.col("recover_samples_long").list.join(" "),
+                        pl.lit(f" --long-read-type {long_read_type}"),
+                        )
+                    ).otherwise(pl.lit("")),
                 pl.lit(" --output "),
                 pl.lit(output_dir),
                 pl.lit("/coassemble/"),
@@ -107,6 +137,8 @@ def main():
     parser.add_argument("--recover-commands", required=True, help="Path to output recover commands file")
     parser.add_argument("--reads-1", required=True, help="Named list file of read1")
     parser.add_argument("--reads-2", required=True, help="Named list file of read2")
+    parser.add_argument("--long-reads", default=None, help="Named list file of long reads")
+    parser.add_argument("--long-read-type", default="ont", help="Aviary --long-read-type value")
     parser.add_argument("--dir", required=True, help="Output directory")
     parser.add_argument("--assemble-threads", type=int, required=True, help="Threads for assembly")
     parser.add_argument("--assemble-memory", required=True, help="Memory for assembly")
@@ -158,6 +190,12 @@ def main():
         for line in f:
             sample, read2 = line.strip().split("\t")
             reads_2[sample] = read2
+    long_reads = {}
+    if args.long_reads:
+        with open(args.long_reads, "r") as f:
+            for line in f:
+                sample, long_read = line.strip().split("\t")
+                long_reads[sample] = long_read
 
     coassemblies = pipeline(
         coassemblies,
@@ -169,6 +207,8 @@ def main():
         recover_threads=args.recover_threads,
         recover_memory=args.recover_memory,
         fast=fast,
+        long_reads=long_reads,
+        long_read_type=args.long_read_type,
     )
 
     coassemblies.select("assemble").write_csv(args.coassemble_commands, separator="\t", include_header=False)

@@ -62,6 +62,20 @@ input reverse nucleotide read sequence(s) newline separated. Reads
 Do not sort read files by sample name before matching forward and
   reverse reads.
 
+**\--long-reads** *LONG_READS* [*LONG_READS* \...]
+
+input long-read nucleotide read sequence(s), one file per sample
+  (single- ended). Sample name is derived from the filename. If it
+  matches a \--forward/\--reverse sample name, the long reads are
+  combined with that sample\'s short reads for Aviary assembly and
+  recovery; otherwise the sample is treated as long-read-only.
+  [default: no long reads]
+
+**\--long-reads-list** *LONG_READS_LIST*
+
+input long-read nucleotide read sequence(s) newline separated. See
+  \--long- reads. [default: no long reads]
+
 **\--genomes** *GENOMES* [*GENOMES* \...]
 
 Reference genomes for read mapping
@@ -201,6 +215,11 @@ Run Aviary recover in \'fast\' or \'comprehensive\' mode. Fast mode
 
 Assembly strategy to use with Aviary. [default: dynamic; attempts
   metaspades and if fails, switches to megahit]
+
+**\--long-read-type** {ont,ont_hq,rs,sq,ccs,hifi}
+
+Sequencing platform and technology for \--long-reads, passed to Aviary
+  as \`\--long-read-type\`. [default: ont]
 
 **\--aviary-gtdbtk-db** *AVIARY_GTDBTK_DB*
 

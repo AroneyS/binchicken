@@ -1,9 +1,11 @@
 max_threads: 8
 coassembly_samples: []
 anchor_samples: []
-singlem_metapackage: 
+singlem_metapackage:
 genomes:
-  genome: 
+  genome:
+long_reads: {}
+long_read_type: "ont"
 taxa_of_interest: ""
 max_coassembly_size: 
 assemble_unmapped: false

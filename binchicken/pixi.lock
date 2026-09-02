@@ -17,7 +17,7 @@ environments:
       - conda: https://conda.anaconda.org/bioconda/linux-64/bbmap-39.81-h9b5c0a0_1.conda
       - conda: https://conda.anaconda.org/bioconda/linux-64/htslib-1.23.1-h633afcb_0.conda
       - conda: https://conda.anaconda.org/bioconda/linux-64/samtools-1.23.1-ha83d96e_0.conda
-      - conda: https://conda.anaconda.org/bioconda/noarch/aviary-0.13.2-pyhdfd78af_0.conda
+      - conda: https://conda.anaconda.org/bioconda/noarch/aviary-0.13.3-pyhdfd78af_0.conda
       - conda: https://conda.anaconda.org/bioconda/noarch/bird_tool_utils_python-0.6.0-pyh7e72e81_0.conda
       - conda: https://conda.anaconda.org/bioconda/noarch/snakemake-executor-plugin-cluster-generic-1.0.9-pyhdfd78af_0.tar.bz2
       - conda: https://conda.anaconda.org/bioconda/noarch/snakemake-interface-common-1.23.0-pyhdfd78af_1.conda
@@ -1499,7 +1499,7 @@ environments:
       - conda: https://conda.anaconda.org/bioconda/noarch/perl-test2-suite-0.000163-pl5321hdfd78af_0.tar.bz2
       - conda: https://conda.anaconda.org/bioconda/noarch/pyranges-0.1.4-pyhdfd78af_0.tar.bz2
       - conda: https://conda.anaconda.org/bioconda/noarch/seqmagick-0.8.6-pyhdfd78af_0.tar.bz2
-      - conda: https://conda.anaconda.org/bioconda/noarch/singlem-0.21.3-pyhdfd78af_0.conda
+      - conda: https://conda.anaconda.org/bioconda/noarch/singlem-0.21.4-pyhdfd78af_0.conda
       - conda: https://conda.anaconda.org/bioconda/noarch/taxtastic-1.0.1-pyhdfd78af_0.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/_openmp_mutex-4.5-20_gnu.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/aws-c-auth-0.10.3-hd2277e8_3.conda
@@ -2155,9 +2155,9 @@ packages:
   license: MIT
   size: 280227
   timestamp: 1766053299578
-- conda: https://conda.anaconda.org/bioconda/noarch/aviary-0.13.2-pyhdfd78af_0.conda
-  sha256: e6d6599a8cb9dd82ddfd25dceb031d71bbaef0378f7a4c1155f7d9ca6ced8cf8
-  md5: 56eeaae21c0a7d622a828a8500c87b62
+- conda: https://conda.anaconda.org/bioconda/noarch/aviary-0.13.3-pyhdfd78af_0.conda
+  sha256: 730066e4d32287383b1b8534fc3cd9947e366878031e88f47369d5cb248b798d
+  md5: d14d6698c2b13980987d155a713583d7
   depends:
   - bbmap
   - biopython
@@ -2174,8 +2174,8 @@ packages:
   - snakemake-minimal 9.*
   license: GPL-3.0-only
   license_family: GPL3
-  size: 248361
-  timestamp: 1784769390209
+  size: 8885266
+  timestamp: 1788225976865
 - conda: https://conda.anaconda.org/bioconda/noarch/bird_tool_utils_python-0.6.0-pyh7e72e81_0.conda
   sha256: 3ef95588442ad126cef9a8a57552c764d89841b35b2a957e7865547a6684c2f7
   md5: e7ae9773e36507a6715eacd5207a6a9c
@@ -2316,9 +2316,9 @@ packages:
   license_family: GPL
   size: 56328
   timestamp: 1678577572949
-- conda: https://conda.anaconda.org/bioconda/noarch/singlem-0.21.3-pyhdfd78af_0.conda
-  sha256: 4f6667207b430f13204068598d3f01f5905103f91e1dd653bca5c3c553e56b38
-  md5: b81f0bd526024cd34426c39b1a555e1b
+- conda: https://conda.anaconda.org/bioconda/noarch/singlem-0.21.4-pyhdfd78af_0.conda
+  sha256: 346ec550cd9eaf755df406b5fe9cd16e82f0789346ff9b5124ca521f3ec9e3d1
+  md5: 708b8fd6435a2fbf47139cc6e8ea7524
   depends:
   - biopython 1.87.*
   - bird_tool_utils_python 0.6.*
@@ -2355,8 +2355,8 @@ packages:
   - zenodo_backpack 0.4.*
   license: GPL-3.0-or-later
   license_family: GPL3
-  size: 178694
-  timestamp: 1779078469637
+  size: 179206
+  timestamp: 1786574160674
 - conda: https://conda.anaconda.org/bioconda/noarch/snakemake-9.22.0-hdfd78af_0.conda
   sha256: 113a7939e2ee7eb4eda146fb0ed268a1b91fda68955f6561c19ec35c9ec1e590
   md5: 687021acde26bc5e47918f8bf804fcf0
