@@ -26,6 +26,8 @@ COMPREHENSIVE_AVIARY_MODE = "comprehensive"
 DYNAMIC_ASSEMBLY_STRATEGY = "dynamic"
 METASPADES_ASSEMBLY = "metaspades"
 MEGAHIT_ASSEMBLY = "megahit"
+LONG_READ_TYPE_ONT = "ont"
+LONG_READ_TYPES = ["ont", "ont_hq", "rs", "sq", "ccs", "hifi"]
 PRECLUSTER_NEVER_MODE = "never"
 PRECLUSTER_SIZE_DEP_MODE = "large"
 PRECLUSTER_ALWAYS_MODE = "always"
@@ -53,7 +55,12 @@ def build_reads_list(forward, reverse, no_sample_sort=False):
             forward_reads[joint_name] = os.path.abspath(forward)
             reverse_reads[joint_name] = os.path.abspath(reverse)
     else:
-        forward_reads = {fasta_to_name(read): os.path.abspath(read) for read in forward}
+        forward_reads = {}
+        for read in forward:
+            name = fasta_to_name(read)
+            if name in forward_reads:
+                raise Exception(f"Duplicate basename: {name}")
+            forward_reads[name] = os.path.abspath(read)
         reverse_reads = None
 
     return forward_reads, reverse_reads
@@ -480,6 +487,74 @@ def download_sra(args):
 
     return forward, reverse
 
+def download_long_sra(accessions, args):
+    """Download long-read SRA/ENA run accessions (always single-ended, so none of the
+    paired/interleave-detection logic in download_sra applies). Returns {accession: path}.
+    """
+    SRA_SUFFIX = ".fastq.gz"
+
+    config_items = {
+        "sra": accessions,
+        "reads_1": {},
+        "reads_2": {},
+        "snakemake_profile": args.snakemake_profile,
+        "retries": args.retries,
+        "tmpdir": args.tmp_dir,
+    }
+
+    config_path = make_config(
+        importlib.resources.files("binchicken.config").joinpath("template_coassemble.yaml"),
+        args.output,
+        config_items
+        )
+
+    if "mock_sra=True" in args.snakemake_args:
+        # mock_download_sra's output is the shared sra/ directory itself (not per-accession),
+        # and forcing it to rerun makes Snakemake rebuild that whole directory, wiping out
+        # whatever a prior download_sra()/download_long_sra() call in this same output
+        # directory (e.g. --sra for short reads) already placed there. Bypass the rule and
+        # copy the mock fixtures directly instead, mirroring mock_download_sra's own logic.
+        sra_dir = os.path.join(args.output, "coassemble", "sra")
+        os.makedirs(sra_dir, exist_ok=True)
+        mock_sra_dir = os.path.join(os.path.dirname(__file__), "..", "test", "data", "sra")
+        if not args.dryrun:
+            for accession in accessions:
+                shutil.copy(
+                    os.path.join(mock_sra_dir, f"{accession}.fastq.gz"),
+                    os.path.join(sra_dir, f"{accession}.fastq.gz"),
+                )
+    else:
+        # Target each accession's own .done file directly rather than the generic
+        # download_sra rule, whose output (sra/all_done) is a single fixed marker shared
+        # across calls -- targeting it would make this call a no-op if download_sra() (or
+        # a prior download_long_sra() call) already ran once in this same output directory.
+        targets = " ".join(f"{args.output}/coassemble/sra/{accession}.done" for accession in accessions)
+        target_rule = f"{targets} --resources downloading={args.download_limit}"
+
+        run_workflow(
+            config = config_path,
+            workflow = "coassemble.smk",
+            output_dir = args.output,
+            cores = args.cores,
+            dryrun = args.dryrun,
+            profile = args.snakemake_profile,
+            local_cores = args.local_cores,
+            retries = args.retries,
+            snakemake_args = target_rule + " " + args.snakemake_args if args.snakemake_args else target_rule,
+        )
+
+    sra_dir = args.output + "/coassemble/sra/"
+    downloaded = {accession: sra_dir + accession + SRA_SUFFIX for accession in accessions}
+
+    if not args.dryrun:
+        for accession, path in downloaded.items():
+            if not os.path.isfile(path):
+                raise Exception(f"Missing long-read download: {path}")
+            # Pre-date, as in download_sra, so Snakemake doesn't see it as a fresh input
+            subprocess.check_call(f"touch -t 200001011200 {path}", shell=True)
+
+    return downloaded
+
 def set_standard_args(args):
     args.singlem_metapackage = None
     args.sample_singlem = None
@@ -489,6 +564,9 @@ def set_standard_args(args):
     args.sample_query_list = None
     args.sample_query_dir = None
     args.sample_read_size = None
+    args.sra_long_reads = None
+    args.sra_long_reads_list = None
+    args.short_long_read_pairs = None
     args.genome_transcripts = None
     args.genome_transcripts_list = None
     args.genome_singlem = None
@@ -710,6 +788,42 @@ def coassemble(args, iteration=None):
         args.reverse = read_list(args.reverse_list)
     forward_reads, reverse_reads = build_reads_list(args.forward, args.reverse, args.no_sample_sort)
 
+    if args.long_reads_list:
+        args.long_reads = read_list(args.long_reads_list)
+    if args.long_reads:
+        long_reads, _ = build_reads_list(args.long_reads, None, args.no_sample_sort)
+        unmatched_long_reads = [s for s in long_reads if s not in forward_reads]
+        if unmatched_long_reads:
+            logging.info(f"Long reads sample name(s) do not match any forward/reverse sample, treating as long-read-only sample(s): {', '.join(sorted(unmatched_long_reads))}")
+    else:
+        long_reads = {}
+
+    if args.sra_long_reads_list:
+        args.sra_long_reads = read_list(args.sra_long_reads_list)
+    if args.sra_long_reads:
+        # Always long-read-only: Illumina/Nanopore runs of one physical sample always have
+        # different SRA/ENA accessions, so no attempt is made to match these by name.
+        long_reads.update(download_long_sra(args.sra_long_reads, args))
+
+    if args.short_long_read_pairs:
+        pairs = []
+        with open(args.short_long_read_pairs) as f:
+            next(f)  # header
+            for line in f:
+                if not line.strip():
+                    continue
+                sample, value = line.rstrip("\n").split("\t")
+                pairs.append((sample, value))
+
+        # Each value may be a local file path or an SRA/ENA accession to download,
+        # regardless of whether --sra/--sra-long-reads were used.
+        to_download = [value for _, value in pairs if not os.path.isfile(value)]
+        downloaded = download_long_sra(to_download, args) if to_download else {}
+
+        for sample, value in pairs:
+            # Explicit pairing bypasses the filename-derived matching above entirely.
+            long_reads[sample] = os.path.abspath(value) if os.path.isfile(value) else downloaded[value]
+
     if args.sample_singlem_list:
         args.sample_singlem = read_list(args.sample_singlem_list)
     if args.sample_singlem:
@@ -840,6 +954,8 @@ def coassemble(args, iteration=None):
         # General config
         "reads_1": forward_reads,
         "reads_2": reverse_reads,
+        "long_reads": long_reads,
+        "long_read_type": args.long_read_type,
         "genomes": genomes if args.genomes else None,
         "singlem_metapackage": metapackage,
         "coassembly_samples": args.coassembly_samples,
@@ -1103,6 +1219,9 @@ def update(args):
                 args.forward = [os.path.normpath(os.path.join(args.coassemble_output, "..", v)) for _,v in old_config["reads_1"].items()]
                 args.reverse = [os.path.normpath(os.path.join(args.coassemble_output, "..", v)) for _,v in old_config["reads_2"].items()]
 
+        if not (args.long_reads or args.long_reads_list):
+            args.long_reads = [os.path.normpath(os.path.join(args.coassemble_output, "..", v)) for _,v in old_config.get("long_reads", {}).items()]
+
     logging.info("Loading Bin Chicken coassemble info")
     if args.coassemble_output:
         coassemble_dir = os.path.abspath(args.coassemble_output)
@@ -1270,6 +1389,8 @@ def iterate(args):
             if not (args.forward or args.forward_list):
                 args.forward = [os.path.normpath(os.path.join(args.coassemble_output, "..", v)) for _,v in old_config["reads_1"].items()]
                 args.reverse = [os.path.normpath(os.path.join(args.coassemble_output, "..", v)) for _,v in old_config["reads_2"].items()]
+            if not (args.long_reads or args.long_reads_list):
+                args.long_reads = [os.path.normpath(os.path.join(args.coassemble_output, "..", v)) for _,v in old_config.get("long_reads", {}).items()]
 
     if not args.aviary_outputs and not (args.new_genomes or args.new_genomes_list):
         aviary_output_path = os.path.join(args.coassemble_output, "coassemble")
@@ -1637,6 +1758,8 @@ def main():
         argument_group.add_argument("--reverse", nargs='+', help="input reverse nucleotide read sequence(s). Reads will be sorted before matching with forward reads unless --no-sample-sort is specified.")
         argument_group.add_argument("--reverse-list", help="input reverse nucleotide read sequence(s) newline separated. Reads will be sorted before matching with forward reads unless --no-sample-sort is specified.")
         argument_group.add_argument("--no-sample-sort", action="store_true", help="Do not sort read files by sample name before matching forward and reverse reads.")
+        argument_group.add_argument("--long-reads", nargs='+', help="input long-read nucleotide read sequence(s), one file per sample (single-ended). Sample name is derived from the filename. If it matches a --forward/--reverse sample name, the long reads are combined with that sample's short reads for Aviary assembly and recovery; otherwise the sample is treated as long-read-only. [default: no long reads]")
+        argument_group.add_argument("--long-reads-list", help="input long-read nucleotide read sequence(s) newline separated. See --long-reads. [default: no long reads]")
         argument_group.add_argument("--genomes", nargs='+', help="Reference genomes for read mapping")
         argument_group.add_argument("--genomes-list", help="Reference genomes for read mapping newline separated")
         argument_group.add_argument("--coassembly-samples", nargs='+', help="Restrict coassembly to these samples. Remaining samples will still be used for recovery [default: use all samples]", default=[])
@@ -1663,6 +1786,9 @@ def main():
         default_assembly_strategy = DYNAMIC_ASSEMBLY_STRATEGY
         argument_group.add_argument("--assembly-strategy", help=f"Assembly strategy to use with Aviary. [default: {default_assembly_strategy}; attempts metaspades and if fails, switches to megahit]",
                                     default=default_assembly_strategy, choices=[DYNAMIC_ASSEMBLY_STRATEGY, METASPADES_ASSEMBLY, MEGAHIT_ASSEMBLY])
+        default_long_read_type = LONG_READ_TYPE_ONT
+        argument_group.add_argument("--long-read-type", help=f"Sequencing platform and technology for --long-reads, passed to Aviary as `--long-read-type`. [default: {default_long_read_type}]",
+                                    default=default_long_read_type, choices=LONG_READ_TYPES)
         argument_group.add_argument("--aviary-gtdbtk-db", help=f"Path to GTDB-Tk database directory for Aviary. Only required if --aviary-speed is set to {COMPREHENSIVE_AVIARY_MODE} [default: use path from GTDBTK_DATA_PATH env variable]")
         argument_group.add_argument("--aviary-checkm2-db", help="Path to CheckM2 database directory for Aviary. [default: use path from CHECKM2DB env variable]")
         argument_group.add_argument("--aviary-metabuli-db", help="Path to MetaBuli database directory for Aviary, specifically for TaxVAMB. [default: use path from METABULI_DB_PATH env variable]")
@@ -1757,6 +1883,9 @@ def main():
         coassemble_coassembly.add_argument("--sra", action="store_true", help="Download reads from SRA (forward read argument intepreted as SRA IDs). Also sets --run-qc.")
         default_download_limit = 3
         coassemble_coassembly.add_argument("--download-limit", type=int, help=f"Parallel download limit [default: {default_download_limit}]", default=default_download_limit)
+        coassemble_coassembly.add_argument("--sra-long-reads", nargs='+', help="Download long reads from SRA/ENA (interpreted as SRA/ENA run accessions). Downloaded reads are treated as long-read-only samples (not matched to any --forward/--reverse/--sra sample). See --short-long-read-pairs to match long reads to a short-read sample. [default: no long reads downloaded]")
+        coassemble_coassembly.add_argument("--sra-long-reads-list", help="Download long reads from SRA/ENA, newline separated. See --sra-long-reads. [default: no long reads downloaded]")
+        coassemble_coassembly.add_argument("--short-long-read-pairs", help="TSV file (header: sample [tab] long_reads) explicitly matching short-read sample names (matching a --forward/--reverse or --sra sample name) to long reads, bypassing the automatic filename-based matching used by --long-reads. Each long_reads value may be a local file path or an SRA/ENA run accession to download (independent of --sra/--sra-long-reads). Matched long reads are combined with that sample's short reads, same as --long-reads. [default: no long reads]")
         coassemble_coassembly.add_argument("--run-qc", action="store_true", help="Run Fastp QC on reads")
         unmapping_min_appraised_default = 0.1
         coassemble_coassembly.add_argument("--unmapping-min-appraised", type=float, help=f"Minimum fraction of sequences binned to justify unmapping [default: {unmapping_min_appraised_default}]", default=unmapping_min_appraised_default)
@@ -1913,10 +2042,10 @@ def main():
                 if args.sra:
                     logging.info("SRA reads reverse reads not required")
                 else:
-                    raise Exception("Interleaved and long-reads not yet implemented")
+                    raise Exception("Interleaved reads not yet implemented")
             except AttributeError:
-                raise Exception("Interleaved and long-reads not yet implemented")
-        if (args.forward and args.forward_list) or (args.reverse and args.reverse_list) or (args.genomes and args.genomes_list):
+                raise Exception("Interleaved reads not yet implemented")
+        if (args.forward and args.forward_list) or (args.reverse and args.reverse_list) or (args.genomes and args.genomes_list) or (args.long_reads and args.long_reads_list):
             raise Exception("General and list arguments are mutually exclusive")
 
     def coassemble_argument_verification(args, iterate=False):

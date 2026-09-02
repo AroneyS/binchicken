@@ -26,6 +26,10 @@ binchicken coassemble --forward reads_1.1.fq ... --reverse reads_1.2.fq ... --si
 # See https://snakemake.readthedocs.io/en/stable/executing/cli.html#profiles
 binchicken coassemble --forward reads_1.1.fq ... --reverse reads_1.2.fq ... --run-aviary \
   --snakemake-profile qsub --cluster-submission --local-cores 64 --cores 64
+
+# Example: cluster reads into proposed coassemblies, combining long reads with short reads for Aviary assembly/recovery
+binchicken coassemble --forward reads_1.1.fq ... --reverse reads_1.2.fq ... \
+  --long-reads reads_1.long.fq ... --long-read-type ont
 ```
 
 Important options:
@@ -34,6 +38,7 @@ Important options:
 - Maximum number of recovery samples for differential-abundance binning can be specified (`--max-recovery-samples`, default 20)
 - Genomes can be provided and matching marker genes will be excluded (`--genomes`)
 - Reads can be mapped to the matched bins with only unmapped reads being assembled (`--assemble-unmapped`).
+- Long reads can be provided per sample (`--long-reads`, single-ended, one file per sample matching a `--forward`/`--reverse` sample name) and are combined with the corresponding short reads for Aviary assembly and recovery. They are not used for clustering. The sequencing platform is set with `--long-read-type` (default `ont`).
 - Assembly and recovery running options:
   - Run directly through Aviary (`--run-aviary`)
   - Run Aviary commands manually (see `coassemble/commands` in output)
@@ -97,6 +102,19 @@ input reverse nucleotide read sequence(s) newline separated. Reads
 
 Do not sort read files by sample name before matching forward and
   reverse reads.
+
+**\--long-reads** *LONG_READS* [*LONG_READS* \...]
+
+input long-read nucleotide read sequence(s), one file per sample
+  (single- ended). Sample name is derived from the filename and must
+  match the corresponding \--forward/\--reverse sample name. Combined
+  with short reads for Aviary assembly and recovery. [default: no long
+  reads]
+
+**\--long-reads-list** *LONG_READS_LIST*
+
+input long-read nucleotide read sequence(s) newline separated. See
+  \--long- reads. [default: no long reads]
 
 **\--genomes** *GENOMES* [*GENOMES* \...]
 
@@ -364,6 +382,11 @@ Run Aviary recover in \'fast\' or \'comprehensive\' mode. Fast mode
 
 Assembly strategy to use with Aviary. [default: dynamic; attempts
   metaspades and if fails, switches to megahit]
+
+**\--long-read-type** {ont,ont_hq,rs,sq,ccs,hifi}
+
+Sequencing platform and technology for \--long-reads, passed to Aviary
+  as \`\--long-read-type\`. [default: ont]
 
 **\--aviary-gtdbtk-db** *AVIARY_GTDBTK_DB*
 

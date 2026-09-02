@@ -19,6 +19,23 @@ GTDBTK_DB = "/work/microbiome/db/gtdb/gtdb_release207_v2"
 CHECKM2_DB = "/work/microbiome/db/CheckM2_database/uniref100.KO.1.dmnd"
 METABULI_DB = "/work/microbiome/abisko/aroneys/db/metabuli"
 
+MFD_LONG_READS_DIR = "/mnt/hpccs01/datasets/deepocean/mfd_long"
+# Microflora Danica samples with both Nanopore long reads (ENA, on disk) and Illumina short reads (SRA)
+MFD_SAMPLES = {
+    "SRR28011661": "ERR10750395",  # MFD03638
+    "SRR27973765": "ERR10755935",  # MFD01138
+    "SRR27973122": "ERR10755936",  # MFD01223
+}
+
+# Two related M. tuberculosis isolates, each sequenced with both Illumina short reads and
+# Nanopore long reads. Downloaded fresh at test time: short reads via --sra, long reads via
+# --short-long-read-pairs (matched explicitly to the short-read sample name). Related enough
+# to be expected to co-cluster into a single coassembly.
+MTB_SHORT_TO_LONG_ACCESSIONS = {
+    "ERR10225514": "ERR10225378",  # sample_A
+    "ERR10225372": "ERR10225417",  # sample_B
+}
+
 SAMPLE_READS_FORWARD = " ".join([
     os.path.join(path_to_data, "sample_1.1.fq"),
     os.path.join(path_to_data, "sample_2.1.fq"),
@@ -211,6 +228,117 @@ class TestsQsub(unittest.TestCase):
         self.assertTrue(config["use_megahit"])
 
         self.assertTrue(os.path.exists(os.path.join(output_dir, "coassemble", "coassemble", "coassembly_0", "recover", "bins", "checkm_minimal.tsv")))
+
+    def test_single_long_reads_real(self):
+        """Hybrid assembly/recovery test combining real Illumina short reads (downloaded from SRA) with
+        real Nanopore long reads (Microflora Danica project, on disk) for the same physical samples.
+        Uses single-sample assembly so each sample is guaranteed its own coassembly, independent of
+        whether these environmentally-diverse samples happen to co-cluster.
+        """
+        output_dir = os.path.join("example", "test_single_long_reads_real")
+        self.setup_output_dir(output_dir)
+
+        long_reads_dir = os.path.join(output_dir, "long_reads")
+        os.makedirs(long_reads_dir, exist_ok=True)
+        long_reads_paths = []
+        for sra_accession, ena_accession in MFD_SAMPLES.items():
+            link_path = os.path.join(long_reads_dir, f"{sra_accession}.fastq.gz")
+            os.symlink(os.path.join(MFD_LONG_READS_DIR, f"{ena_accession}.fastq.gz"), link_path)
+            long_reads_paths.append(link_path)
+
+        cmd = (
+            f"binchicken single "
+            f"--forward {' '.join(MFD_SAMPLES.keys())} "
+            f"--sra "
+            f"--long-reads {' '.join(long_reads_paths)} "
+            f"--long-read-type ont "
+            f"--coassembly-samples {' '.join(MFD_SAMPLES.keys())} "
+            f"--singlem-metapackage {SINGLEM_METAPACKAGE} "
+            f"--run-aviary "
+            f"--aviary-speed fast "
+            f"--assembly-strategy megahit "
+            f"--aviary-gtdbtk-db {GTDBTK_DB} "
+            f"--aviary-checkm2-db {CHECKM2_DB} "
+            f"--cores 32 "
+            f"--output {output_dir} "
+            f"--snakemake-profile aqua "
+            f"--local-cores 12 "
+            f"--retries 1 "
+            f"--cluster-submission "
+        )
+        subprocess.run(cmd, shell=True, check=True)
+
+        config_path = os.path.join(output_dir, "config.yaml")
+        self.assertTrue(os.path.exists(config_path))
+        with open(config_path) as f:
+            config = YAML().load(f)
+        self.assertEqual(3, len(config["long_reads"]))
+        self.assertEqual("ont", config["long_read_type"])
+
+        for sample in MFD_SAMPLES:
+            self.assertTrue(os.path.exists(os.path.join(output_dir, "coassemble", "coassemble", sample, "assemble", "assembly", "final_contigs.fasta")))
+            self.assertTrue(os.path.exists(os.path.join(output_dir, "coassemble", "coassemble", sample, "recover", "bins", "checkm_minimal.tsv")))
+
+    def test_coassemble_long_reads_real(self):
+        """Hybrid coassemble test combining real Illumina short reads with real Nanopore long
+        reads for two related M. tuberculosis isolates, downloaded fresh each run. Unlike
+        test_single_long_reads_real (single-assembly, one coassembly per sample guaranteed),
+        this exercises the multi-sample coassemble path: the long reads are merged into each
+        matched sample's OTU table (combine_pipe_reads) before clustering, so the two samples
+        must actually co-cluster into a shared coassembly for aviary assemble/recover to run.
+        A low --min-sequence-coverage is needed since these are tiny (<1MB) files.
+        """
+        output_dir = os.path.join("example", "test_coassemble_long_reads_real")
+        self.setup_output_dir(output_dir)
+
+        # sample:long_reads pairs mapping each short-read sample (the --sra accession, which
+        # becomes the sample name) to its matched long-read accession to download.
+        pairs_path = os.path.join(output_dir, "short_long_read_pairs.tsv")
+        with open(pairs_path, "w") as f:
+            f.write("sample\tlong_reads\n")
+            for short_accession, long_accession in MTB_SHORT_TO_LONG_ACCESSIONS.items():
+                f.write(f"{short_accession}\t{long_accession}\n")
+
+        cmd = (
+            f"binchicken coassemble "
+            f"--forward {' '.join(MTB_SHORT_TO_LONG_ACCESSIONS.keys())} "
+            f"--sra "
+            f"--short-long-read-pairs {pairs_path} "
+            f"--long-read-type ont "
+            f"--min-sequence-coverage 1 "
+            f"--singlem-metapackage {SINGLEM_METAPACKAGE} "
+            f"--run-aviary "
+            f"--aviary-speed fast "
+            f"--assembly-strategy megahit "
+            f"--aviary-gtdbtk-db {GTDBTK_DB} "
+            f"--aviary-checkm2-db {CHECKM2_DB} "
+            f"--cores 8 "
+            f"--output {output_dir} "
+            f"--snakemake-profile aqua "
+            f"--local-cores 4 "
+            f"--retries 1 "
+            f"--cluster-submission "
+        )
+        subprocess.run(cmd, shell=True, check=True)
+
+        config_path = os.path.join(output_dir, "config.yaml")
+        self.assertTrue(os.path.exists(config_path))
+        with open(config_path) as f:
+            config = YAML().load(f)
+        self.assertEqual(2, len(config["long_reads"]))
+        self.assertEqual("ont", config["long_read_type"])
+
+        cluster_path = os.path.join(output_dir, "coassemble", "target", "elusive_clusters.tsv")
+        self.assertTrue(os.path.exists(cluster_path))
+        with open(cluster_path) as f:
+            clusters = f.read().splitlines()
+        self.assertTrue(len(clusters) > 1, "Expected at least one coassembly to be formed")
+
+        coassembly_dirs = glob.glob(os.path.join(output_dir, "coassemble", "coassemble", "coassembly_*"))
+        self.assertTrue(len(coassembly_dirs) > 0)
+        for coassembly_dir in coassembly_dirs:
+            self.assertTrue(os.path.exists(os.path.join(coassembly_dir, "assemble", "assembly", "final_contigs.fasta")))
+            self.assertTrue(os.path.exists(os.path.join(coassembly_dir, "recover", "bins", "checkm_minimal.tsv")))
 
 @pytest.mark.expensive
 class Tests(unittest.TestCase):

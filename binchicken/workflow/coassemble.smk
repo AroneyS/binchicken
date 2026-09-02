@@ -32,9 +32,11 @@ def apply_hierarchy(read):
 if config["file_hierarchy"]:
     reads_1 = {apply_hierarchy(read): r for read, r in config["reads_1"].items()}
     reads_2 = {apply_hierarchy(read): r for read, r in config["reads_2"].items()}
+    long_reads = {apply_hierarchy(read): r for read, r in config.get("long_reads", {}).items()}
 else:
     reads_1 = config["reads_1"]
     reads_2 = config["reads_2"]
+    long_reads = config.get("long_reads", {})
 
 mapped_reads_1 = {read: output_dir + f"/mapping/{read}_unmapped.1.fq.gz" for read in reads_1}
 mapped_reads_2 = {read: output_dir + f"/mapping/{read}_unmapped.2.fq.gz" for read in reads_2}
@@ -113,7 +115,35 @@ def get_reads_coassembly(wildcards, forward=True, recover=False):
         version = "whole"
 
     reads = get_reads(wildcards, forward=forward, version=version)
-    return [reads[n] for n in sample_names]
+    return [reads[n] for n in sample_names if n in reads]
+
+def get_long_reads_coassembly(wildcards, recover=False):
+    checkpoint_output = checkpoints.cluster_graph.get(**wildcards).output[0]
+    elusive_clusters = pl.read_csv(checkpoint_output, separator="\t")
+
+    if recover:
+        sample_names = elusive_clusters.filter(pl.col("coassembly") == wildcards.coassembly).get_column("recover_samples").to_list()[0]
+    else:
+        sample_names = elusive_clusters.filter(pl.col("coassembly") == wildcards.coassembly).get_column("samples").to_list()[0]
+
+    sample_names = sample_names.split(",")
+
+    return [long_reads[n] for n in sample_names if n in long_reads]
+
+def get_longreads_param(wildcards, recover=False):
+    reads = get_long_reads_coassembly(wildcards, recover=recover)
+    if reads:
+        return "--longreads " + " ".join(reads) + f" --long-read-type {config['long_read_type']} "
+    else:
+        return ""
+
+def get_shortreads_param(wildcards, recover=False):
+    reads_1 = get_reads_coassembly(wildcards, recover=recover)
+    reads_2 = get_reads_coassembly(wildcards, forward=False, recover=recover)
+    if reads_1:
+        return "-1 " + " ".join(reads_1) + " -2 " + " ".join(reads_2) + " "
+    else:
+        return ""
 
 def get_coassemblies(wildcards):
     checkpoint_output = checkpoints.cluster_graph.get().output[0]
@@ -197,6 +227,92 @@ rule rename_pipe_reads:
             )
             .sink_csv(output[0], separator="\t")
         )
+
+rule singlem_pipe_long_reads:
+    input:
+        reads = lambda wildcards: long_reads[wildcards.long_read],
+    output:
+        temp(output_dir + "/pipe_long/{long_read}_read_raw.otu_table.tsv")
+    benchmark:
+        benchmarks_dir + "/pipe/{long_read}_long_read.tsv"
+    params:
+        singlem_metapackage = config["singlem_metapackage"]
+    threads: 1
+    resources:
+        mem_mb=get_mem_mb,
+        runtime = get_runtime(base_hours = 24),
+        log_path=lambda wildcards, attempt: setup_log(f"{logs_dir}/pipe/{wildcards.long_read}_long_read", attempt)
+    shell:
+        f"{pixi_run} -e singlem "
+        "singlem pipe "
+        "--forward {input.reads} "
+        "--otu-table {output} "
+        "--metapackage {params.singlem_metapackage} "
+        "&> {resources.log_path}"
+
+rule rename_pipe_long_reads:
+    input:
+        output_dir + "/pipe_long/{long_read}_read_raw.otu_table.tsv"
+    output:
+        output_dir + "/pipe_long/{long_read}_read.otu_table.tsv"
+    params:
+        sample = "{long_read}",
+    threads: 1
+    resources:
+        mem_mb=get_mem_mb,
+        runtime = get_runtime(base_hours = 6),
+    run:
+        (
+            pl.scan_csv(input[0], separator="\t")
+            .with_columns(sample = pl.lit(params.sample))
+            .with_columns(
+                pl.when(pl.col("sample").str.contains("/"))
+                .then(pl.col("sample").str.split("/").list.last())
+                .otherwise(pl.col("sample"))
+            )
+            .sink_csv(output[0], separator="\t")
+        )
+
+rule combine_pipe_reads:
+    input:
+        short = output_dir + "/pipe/{read}_read.otu_table.tsv",
+        long = output_dir + "/pipe_long/{read}_read.otu_table.tsv",
+    output:
+        output_dir + "/pipe/{read}_read_combined.otu_table.tsv"
+    threads: 1
+    resources:
+        mem_mb=get_mem_mb,
+        runtime = get_runtime(base_hours = 6),
+    run:
+        otu_table_schema = {
+            "gene": pl.Utf8, "sample": pl.Utf8, "sequence": pl.Utf8,
+            "num_hits": pl.Int64, "coverage": pl.Float64, "taxonomy": pl.Utf8,
+        }
+        (
+            pl.concat([
+                pl.scan_csv(input.short, separator="\t", schema_overrides=otu_table_schema),
+                pl.scan_csv(input.long, separator="\t", schema_overrides=otu_table_schema),
+                ])
+            .group_by("gene", "sample", "sequence")
+            .agg(
+                pl.first("taxonomy"),
+                pl.sum("num_hits"),
+                pl.sum("coverage"),
+                )
+            .select("gene", "sample", "sequence", "num_hits", "coverage", "taxonomy")
+            .sink_csv(output[0], separator="\t")
+        )
+
+def get_appraise_pipe_tables():
+    long_read_only = [read for read in long_reads if read not in reads_1]
+    return [
+        output_dir + f"/pipe/{read}_read_combined.otu_table.tsv" if read in long_reads
+        else output_dir + f"/pipe/{read}_read.otu_table.tsv"
+        for read in reads_1
+        ] + [
+        output_dir + f"/pipe_long/{read}_read.otu_table.tsv"
+        for read in long_read_only
+        ]
 
 #######################
 ### SingleM genomes ###
@@ -287,7 +403,7 @@ rule singlem_summarise_genomes:
 ########################
 rule singlem_appraise:
     input:
-        reads = expand(output_dir + "/pipe/{read}_read.otu_table.tsv", read=reads_1),
+        reads = get_appraise_pipe_tables(),
         bins = output_dir + "/summarise/bins_summarised.otu_table.tsv",
     output:
         unbinned = temp(output_dir + "/appraise/unbinned_raw.otu_table.tsv"),
@@ -443,7 +559,7 @@ rule query_processing:
 ################################
 rule read_otu_table_list:
     input:
-        reads = expand(output_dir + "/pipe/{read}_read.otu_table.tsv", read=reads_1),
+        reads = get_appraise_pipe_tables(),
     output:
         output_dir + "/lists/reads_otu_table_list.tsv",
     threads: 1
@@ -675,7 +791,7 @@ rule get_samples_list:
     output:
         output_dir + "/lists/samples_list.tsv",
     params:
-        names = list(config["reads_1"].keys()),
+        names = list(config["reads_1"].keys()) + [read for read in config.get("long_reads", {}).keys() if read not in config["reads_1"]],
     threads: 1
     resources:
         mem_mb=get_mem_mb,
@@ -1084,12 +1200,27 @@ rule get_reads_named_list:
             for sample, read in params.reads_2.items():
                 f.write(f"{sample}\t{read}\n")
 
+rule get_long_reads_named_list:
+    output:
+        long_reads = output_dir + "/lists/long_reads_named_list.tsv",
+    params:
+        long_reads = long_reads,
+    threads: 1
+    resources:
+        mem_mb=get_mem_mb,
+        runtime = get_runtime(base_hours = 5),
+    run:
+        with open(output.long_reads, "w") as f:
+            for sample, read in params.long_reads.items():
+                f.write(f"{sample}\t{read}\n")
+
 rule aviary_commands:
     input:
         output_dir + "/mapping/done" if config["assemble_unmapped"] else output_dir + "/qc/done" if config["run_qc"] else [],
         elusive_clusters = output_dir + "/target/elusive_clusters.tsv",
         reads_1 = lambda wildcards: output_dir + "/lists/unmapped_reads_1_named_list.tsv" if config["assemble_unmapped"] else output_dir + "/lists/qc_reads_1_named_list.tsv" if config["run_qc"] else output_dir + "/lists/reads_1_named_list.tsv",
         reads_2 = lambda wildcards: output_dir + "/lists/unmapped_reads_2_named_list.tsv" if config["assemble_unmapped"] else output_dir + "/lists/qc_reads_2_named_list.tsv" if config["run_qc"] else output_dir + "/lists/reads_2_named_list.tsv",
+        long_reads = output_dir + "/lists/long_reads_named_list.tsv",
     output:
         coassemble_commands = output_dir + "/commands/coassemble_commands.sh",
         recover_commands = output_dir + "/commands/recover_commands.sh"
@@ -1102,6 +1233,7 @@ rule aviary_commands:
         recover_memory = config["aviary_recover_memory"],
         recover_threads = config["aviary_recover_threads"],
         speed = config["aviary_speed"],
+        long_read_type = config["long_read_type"],
     localrule: True
     resources:
         log_path=lambda wildcards, attempt: setup_log(f"{logs_dir}/aviary_commands", attempt)
@@ -1113,6 +1245,8 @@ rule aviary_commands:
         "--recover-commands {output.recover_commands} "
         "--reads-1 {input.reads_1} "
         "--reads-2 {input.reads_2} "
+        "--long-reads {input.long_reads} "
+        "--long-read-type {params.long_read_type} "
         "--dir {params.dir} "
         "--assemble-threads {params.assemble_threads} "
         "--assemble-memory {params.assemble_memory} "
@@ -1183,8 +1317,8 @@ rule aviary_assemble:
         dir = directory(output_dir + "/coassemble/{coassembly}/assemble"),
         assembly = output_dir + "/coassemble/{coassembly}/assemble/assembly/final_contigs.fasta",
     params:
-        reads_1 = lambda wildcards: get_reads_coassembly(wildcards),
-        reads_2 = lambda wildcards: get_reads_coassembly(wildcards, forward=False),
+        shortreads = lambda wildcards: get_shortreads_param(wildcards),
+        longreads = lambda wildcards: get_longreads_param(wildcards),
         dryrun = "--build" if config["build"] else "--dryrun" if config["aviary_dryrun"] else "",
         drymkdir = "&& mkdir -p "+output_dir+"/coassemble/{coassembly}/assemble/assembly" if config["aviary_dryrun"] else "",
         drytouch = "&& touch "+output_dir+"/coassemble/{coassembly}/assemble/assembly/final_contigs.fasta" if config["aviary_dryrun"] else "",
@@ -1207,8 +1341,8 @@ rule aviary_assemble:
         "{params.tmpdir} "
         "aviary assemble "
         "--coassemble "
-        "-1 {params.reads_1} "
-        "-2 {params.reads_2} "
+        "{params.shortreads}"
+        "{params.longreads}"
         "--output {output.dir} "
         "-n {threads} "
         "-t {threads} "
@@ -1228,8 +1362,8 @@ rule aviary_recover:
         output_dir + "/coassemble/{coassembly}/recover.done",
     params:
         output = output_dir + "/coassemble/{coassembly}/recover",
-        reads_1 = lambda wildcards: get_reads_coassembly(wildcards, recover=True),
-        reads_2 = lambda wildcards: get_reads_coassembly(wildcards, forward=False, recover=True),
+        shortreads = lambda wildcards: get_shortreads_param(wildcards, recover=True),
+        longreads = lambda wildcards: get_longreads_param(wildcards, recover=True),
         dryrun = "--build" if config["build"] else "--dryrun" if config["aviary_dryrun"] else "",
         gtdbtk = config["aviary_gtdbtk"] if config["aviary_gtdbtk"] else ".",
         checkm2 = config["aviary_checkm2"],
@@ -1257,8 +1391,8 @@ rule aviary_recover:
         "{params.tmpdir} "
         "aviary recover "
         "--assembly {input.assembly} "
-        "-1 {params.reads_1} "
-        "-2 {params.reads_2} "
+        "{params.shortreads}"
+        "{params.longreads}"
         "--output {params.output} "
         "--checkm2-db-path {params.checkm2} "
         "{params.fast} "

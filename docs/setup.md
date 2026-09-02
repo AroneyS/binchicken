@@ -19,6 +19,8 @@ These can also be downloaded automatically with `--download-databases` flag, whi
 If you use this flag, note that it will only download the databases if the provided path does *not* already exist.
 Also note that the databases are very large.
 
+To install GPU-friendly environments, use `--build-gpu` flag. This requires either access to a CUDA-enabled GPU or the use of the `export CONDA_OVERRIDE_CUDA=12.9` environment variable.
+
 ```bash
 binchicken build \
   --singlem-metapackage /metapackage/dir \

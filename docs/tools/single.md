@@ -69,6 +69,20 @@ input reverse nucleotide read sequence(s) newline separated. Reads
 Do not sort read files by sample name before matching forward and
   reverse reads.
 
+**\--long-reads** *LONG_READS* [*LONG_READS* \...]
+
+input long-read nucleotide read sequence(s), one file per sample
+  (single- ended). Sample name is derived from the filename. If it
+  matches a \--forward/\--reverse sample name, the long reads are
+  combined with that sample\'s short reads for Aviary assembly and
+  recovery; otherwise the sample is treated as long-read-only.
+  [default: no long reads]
+
+**\--long-reads-list** *LONG_READS_LIST*
+
+input long-read nucleotide read sequence(s) newline separated. See
+  \--long- reads. [default: no long reads]
+
 **\--genomes** *GENOMES* [*GENOMES* \...]
 
 Reference genomes for read mapping
@@ -283,6 +297,30 @@ Download reads from SRA (forward read argument intepreted as SRA IDs).
 
 Parallel download limit [default: 3]
 
+**\--sra-long-reads** *SRA_LONG_READS* [*SRA_LONG_READS* \...]
+
+Download long reads from SRA/ENA (interpreted as SRA/ENA run
+  accessions). Downloaded reads are treated as long-read-only samples
+  (not matched to any \--forward/\--reverse/\--sra sample). See
+  \--short-long-read-pairs to match long reads to a short-read sample.
+  [default: no long reads downloaded]
+
+**\--sra-long-reads-list** *SRA_LONG_READS_LIST*
+
+Download long reads from SRA/ENA, newline separated. See
+  \--sra-long-reads. [default: no long reads downloaded]
+
+**\--short-long-read-pairs** *SHORT_LONG_READ_PAIRS*
+
+TSV file (header: sample [tab] long_reads) explicitly matching
+  short-read sample names (matching a \--forward/\--reverse or \--sra
+  sample name) to long reads, bypassing the automatic filename-based
+  matching used by \--long-reads. Each long_reads value may be a local
+  file path or an SRA/ENA run accession to download (independent of
+  \--sra/\--sra-long-reads). Matched long reads are combined with that
+  sample\'s short reads, same as \--long-reads. [default: no long
+  reads]
+
 **\--run-qc**
 
 Run Fastp QC on reads
@@ -335,6 +373,11 @@ Run Aviary recover in \'fast\' or \'comprehensive\' mode. Fast mode
 
 Assembly strategy to use with Aviary. [default: dynamic; attempts
   metaspades and if fails, switches to megahit]
+
+**\--long-read-type** {ont,ont_hq,rs,sq,ccs,hifi}
+
+Sequencing platform and technology for \--long-reads, passed to Aviary
+  as \`\--long-read-type\`. [default: ont]
 
 **\--aviary-gtdbtk-db** *AVIARY_GTDBTK_DB*
 
