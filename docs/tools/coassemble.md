@@ -38,7 +38,8 @@ Important options:
 - Maximum number of recovery samples for differential-abundance binning can be specified (`--max-recovery-samples`, default 20)
 - Genomes can be provided and matching marker genes will be excluded (`--genomes`)
 - Reads can be mapped to the matched bins with only unmapped reads being assembled (`--assemble-unmapped`).
-- Long reads can be provided per sample (`--long-reads`, single-ended, one file per sample matching a `--forward`/`--reverse` sample name) and are combined with the corresponding short reads for Aviary assembly and recovery. They are not used for clustering. The sequencing platform is set with `--long-read-type` (default `ont`).
+- Long reads can be provided per sample (`--long-reads`, single-ended, one file per sample). When a long-read sample name matches a `--forward`/`--reverse` sample, the long reads are merged into that sample's marker gene profile (via SingleM) and combined with the short reads for Aviary assembly and recovery. Long-read samples without a matching short-read sample are also supported: they contribute to clustering decisions and are assembled/recovered with Aviary using long reads alone. The sequencing platform is set with `--long-read-type` (default `ont`).
+- Long reads can also be downloaded directly from SRA/ENA (`--sra-long-reads`, run accessions, always treated as long-read-only samples since matching short/long accessions differ). To explicitly match a short-read sample to a long read, use `--short-long-read-pairs`: a TSV file with header `sample`/`long_reads` mapping a `--forward`/`--reverse`/`--sra` sample name to either a local long-read file or an SRA/ENA accession to download (independent of `--sra`/`--sra-long-reads`). This bypasses the automatic filename-based matching used by `--long-reads`.
 - Assembly and recovery running options:
   - Run directly through Aviary (`--run-aviary`)
   - Run Aviary commands manually (see `coassemble/commands` in output)
@@ -106,10 +107,11 @@ Do not sort read files by sample name before matching forward and
 **\--long-reads** *LONG_READS* [*LONG_READS* \...]
 
 input long-read nucleotide read sequence(s), one file per sample
-  (single- ended). Sample name is derived from the filename and must
-  match the corresponding \--forward/\--reverse sample name. Combined
-  with short reads for Aviary assembly and recovery. [default: no long
-  reads]
+  (single- ended). Sample name is derived from the filename. If it
+  matches a \--forward/\--reverse sample name, the long reads are
+  combined with that sample\'s short reads for Aviary assembly and
+  recovery; otherwise the sample is treated as long-read-only.
+  [default: no long reads]
 
 **\--long-reads-list** *LONG_READS_LIST*
 
@@ -329,6 +331,30 @@ Download reads from SRA (forward read argument intepreted as SRA IDs).
 **\--download-limit** *DOWNLOAD_LIMIT*
 
 Parallel download limit [default: 3]
+
+**\--sra-long-reads** *SRA_LONG_READS* [*SRA_LONG_READS* \...]
+
+Download long reads from SRA/ENA (interpreted as SRA/ENA run
+  accessions). Downloaded reads are treated as long-read-only samples
+  (not matched to any \--forward/\--reverse/\--sra sample). See
+  \--short-long-read-pairs to match long reads to a short-read sample.
+  [default: no long reads downloaded]
+
+**\--sra-long-reads-list** *SRA_LONG_READS_LIST*
+
+Download long reads from SRA/ENA, newline separated. See
+  \--sra-long-reads. [default: no long reads downloaded]
+
+**\--short-long-read-pairs** *SHORT_LONG_READ_PAIRS*
+
+TSV file (header: sample [tab] long_reads) explicitly matching
+  short-read sample names (matching a \--forward/\--reverse or \--sra
+  sample name) to long reads, bypassing the automatic filename-based
+  matching used by \--long-reads. Each long_reads value may be a local
+  file path or an SRA/ENA run accession to download (independent of
+  \--sra/\--sra-long-reads). Matched long reads are combined with that
+  sample\'s short reads, same as \--long-reads. [default: no long
+  reads]
 
 **\--run-qc**
 
