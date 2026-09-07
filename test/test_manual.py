@@ -340,6 +340,66 @@ class TestsQsub(unittest.TestCase):
             self.assertTrue(os.path.exists(os.path.join(coassembly_dir, "assemble", "assembly", "final_contigs.fasta")))
             self.assertTrue(os.path.exists(os.path.join(coassembly_dir, "recover", "bins", "checkm_minimal.tsv")))
 
+    def test_coassemble_long_reads_only_real(self):
+        """Long-read-only coassemble test: real Nanopore long reads for two related
+        M. tuberculosis isolates, downloaded directly from ENA via --sra-long-reads, with no
+        --forward/--reverse/--sra short reads provided at all. Exercises the fully long-read-only
+        pipeline path (no short reads anywhere in the run): base_argument_verification allowing
+        no short reads, read size counting via count_bp_long_reads/combine_read_size, and
+        clustering/assembly/recovery of long-read-only samples end to end. The two isolates are
+        related enough to be expected to co-cluster into a single coassembly.
+        """
+        output_dir = os.path.join("example", "test_coassemble_long_reads_only_real")
+        self.setup_output_dir(output_dir)
+
+        cmd = (
+            f"binchicken coassemble "
+            f"--sra-long-reads {' '.join(MTB_SHORT_TO_LONG_ACCESSIONS.values())} "
+            f"--long-read-type ont "
+            f"--min-sequence-coverage 1 "
+            f"--singlem-metapackage {SINGLEM_METAPACKAGE} "
+            f"--run-aviary "
+            f"--aviary-speed fast "
+            f"--assembly-strategy megahit "
+            f"--aviary-gtdbtk-db {GTDBTK_DB} "
+            f"--aviary-checkm2-db {CHECKM2_DB} "
+            f"--cores 8 "
+            f"--output {output_dir} "
+            f"--snakemake-profile aqua "
+            f"--local-cores 4 "
+            f"--retries 1 "
+            f"--cluster-submission "
+        )
+        subprocess.run(cmd, shell=True, check=True)
+
+        config_path = os.path.join(output_dir, "config.yaml")
+        self.assertTrue(os.path.exists(config_path))
+        with open(config_path) as f:
+            config = YAML().load(f)
+        self.assertEqual({}, config["reads_1"])
+        self.assertEqual({}, config["reads_2"])
+        self.assertEqual(2, len(config["long_reads"]))
+        self.assertEqual("ont", config["long_read_type"])
+
+        read_size_path = os.path.join(output_dir, "coassemble", "read_size.csv")
+        self.assertTrue(os.path.exists(read_size_path))
+        with open(read_size_path) as f:
+            read_sizes = dict(line.strip().split(",") for line in f if line.strip())
+        self.assertEqual(2, len(read_sizes))
+        self.assertTrue(all(int(size) > 0 for size in read_sizes.values()))
+
+        cluster_path = os.path.join(output_dir, "coassemble", "target", "elusive_clusters.tsv")
+        self.assertTrue(os.path.exists(cluster_path))
+        with open(cluster_path) as f:
+            clusters = f.read().splitlines()
+        self.assertTrue(len(clusters) > 1, "Expected at least one coassembly to be formed")
+
+        coassembly_dirs = glob.glob(os.path.join(output_dir, "coassemble", "coassemble", "coassembly_*"))
+        self.assertTrue(len(coassembly_dirs) > 0)
+        for coassembly_dir in coassembly_dirs:
+            self.assertTrue(os.path.exists(os.path.join(coassembly_dir, "assemble", "assembly", "final_contigs.fasta")))
+            self.assertTrue(os.path.exists(os.path.join(coassembly_dir, "recover", "bins", "checkm_minimal.tsv")))
+
 @pytest.mark.expensive
 class Tests(unittest.TestCase):
     def setup_output_dir(self, output_dir):

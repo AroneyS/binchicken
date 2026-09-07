@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Support for coassemble/single/iterate runs consisting entirely of long-read samples (`--long-reads`/`--long-reads-list`/`--sra-long-reads`/`--sra-long-reads-list`/`--short-long-read-pairs`), without requiring any `--forward`/`--forward-list`/`--sra` short reads. Long-read file sizes now also count towards `total_size`/`--max-coassembly-size`, both for long-read-only samples and for samples with both short and long reads (summed)
+
 ## [0.15.0] - 2026-09-03
 
 ### Added

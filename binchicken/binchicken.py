@@ -785,7 +785,10 @@ def coassemble(args, iteration=None):
         args.forward = read_list(args.forward_list)
     if args.reverse_list:
         args.reverse = read_list(args.reverse_list)
-    forward_reads, reverse_reads = build_reads_list(args.forward, args.reverse, args.no_sample_sort)
+    if args.forward:
+        forward_reads, reverse_reads = build_reads_list(args.forward, args.reverse, args.no_sample_sort)
+    else:
+        forward_reads, reverse_reads = {}, {}
 
     if args.long_reads_list:
         args.long_reads = read_list(args.long_reads_list)
@@ -1673,11 +1676,30 @@ def main():
                     "find relevant samples for differential coverage binning (no coassembly)",
                     "binchicken coassemble --forward reads_1.1.fq ... --reverse reads_1.2.fq ... --single-assembly"
                 ),
+                btu.Example(
+                    "run proposed coassemblies through aviary with cluster submission",
+                    "binchicken coassemble --forward reads_1.1.fq ... --reverse reads_1.2.fq ... --run-aviary "
+                    "--snakemake-profile qsub --cluster-submission --local-cores 64 --cores 64"
+                ),
+                btu.Example(
+                    "cluster reads into proposed coassemblies, combining long reads with short reads for Aviary assembly/recovery",
+                    "binchicken coassemble --forward reads_1.1.fq ... --reverse reads_1.2.fq ... "
+                    "--long-reads reads_1.long.fq ... --long-read-type ont"
+                ),
+                btu.Example(
+                    "cluster reads into proposed coassemblies using long reads only, without any short reads",
+                    "binchicken coassemble --long-reads reads_1.long.fq ... --long-read-type ont"
+                ),
             ],
             "single": [
                 btu.Example(
                     "find relevant samples for differential coverage binning (no coassembly)",
                     "binchicken single --forward reads_1.1.fq ... --reverse reads_1.2.fq ..."
+                ),
+                btu.Example(
+                    "run proposed assemblies through aviary with cluster submission",
+                    "binchicken single --forward reads_1.1.fq ... --reverse reads_1.2.fq ... --run-aviary "
+                    "--snakemake-profile qsub --cluster-submission --local-cores 64 --cores 64"
                 ),
             ],
             "evaluate": [
@@ -2034,9 +2056,11 @@ def main():
                     args.aviary_snakemake_profile = args.snakemake_profile
 
     def base_argument_verification(args):
-        if not args.forward and not args.forward_list:
+        has_short_reads = args.forward or args.forward_list or getattr(args, "sra", False)
+        has_long_reads = args.long_reads or args.long_reads_list or args.sra_long_reads or args.sra_long_reads_list or args.short_long_read_pairs
+        if not has_short_reads and not has_long_reads:
             raise Exception("Input reads must be provided")
-        if not args.reverse and not args.reverse_list:
+        if has_short_reads and not args.reverse and not args.reverse_list:
             try:
                 if args.sra:
                     logging.info("SRA reads reverse reads not required")
