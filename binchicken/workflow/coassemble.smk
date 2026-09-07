@@ -94,7 +94,15 @@ def get_reads(wildcards, forward=True, version=None):
         raise ValueError("Version should be empty, 'whole' or 'unmapped'")
 
 def get_cat(wildcards):
-    return "zcat" if [r for r in get_reads(wildcards).values()][0].endswith(".gz") else "cat"
+    reads = [r for r in get_reads(wildcards).values()]
+    if not reads:
+        return "cat"
+    return "zcat" if reads[0].endswith(".gz") else "cat"
+
+def get_cat_long():
+    if not long_reads:
+        return "cat"
+    return "zcat" if list(long_reads.values())[0].endswith(".gz") else "cat"
 
 def get_reads_coassembly(wildcards, forward=True, recover=False):
     checkpoint_output = checkpoints.cluster_graph.get(**wildcards).output[0]
@@ -673,6 +681,71 @@ rule count_bp_reads:
         ":::: {input.samples} ::::+ {input.reads_1} ::::+ {input.reads_2} "
         "> {output}"
 
+rule get_long_reads_count_list:
+    output:
+        long_reads = output_dir + "/lists/long_reads_count_list.tsv",
+        samples = output_dir + "/lists/long_reads_count_samples_list.tsv",
+    params:
+        long_reads = list(long_reads.values()),
+        samples = list(long_reads.keys()),
+    threads: 1
+    resources:
+        mem_mb=get_mem_mb,
+        runtime = get_runtime(base_hours = 5),
+    run:
+        with open(output.long_reads, "w") as f:
+            for read in params.long_reads:
+                f.write(f"{read}\n")
+        with open(output.samples, "w") as f:
+            for sample in params.samples:
+                f.write(f"{sample}\n")
+
+rule count_bp_long_reads:
+    input:
+        long_reads = output_dir + "/lists/long_reads_count_list.tsv",
+        samples = output_dir + "/lists/long_reads_count_samples_list.tsv",
+    output:
+        output_dir + "/long_read_size.csv"
+    params:
+        cat = get_cat_long(),
+    threads: 8
+    resources:
+        mem_mb=get_mem_mb,
+        runtime = get_runtime(base_hours = 24),
+    shell:
+        f"{pixi_run} -e general "
+        "parallel -k -j {threads} "
+        "echo -n {{1}}, '&&' "
+        "{params.cat} {{2}} '|' sed -n 2~4p '|' tr -d '\"\n\"' '|' wc -m "
+        ":::: {input.samples} ::::+ {input.long_reads} "
+        "> {output}"
+
+rule combine_read_size:
+    input:
+        short_reads = output_dir + "/read_size.csv",
+        long_reads = output_dir + "/long_read_size.csv",
+    output:
+        output_dir + "/read_size_combined.csv"
+    threads: 1
+    resources:
+        mem_mb=get_mem_mb,
+        runtime = get_runtime(base_hours = 5),
+    run:
+        # Samples with both short and long reads (matched) appear in both inputs;
+        # their sizes are summed rather than added as separate rows.
+        sizes = {}
+        for path in [input.short_reads, input.long_reads]:
+            with open(path) as f:
+                for line in f:
+                    line = line.strip()
+                    if not line:
+                        continue
+                    sample, size = line.split(",")
+                    sizes[sample] = sizes.get(sample, 0) + int(size)
+        with open(output[0], "w") as f:
+            for sample, size in sizes.items():
+                f.write(f"{sample},{size}\n")
+
 rule get_abundance_weighted_samples_list:
     output:
         output_dir + "/lists/abundance_weighted_samples_list.tsv",
@@ -908,7 +981,7 @@ rule get_exclude_coassemblies:
 checkpoint cluster_graph:
     input:
         elusive_edges = output_dir + "/target/elusive_edges.tsv",
-        read_size = ancient(output_dir + "/read_size.csv"),
+        read_size = ancient(output_dir + "/read_size_combined.csv"),
         targets_weighted = output_dir + "/target/targets_weighted.tsv" if config["abundance_weighted"] else [],
         anchor_samples = output_dir + "/lists/anchor_samples_list.tsv" if config["anchor_samples"] else [],
         coassembly_samples = output_dir + "/lists/coassembly_samples_list.tsv" if config["coassembly_samples"] else [],
