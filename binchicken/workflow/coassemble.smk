@@ -666,9 +666,33 @@ rule count_bp_reads:
         reads_2 = output_dir + "/lists/{version}reads_2_list.tsv",
         samples = output_dir + "/lists/{version}count_samples_list.tsv",
     output:
-        output_dir + "/{version,.*}read_size.csv"
+        output_dir + "/{version,.+}read_size.csv"
     params:
         cat = get_cat,
+    threads: 8
+    resources:
+        mem_mb=get_mem_mb,
+        runtime = get_runtime(base_hours = 24),
+    shell:
+        f"{pixi_run} -e general "
+        "parallel -k -j {threads} "
+        "echo -n {{1}}, '&&' "
+        "{params.cat} {{2}} {{3}} '|' sed -n 2~4p '|' tr -d '\"\n\"' '|' wc -m "
+        ":::: {input.samples} ::::+ {input.reads_1} ::::+ {input.reads_2} "
+        "> {output}"
+
+# Same as count_bp_reads (version ""), except its output feeds combine_read_size
+# rather than being consumed directly, keeping read_size.csv's own filename
+# and ancient()-protected resume behaviour unchanged for pre-existing outputs.
+rule count_bp_short_reads:
+    input:
+        reads_1 = output_dir + "/lists/reads_1_list.tsv",
+        reads_2 = output_dir + "/lists/reads_2_list.tsv",
+        samples = output_dir + "/lists/count_samples_list.tsv",
+    output:
+        output_dir + "/short_read_size.csv"
+    params:
+        cat = "zcat" if reads_1 and list(reads_1.values())[0].endswith(".gz") else "cat",
     threads: 8
     resources:
         mem_mb=get_mem_mb,
@@ -722,10 +746,10 @@ rule count_bp_long_reads:
 
 rule combine_read_size:
     input:
-        short_reads = output_dir + "/read_size.csv",
+        short_reads = output_dir + "/short_read_size.csv",
         long_reads = output_dir + "/long_read_size.csv",
     output:
-        output_dir + "/read_size_combined.csv"
+        output_dir + "/read_size.csv"
     threads: 1
     resources:
         mem_mb=get_mem_mb,
@@ -981,7 +1005,7 @@ rule get_exclude_coassemblies:
 checkpoint cluster_graph:
     input:
         elusive_edges = output_dir + "/target/elusive_edges.tsv",
-        read_size = ancient(output_dir + "/read_size_combined.csv"),
+        read_size = ancient(output_dir + "/read_size.csv"),
         targets_weighted = output_dir + "/target/targets_weighted.tsv" if config["abundance_weighted"] else [],
         anchor_samples = output_dir + "/lists/anchor_samples_list.tsv" if config["anchor_samples"] else [],
         coassembly_samples = output_dir + "/lists/coassembly_samples_list.tsv" if config["coassembly_samples"] else [],

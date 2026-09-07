@@ -452,7 +452,7 @@ class Tests(unittest.TestCase):
                 samples = f.read().splitlines()
             self.assertEqual({"sample_1", "sample_3"}, set(samples))
 
-            read_size_path = os.path.join("test", "coassemble", "read_size_combined.csv")
+            read_size_path = os.path.join("test", "coassemble", "read_size.csv")
             self.assertTrue(os.path.exists(read_size_path))
             read_size = pl.read_csv(read_size_path, has_header=False, new_columns=["sample", "read_size"])
             self.assertEqual({"sample_1", "sample_3"}, set(read_size.get_column("sample").to_list()))
@@ -481,9 +481,9 @@ class Tests(unittest.TestCase):
                 with open(path) as f:
                     return {sample: int(size) for sample, size in (line.strip().split(",") for line in f if line.strip())}
 
-            short_only = load_sizes(os.path.join("test", "coassemble", "read_size.csv"))
+            short_only = load_sizes(os.path.join("test", "coassemble", "short_read_size.csv"))
             long_only = load_sizes(os.path.join("test", "coassemble", "long_read_size.csv"))
-            combined = load_sizes(os.path.join("test", "coassemble", "read_size_combined.csv"))
+            combined = load_sizes(os.path.join("test", "coassemble", "read_size.csv"))
 
             self.assertGreater(short_only["sample_1"], 0)
             self.assertGreater(long_only["sample_1"], 0)
