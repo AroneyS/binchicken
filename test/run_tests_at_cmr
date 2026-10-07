@@ -9,6 +9,17 @@ import extern
 
 # To invoke this script:
 # $ pixi run run-tests-at-cmr
+#
+# To resume a run that was interrupted (e.g. by cluster maintenance) without
+# discarding the output already produced:
+# $ pixi run run-tests-at-cmr-resume
+
+# Passed through to pytest so that tests keep, rather than delete, their existing
+# output directories. Only safe when binchicken itself has not changed since the
+# interrupted run: snakemake is invoked with --rerun-triggers mtime and so will not
+# rerun completed rules just because the code changed.
+RESUME = "--resume" in sys.argv[1:]
+resume_arg = " --resume" if RESUME else ""
 
 def collect_expensive_tests():
     """Collect all test nodeids marked as 'expensive'."""
@@ -31,14 +42,14 @@ if os.path.exists(MQSUB_OUT):
 
 # Expensive tests
 expensive_tests = collect_expensive_tests()
-print(f"Running {len(expensive_tests)} expensive tests individually via mqsub..")
+print(f"Running {len(expensive_tests)} expensive tests individually via mqsub{' (resuming)' if RESUME else ''}..")
 if not expensive_tests:
     raise ValueError("No tests marked as 'expensive' found.")
 for test in expensive_tests:
     print(f"mqsub Expensive test: {test} ..")
     cmd = (
         "mqsub -t 16 -m 128 --hours 4 --segregated-log-files --bg -- "
-        f"pixi run -e dev pytest --run-expensive {test} &>>{MQSUB_OUT}"
+        f"pixi run -e dev pytest --run-expensive{resume_arg} {test} &>>{MQSUB_OUT}"
     )
     extern.run(cmd)
 
@@ -49,7 +60,7 @@ with open("test/qsub-test-log.txt", "w") as log_file:
         [
             "pixi", "run", "-e", "dev",
             "pytest", "test", "-m", "qsub", "--run-qsub",
-        ],
+        ] + (["--resume"] if RESUME else []),
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
         text=True

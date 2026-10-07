@@ -79,11 +79,14 @@ PRIOR_COASSEMBLY = os.path.join(path_to_data, "prior_coassembly.tsv")
 @pytest.mark.qsub
 class TestsQsub(unittest.TestCase):
     def setup_output_dir(self, output_dir):
-        try:
-            shutil.rmtree(output_dir)
-        except FileNotFoundError:
-            pass
-        os.makedirs(output_dir)
+        # With --resume, keep any existing output so snakemake picks up where it left off
+        # (it is run with --rerun-triggers mtime --rerun-incomplete --nolock).
+        if not getattr(pytest, "resume_tests", False):
+            try:
+                shutil.rmtree(output_dir)
+            except FileNotFoundError:
+                pass
+        os.makedirs(output_dir, exist_ok=True)
 
     def test_update_aviary_run_real(self):
         output_dir = os.path.join("example", "test_update_aviary_run_real")
@@ -403,11 +406,14 @@ class TestsQsub(unittest.TestCase):
 @pytest.mark.expensive
 class Tests(unittest.TestCase):
     def setup_output_dir(self, output_dir):
-        try:
-            shutil.rmtree(output_dir)
-        except FileNotFoundError:
-            pass
-        os.makedirs(output_dir)
+        # With --resume, keep any existing output so snakemake picks up where it left off
+        # (it is run with --rerun-triggers mtime --rerun-incomplete --nolock).
+        if not getattr(pytest, "resume_tests", False):
+            try:
+                shutil.rmtree(output_dir)
+            except FileNotFoundError:
+                pass
+        os.makedirs(output_dir, exist_ok=True)
 
     def test_coassemble_sra_download_real(self):
         output_dir = os.path.join("example", "test_coassemble_sra_download_real")
@@ -785,6 +791,40 @@ class Tests(unittest.TestCase):
             if printed_paths:
                 # Normalize whitespace and test for existence of at least one printed log
                 self.assertTrue(any(os.path.exists(p.strip()) for p in printed_paths))
+
+
+class TestsSetupOutputDir(unittest.TestCase):
+    """Guard the --resume behaviour of setup_output_dir, which both manual test
+    classes rely on to either discard or keep output from an interrupted run."""
+
+    def kept_existing_output(self, resume):
+        """Run each class's setup_output_dir over a populated output dir, returning
+        whether the pre-existing file survived. setup_output_dir ignores self, so
+        call it unbound."""
+        original = getattr(pytest, "resume_tests", False)
+        pytest.resume_tests = resume
+        try:
+            kept = []
+            for cls in (TestsQsub, Tests):
+                with in_tempdir():
+                    output_dir = "output"
+                    os.makedirs(output_dir)
+                    existing = os.path.join(output_dir, "existing_output")
+                    with open(existing, "w") as f:
+                        f.write("previous run")
+
+                    cls.setup_output_dir(None, output_dir)
+                    self.assertTrue(os.path.isdir(output_dir))
+                    kept.append(os.path.exists(existing))
+            return kept
+        finally:
+            pytest.resume_tests = original
+
+    def test_setup_output_dir_default_deletes_existing_output(self):
+        self.assertEqual([False, False], self.kept_existing_output(resume=False))
+
+    def test_setup_output_dir_resume_keeps_existing_output(self):
+        self.assertEqual([True, True], self.kept_existing_output(resume=True))
 
 
 if __name__ == '__main__':
