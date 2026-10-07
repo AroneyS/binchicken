@@ -98,6 +98,17 @@ depends-on = [
     { task = "run-tests-at-cmr-base", environment = "dev" }
 ]
 
+[tasks.run-tests-at-cmr-resume-base]
+cmd = "test/run_tests_at_cmr --resume"
+depends-on = [
+    {task="build", environment = "dev"}
+]
+
+[tasks.run-tests-at-cmr-resume]
+depends-on = [
+    { task = "run-tests-at-cmr-resume-base", environment = "dev" }
+]
+
 [feature.dev.dependencies]
 pytest = "*"
 ipython = "*"
@@ -120,7 +131,7 @@ singlem = ["singlem"]
 parallel = "==20230522"
 
 [feature.aviary.dependencies]
-aviary = ">=0.13.3"
+aviary = ">=0.13.4"
 snakemake-executor-plugin-cluster-generic = ">=1"
 conda = "*"
 pixi = ">=0.72.1"
