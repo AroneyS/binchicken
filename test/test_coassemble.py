@@ -421,6 +421,74 @@ class Tests(unittest.TestCase):
             cluster_path = os.path.join("test", "coassemble", "target", "elusive_clusters.tsv")
             self.assertTrue(os.path.exists(cluster_path))
 
+    def test_coassemble_long_reads_only(self):
+        with in_tempdir():
+            cmd = (
+                f"binchicken coassemble "
+                f"--long-reads {SAMPLE_LONG_READS} "
+                f"--long-read-type ont "
+                f"--singlem-metapackage {METAPACKAGE} "
+                f"--prodigal-meta "
+                f"--output test "
+            )
+            extern.run(cmd)
+
+            config_path = os.path.join("test", "config.yaml")
+            self.assertTrue(os.path.exists(config_path))
+            config = load_configfile(config_path)
+            self.assertEqual({}, config["reads_1"])
+            self.assertEqual({}, config["reads_2"])
+            self.assertEqual(
+                {
+                    "sample_1": os.path.abspath(os.path.join(path_to_data, "sample_1.fq")),
+                    "sample_3": os.path.abspath(os.path.join(path_to_data, "sample_3.fq")),
+                },
+                config["long_reads"],
+            )
+
+            samples_list_path = os.path.join("test", "coassemble", "lists", "samples_list.tsv")
+            self.assertTrue(os.path.exists(samples_list_path))
+            with open(samples_list_path) as f:
+                samples = f.read().splitlines()
+            self.assertEqual({"sample_1", "sample_3"}, set(samples))
+
+            read_size_path = os.path.join("test", "coassemble", "read_size.csv")
+            self.assertTrue(os.path.exists(read_size_path))
+            read_size = pl.read_csv(read_size_path, has_header=False, new_columns=["sample", "read_size"])
+            self.assertEqual({"sample_1", "sample_3"}, set(read_size.get_column("sample").to_list()))
+            self.assertTrue((read_size.get_column("read_size") > 0).all())
+
+            pipe_long_path = os.path.join("test", "coassemble", "pipe_long", "sample_1_read.otu_table.tsv")
+            self.assertTrue(os.path.exists(pipe_long_path))
+
+            cluster_path = os.path.join("test", "coassemble", "target", "elusive_clusters.tsv")
+            self.assertTrue(os.path.exists(cluster_path))
+
+    def test_coassemble_read_size_combined_matched_sample(self):
+        with in_tempdir():
+            cmd = (
+                f"binchicken coassemble "
+                f"--forward {os.path.join(path_to_data, 'sample_1.1.fq')} "
+                f"--reverse {os.path.join(path_to_data, 'sample_1.2.fq')} "
+                f"--long-reads {os.path.join(path_to_data, 'sample_1.fq')} "
+                f"--singlem-metapackage {METAPACKAGE} "
+                f"--prodigal-meta "
+                f"--output test "
+            )
+            extern.run(cmd)
+
+            def load_sizes(path):
+                with open(path) as f:
+                    return {sample: int(size) for sample, size in (line.strip().split(",") for line in f if line.strip())}
+
+            short_only = load_sizes(os.path.join("test", "coassemble", "short_read_size.csv"))
+            long_only = load_sizes(os.path.join("test", "coassemble", "long_read_size.csv"))
+            combined = load_sizes(os.path.join("test", "coassemble", "read_size.csv"))
+
+            self.assertGreater(short_only["sample_1"], 0)
+            self.assertGreater(long_only["sample_1"], 0)
+            self.assertEqual(short_only["sample_1"] + long_only["sample_1"], combined["sample_1"])
+
     def test_coassemble_combine_pipe_reads(self):
         with in_tempdir():
             short_otu_table = "sample_1_read.otu_table.tsv"

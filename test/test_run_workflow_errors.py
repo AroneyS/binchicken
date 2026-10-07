@@ -262,6 +262,147 @@ class Tests(unittest.TestCase):
             out = stdout_buf.getvalue()
             self.assertIn("some failure text", out)
 
+    def test_parse_snakemake_external_jobids(self):
+        text = (
+            "Error in rule read_otu_table_list:\n"
+            "    jobid: 6\n"
+            "    external_jobid: 25364677.aqua\n"
+            "Error in rule read_otu_table_list:\n"
+            "    jobid: 6\n"
+            "    external_jobid: 25364678.aqua\n"
+            "Error in rule aviary_assemble:\n"
+            "    jobid: 9\n"
+        )
+        self.assertEqual(
+            bc.parse_snakemake_external_jobids(text),
+            {"read_otu_table_list": ["25364677.aqua", "25364678.aqua"]},
+        )
+
+    def test_find_logs_for_rule_returns_none_without_log_path(self):
+        """A rule with no log_path must not be handed other rules' logs."""
+        with TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            wid = "UNITTESTWID"
+            # Logs belonging to a different rule (aviary_assemble)
+            log_dir = tmp_path / "coassemble" / "logs" / "aviary" / "coassembly_0_assemble" / wid
+            log_dir.mkdir(parents=True, exist_ok=True)
+            (log_dir / "attempt1.log").write_text("unrelated\n")
+
+            # read_otu_table_list declares only mem_mb and runtime in coassemble.smk
+            self.assertIsNone(
+                bc.find_logs_for_rule("read_otu_table_list", "coassemble.smk", str(tmp_path), wid)
+            )
+            # The rule that did write them still finds them
+            self.assertTrue(
+                bc.find_logs_for_rule("aviary_assemble", "coassemble.smk", str(tmp_path), wid)
+            )
+
+    def test_run_workflow_rule_without_log_path_does_not_blame_other_logs(self):
+        with TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            wid = "TESTWID"
+            # A log from an unrelated rule already exists in the tree
+            unrelated = tmp_path / "coassemble" / "logs" / "aviary" / "coassembly_0_assemble" / wid / "attempt1.log"
+            unrelated.parent.mkdir(parents=True, exist_ok=True)
+            unrelated.write_text("UNRELATED CONTENT\n")
+
+            # read_otu_table_list has no log_path; snakemake reports a cluster job id
+            smk_output = (
+                "Error in rule read_otu_table_list:\n"
+                "    jobid: 6\n"
+                "    external_jobid: 25364677.aqua\n"
+            )
+
+            def fake_popen(cmd, shell, stdout, stderr, text, encoding, errors, bufsize):
+                return DummyProc(smk_output, stderr_text="", returncode=1)
+
+            cfg = make_config(tmp_path)
+            stdout_buf = io.StringIO()
+            stderr_buf = io.StringIO()
+
+            log_stream = io.StringIO()
+            handler = logging.StreamHandler(log_stream)
+            root_logger = logging.getLogger()
+            root_level = root_logger.level
+            root_logger.setLevel(logging.ERROR)
+            root_logger.addHandler(handler)
+
+            try:
+                with patch.object(bc.subprocess, "Popen", fake_popen), \
+                     patch.object(bc, "workflow_identifier", wid, create=True), \
+                     patch.object(bc, "load_configfile", lambda p: None, create=True), \
+                     redirect_stdout(stdout_buf), redirect_stderr(stderr_buf):
+                    with self.assertRaises(SystemExit) as cm:
+                        bc.run_workflow(
+                            config=cfg,
+                            workflow="coassemble.smk",
+                            output_dir=str(tmp_path),
+                            cores=1,
+                            dryrun=False,
+                            profile=None,
+                            local_cores=1,
+                            retries=None,
+                            snakemake_args="",
+                        )
+            finally:
+                root_logger.removeHandler(handler)
+                root_logger.setLevel(root_level)
+
+            self.assertEqual(cm.exception.code, 1)
+            logs = log_stream.getvalue()
+            err = stderr_buf.getvalue()
+
+            # The unrelated log is neither reported nor dumped
+            self.assertNotIn(str(unrelated), logs)
+            self.assertNotIn("UNRELATED CONTENT", err)
+            self.assertNotIn("BEGIN LOG", err)
+
+            # The message explains there is no log, and points at the cluster job
+            self.assertIn("Rule failed: read_otu_table_list", logs)
+            self.assertIn("declares no log_path", logs)
+            self.assertIn("25364677.aqua", logs)
+
+    def test_run_workflow_caps_number_of_dumped_logs(self):
+        with TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            wid = "TESTWID"
+            # More aviary_assemble logs than the dump cap, across coassembly_* wildcards
+            n_logs = bc.MAX_LOGS_TO_DUMP + 3
+            for i in range(n_logs):
+                lp = tmp_path / "coassemble" / "logs" / "aviary" / f"coassembly_{i}_assemble" / wid / "attempt1.log"
+                lp.parent.mkdir(parents=True, exist_ok=True)
+                lp.write_text(f"CONTENT_{i}\n")
+
+            smk_output = "Error in rule aviary_assemble:\n    jobid: 1\n"
+
+            def fake_popen(cmd, shell, stdout, stderr, text, encoding, errors, bufsize):
+                return DummyProc(smk_output, stderr_text="", returncode=1)
+
+            cfg = make_config(tmp_path)
+            stdout_buf = io.StringIO()
+            stderr_buf = io.StringIO()
+
+            with patch.object(bc.subprocess, "Popen", fake_popen), \
+                 patch.object(bc, "workflow_identifier", wid, create=True), \
+                 patch.object(bc, "load_configfile", lambda p: None, create=True), \
+                 redirect_stdout(stdout_buf), redirect_stderr(stderr_buf):
+                with self.assertRaises(SystemExit):
+                    bc.run_workflow(
+                        config=cfg,
+                        workflow="coassemble.smk",
+                        output_dir=str(tmp_path),
+                        cores=1,
+                        dryrun=False,
+                        profile=None,
+                        local_cores=1,
+                        retries=None,
+                        snakemake_args="",
+                    )
+
+            err = stderr_buf.getvalue()
+            self.assertEqual(err.count("===== BEGIN LOG"), bc.MAX_LOGS_TO_DUMP)
+            self.assertIn(f"omitting {n_logs - bc.MAX_LOGS_TO_DUMP}", err)
+
 
 if __name__ == '__main__':
     unittest.main()

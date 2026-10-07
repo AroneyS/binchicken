@@ -438,7 +438,10 @@ def main():
     anchor_samples = set(pl.read_csv(args.anchor_samples, has_header=False, new_columns=["sample"], schema_overrides={"sample": str}).get_column("sample").to_list()) if args.anchor_samples else set()
 
     elusive_edges = pl.read_csv(args.elusive_edges, separator="\t", schema_overrides={"target_ids": str})
-    read_size = pl.read_csv(args.read_size, has_header=False, new_columns=["sample", "read_size"], schema_overrides={"sample": str})
+    try:
+        read_size = pl.read_csv(args.read_size, has_header=False, new_columns=["sample", "read_size"], schema_overrides={"sample": str})
+    except pl.exceptions.NoDataError:
+        read_size = pl.DataFrame(schema={"sample": str, "read_size": int})
 
     if args.targets_weighted:
         weightings = pl.read_csv(args.targets_weighted, separator="\t", schema_overrides=TARGET_WEIGHTING_COLUMNS)
