@@ -78,10 +78,13 @@ PRIOR_COASSEMBLY = os.path.join(path_to_data, "prior_coassembly.tsv")
 
 @pytest.mark.qsub
 class TestsQsub(unittest.TestCase):
-    def setup_output_dir(self, output_dir):
+    def setup_output_dir(self, output_dir, allow_resume=True):
         # With --resume, keep any existing output so snakemake picks up where it left off
         # (it is run with --rerun-triggers mtime --rerun-incomplete --nolock).
-        if not getattr(pytest, "resume_tests", False):
+        # Tests that assert on which rules snakemake ran must pass allow_resume=False:
+        # resuming means snakemake reports "Nothing to be done", so no rule names reach
+        # stderr and those assertions cannot pass.
+        if not (allow_resume and getattr(pytest, "resume_tests", False)):
             try:
                 shutil.rmtree(output_dir)
             except FileNotFoundError:
@@ -405,10 +408,13 @@ class TestsQsub(unittest.TestCase):
 
 @pytest.mark.expensive
 class Tests(unittest.TestCase):
-    def setup_output_dir(self, output_dir):
+    def setup_output_dir(self, output_dir, allow_resume=True):
         # With --resume, keep any existing output so snakemake picks up where it left off
         # (it is run with --rerun-triggers mtime --rerun-incomplete --nolock).
-        if not getattr(pytest, "resume_tests", False):
+        # Tests that assert on which rules snakemake ran must pass allow_resume=False:
+        # resuming means snakemake reports "Nothing to be done", so no rule names reach
+        # stderr and those assertions cannot pass.
+        if not (allow_resume and getattr(pytest, "resume_tests", False)):
             try:
                 shutil.rmtree(output_dir)
             except FileNotFoundError:
@@ -578,7 +584,8 @@ class Tests(unittest.TestCase):
 
     def test_single_assembly_provided(self):
         output_dir = os.path.join("example", "test_single_assembly_provided")
-        self.setup_output_dir(output_dir)
+        # Asserts on the rules snakemake ran, so it cannot resume from existing output.
+        self.setup_output_dir(output_dir, allow_resume=False)
 
         cmd = (
             f"binchicken single "
@@ -673,9 +680,10 @@ class Tests(unittest.TestCase):
 
     def test_update_assembly_provided(self):
         output_dir = os.path.join("example", "test_update_assembly_provided")
-        self.setup_output_dir(output_dir)
+        # Asserts on the rules snakemake ran, so it cannot resume from existing output.
+        self.setup_output_dir(output_dir, allow_resume=False)
         update_dir = os.path.join("example", "test_update_assembly_provided_update")
-        self.setup_output_dir(update_dir)
+        self.setup_output_dir(update_dir, allow_resume=False)
 
         cmd = (
             f"binchicken coassemble "
@@ -797,7 +805,7 @@ class TestsSetupOutputDir(unittest.TestCase):
     """Guard the --resume behaviour of setup_output_dir, which both manual test
     classes rely on to either discard or keep output from an interrupted run."""
 
-    def kept_existing_output(self, resume):
+    def kept_existing_output(self, resume, allow_resume=True):
         """Run each class's setup_output_dir over a populated output dir, returning
         whether the pre-existing file survived. setup_output_dir ignores self, so
         call it unbound."""
@@ -813,7 +821,7 @@ class TestsSetupOutputDir(unittest.TestCase):
                     with open(existing, "w") as f:
                         f.write("previous run")
 
-                    cls.setup_output_dir(None, output_dir)
+                    cls.setup_output_dir(None, output_dir, allow_resume=allow_resume)
                     self.assertTrue(os.path.isdir(output_dir))
                     kept.append(os.path.exists(existing))
             return kept
@@ -825,6 +833,11 @@ class TestsSetupOutputDir(unittest.TestCase):
 
     def test_setup_output_dir_resume_keeps_existing_output(self):
         self.assertEqual([True, True], self.kept_existing_output(resume=True))
+
+    def test_setup_output_dir_resume_disallowed_deletes_existing_output(self):
+        """Tests that assert on which rules snakemake ran opt out of resume, so their
+        output must be discarded even when --resume is in effect."""
+        self.assertEqual([False, False], self.kept_existing_output(resume=True, allow_resume=False))
 
 
 if __name__ == '__main__':

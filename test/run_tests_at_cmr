@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import glob
 import os
 import subprocess
 import sys
@@ -21,12 +22,12 @@ import extern
 RESUME = "--resume" in sys.argv[1:]
 resume_arg = " --resume" if RESUME else ""
 
-def collect_expensive_tests():
-    """Collect all test nodeids marked as 'expensive'."""
+def collect_tests(marker):
+    """Collect all test nodeids marked with the given pytest marker."""
     # Unfortunately, pytest.main doesn't return nodeids directly.
     # Instead, we'll use subprocess to parse the output.
     result = subprocess.run(
-        ['pytest', '--collect-only', '-q', '-m', 'expensive', 'test'],
+        ['pytest', '--collect-only', '-q', '-m', marker, 'test'],
         capture_output=True, text=True
     )
     nodeids = [
@@ -41,7 +42,7 @@ if os.path.exists(MQSUB_OUT):
     os.remove(MQSUB_OUT)
 
 # Expensive tests
-expensive_tests = collect_expensive_tests()
+expensive_tests = collect_tests('expensive')
 print(f"Running {len(expensive_tests)} expensive tests individually via mqsub{' (resuming)' if RESUME else ''}..")
 if not expensive_tests:
     raise ValueError("No tests marked as 'expensive' found.")
@@ -53,29 +54,48 @@ for test in expensive_tests:
     )
     extern.run(cmd)
 
-print("Running qsub tests locally, which qsub themselves ..")
+# qsub tests run locally because they qsub themselves (via snakemake's aqua profile).
+# Each blocks until its whole workflow finishes, so give each its own pytest process
+# and run them concurrently rather than queueing one behind another's cluster jobs.
+qsub_tests = collect_tests('qsub')
+print(f"Running {len(qsub_tests)} qsub tests concurrently, each of which qsubs itself{' (resuming)' if RESUME else ''}..")
+if not qsub_tests:
+    raise ValueError("No tests marked as 'qsub' found.")
+# Remove logs from previous runs so stale results aren't mistaken for this run's
+for old_log in glob.glob("test/qsub-test-log*.txt"):
+    os.remove(old_log)
+qsub_processes = {}
+for test in qsub_tests:
+    log_path = f"test/qsub-test-log.{test.split('::')[-1]}.txt"
+    print(f"Local qsub test: {test} (log: {log_path}) ..")
+    with open(log_path, "w") as log_file:
+        # The child inherits its own handle on the log file, so this one can be closed
+        qsub_processes[test] = (
+            subprocess.Popen(
+                [
+                    "pixi", "run", "-e", "dev",
+                    "pytest", "--run-qsub",
+                ] + (["--resume"] if RESUME else []) + [test],
+                stdout=log_file,
+                stderr=subprocess.STDOUT,
+            ),
+            log_path,
+        )
+
 fails = 0
-with open("test/qsub-test-log.txt", "w") as log_file:
-    process = subprocess.Popen(
-        [
-            "pixi", "run", "-e", "dev",
-            "pytest", "test", "-m", "qsub", "--run-qsub",
-        ] + (["--resume"] if RESUME else []),
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT,
-        text=True
-    )
-    for line in process.stdout:
-        print(line, end="")
-        log_file.write(line)
-    process.wait()
-    # check return code
-    if process.returncode != 0:
-        print(f"Error: qsub tests failed with return code {process.returncode}.")
-        print("Check the log file test/qsub-test-log.txt for details.")
-        fails += 1
-    else:
-        print("tests marked qsub appear to have run successfully, but check the log file test/qsub-test-log.txt for details.\n")
+pending = dict(qsub_processes)
+while pending:
+    time.sleep(60)
+    for test, (process, log_path) in list(pending.items()):
+        if process.poll() is None:
+            continue
+        del pending[test]
+        if process.returncode != 0:
+            fails += 1
+            print(f"Error: qsub test {test} failed with return code {process.returncode}. See {log_path} for details.")
+        else:
+            print(f"qsub test {test} passed. See {log_path} for details.")
+print(f"{len(qsub_tests) - fails} of {len(qsub_tests)} qsub tests passed.\n")
 
 with open(MQSUB_OUT, "r") as mqsub_file:
     mqsub_lines = mqsub_file.readlines()
