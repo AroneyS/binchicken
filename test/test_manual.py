@@ -249,7 +249,15 @@ class TestsQsub(unittest.TestCase):
         long_reads_paths = []
         for sra_accession, ena_accession in MFD_SAMPLES.items():
             link_path = os.path.join(long_reads_dir, f"{sra_accession}.fastq.gz")
-            os.symlink(os.path.join(MFD_LONG_READS_DIR, f"{ena_accession}.fastq.gz"), link_path)
+            target = os.path.join(MFD_LONG_READS_DIR, f"{ena_accession}.fastq.gz")
+            # Under --resume the link may survive from a previous run. Keep it if correct, since
+            # recreating it would give it a newer mtime and make snakemake rerun downstream rules.
+            if os.path.lexists(link_path):
+                if os.readlink(link_path) == target:
+                    long_reads_paths.append(link_path)
+                    continue
+                os.remove(link_path)
+            os.symlink(target, link_path)
             long_reads_paths.append(link_path)
 
         cmd = (
