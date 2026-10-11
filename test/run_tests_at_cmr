@@ -69,12 +69,14 @@ for test in qsub_tests:
     log_path = f"test/qsub-test-log.{test.split('::')[-1]}.txt"
     print(f"Local qsub test: {test} (log: {log_path}) ..")
     with open(log_path, "w") as log_file:
-        # The child inherits its own handle on the log file, so this one can be closed
+        # The child inherits its own handle on the log file, so this one can be closed.
+        # -s disables pytest's output capture so the log fills in while the test runs,
+        # rather than only once the (hours-long) test finishes.
         qsub_processes[test] = (
             subprocess.Popen(
                 [
                     "pixi", "run", "-e", "dev",
-                    "pytest", "--run-qsub",
+                    "pytest", "-s", "--run-qsub",
                 ] + (["--resume"] if RESUME else []) + [test],
                 stdout=log_file,
                 stderr=subprocess.STDOUT,
