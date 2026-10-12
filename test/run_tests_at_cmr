@@ -49,7 +49,7 @@ if not expensive_tests:
 for test in expensive_tests:
     print(f"mqsub Expensive test: {test} ..")
     cmd = (
-        "mqsub -t 16 -m 128 --hours 4 --segregated-log-files --bg -- "
+        "mqsub --no-email -t 8 -m 16 --hours 8 --segregated-log-files --bg -- "
         f"pixi run -e dev pytest --run-expensive{resume_arg} {test} &>>{MQSUB_OUT}"
     )
     extern.run(cmd)
