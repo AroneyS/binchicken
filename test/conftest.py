@@ -6,6 +6,13 @@ def pytest_addoption(parser):
     parser.addoption("--run-qsub", action="store_true", help="run tests that require qsub")
     # snakemake profile
     parser.addoption("--profile", help="run snakemake with profile")
+    # resume interrupted runs instead of starting from scratch
+    parser.addoption(
+        "--resume", action="store_true",
+        help="keep existing test output directories so snakemake resumes where it left off. "
+             "Only safe when binchicken has not changed since the interrupted run, because "
+             "snakemake is invoked with --rerun-triggers mtime and will not rerun on code changes."
+    )
 
 def pytest_configure(config):
     config.addinivalue_line("markers", "expensive: mark test as requiring --run-expensive")
@@ -13,6 +20,7 @@ def pytest_configure(config):
     pytest.snakemake_profile_arg = ''
     if config.getoption("--profile"):
         pytest.snakemake_profile_arg = f"--snakemake-profile {config.getoption('--profile')}"
+    pytest.resume_tests = config.getoption("--resume")
 
 def pytest_collection_modifyitems(config, items):
     if config.getoption("--run-expensive") and config.getoption("--run-qsub"):
