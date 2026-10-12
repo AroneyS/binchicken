@@ -176,7 +176,12 @@ class TestsQsub(unittest.TestCase):
 
         self.assertTrue("bin_info.tsv not yet available in recover outputs: ['coassembly_0']." in output)
 
-        recover_log_path = glob.glob(os.path.join(output_dir, "coassemble", "logs", "aviary", "coassembly_0_recover", "*", "attempt1.log"))[0]
+        # Under --resume earlier runs' recover logs are kept, so take this run's (newest) log;
+        # an older one would qdel stale job IDs and leave this run's held jobs in the queue.
+        recover_log_path = max(
+            glob.glob(os.path.join(output_dir, "coassemble", "logs", "aviary", "coassembly_0_recover", "*", "attempt1.log")),
+            key=os.path.getmtime,
+        )
         self.assertTrue(os.path.exists(recover_log_path))
 
         with open(recover_log_path) as f:
