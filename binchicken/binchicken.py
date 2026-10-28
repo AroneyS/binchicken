@@ -137,6 +137,32 @@ def parse_snakemake_errors(text: str):
             seen.add(r)
     return unique_rules
 
+# Upper bound on how many log files a single failure dumps to stderr.
+MAX_LOGS_TO_DUMP = 5
+
+def parse_snakemake_external_jobids(text: str):
+    """Map failed rule names to the external (cluster) job ids Snakemake reported.
+
+    Under a cluster profile Snakemake prints, a few lines below "Error in rule X:",
+    an "external_jobid:" line. For rules with no log of their own that job id is the
+    only pointer to what actually went wrong, so surface it in the failure message.
+    """
+    jobids = {}
+    current_rule = None
+    for raw in text.splitlines():
+        m_rule = re.search(r"Error in rule (\S+):", raw)
+        if m_rule:
+            current_rule = m_rule.group(1)
+            continue
+        if current_rule:
+            m_job = re.search(r"external_jobid:\s*(\S+)", raw)
+            if m_job:
+                seen_for_rule = jobids.setdefault(current_rule, [])
+                if m_job.group(1) not in seen_for_rule:
+                    seen_for_rule.append(m_job.group(1))
+                current_rule = None
+    return jobids
+
 def logs_dir_root_for_workflow(output_dir: str, workflow: str) -> str:
     wf_base = os.path.splitext(os.path.basename(workflow))[0]
     return os.path.join(output_dir, wf_base, "logs")
@@ -149,15 +175,23 @@ def find_logs_for_rule(rule_name: str, workflow: str, output_dir: str, wid: str 
     - workflow: Snakefile name (e.g., 'coassemble.smk')
     - output_dir: snakemake working directory used by run_workflow
     - wid: workflow identifier subdirectory; defaults to binchicken.common.workflow_identifier
+
+    Returns
+    - None if the rule was located in the Snakefile but declares no `log_path`
+      resource. Such a rule has no log of its own, and callers must report that
+      rather than fall back to a broad search, which would return every other
+      rule's logs and blame them on this rule.
+    - otherwise a (possibly empty) list of log paths, newest wid and highest
+      attempt first. Empty means the rule does declare a `log_path` but no files
+      exist yet.
     """
     import glob
 
     wid = wid or workflow_identifier
     logs_root = logs_dir_root_for_workflow(output_dir, workflow)
-    if not os.path.isdir(logs_root):
-        return []
 
-    # Locate and read the Snakefile specified by `workflow`
+    # Read the Snakefile before looking at disk: whether a rule declares a log_path is a
+    # property of the workflow, not of whatever logs happen to exist.
     snakefile_path = os.path.join(os.path.dirname(__file__), "workflow", workflow)
     try:
         with open(snakefile_path, "r", encoding="utf-8", errors="replace") as sf:
@@ -167,15 +201,19 @@ def find_logs_for_rule(rule_name: str, workflow: str, output_dir: str, wid: str 
         snake_txt = ""
 
     patterns = []
+    rule_found = False
+    declares_log_path = False
     if snake_txt:
         # Extract the block for the rule
         block_re = re.compile(rf"(?ms)^rule\s+{re.escape(rule_name)}\s*:\s*(.*?)\n(?=rule\s+\w+:|$)")
         m_block = block_re.search(snake_txt)
         if m_block:
+            rule_found = True
             block = m_block.group(1)
             # Find setup_log(f"{logs_dir}/...", attempt)
             m_log = re.search(r"log_path\s*=\s*lambda[^:]*:\s*setup_log\((.+?),\s*attempt\)", block, re.S)
             if m_log:
+                declares_log_path = True
                 arg = m_log.group(1)
                 m_f = re.search(r"f[\"'](.+?)[\"']", arg, re.S)
                 if m_f:
@@ -191,7 +229,17 @@ def find_logs_for_rule(rule_name: str, workflow: str, output_dir: str, wid: str 
                     # Snakefile may import at a slightly different time. Prefer any wid.
                     patterns.append(os.path.join(content, "*", "attempt*.log"))
 
-    # Fallback if no pattern found for the rule
+    # A rule that declares no log_path has no log to find. Say so distinctly instead of
+    # falling through to the broad glob below, which matches every rule's logs and would
+    # be reported as if they belonged to this rule.
+    if rule_found and not declares_log_path:
+        return None
+
+    if not os.path.isdir(logs_root):
+        return []
+
+    # Fallback only when the rule could not be located, or its log_path could not be
+    # parsed: there a broad search is the best guess available.
     if not patterns:
         # Fallback: search for any rule logs under logs_root
         patterns.append(os.path.join(logs_root, "**", "attempt*.log"))
@@ -292,11 +340,26 @@ def run_workflow(config, workflow, output_dir, cores=16, dryrun=False,
         logging.error("Snakemake failed, but no rule-specific errors were parsed. See output above.")
         sys.exit(1)
 
+    external_jobids = parse_snakemake_external_jobids(output_text)
+
     unique_logs = []
     seen = set()
     for rule in failed_rules:
         logs = find_logs_for_rule(rule, workflow, output_dir, workflow_identifier)
-        if logs:
+        if logs is None:
+            # Rule declares no log_path, so there is nothing of its own to show.
+            jobids = external_jobids.get(rule)
+            pointer = (
+                f" Snakemake reported external job id(s): {', '.join(jobids)}; check the "
+                "scheduler log for those jobs."
+                if jobids else
+                " Check the snakemake output above for details."
+            )
+            logging.error(
+                f"[{workflow_identifier}] Rule failed: {rule}; this rule declares no log_path, "
+                f"so it has no log of its own.{pointer}"
+            )
+        elif logs:
             for lp in logs:
                 logging.error(f"[{workflow_identifier}] Rule failed: {rule}; log: {lp}")
                 if lp not in seen:
@@ -306,8 +369,16 @@ def run_workflow(config, workflow, output_dir, cores=16, dryrun=False,
             logs_root = logs_dir_root_for_workflow(output_dir, workflow)
             logging.error(f"[{workflow_identifier}] Rule failed: {rule}; no log files found under {logs_root}")
 
-    # Dump log files to stderr
-    for lp in unique_logs:
+    # Dump log files to stderr. Cap this: dumping many logs buries the actual failure,
+    # which is what made a real 155-sample failure unreadable (see BUG.md).
+    if len(unique_logs) > MAX_LOGS_TO_DUMP:
+        skipped = len(unique_logs) - MAX_LOGS_TO_DUMP
+        sys.stderr.write(
+            f"\n===== {len(unique_logs)} logs matched; dumping the first {MAX_LOGS_TO_DUMP}, "
+            f"omitting {skipped}. Remaining paths were listed above. =====\n"
+        )
+        sys.stderr.flush()
+    for lp in unique_logs[:MAX_LOGS_TO_DUMP]:
         try:
             with open(lp, "r", encoding="utf-8", errors="replace") as fh:
                 sys.stderr.write(f"\n===== BEGIN LOG ({workflow_identifier}): {lp} =====\n")
@@ -785,7 +856,10 @@ def coassemble(args, iteration=None):
         args.forward = read_list(args.forward_list)
     if args.reverse_list:
         args.reverse = read_list(args.reverse_list)
-    forward_reads, reverse_reads = build_reads_list(args.forward, args.reverse, args.no_sample_sort)
+    if args.forward:
+        forward_reads, reverse_reads = build_reads_list(args.forward, args.reverse, args.no_sample_sort)
+    else:
+        forward_reads, reverse_reads = {}, {}
 
     if args.long_reads_list:
         args.long_reads = read_list(args.long_reads_list)
@@ -1673,11 +1747,30 @@ def main():
                     "find relevant samples for differential coverage binning (no coassembly)",
                     "binchicken coassemble --forward reads_1.1.fq ... --reverse reads_1.2.fq ... --single-assembly"
                 ),
+                btu.Example(
+                    "run proposed coassemblies through aviary with cluster submission",
+                    "binchicken coassemble --forward reads_1.1.fq ... --reverse reads_1.2.fq ... --run-aviary "
+                    "--snakemake-profile qsub --cluster-submission --local-cores 64 --cores 64"
+                ),
+                btu.Example(
+                    "cluster reads into proposed coassemblies, combining long reads with short reads for Aviary assembly/recovery",
+                    "binchicken coassemble --forward reads_1.1.fq ... --reverse reads_1.2.fq ... "
+                    "--long-reads reads_1.long.fq ... --long-read-type ont"
+                ),
+                btu.Example(
+                    "cluster reads into proposed coassemblies using long reads only, without any short reads",
+                    "binchicken coassemble --long-reads reads_1.long.fq ... --long-read-type ont"
+                ),
             ],
             "single": [
                 btu.Example(
                     "find relevant samples for differential coverage binning (no coassembly)",
                     "binchicken single --forward reads_1.1.fq ... --reverse reads_1.2.fq ..."
+                ),
+                btu.Example(
+                    "run proposed assemblies through aviary with cluster submission",
+                    "binchicken single --forward reads_1.1.fq ... --reverse reads_1.2.fq ... --run-aviary "
+                    "--snakemake-profile qsub --cluster-submission --local-cores 64 --cores 64"
                 ),
             ],
             "evaluate": [
@@ -2034,9 +2127,11 @@ def main():
                     args.aviary_snakemake_profile = args.snakemake_profile
 
     def base_argument_verification(args):
-        if not args.forward and not args.forward_list:
+        has_short_reads = args.forward or args.forward_list or getattr(args, "sra", False)
+        has_long_reads = args.long_reads or args.long_reads_list or args.sra_long_reads or args.sra_long_reads_list or args.short_long_read_pairs
+        if not has_short_reads and not has_long_reads:
             raise Exception("Input reads must be provided")
-        if not args.reverse and not args.reverse_list:
+        if has_short_reads and not args.reverse and not args.reverse_list:
             try:
                 if args.sra:
                     logging.info("SRA reads reverse reads not required")
