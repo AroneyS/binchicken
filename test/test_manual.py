@@ -274,6 +274,7 @@ class TestsQsub(unittest.TestCase):
             f"--coassembly-samples {' '.join(MFD_SAMPLES.keys())} "
             f"--singlem-metapackage {SINGLEM_METAPACKAGE} "
             f"--run-aviary "
+            f"--aviary-request-gpu "
             f"--aviary-speed fast "
             f"--assembly-strategy megahit "
             f"--aviary-gtdbtk-db {GTDBTK_DB} "
