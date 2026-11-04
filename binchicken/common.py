@@ -1,5 +1,5 @@
 import os
-from pathlib import Path
+from importlib.resources import files, as_file
 import re
 import ast
 import time
@@ -28,29 +28,10 @@ def parse_snake_dict(s):
     return ast.literal_eval(s)
 
 def pixi_run_func():
-    # pixi.toml ships inside this package directory (see MANIFEST.in), so
-    # under a normal pip/conda install that's the only copy and the only
-    # sensible pixi project root. In a git checkout, though, a convenience
-    # symlink at the repo root also points at this same file, and the
-    # project's own pixi tasks (postinstall's `cwd = "binchicken"` + `-e ..`)
-    # are written assuming *that* repo-root location is the pixi project
-    # root -- dev tooling that runs `pixi run ...` from the repo root
-    # creates environments on that basis. If this function instead pointed
-    # at the real nested file, pixi would see the same project referenced
-    # via two different literal manifest paths and, since 0.82.1, refuse to
-    # continue with "the environment directory has moved". Prefer the
-    # repo-root symlink when it's actually an alias for our own pixi.toml,
-    # to stay consistent with whichever path created the environment; fall
-    # back to this package's own location otherwise (the only copy that
-    # exists in a real install).
-    package_dir = Path(__file__).resolve().parent
-    local_manifest = package_dir / "pixi.toml"
-    repo_root_manifest = package_dir.parent / "pixi.toml"
-    if repo_root_manifest.exists() and repo_root_manifest.resolve() == local_manifest.resolve():
-        manifest_path = repo_root_manifest
-    else:
-        manifest_path = local_manifest
-    return f"pixi run --frozen --manifest-path {manifest_path}"
+    pixi_source = files("binchicken").joinpath("pixi.toml")
+
+    with as_file(pixi_source) as manifest_path:
+        return f"pixi run --frozen --manifest-path {manifest_path}"
 
 pixi_run = pixi_run_func()
 
