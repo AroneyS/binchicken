@@ -23,7 +23,7 @@ MFD_LONG_READS_DIR = "/mnt/hpccs01/datasets/deepocean/mfd_long"
 # Microflora Danica samples with both Nanopore long reads (ENA, on disk) and Illumina short reads (SRA)
 MFD_SAMPLES = {
     "SRR28011661": "ERR10750395",  # MFD03638
-    "SRR27973765": "ERR10755935",  # MFD01138
+    "SRR28059911": "ERR11596059",  # MFD08203
     "SRR27973122": "ERR10755936",  # MFD01223
 }
 
@@ -78,12 +78,18 @@ PRIOR_COASSEMBLY = os.path.join(path_to_data, "prior_coassembly.tsv")
 
 @pytest.mark.qsub
 class TestsQsub(unittest.TestCase):
-    def setup_output_dir(self, output_dir):
-        try:
-            shutil.rmtree(output_dir)
-        except FileNotFoundError:
-            pass
-        os.makedirs(output_dir)
+    def setup_output_dir(self, output_dir, allow_resume=True):
+        # With --resume, keep any existing output so snakemake picks up where it left off
+        # (it is run with --rerun-triggers mtime --rerun-incomplete --nolock).
+        # Tests that assert on which rules snakemake ran must pass allow_resume=False:
+        # resuming means snakemake reports "Nothing to be done", so no rule names reach
+        # stderr and those assertions cannot pass.
+        if not (allow_resume and getattr(pytest, "resume_tests", False)):
+            try:
+                shutil.rmtree(output_dir)
+            except FileNotFoundError:
+                pass
+        os.makedirs(output_dir, exist_ok=True)
 
     def test_update_aviary_run_real(self):
         output_dir = os.path.join("example", "test_update_aviary_run_real")
@@ -170,7 +176,12 @@ class TestsQsub(unittest.TestCase):
 
         self.assertTrue("bin_info.tsv not yet available in recover outputs: ['coassembly_0']." in output)
 
-        recover_log_path = glob.glob(os.path.join(output_dir, "coassemble", "logs", "aviary", "coassembly_0_recover", "*", "attempt1.log"))[0]
+        # Under --resume earlier runs' recover logs are kept, so take this run's (newest) log;
+        # an older one would qdel stale job IDs and leave this run's held jobs in the queue.
+        recover_log_path = max(
+            glob.glob(os.path.join(output_dir, "coassemble", "logs", "aviary", "coassembly_0_recover", "*", "attempt1.log")),
+            key=os.path.getmtime,
+        )
         self.assertTrue(os.path.exists(recover_log_path))
 
         with open(recover_log_path) as f:
@@ -243,7 +254,15 @@ class TestsQsub(unittest.TestCase):
         long_reads_paths = []
         for sra_accession, ena_accession in MFD_SAMPLES.items():
             link_path = os.path.join(long_reads_dir, f"{sra_accession}.fastq.gz")
-            os.symlink(os.path.join(MFD_LONG_READS_DIR, f"{ena_accession}.fastq.gz"), link_path)
+            target = os.path.join(MFD_LONG_READS_DIR, f"{ena_accession}.fastq.gz")
+            # Under --resume the link may survive from a previous run. Keep it if correct, since
+            # recreating it would give it a newer mtime and make snakemake rerun downstream rules.
+            if os.path.lexists(link_path):
+                if os.readlink(link_path) == target:
+                    long_reads_paths.append(link_path)
+                    continue
+                os.remove(link_path)
+            os.symlink(target, link_path)
             long_reads_paths.append(link_path)
 
         cmd = (
@@ -255,6 +274,7 @@ class TestsQsub(unittest.TestCase):
             f"--coassembly-samples {' '.join(MFD_SAMPLES.keys())} "
             f"--singlem-metapackage {SINGLEM_METAPACKAGE} "
             f"--run-aviary "
+            f"--aviary-request-gpu "
             f"--aviary-speed fast "
             f"--assembly-strategy megahit "
             f"--aviary-gtdbtk-db {GTDBTK_DB} "
@@ -287,6 +307,9 @@ class TestsQsub(unittest.TestCase):
         matched sample's OTU table (combine_pipe_reads) before clustering, so the two samples
         must actually co-cluster into a shared coassembly for aviary assemble/recover to run.
         A low --min-sequence-coverage is needed since these are tiny (<1MB) files.
+        Those tiny files assemble only a handful of binnable contigs, so no bins are expected:
+        Aviary recover fails at DAS Tool ("No bins were found") and Bin Chicken carries on
+        without recover outputs. The assertions therefore stop at the assembly.
         """
         output_dir = os.path.join("example", "test_coassemble_long_reads_real")
         self.setup_output_dir(output_dir)
@@ -338,16 +361,85 @@ class TestsQsub(unittest.TestCase):
         self.assertTrue(len(coassembly_dirs) > 0)
         for coassembly_dir in coassembly_dirs:
             self.assertTrue(os.path.exists(os.path.join(coassembly_dir, "assemble", "assembly", "final_contigs.fasta")))
-            self.assertTrue(os.path.exists(os.path.join(coassembly_dir, "recover", "bins", "checkm_minimal.tsv")))
+            # No recover/bins assertion: this data is too small to produce bins (see docstring)
+
+    def test_coassemble_long_reads_only_real(self):
+        """Long-read-only coassemble test: real Nanopore long reads for two related
+        M. tuberculosis isolates, downloaded directly from ENA via --sra-long-reads, with no
+        --forward/--reverse/--sra short reads provided at all. Exercises the fully long-read-only
+        pipeline path (no short reads anywhere in the run): base_argument_verification allowing
+        no short reads, read size counting via count_bp_long_reads/combine_read_size, and
+        clustering/assembly of long-read-only samples end to end. The two isolates are
+        related enough to be expected to co-cluster into a single coassembly. Recovery runs
+        but no bins are expected: these tiny files assemble only a handful of binnable contigs,
+        so Aviary recover fails at DAS Tool ("No bins were found") and Bin Chicken carries on
+        without recover outputs.
+        """
+        output_dir = os.path.join("example", "test_coassemble_long_reads_only_real")
+        self.setup_output_dir(output_dir)
+
+        cmd = (
+            f"binchicken coassemble "
+            f"--sra-long-reads {' '.join(MTB_SHORT_TO_LONG_ACCESSIONS.values())} "
+            f"--long-read-type ont "
+            f"--min-sequence-coverage 1 "
+            f"--singlem-metapackage {SINGLEM_METAPACKAGE} "
+            f"--run-aviary "
+            f"--aviary-speed fast "
+            f"--assembly-strategy megahit "
+            f"--aviary-gtdbtk-db {GTDBTK_DB} "
+            f"--aviary-checkm2-db {CHECKM2_DB} "
+            f"--cores 8 "
+            f"--output {output_dir} "
+            f"--snakemake-profile aqua "
+            f"--local-cores 4 "
+            f"--retries 1 "
+            f"--cluster-submission "
+        )
+        subprocess.run(cmd, shell=True, check=True)
+
+        config_path = os.path.join(output_dir, "config.yaml")
+        self.assertTrue(os.path.exists(config_path))
+        with open(config_path) as f:
+            config = YAML().load(f)
+        self.assertEqual({}, config["reads_1"])
+        self.assertEqual({}, config["reads_2"])
+        self.assertEqual(2, len(config["long_reads"]))
+        self.assertEqual("ont", config["long_read_type"])
+
+        read_size_path = os.path.join(output_dir, "coassemble", "read_size.csv")
+        self.assertTrue(os.path.exists(read_size_path))
+        with open(read_size_path) as f:
+            read_sizes = dict(line.strip().split(",") for line in f if line.strip())
+        self.assertEqual(2, len(read_sizes))
+        self.assertTrue(all(int(size) > 0 for size in read_sizes.values()))
+
+        cluster_path = os.path.join(output_dir, "coassemble", "target", "elusive_clusters.tsv")
+        self.assertTrue(os.path.exists(cluster_path))
+        with open(cluster_path) as f:
+            clusters = f.read().splitlines()
+        self.assertTrue(len(clusters) > 1, "Expected at least one coassembly to be formed")
+
+        coassembly_dirs = glob.glob(os.path.join(output_dir, "coassemble", "coassemble", "coassembly_*"))
+        self.assertTrue(len(coassembly_dirs) > 0)
+        for coassembly_dir in coassembly_dirs:
+            self.assertTrue(os.path.exists(os.path.join(coassembly_dir, "assemble", "assembly", "final_contigs.fasta")))
+            # No recover/bins assertion: this data is too small to produce bins (see docstring)
 
 @pytest.mark.expensive
 class Tests(unittest.TestCase):
-    def setup_output_dir(self, output_dir):
-        try:
-            shutil.rmtree(output_dir)
-        except FileNotFoundError:
-            pass
-        os.makedirs(output_dir)
+    def setup_output_dir(self, output_dir, allow_resume=True):
+        # With --resume, keep any existing output so snakemake picks up where it left off
+        # (it is run with --rerun-triggers mtime --rerun-incomplete --nolock).
+        # Tests that assert on which rules snakemake ran must pass allow_resume=False:
+        # resuming means snakemake reports "Nothing to be done", so no rule names reach
+        # stderr and those assertions cannot pass.
+        if not (allow_resume and getattr(pytest, "resume_tests", False)):
+            try:
+                shutil.rmtree(output_dir)
+            except FileNotFoundError:
+                pass
+        os.makedirs(output_dir, exist_ok=True)
 
     def test_coassemble_sra_download_real(self):
         output_dir = os.path.join("example", "test_coassemble_sra_download_real")
@@ -512,7 +604,8 @@ class Tests(unittest.TestCase):
 
     def test_single_assembly_provided(self):
         output_dir = os.path.join("example", "test_single_assembly_provided")
-        self.setup_output_dir(output_dir)
+        # Asserts on the rules snakemake ran, so it cannot resume from existing output.
+        self.setup_output_dir(output_dir, allow_resume=False)
 
         cmd = (
             f"binchicken single "
@@ -607,9 +700,10 @@ class Tests(unittest.TestCase):
 
     def test_update_assembly_provided(self):
         output_dir = os.path.join("example", "test_update_assembly_provided")
-        self.setup_output_dir(output_dir)
+        # Asserts on the rules snakemake ran, so it cannot resume from existing output.
+        self.setup_output_dir(output_dir, allow_resume=False)
         update_dir = os.path.join("example", "test_update_assembly_provided_update")
-        self.setup_output_dir(update_dir)
+        self.setup_output_dir(update_dir, allow_resume=False)
 
         cmd = (
             f"binchicken coassemble "
@@ -725,6 +819,45 @@ class Tests(unittest.TestCase):
             if printed_paths:
                 # Normalize whitespace and test for existence of at least one printed log
                 self.assertTrue(any(os.path.exists(p.strip()) for p in printed_paths))
+
+
+class TestsSetupOutputDir(unittest.TestCase):
+    """Guard the --resume behaviour of setup_output_dir, which both manual test
+    classes rely on to either discard or keep output from an interrupted run."""
+
+    def kept_existing_output(self, resume, allow_resume=True):
+        """Run each class's setup_output_dir over a populated output dir, returning
+        whether the pre-existing file survived. setup_output_dir ignores self, so
+        call it unbound."""
+        original = getattr(pytest, "resume_tests", False)
+        pytest.resume_tests = resume
+        try:
+            kept = []
+            for cls in (TestsQsub, Tests):
+                with in_tempdir():
+                    output_dir = "output"
+                    os.makedirs(output_dir)
+                    existing = os.path.join(output_dir, "existing_output")
+                    with open(existing, "w") as f:
+                        f.write("previous run")
+
+                    cls.setup_output_dir(None, output_dir, allow_resume=allow_resume)
+                    self.assertTrue(os.path.isdir(output_dir))
+                    kept.append(os.path.exists(existing))
+            return kept
+        finally:
+            pytest.resume_tests = original
+
+    def test_setup_output_dir_default_deletes_existing_output(self):
+        self.assertEqual([False, False], self.kept_existing_output(resume=False))
+
+    def test_setup_output_dir_resume_keeps_existing_output(self):
+        self.assertEqual([True, True], self.kept_existing_output(resume=True))
+
+    def test_setup_output_dir_resume_disallowed_deletes_existing_output(self):
+        """Tests that assert on which rules snakemake ran opt out of resume, so their
+        output must be discarded even when --resume is in effect."""
+        self.assertEqual([False, False], self.kept_existing_output(resume=True, allow_resume=False))
 
 
 if __name__ == '__main__':

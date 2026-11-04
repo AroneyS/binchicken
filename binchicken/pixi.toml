@@ -19,7 +19,10 @@ sourmash = "4.8.*"
 sourmash_plugin_branchwater = "0.9.*"
 # see https://github.com/pyca/cryptography/issues/7959#issuecomment-1368711852
 pyopenssl = ">22.1.0"
-pixi = ">=0.72.1"
+# Capped: newer pixi (0.84 fails, 0.72.2 works) errors with "the environment directory
+# has moved" because the repo-root .pixi/pixi.toml symlinks give two paths to one env.
+# TODO: check https://github.com/prefix-dev/pixi/issues/7335 before raising the cap.
+pixi = ">=0.72.1,<0.82"
 conda = "*"
 pip = "*"
 
@@ -98,6 +101,17 @@ depends-on = [
     { task = "run-tests-at-cmr-base", environment = "dev" }
 ]
 
+[tasks.run-tests-at-cmr-resume-base]
+cmd = "test/run_tests_at_cmr --resume"
+depends-on = [
+    {task="build", environment = "dev"}
+]
+
+[tasks.run-tests-at-cmr-resume]
+depends-on = [
+    { task = "run-tests-at-cmr-resume-base", environment = "dev" }
+]
+
 [feature.dev.dependencies]
 pytest = "*"
 ipython = "*"
@@ -120,10 +134,13 @@ singlem = ["singlem"]
 parallel = "==20230522"
 
 [feature.aviary.dependencies]
-aviary = ">=0.13.3"
+aviary = ">=0.13.4"
 snakemake-executor-plugin-cluster-generic = ">=1"
 conda = "*"
-pixi = ">=0.72.1"
+# Capped: newer pixi (0.84 fails, 0.72.2 works) errors with "the environment directory
+# has moved" because the repo-root .pixi/pixi.toml symlinks give two paths to one env.
+# TODO: check https://github.com/prefix-dev/pixi/issues/7335 before raising the cap.
+pixi = ">=0.72.1,<0.82"
 
 [feature.coverm.dependencies]
 coverm = ">=0.8.0"

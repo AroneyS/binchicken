@@ -26,6 +26,9 @@ binchicken coassemble --forward reads_1.1.fq ... --reverse reads_1.2.fq ... --ru
 # Example: cluster reads into proposed coassemblies, combining long reads with short reads for Aviary assembly/recovery
 binchicken coassemble --forward reads_1.1.fq ... --reverse reads_1.2.fq ... \
   --long-reads reads_1.long.fq ... --long-read-type ont
+
+# Example: cluster reads into proposed coassemblies using long reads only, without any short reads
+binchicken coassemble --long-reads reads_1.long.fq ... --long-read-type ont
 ```
 
 Important options:
@@ -34,7 +37,7 @@ Important options:
 - Maximum number of recovery samples for differential-abundance binning can be specified (`--max-recovery-samples`, default 20)
 - Genomes can be provided and matching marker genes will be excluded (`--genomes`)
 - Reads can be mapped to the matched bins with only unmapped reads being assembled (`--assemble-unmapped`).
-- Long reads can be provided per sample (`--long-reads`, single-ended, one file per sample). When a long-read sample name matches a `--forward`/`--reverse` sample, the long reads are merged into that sample's marker gene profile (via SingleM) and combined with the short reads for Aviary assembly and recovery. Long-read samples without a matching short-read sample are also supported: they contribute to clustering decisions and are assembled/recovered with Aviary using long reads alone. The sequencing platform is set with `--long-read-type` (default `ont`).
+- Long reads can be provided per sample (`--long-reads`, single-ended, one file per sample). When a long-read sample name matches a `--forward`/`--reverse` sample, the long reads are merged into that sample's marker gene profile (via SingleM) and combined with the short reads for Aviary assembly and recovery. Long-read samples without a matching short-read sample are also supported: they contribute to clustering decisions and are assembled/recovered with Aviary using long reads alone. `--forward`/`--forward-list`/`--sra` can be omitted entirely to run a coassembly using only long-read samples. The sequencing platform is set with `--long-read-type` (default `ont`).
 - Long reads can also be downloaded directly from SRA/ENA (`--sra-long-reads`, run accessions, always treated as long-read-only samples since matching short/long accessions differ). To explicitly match a short-read sample to a long read, use `--short-long-read-pairs`: a TSV file with header `sample`/`long_reads` mapping a `--forward`/`--reverse`/`--sra` sample name to either a local long-read file or an SRA/ENA accession to download (independent of `--sra`/`--sra-long-reads`). This bypasses the automatic filename-based matching used by `--long-reads`.
 - Assembly and recovery running options:
   - Run directly through Aviary (`--run-aviary`)
