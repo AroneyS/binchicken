@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Minimum Aviary version bumped to 0.13.4, which fixes hybrid (short + long read) assembly failing in short-read Racon polishing with "empty sequences set!" when short-read headers carry a description field (e.g. SRA-downloaded reads)
+- Capped the pixi dependency to <0.82: newer pixi fails every rule with "the environment directory has moved" in git checkouts, where the repo-root .pixi/pixi.toml are symlinks (prefix-dev/pixi#7335)
 
 ## [0.15.0] - 2026-09-03
 
