@@ -504,3 +504,9 @@ find relevant samples for differential coverage binning (no coassembly)
 
 **\$ binchicken single \--forward reads_1.1.fq \... \--reverse
   reads_1.2.fq \...**
+
+run proposed assemblies through aviary with cluster submission
+
+**\$ binchicken single \--forward reads_1.1.fq \... \--reverse
+  reads_1.2.fq \... \--run-aviary \--snakemake-profile qsub
+  \--cluster-submission \--local-cores 64 \--cores 64**
