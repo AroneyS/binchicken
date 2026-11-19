@@ -641,6 +641,7 @@ def set_standard_args(args):
     args.genome_transcripts_list = None
     args.genome_singlem = None
     args.taxa_of_interest = None
+    args.exclude_taxa = None
     args.appraise_sequence_identity = 1
     args.min_sequence_coverage = 1
     args.single_assembly = False
@@ -1035,6 +1036,7 @@ def coassemble(args, iteration=None):
         "anchor_samples": args.anchor_samples,
         # Clustering config
         "taxa_of_interest": args.taxa_of_interest if args.taxa_of_interest else None,
+        "exclude_taxa": args.exclude_taxa if args.exclude_taxa else None,
         "appraise_sequence_identity": args.appraise_sequence_identity / 100 if args.appraise_sequence_identity > 1 else args.appraise_sequence_identity,
         "min_coassembly_coverage": args.min_sequence_coverage,
         "single_assembly": args.single_assembly,
@@ -1940,6 +1942,7 @@ def main():
         # Clustering options
         coassemble_clustering = parser.add_argument_group("Clustering options")
         coassemble_clustering.add_argument("--taxa-of-interest", help="Only consider sequences from this GTDB taxa (e.g. p__Planctomycetota, or 'p__Bacillota|p__Bacteroidota') [default: all]")
+        coassemble_clustering.add_argument("--exclude-taxa", help="Exclude sequences from this GTDB taxa (e.g. p__Bacillota, or 'p__Bacillota|p__Bacteroidota'). Applied after --taxa-of-interest [default: none]")
         appraise_sequence_identity_default = 0.96
         coassemble_clustering.add_argument("--appraise-sequence-identity", type=int, help=f"Minimum sequence identity for SingleM appraise against reference database. e.g. 96% for Species-level or 86% Genus-level [default: {appraise_sequence_identity_default}]", default=appraise_sequence_identity_default)
         min_sequence_coverage_default = 10

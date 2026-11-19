@@ -33,6 +33,7 @@ EDGES_COLUMNS={
 #   --min-coassembly-coverage {params.min_coassembly_coverage} \
 #   --max-coassembly-samples {params.max_coassembly_samples} \
 #   --taxa-of-interest {params.taxa_of_interest:q} \
+#   --exclude-taxa {params.exclude_taxa:q} \
 #   --precluster-size {params.precluster_size} \
 #   --threads {threads} \
 #   --log {log}
@@ -140,6 +141,7 @@ def streaming_pipeline(
     edges_path,
     MIN_COASSEMBLY_COVERAGE=10,
     TAXA_OF_INTEREST="",
+    EXCLUDE_TAXA="",
     MAX_COASSEMBLY_SAMPLES=2,
     CHUNK_SIZE=2):
 
@@ -156,6 +158,13 @@ def streaming_pipeline(
         logging.info(f"Filtering for taxa of interest: {TAXA_OF_INTEREST}")
         unbinned = unbinned.filter(
             pl.col("taxonomy").str.contains(TAXA_OF_INTEREST)
+        )
+
+    # Filter EXCLUDE_TAXA
+    if EXCLUDE_TAXA:
+        logging.info(f"Excluding taxa: {EXCLUDE_TAXA}")
+        unbinned = unbinned.filter(
+            ~pl.col("taxonomy").str.contains(EXCLUDE_TAXA)
         )
 
     logging.info("Grouping hits by marker gene sequences to form targets")
@@ -320,6 +329,7 @@ def pipeline(
     samples,
     MIN_COASSEMBLY_COVERAGE=10,
     TAXA_OF_INTEREST="",
+    EXCLUDE_TAXA="",
     MAX_COASSEMBLY_SAMPLES=2):
 
     logging.info(f"Polars using {str(pl.thread_pool_size())} threads")
@@ -333,6 +343,13 @@ def pipeline(
         logging.info(f"Filtering for taxa of interest: {TAXA_OF_INTEREST}")
         unbinned = unbinned.filter(
             pl.col("taxonomy").str.contains(TAXA_OF_INTEREST)
+        )
+
+    # Filter EXCLUDE_TAXA
+    if EXCLUDE_TAXA:
+        logging.info(f"Excluding taxa: {EXCLUDE_TAXA}")
+        unbinned = unbinned.filter(
+            ~pl.col("taxonomy").str.contains(EXCLUDE_TAXA)
         )
 
     logging.info("Grouping hits by marker gene sequences to form targets")
@@ -474,6 +491,7 @@ def main():
     parser.add_argument("--min-coassembly-coverage", type=int, default=10, help="Minimum coassembly coverage")
     parser.add_argument("--max-coassembly-samples", type=int, default=2, help="Maximum coassembly samples")
     parser.add_argument("--taxa-of-interest", nargs='?', const="", default="", help="Taxa of interest string")
+    parser.add_argument("--exclude-taxa", nargs='?', const="", default="", help="Taxa to exclude string")
     parser.add_argument("--precluster-size", type=int, default=2, help="Precluster size")
     parser.add_argument("--threads", type=int, default=1, help="Number of threads for Polars")
     parser.add_argument("--log", default=None, help="Log file path")
@@ -499,6 +517,7 @@ def main():
     MIN_COASSEMBLY_COVERAGE = args.min_coassembly_coverage
     MAX_COASSEMBLY_SAMPLES = args.max_coassembly_samples
     TAXA_OF_INTEREST = args.taxa_of_interest
+    EXCLUDE_TAXA = args.exclude_taxa
     PRECLUSTER_SIZE = args.precluster_size
     unbinned_path = args.unbinned
     distances_path = args.distances
@@ -529,6 +548,7 @@ def main():
             edges_path=edges_path,
             MIN_COASSEMBLY_COVERAGE=MIN_COASSEMBLY_COVERAGE,
             TAXA_OF_INTEREST=TAXA_OF_INTEREST,
+            EXCLUDE_TAXA=EXCLUDE_TAXA,
             MAX_COASSEMBLY_SAMPLES=MAX_COASSEMBLY_SAMPLES,
             CHUNK_SIZE=100000,
             )
@@ -539,6 +559,7 @@ def main():
             samples,
             MIN_COASSEMBLY_COVERAGE=MIN_COASSEMBLY_COVERAGE,
             TAXA_OF_INTEREST=TAXA_OF_INTEREST,
+            EXCLUDE_TAXA=EXCLUDE_TAXA,
             MAX_COASSEMBLY_SAMPLES=MAX_COASSEMBLY_SAMPLES,
             )
         targets.write_csv(targets_path, separator="\t")

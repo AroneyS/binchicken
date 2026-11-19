@@ -899,6 +899,59 @@ class Tests(unittest.TestCase):
         self.assertDataFrameEqual(expected_targets, observed_targets)
         self.assertDataFrameEqual(expected_edges, observed_edges)
 
+    def test_target_elusive_exclude_taxa(self):
+        unbinned = pl.DataFrame([
+            ["S3.1", "sample_1", "AAA", 5, 10, "Root; d__Bacteria; p__Planctomycetota", ""],
+            ["S3.1", "sample_1", "AAB", 5, 10, "Root; d__Bacteria; p__Pseudomonadota", ""],
+            ["S3.1", "sample_1", "AAC", 5, 10, "Root", ""],
+            ["S3.1", "sample_2", "AAA", 5, 10, "Root; d__Bacteria; p__Planctomycetota", ""],
+            ["S3.1", "sample_2", "AAB", 5, 10, "Root; d__Bacteria; p__Pseudomonadota", ""],
+            ["S3.1", "sample_2", "AAC", 5, 10, "Root", ""],
+        ], orient="row", schema=APPRAISE_COLUMNS)
+        samples = set(["sample_1", "sample_2"])
+
+        expected_targets = pl.DataFrame([
+            ["S3.1", "sample_1", "AAA", 5, 10, "Root; d__Bacteria; p__Planctomycetota", "0"],
+            ["S3.1", "sample_1", "AAC", 5, 10, "Root", "1"],
+            ["S3.1", "sample_2", "AAA", 5, 10, "Root; d__Bacteria; p__Planctomycetota", "0"],
+            ["S3.1", "sample_2", "AAC", 5, 10, "Root", "1"],
+        ], orient="row", schema=TARGETS_COLUMNS)
+        expected_edges = pl.DataFrame([
+            ["match", 2, "sample_1,sample_2", "0,1"],
+        ], orient="row", schema=EDGES_COLUMNS)
+
+        observed_targets, observed_edges = pipeline(unbinned, samples, EXCLUDE_TAXA="p__Pseudomonadota")
+        self.assertDataFrameEqual(expected_targets, observed_targets)
+        self.assertDataFrameEqual(expected_edges, observed_edges)
+
+    def test_target_elusive_exclude_taxa_with_taxa_of_interest(self):
+        unbinned = pl.DataFrame([
+            ["S3.1", "sample_1", "AAA", 5, 10, "Root; d__Bacteria; p__Planctomycetota; c__Planctomycetia", ""],
+            ["S3.1", "sample_1", "AAB", 5, 10, "Root; d__Bacteria; p__Planctomycetota; c__Phycisphaerae", ""],
+            ["S3.1", "sample_1", "AAC", 5, 10, "Root; d__Bacteria; p__Pseudomonadota", ""],
+            ["S3.1", "sample_2", "AAA", 5, 10, "Root; d__Bacteria; p__Planctomycetota; c__Planctomycetia", ""],
+            ["S3.1", "sample_2", "AAB", 5, 10, "Root; d__Bacteria; p__Planctomycetota; c__Phycisphaerae", ""],
+            ["S3.1", "sample_2", "AAC", 5, 10, "Root; d__Bacteria; p__Pseudomonadota", ""],
+        ], orient="row", schema=APPRAISE_COLUMNS)
+        samples = set(["sample_1", "sample_2"])
+
+        expected_targets = pl.DataFrame([
+            ["S3.1", "sample_1", "AAA", 5, 10, "Root; d__Bacteria; p__Planctomycetota; c__Planctomycetia", "0"],
+            ["S3.1", "sample_2", "AAA", 5, 10, "Root; d__Bacteria; p__Planctomycetota; c__Planctomycetia", "0"],
+        ], orient="row", schema=TARGETS_COLUMNS)
+        expected_edges = pl.DataFrame([
+            ["match", 2, "sample_1,sample_2", "0"],
+        ], orient="row", schema=EDGES_COLUMNS)
+
+        observed_targets, observed_edges = pipeline(
+            unbinned,
+            samples,
+            TAXA_OF_INTEREST="p__Planctomycetota",
+            EXCLUDE_TAXA="c__Phycisphaerae|c__Brocadiia",
+            )
+        self.assertDataFrameEqual(expected_targets, observed_targets)
+        self.assertDataFrameEqual(expected_edges, observed_edges)
+
     def test_target_elusive_single_assembly(self):
         unbinned = pl.DataFrame([
             ["S3.1", "sample_1", "AAA", 5, 11, "Root", ""],
@@ -1017,6 +1070,36 @@ class Tests(unittest.TestCase):
             observed_edges = pl.read_csv("edges.tsv", schema_overrides=EDGES_COLUMNS, separator="\t")
             self.assertDataFrameEqual(expected_targets, observed_targets)
             self.assertDataFrameEqual(expected_edges, observed_edges)
+
+    def test_target_elusive_preclustered_exclude_taxa(self):
+        with in_tempdir():
+            unbinned = pl.LazyFrame([
+                ["S3.1", "sample_1", "AAA", 5, 10, "Root; d__Bacteria; p__Planctomycetota", ""],
+                ["S3.1", "sample_1", "AAB", 5, 10, "Root; d__Bacteria; p__Pseudomonadota", ""],
+                ["S3.1", "sample_2", "AAA", 5, 10, "Root; d__Bacteria; p__Planctomycetota", ""],
+                ["S3.1", "sample_2", "AAB", 5, 10, "Root; d__Bacteria; p__Pseudomonadota", ""],
+            ], orient="row", schema=APPRAISE_COLUMNS)
+            samples = set(["sample_1", "sample_2"])
+            preclusters = pl.DataFrame([
+                ["sample_1,sample_2"],
+            ], orient="row", schema=CLUSTERS_COLUMNS)
+
+            streaming_pipeline(
+                unbinned,
+                samples,
+                sample_preclusters=preclusters,
+                targets_path="targets.tsv",
+                edges_path="edges.tsv",
+                EXCLUDE_TAXA="p__Pseudomonadota",
+                MAX_COASSEMBLY_SAMPLES=2,
+                CHUNK_SIZE=2,
+                )
+            observed_targets = pl.read_csv("targets.tsv", schema_overrides=TARGETS_COLUMNS, separator="\t")
+            observed_edges = pl.read_csv("edges.tsv", schema_overrides=EDGES_COLUMNS, separator="\t")
+            self.assertEqual(observed_targets.get_column("sequence").to_list(), ["AAA", "AAA"])
+            self.assertEqual(observed_targets.get_column("taxonomy").unique().to_list(), ["Root; d__Bacteria; p__Planctomycetota"])
+            self.assertEqual(observed_edges.height, 1)
+            self.assertEqual(observed_edges.get_column("samples").to_list(), ["sample_1,sample_2"])
 
     def test_target_elusive_preclustered_single_assembly(self):
         with in_tempdir():
