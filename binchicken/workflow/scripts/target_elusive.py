@@ -32,7 +32,7 @@ EDGES_COLUMNS={
 #   --anchor-samples {input.anchor_samples} \
 #   --min-coassembly-coverage {params.min_coassembly_coverage} \
 #   --max-coassembly-samples {params.max_coassembly_samples} \
-#   --taxa-of-interest {params.taxa_of_interest} \
+#   --taxa-of-interest {params.taxa_of_interest:q} \
 #   --precluster-size {params.precluster_size} \
 #   --threads {threads} \
 #   --log {log}

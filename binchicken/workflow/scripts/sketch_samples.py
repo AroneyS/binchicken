@@ -29,7 +29,7 @@ SINGLEM_OTU_TABLE_SCHEMA = {
 # python3 binchicken/workflow/scripts/sketch_samples.py \
 #   --unbinned {input.unbinned} \
 #   --sketch {output.sketch} \
-#   --taxa-of-interest {params.taxa_of_interest} \
+#   --taxa-of-interest {params.taxa_of_interest:q} \
 #   --threads {threads} \
 #   --log {log}
 # """

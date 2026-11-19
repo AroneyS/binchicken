@@ -858,7 +858,7 @@ rule sketch_samples:
         "python3 {params.script} "
         "--unbinned {input.unbinned} "
         "--sketch {output.sketch} "
-        "--taxa-of-interest {params.taxa_of_interest} "
+        "--taxa-of-interest {params.taxa_of_interest:q} "
         "--threads {threads} "
         "--log {resources.log_path}"
 
@@ -973,7 +973,7 @@ rule target_elusive:
         "--anchor-samples {input.anchor_samples} "
         "--min-coassembly-coverage {params.min_coassembly_coverage} "
         "--max-coassembly-samples {params.max_coassembly_samples} "
-        "--taxa-of-interest {params.taxa_of_interest} "
+        "--taxa-of-interest {params.taxa_of_interest:q} "
         "--precluster-size {params.precluster_size} "
         "--threads {threads} "
         "--log {resources.log_path}"
