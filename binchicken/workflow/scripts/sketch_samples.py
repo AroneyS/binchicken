@@ -29,7 +29,8 @@ SINGLEM_OTU_TABLE_SCHEMA = {
 # python3 binchicken/workflow/scripts/sketch_samples.py \
 #   --unbinned {input.unbinned} \
 #   --sketch {output.sketch} \
-#   --taxa-of-interest {params.taxa_of_interest} \
+#   --taxa-of-interest {params.taxa_of_interest:q} \
+#   --exclude-taxa {params.exclude_taxa:q} \
 #   --threads {threads} \
 #   --log {log}
 # """
@@ -44,13 +45,15 @@ def process_groups(groups, output_path):
             signature = SourmashSignature(mh, name=sample)
             save_sigs.add(signature)
 
-def processing(unbinned_path, output_path, taxa_of_interest=None, threads=1, samples_per_group=1000):
+def processing(unbinned_path, output_path, taxa_of_interest=None, exclude_taxa=None, threads=1, samples_per_group=1000):
     output_dir = os.path.dirname(output_path)
 
     with open(unbinned_path) as f:
         logging.info(f"Reading unbinned OTU table from {unbinned_path}")
         if taxa_of_interest:
             logging.info(f"Filtering for taxa of interest: {taxa_of_interest}")
+        if exclude_taxa:
+            logging.info(f"Excluding taxa: {exclude_taxa}")
 
         logging.info("Generating sketches in separate threads")
         with ProcessPoolExecutor(max_workers=threads) as executor:
@@ -67,9 +70,11 @@ def processing(unbinned_path, output_path, taxa_of_interest=None, threads=1, sam
                 sample = line.split("\t")[1]
                 sequence = line.split("\t")[2]
 
-                if taxa_of_interest:
+                if taxa_of_interest or exclude_taxa:
                     taxonomy = line.split("\t")[5]
-                    if not re.search(taxa_of_interest, taxonomy):
+                    if taxa_of_interest and not re.search(taxa_of_interest, taxonomy):
+                        continue
+                    if exclude_taxa and re.search(exclude_taxa, taxonomy):
                         continue
 
                 if not current_sample:
@@ -112,6 +117,7 @@ def main():
     parser.add_argument("--unbinned", required=True, help="Path to unbinned input file")
     parser.add_argument("--sketch", required=True, help="Path to output sketch file")
     parser.add_argument("--taxa-of-interest", nargs='?', const=None, default=None, help="Taxa of interest string")
+    parser.add_argument("--exclude-taxa", nargs='?', const=None, default=None, help="Taxa to exclude string")
     parser.add_argument("--threads", type=int, default=1, help="Number of threads for Polars and sketching")
     parser.add_argument("--log", default=None, help="Log file path")
     args = parser.parse_args()
@@ -139,6 +145,7 @@ def main():
         args.unbinned,
         args.sketch,
         taxa_of_interest=args.taxa_of_interest,
+        exclude_taxa=args.exclude_taxa,
         threads=args.threads
     )
 

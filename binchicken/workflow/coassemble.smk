@@ -846,6 +846,7 @@ rule sketch_samples:
     params:
         script = scripts_dir + "/sketch_samples.py",
         taxa_of_interest = config["taxa_of_interest"],
+        exclude_taxa = config["exclude_taxa"],
     threads: 64
     benchmark:
         benchmarks_dir + "/precluster/sketching.tsv"
@@ -858,7 +859,8 @@ rule sketch_samples:
         "python3 {params.script} "
         "--unbinned {input.unbinned} "
         "--sketch {output.sketch} "
-        "--taxa-of-interest {params.taxa_of_interest} "
+        "--taxa-of-interest {params.taxa_of_interest:q} "
+        "--exclude-taxa {params.exclude_taxa:q} "
         "--threads {threads} "
         "--log {resources.log_path}"
 
@@ -954,6 +956,7 @@ rule target_elusive:
         min_coassembly_coverage = config["min_coassembly_coverage"],
         max_coassembly_samples = config["max_coassembly_samples"],
         taxa_of_interest = config["taxa_of_interest"],
+        exclude_taxa = config["exclude_taxa"],
         precluster_size = config["precluster_size"],
     threads: 64
     resources:
@@ -973,7 +976,8 @@ rule target_elusive:
         "--anchor-samples {input.anchor_samples} "
         "--min-coassembly-coverage {params.min_coassembly_coverage} "
         "--max-coassembly-samples {params.max_coassembly_samples} "
-        "--taxa-of-interest {params.taxa_of_interest} "
+        "--taxa-of-interest {params.taxa_of_interest:q} "
+        "--exclude-taxa {params.exclude_taxa:q} "
         "--precluster-size {params.precluster_size} "
         "--threads {threads} "
         "--log {resources.log_path}"

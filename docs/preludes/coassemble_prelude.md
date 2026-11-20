@@ -44,6 +44,7 @@ Important options:
   - Run Aviary commands manually (see `coassemble/commands` in output)
   - Run coassemblies with differential-abundance-binning samples with the tool of your choice (see `coassemble/target/elusive_clusters.tsv` in output)
 - The taxa of the considered sequences can be filtered to target a specific taxon (e.g. `--taxa-of-interest "p__Planctomycetota"`).
+- Specific taxa can be excluded from the considered sequences (e.g. `--exclude-taxa "p__Bacillota|p__Bacteroidota"`). This is applied after `--taxa-of-interest`, so the two can be combined to target a taxon while excluding a subclade.
 - Differential-abundance binning samples for single-assembly can also be found (`--single-assembly`)
 
 Paired end reads of form \*.1.fq, \*_1.fq and \*_R1.fq, where \* represents the sample name are automatically detected and matched to their basename.
