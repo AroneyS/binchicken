@@ -17,7 +17,7 @@ If you encounter memory issues with target_elusive or cluster_graph, you can try
 
 - **Kmer preclustering**: The `--kmer-precluster` option can be set to `always` to enable kmer preclustering. This is the default if more than 1000 samples are provided. This greatly reduces memory usage and allows scaling up to at least 250k samples on a single HPC node. Kmer preclustering can be disabled with `--kmer-precluster never`.
 - **Precluster size**: The `--precluster-size` option sets the maximum number of samples to use for preclustering. The default value is 5 x the number of recovery samples. Reducing this value will reduce memory usage by reducing the number of combinations that are considered. However, this reduces the samples combinations that are considered for both coassembly and differential-abundance binning (co-binning), so may result in sub-optimal coassembly suggestions.
-- **Target taxa**: The `--taxa-of-interest` option can be used to filter the taxa of the considered sequences to target a specific taxon. This can reduce memory usage.
+- **Target taxa**: The `--taxa-of-interest` option can be used to filter the taxa of the considered sequences to target a specific taxon. Conversely, `--exclude-taxa` removes sequences matching a taxon (regex), e.g. abundant, well-recovered lineages. Both can reduce memory usage.
 
 ## Cluster submission
 

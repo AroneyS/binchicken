@@ -874,6 +874,61 @@ class Tests(unittest.TestCase):
             cluster_path = os.path.join("test", "coassemble", "target", "elusive_clusters.tsv")
             self.assertTrue(os.path.exists(cluster_path))
 
+    def test_coassemble_exclude_taxa(self):
+        with in_tempdir():
+            cmd = (
+                f"binchicken coassemble "
+                f"--forward {SAMPLE_READS_FORWARD} "
+                f"--reverse {SAMPLE_READS_REVERSE} "
+                f"--genomes {GENOMES} "
+                f"--genome-transcripts {GENOME_TRANSCRIPTS} "
+                f"--sample-singlem {SAMPLE_SINGLEM} "
+                f"--sample-read-size {SAMPLE_READ_SIZE} "
+                f"--genome-singlem {GENOME_SINGLEM} "
+                f"--singlem-metapackage {METAPACKAGE} "
+                f"--output test "
+                f"--exclude-taxa \"p__Bacteroidota|p__Proteobacteria\" "
+            )
+            extern.run(cmd)
+
+            config_path = os.path.join("test", "config.yaml")
+            self.assertTrue(os.path.exists(config_path))
+            config = load_configfile(config_path)
+            self.assertEqual(config["exclude_taxa"], "p__Bacteroidota|p__Proteobacteria")
+
+            targets_path = os.path.join("test", "coassemble", "target", "targets.tsv")
+            self.assertTrue(os.path.exists(targets_path))
+            targets = pl.read_csv(targets_path, separator="\t")
+            self.assertTrue(targets.height > 0)
+            self.assertFalse(targets.get_column("taxonomy").str.contains("p__Bacteroidota|p__Proteobacteria").any())
+
+            cluster_path = os.path.join("test", "coassemble", "target", "elusive_clusters.tsv")
+            self.assertTrue(os.path.exists(cluster_path))
+
+            expected = "\n".join(
+                [
+                    "\t".join([
+                        "samples",
+                        "length",
+                        "total_targets",
+                        "total_size",
+                        "recover_samples",
+                        "coassembly",
+                    ]),
+                    "\t".join([
+                        "sample_1,sample_3",
+                        "2",
+                        "2",
+                        "2869",
+                        "sample_1,sample_3",
+                        "coassembly_0"
+                    ]),
+                    ""
+                ]
+            )
+            with open(cluster_path) as f:
+                self.assertEqual(expected, f.read())
+
     def test_coassemble_query_input_taxa_of_interest(self):
         with in_tempdir():
             cmd = (
@@ -1327,6 +1382,7 @@ class Tests(unittest.TestCase):
             config = load_configfile(os.path.join("test", "config.yaml"))
             self.assertEqual(config["max_threads"], 8)
             self.assertEqual(config["taxa_of_interest"], "")
+            self.assertEqual(config["exclude_taxa"], "")
             self.assertEqual(config["assemble_unmapped"], False)
             self.assertEqual(config["aviary_assemble_threads"], 64)
             self.assertEqual(config["aviary_assemble_memory"], 500)

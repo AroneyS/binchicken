@@ -7,6 +7,7 @@ genomes:
 long_reads: {}
 long_read_type: "ont"
 taxa_of_interest: ""
+exclude_taxa: ""
 max_coassembly_size: 
 assemble_unmapped: false
 run_qc: false

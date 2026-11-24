@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `--exclude-taxa` option to exclude sequences matching GTDB taxa (regex), the inverse of `--taxa-of-interest`
+
+### Fixed
+
+- Shell-quote `--taxa-of-interest` in workflow rules so regexes containing `|` work
+
 ## [0.15.1] - 2026-11-04
 
 ### Added
