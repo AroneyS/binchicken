@@ -37,6 +37,11 @@ jobs:
           pixi run -e dev postinstall
           pixi run -e dev pixi info
 
+      # Inner envs are run with --as-is, so install them up front as users do
+      - name: Install subworkflow environments
+        run: |
+          pixi run -e dev binchicken build --skip-aviary-envs
+
       - name: Show environment info
         run: |
           pixi run -e dev pixi list
@@ -86,6 +91,11 @@ jobs:
         run: |
           pixi run -e dev postinstall
           pixi run -e dev pixi info
+
+      # Inner envs are run with --as-is, so install them up front as users do
+      - name: Install subworkflow environments
+        run: |
+          pixi run -e dev binchicken build --skip-aviary-envs
 
       - name: Show environment info
         run: |
