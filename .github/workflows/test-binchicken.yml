@@ -28,28 +28,30 @@ jobs:
       # Needed due to pixi run -e default breaking for import binchicken
       - name: Create default environment
         run: |
-          pixi run postinstall
-          pixi run pixi info
-          pixi run binchicken -h
+          pixi run --manifest-path binchicken/pixi.toml postinstall
+          pixi run --manifest-path binchicken/pixi.toml pixi info
+          pixi run --manifest-path binchicken/pixi.toml binchicken -h
 
       - name: Create dev environment
         run: |
-          pixi run -e dev postinstall
-          pixi run -e dev pixi info
+          pixi run --manifest-path binchicken/pixi.toml -e dev postinstall
+          pixi run --manifest-path binchicken/pixi.toml -e dev pixi info
 
-      # Inner envs are run with --as-is, so install them up front as users do
+      # Inner envs are run with --as-is, so install them up front as users do.
+      # All pixi calls use binchicken/pixi.toml directly: the repo-root symlinks give a
+      # second path to the same envs, which pixi rejects as "environment directory has moved"
       - name: Install subworkflow environments
         run: |
-          pixi run -e dev binchicken build --skip-aviary-envs
+          pixi run --manifest-path binchicken/pixi.toml -e dev binchicken build --skip-aviary-envs
 
       - name: Show environment info
         run: |
-          pixi run -e dev pixi list
+          pixi run --manifest-path binchicken/pixi.toml -e dev pixi list
 
       - name: Run tests with Pixi
         run: |
-          pixi run -e dev binchicken -h
-          pixi run -e dev pytest -v
+          pixi run --manifest-path binchicken/pixi.toml -e dev binchicken -h
+          pixi run --manifest-path binchicken/pixi.toml -e dev pytest -v
 
   # Run after removing lock file so dependences are unlocked
   pixi_test_dependencies_optimistic:
@@ -77,31 +79,33 @@ jobs:
 
       - name: Remove lock file
         run: |
-          rm -fv pixi.lock admin/requirements.txt
+          rm -fv pixi.lock binchicken/pixi.lock admin/requirements.txt
           touch admin/requirements.txt
 
       # Needed due to pixi run -e default breaking for import binchicken
       - name: Create default environment
         run: |
-          pixi run postinstall
-          pixi run pixi info
-          pixi run binchicken -h
+          pixi run --manifest-path binchicken/pixi.toml postinstall
+          pixi run --manifest-path binchicken/pixi.toml pixi info
+          pixi run --manifest-path binchicken/pixi.toml binchicken -h
 
       - name: Create dev environment
         run: |
-          pixi run -e dev postinstall
-          pixi run -e dev pixi info
+          pixi run --manifest-path binchicken/pixi.toml -e dev postinstall
+          pixi run --manifest-path binchicken/pixi.toml -e dev pixi info
 
-      # Inner envs are run with --as-is, so install them up front as users do
+      # Inner envs are run with --as-is, so install them up front as users do.
+      # All pixi calls use binchicken/pixi.toml directly: the repo-root symlinks give a
+      # second path to the same envs, which pixi rejects as "environment directory has moved"
       - name: Install subworkflow environments
         run: |
-          pixi run -e dev binchicken build --skip-aviary-envs
+          pixi run --manifest-path binchicken/pixi.toml -e dev binchicken build --skip-aviary-envs
 
       - name: Show environment info
         run: |
-          pixi run -e dev pixi list
+          pixi run --manifest-path binchicken/pixi.toml -e dev pixi list
 
       - name: Run tests with Pixi
         run: |
-          pixi run -e dev binchicken -h
-          pixi run -e dev pytest -v
+          pixi run --manifest-path binchicken/pixi.toml -e dev binchicken -h
+          pixi run --manifest-path binchicken/pixi.toml -e dev pytest -v
