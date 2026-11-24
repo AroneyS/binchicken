@@ -31,9 +31,11 @@ def pixi_run_func():
     pixi_source = files("binchicken").joinpath("pixi.toml")
 
     with as_file(pixi_source) as manifest_path:
-        return f"pixi run --frozen --manifest-path {manifest_path}"
+        return f"pixi run --as-is --manifest-path {manifest_path}"
 
 pixi_run = pixi_run_func()
+# --as-is is only valid for `pixi run`, so build the explicit install separately
+pixi_install = pixi_run.replace("run --as-is", "install -a", 1)
 
 
 # A unique identifier for the current workflow invocation. This is used

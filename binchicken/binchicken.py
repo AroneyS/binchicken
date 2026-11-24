@@ -17,7 +17,7 @@ from snakemake.common.configfile import load_configfile
 from ruamel.yaml import YAML
 import copy
 import shutil
-from binchicken.common import fasta_to_name, pixi_run, workflow_identifier, BIN_INFO_COLUMNS, CHECKM2_QUALITY_COLUMNS, ELUSIVE_EDGES_COLUMNS, ELUSIVE_CLUSTERS_COLUMNS
+from binchicken.common import fasta_to_name, pixi_run, pixi_install, workflow_identifier, BIN_INFO_COLUMNS, CHECKM2_QUALITY_COLUMNS, ELUSIVE_EDGES_COLUMNS, ELUSIVE_CLUSTERS_COLUMNS
 import re
 import threading
 
@@ -1636,7 +1636,7 @@ def configure_variable(variable, value):
     os.environ[variable] = value
     extern.run(f"{pixi_run} -e default conda env config vars set {variable}={value}")
     try:
-        extern.run(f"pixi run --frozen conda env config vars set {variable}={value}")
+        extern.run(f"pixi run --as-is conda env config vars set {variable}={value}")
     except extern.ExternCalledProcessError:
         try:
             extern.run(f"conda env config vars set {variable}={value}")
@@ -1715,7 +1715,7 @@ def build(args):
             )
 
     # Create pixi environments
-    extern.run(pixi_run.replace("run", "install -a", 1))
+    extern.run(pixi_install)
 
     if not args.skip_aviary_envs:
         logging.info(f"Creating Aviary environments")

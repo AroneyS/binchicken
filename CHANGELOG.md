@@ -15,6 +15,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Shell-quote `--taxa-of-interest` in workflow rules so regexes containing `|` work
 
+### Changed
+
+- Subworkflow environments are now run with `pixi run --as-is` instead of `--frozen`, so runs no longer write to (or contend over) already-installed environments, e.g. read-only installs. Environments are no longer installed lazily on first use: run `binchicken build` once after installing (`--skip-aviary-envs` if Aviary is not needed). CI now does this before running tests
+
 ## [0.15.1] - 2026-11-04
 
 ### Added
