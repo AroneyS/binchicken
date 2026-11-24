@@ -25,16 +25,17 @@ jobs:
           echo "Contents of binchicken directory:"
           ls -la binchicken
 
-      # Needed due to pixi run -e default breaking for import binchicken
+      # Needed due to pixi run -e default breaking for import binchicken.
+      # Not `pixi run postinstall`: its cwd = "binchicken" is invalid when the manifest is in binchicken/
       - name: Create default environment
         run: |
-          pixi run --manifest-path binchicken/pixi.toml postinstall
+          pixi run --manifest-path binchicken/pixi.toml pip install --no-build-isolation --no-deps --disable-pip-version-check -e .
           pixi run --manifest-path binchicken/pixi.toml pixi info
           pixi run --manifest-path binchicken/pixi.toml binchicken -h
 
       - name: Create dev environment
         run: |
-          pixi run --manifest-path binchicken/pixi.toml -e dev postinstall
+          pixi run --manifest-path binchicken/pixi.toml -e dev pip install --no-build-isolation --no-deps --disable-pip-version-check -e .
           pixi run --manifest-path binchicken/pixi.toml -e dev pixi info
 
       # Inner envs are run with --as-is, so install them up front as users do.
@@ -82,16 +83,17 @@ jobs:
           rm -fv pixi.lock binchicken/pixi.lock admin/requirements.txt
           touch admin/requirements.txt
 
-      # Needed due to pixi run -e default breaking for import binchicken
+      # Needed due to pixi run -e default breaking for import binchicken.
+      # Not `pixi run postinstall`: its cwd = "binchicken" is invalid when the manifest is in binchicken/
       - name: Create default environment
         run: |
-          pixi run --manifest-path binchicken/pixi.toml postinstall
+          pixi run --manifest-path binchicken/pixi.toml pip install --no-build-isolation --no-deps --disable-pip-version-check -e .
           pixi run --manifest-path binchicken/pixi.toml pixi info
           pixi run --manifest-path binchicken/pixi.toml binchicken -h
 
       - name: Create dev environment
         run: |
-          pixi run --manifest-path binchicken/pixi.toml -e dev postinstall
+          pixi run --manifest-path binchicken/pixi.toml -e dev pip install --no-build-isolation --no-deps --disable-pip-version-check -e .
           pixi run --manifest-path binchicken/pixi.toml -e dev pixi info
 
       # Inner envs are run with --as-is, so install them up front as users do.
