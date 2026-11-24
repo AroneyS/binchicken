@@ -1636,7 +1636,7 @@ def configure_variable(variable, value):
     os.environ[variable] = value
     extern.run(f"{pixi_run} -e default conda env config vars set {variable}={value}")
     try:
-        extern.run(f"pixi run --frozen conda env config vars set {variable}={value}")
+        extern.run(f"pixi run --as-is conda env config vars set {variable}={value}")
     except extern.ExternCalledProcessError:
         try:
             extern.run(f"conda env config vars set {variable}={value}")
