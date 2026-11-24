@@ -221,6 +221,12 @@ Combined SingleM otu tables for genome transcripts. If provided,
 Only consider sequences from this GTDB taxa (e.g.
   p\_\_Planctomycetota, or
 
+**\--exclude-taxa** *EXCLUDE_TAXA*
+
+Exclude sequences from this GTDB taxa (e.g. p\_\_Bacillota, or
+
+  none]
+
 **\--appraise-sequence-identity** *APPRAISE_SEQUENCE_IDENTITY*
 
 Minimum sequence identity for SingleM appraise against reference

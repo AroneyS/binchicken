@@ -26,6 +26,7 @@ Important options:
   - Run Aviary commands manually (see `coassemble/commands` in output)
   - Run assemblies with differential-abundance-binning samples with the tool of your choice (see `coassemble/target/elusive_clusters.tsv` in output)
 - The taxa of the considered sequences can be filtered to target a specific taxon (e.g. `--taxa-of-interest "p__Planctomycetota"`).
+- Specific taxa can be excluded from the considered sequences (e.g. `--exclude-taxa "p__Bacillota|p__Bacteroidota"`). This is applied after `--taxa-of-interest`, so the two can be combined to target a taxon while excluding a subclade.
 
 Paired end reads of form \*.1.fq, \*_1.fq and \*_R1.fq, where \* represents the sample name are automatically detected and matched to their basename.
 Most intermediate files can be provided to skip intermediate steps (e.g. SingleM otu tables, read sizes or genome transcripts; see `binchicken coassemble --full-help`).
@@ -182,6 +183,12 @@ Combined SingleM otu tables for genome transcripts. If provided,
 
 Only consider sequences from this GTDB taxa (e.g.
   p\_\_Planctomycetota, or
+
+**\--exclude-taxa** *EXCLUDE_TAXA*
+
+Exclude sequences from this GTDB taxa (e.g. p\_\_Bacillota, or
+
+  none]
 
 **\--appraise-sequence-identity** *APPRAISE_SEQUENCE_IDENTITY*
 
