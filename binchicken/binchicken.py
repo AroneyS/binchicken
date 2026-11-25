@@ -1494,24 +1494,28 @@ def iterate(args):
         args.new_genomes = read_list(args.new_genomes_list)
 
     bins = None
-    # Prefer recovered_bins from prior coassemble run when available
+    # Prefer bins consolidated in the prior coassemble run's recovered dir when available
     if args.coassemble_output:
         prior_recovered = os.path.join(args.coassemble_output, "..", "recovered")
         if os.path.isdir(prior_recovered):
-            logging.info("Using recovered folder from prior coassemble run")
-            bins = select_bins_from_recovered(prior_recovered, args.min_completeness, args.max_contamination)
-            new_genomes = list(bins.values())
-            args.new_genomes = bins
+            recovered_bins = select_bins_from_recovered(prior_recovered, args.min_completeness, args.max_contamination)
+            if recovered_bins:
+                logging.info("Using recovered folder from prior coassemble run")
+                bins = recovered_bins
+                new_genomes = list(bins.values())
+                args.new_genomes = bins
+            else:
+                logging.warning(f"No usable bins in {prior_recovered}; falling back to Aviary outputs or --new-genomes")
 
     if bins is None and args.aviary_outputs:
         bins = evaluate_bins(args.aviary_outputs, args.checkm_version, args.min_completeness, args.max_contamination, args.iteration)
-        # Copy selected bins into this run's recovered_bins and wire into config
+        # Link selected bins from the previous iteration into previous_bins (kept separate from this run's recovered dir)
         for bin in bins:
             copy_input(
                 os.path.abspath(bins[bin]),
-                os.path.join(args.output, "recovered_bins", bin + ".fna")
+                os.path.join(args.output, "previous_bins", bin + ".fna")
             )
-        new_genomes = [os.path.join(args.output, "recovered_bins", bin + ".fna") for bin in bins]
+        new_genomes = [os.path.join(args.output, "previous_bins", bin + ".fna") for bin in bins]
         args.new_genomes = {os.path.splitext(os.path.basename(g))[0]: os.path.abspath(g) for g in new_genomes}
 
     if bins is None and args.new_genomes:

@@ -126,17 +126,17 @@ class Tests(unittest.TestCase):
             )
             extern.run(cmd)
 
-            new_bin_0_path = os.path.join("test", "recovered_bins", "iteration_0-coassembly_0-0.fna")
+            new_bin_0_path = os.path.join("test", "previous_bins", "iteration_0-coassembly_0-0.fna")
             self.assertTrue(os.path.exists(new_bin_0_path))
             with open(new_bin_0_path) as f:
                 file = f.read()
                 self.assertTrue(">k141_1363016" in file)
                 self.assertTrue(">k141_177318" not in file)
 
-            new_bin_1_path = os.path.join("test", "recovered_bins", "iteration_0-coassembly_0-1.fna")
+            new_bin_1_path = os.path.join("test", "previous_bins", "iteration_0-coassembly_0-1.fna")
             self.assertTrue(os.path.exists(new_bin_1_path))
 
-            new_bin_2_path = os.path.join("test", "recovered_bins", "iteration_0-coassembly_0-2.fna")
+            new_bin_2_path = os.path.join("test", "previous_bins", "iteration_0-coassembly_0-2.fna")
             self.assertFalse(os.path.exists(new_bin_2_path))
 
             bin_provenance_path = os.path.join("test", "previous_bin_provenance.tsv")
@@ -207,7 +207,7 @@ class Tests(unittest.TestCase):
                 os.path.join(MOCK_COASSEMBLE, "coassemble", "coassembly_0", "recover", "bins", "final_bins", "iteration_0-coassembly_0-1.fna"),
             ])
             genomes = {
-                os.path.splitext(os.path.basename(g))[0]: g.replace(MOCK_COASSEMBLE + "/coassemble/coassembly_0/recover/bins/final_bins/", os.getcwd() + "/test/recovered_bins/")
+                os.path.splitext(os.path.basename(g))[0]: g.replace(MOCK_COASSEMBLE + "/coassemble/coassembly_0/recover/bins/final_bins/", os.getcwd() + "/test/previous_bins/")
                 for g in (GENOMES + " " + NEW_GENOMES).split(" ")
                 }
             self.assertEqual(genomes, config["genomes"])
@@ -280,7 +280,7 @@ class Tests(unittest.TestCase):
                 os.path.join(MOCK_COASSEMBLE, "coassemble", "coassembly_0", "recover", "bins", "final_bins", "iteration_0-coassembly_0-1.fna"),
             ]
             genomes = {
-                os.path.splitext(os.path.basename(g))[0]: g.replace(MOCK_COASSEMBLE + "/coassemble/coassembly_0/recover/bins/final_bins/", os.getcwd() + "/test/recovered_bins/")
+                os.path.splitext(os.path.basename(g))[0]: g.replace(MOCK_COASSEMBLE + "/coassemble/coassembly_0/recover/bins/final_bins/", os.getcwd() + "/test/previous_bins/")
                 for g in NEW_GENOMES
                 }
             self.assertEqual(genomes, config["genomes"])
@@ -741,6 +741,87 @@ class Tests(unittest.TestCase):
             self.assertIn("genomes", config)
             self.assertTrue(any("binchicken_coassembly_0.1.fna" in p for p in config["genomes"].values()))
             self.assertFalse(any("binchicken_coassembly_0.2.fna" in p for p in config["genomes"].values()))
+
+    def test_iterate_recovered_bins_none_passing_falls_back(self):
+        with in_tempdir():
+            elusive_clusters_path = os.path.join("prior_coassemble", "coassemble", "target", "elusive_clusters.tsv")
+            os.makedirs(os.path.dirname(elusive_clusters_path), exist_ok=True)
+            (
+                pl.DataFrame([
+                        ["sample_1,sample_3", "2", "2", "2869", "sample_1,sample_3", "coassembly_1"],
+                        ],
+                    orient="row", schema=ELUSIVE_CLUSTERS_COLUMNS
+                    )
+                .write_csv(elusive_clusters_path, separator="\t")
+            )
+
+            unbinned_path = os.path.join("prior_coassemble", "coassemble", "appraise", "unbinned.otu_table.tsv")
+            binned_path = os.path.join("prior_coassemble", "coassemble", "appraise", "binned.otu_table.tsv")
+            os.makedirs(os.path.dirname(unbinned_path), exist_ok=True)
+            read_size_path = os.path.join("prior_coassemble", "coassemble", "read_size.csv")
+            for path in [unbinned_path, binned_path, read_size_path]:
+                with open(path, "w") as f:
+                    pass
+
+            # recovered outputs exist, but no bins pass the quality thresholds
+            output_bins_path = os.path.join("prior_coassemble", "recovered")
+            os.makedirs(os.path.join(output_bins_path, "bins"), exist_ok=True)
+            with open(os.path.join(output_bins_path, "bins", "binchicken_coassembly_1.1.fna"), "w") as f:
+                f.write(">contigB\nTGCA\n")
+            (
+                pl.DataFrame([
+                        [
+                            "binchicken_coassembly_1.1",
+                            "36.49", "0.24", "Neural Network (Specific Model)", "11", "0.909", "2442", "239.274115755627", "980304", "0.6", "1244", "399", "7735", ""
+                        ],
+                    ], orient="row", schema=CHECKM2_QUALITY_COLUMNS)
+                .write_csv(os.path.join(output_bins_path, "quality_report.tsv"), separator="\t")
+            )
+
+            config_path = os.path.join("prior_coassemble", "config.yaml")
+            with open(config_path, "w") as f:
+                f.write("\n".join([
+                    "no_genomes: true",
+                    f"reads_1: {{'sample_1': '{path_to_data}/sample_1.1.fq', 'sample_2': '{path_to_data}/sample_2.1.fq', 'sample_3': '{path_to_data}/sample_3.1.fq'}}",
+                    f"reads_2: {{'sample_1': '{path_to_data}/sample_1.2.fq', 'sample_2': '{path_to_data}/sample_2.2.fq', 'sample_3': '{path_to_data}/sample_3.2.fq'}}",
+                    "",
+                ]))
+
+            # Aviary outputs with one bin passing thresholds
+            source_bins_path = os.path.join("prior_coassemble", "coassemble", "coassemble", "coassembly_1", "recover", "bins")
+            os.makedirs(os.path.join(source_bins_path, "final_bins"), exist_ok=True)
+            with open(os.path.join(source_bins_path, "final_bins", "metabat2_refined_bins.tsv.005.fna"), "w") as f:
+                f.write(">contigA\nACGT\n")
+            with open(os.path.join(source_bins_path, "final_bins", "semibin_refined_bins.tsv.072_sub.fna"), "w") as f:
+                f.write(">contigB\nTGCA\n")
+            with open(os.path.join(source_bins_path, "checkm_minimal.tsv"), "w") as f:
+                f.write("\n".join([
+                    "Name\tCompleteness\tContamination",
+                    "metabat2_refined_bins.tsv.005\t83.86\t1.14",
+                    "semibin_refined_bins.tsv.072_sub\t36.49\t0.24",
+                    "",
+                ]))
+
+            cmd = (
+                f"binchicken iterate "
+                f"--coassemble-output prior_coassemble "
+                f"--singlem-metapackage {METAPACKAGE} "
+                f"--output test "
+                f"--dryrun "
+                f"--snakemake-args \" --quiet rules\" "
+            )
+            extern.run(cmd)
+
+            previous_bin_path = os.path.join("test", "previous_bins", "iteration_0-coassembly_1-0.fna")
+            self.assertTrue(os.path.islink(previous_bin_path))
+            self.assertTrue(os.readlink(previous_bin_path).endswith("metabat2_refined_bins.tsv.005.fna"))
+            self.assertFalse(os.path.exists(os.path.join("test", "previous_bins", "iteration_0-coassembly_1-1.fna")))
+
+            config = load_configfile(os.path.join("test", "config.yaml"))
+            self.assertEqual(
+                {"iteration_0-coassembly_1-0": os.path.abspath(previous_bin_path)},
+                config["genomes"],
+            )
 
 
 if __name__ == '__main__':

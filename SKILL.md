@@ -129,6 +129,9 @@ suggestions, then rerun the same command with `--run-aviary` added, or use
 - `coassemble/coassemble/<coassembly>/{assemble,recover}`: the Aviary outputs.
 - `recovered/`: the combined bins (`bins/*.fna`) with `quality_report.tsv`,
   `bin_info.tsv` and `bin_provenance.tsv`.
+- `previous_bins/` (`iterate` only): symlinks to the previous iteration's
+  passing bins, used as references when they are taken from Aviary outputs
+  rather than from the prior run's `recovered/`.
 - `evaluate/evaluate/summary_stats.tsv`: the `evaluate` summary.
 
 ## Caveats
