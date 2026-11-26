@@ -23,6 +23,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Smaller cluster resource requests: memory is no longer 8 GB per thread for every rule. Rules whose memory scales with input (`sketch_samples`, `distance_samples`, `abundance_weighting`, `target_weighting`, `update_appraise`) request 10x input size within 16 GB to their previous request, and others use fixed requests (e.g. `map_reads` 64 GB, `qc_reads` 16 GB, `count_bp_*`/`filter_bam_files`/`bam_to_fastq` 8 GB with 8 threads). `target_elusive` and `cluster_graph` are unchanged. Memory still doubles on each retry
+- List-writing rules run locally instead of being submitted as cluster jobs, and the per-sample SingleM OTU table rename is now part of `singlem pipe` jobs (removing one cluster job per sample)
+- `coverm filter` now uses its `--threads` for output compression
 - `iterate` now links previous-iteration bins taken from Aviary outputs into `previous_bins/` (was `recovered_bins/`), to avoid confusion with the `recovered/` output dir
 
 ## [0.16.0] - 2026-11-24

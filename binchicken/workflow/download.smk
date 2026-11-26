@@ -26,6 +26,11 @@ if gtdbtk_db:
 def get_mem_mb(wildcards, threads, attempt):
     return 8 * 1000 * threads * attempt
 
+def get_mem_mb_fixed(gb):
+    def mem_func(wildcards, attempt):
+        return gb * 1000 * attempt
+    return mem_func
+
 def get_runtime(base_hours):
     def runtime_func(wildcards, attempt):
         return f"{attempt * base_hours}h"
@@ -53,7 +58,7 @@ rule aviary_download:
         download_arg = download_arg,
     threads: 16
     resources:
-        mem_mb=get_mem_mb,
+        mem_mb=get_mem_mb_fixed(16),
         runtime = get_runtime(base_hours = 16),
         log_path=lambda wildcards, attempt: setup_log(f"{logs_dir}/aviary_downloads", attempt)
     shell:
