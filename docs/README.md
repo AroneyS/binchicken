@@ -30,7 +30,7 @@ binchicken iterate \
 
 # Perform another iteration of coassembly, with 3-samples this time
 binchicken iterate \
-  --coassembly-samples 3 \
+  --num-coassembly-samples 3 \
   --coassemble-output binchicken_2_coassembly \
   --run-aviary --cores 64 \
   --output binchicken_3_coassembly

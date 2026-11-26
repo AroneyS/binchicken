@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- `iterate` now falls back to `--aviary-outputs`/`--new-genomes` when the prior run's `recovered/` dir has no bins passing the quality thresholds, instead of failing with "Programming error: no bins to evaluate"
+- Docs: `iterate` examples used `--coassembly-samples 3` (a sample list) instead of `--num-coassembly-samples 3`; demo pointed to `recovered_bins/` instead of `recovered/bins/`
+
+### Changed
+
+- `iterate` now links previous-iteration bins taken from Aviary outputs into `previous_bins/` (was `recovered_bins/`), to avoid confusion with the `recovered/` output dir
+
 ## [0.16.0] - 2026-11-24
 
 ### Added
