@@ -39,6 +39,35 @@ EDGES_COLUMNS={
 #   --log {log}
 # """
 
+def top_k_indices(row_indices, row_values, n, k):
+    """Column indices of the k largest values in a sparse row of length n.
+
+    Equivalent to np.argsort(dense_row, kind="stable")[-k:] without densifying the row:
+    ascending by value, ties by column index, and unstored (zero) columns fill from the highest index.
+    """
+    nnz = len(row_values)
+    if nnz > k:
+        # Partition to the k largest in linear time; boundary ties keep the highest column indices
+        kth = np.partition(row_values, nnz - k)[nnz - k]
+        greater = np.flatnonzero(row_values > kth)
+        ties = np.flatnonzero(row_values == kth)
+        ties = ties[np.argsort(row_indices[ties], kind="stable")][len(ties) - (k - len(greater)):]
+        chosen = np.concatenate([greater, ties])
+        row_indices = row_indices[chosen]
+        row_values = row_values[chosen]
+        padding = np.empty(0, dtype=row_indices.dtype)
+    else:
+        stored = set(row_indices.tolist())
+        padding = []
+        j = n - 1
+        while len(padding) < k - nnz and j >= 0:
+            if j not in stored:
+                padding.append(j)
+            j -= 1
+        padding = np.array(padding[::-1], dtype=row_indices.dtype)
+    order = np.lexsort((row_indices, row_values))
+    return np.concatenate([padding, row_indices[order]])
+
 def get_clusters(
         sample_distances,
         samples,
@@ -83,12 +112,15 @@ def get_clusters(
     distances.setdiag(1)
 
     logging.info("Processing distances...")
-    best_samples = np.empty((distances.shape[0], PRECLUSTER_SIZE), dtype=np.int32)
-    for i in range(distances.shape[0]):
-        row = distances.getrow(i).toarray().ravel()
-        best_samples[i] = np.argsort(row)[-PRECLUSTER_SIZE:]
+    # Work on the CSR arrays directly: densifying each row is O(n) per sample, O(n^2) overall
+    num_samples = distances.shape[0]
+    best_samples = np.empty((num_samples, PRECLUSTER_SIZE), dtype=np.int32)
+    indptr, indices, data = distances.indptr, distances.indices, distances.data
+    for i in range(num_samples):
+        start, end = indptr[i], indptr[i + 1]
+        best_samples[i] = top_k_indices(indices[start:end], data[start:end], num_samples, PRECLUSTER_SIZE)
 
-    chosen_samples = [[[samples[i]] + list(np.array(samples)[b[b != i]])] for i, b in enumerate(best_samples)]
+    chosen_samples = [[[samples[i]] + list(samples[b[b != i]])] for i, b in enumerate(best_samples)]
 
     sample_combinations = (
         pl.LazyFrame({"cluster_size": range(1, MAX_COASSEMBLY_SAMPLES)})
@@ -185,8 +217,34 @@ def streaming_pipeline(
             )
     )
 
-    unbinned.with_columns(pl.col("target").cast(pl.Utf8)).sink_csv(targets_path, separator="\t")
-    targets = pl.scan_csv(targets_path, separator="\t")
+    # Targets are re-scanned for every chunk below, so keep a Parquet copy (typed, column-pruned,
+    # row-group statistics for sample filters) rather than re-parsing the CSV each time
+    targets_parquet_path = targets_path + ".tmp.parquet"
+    unbinned.with_columns(pl.col("sample").cast(pl.Utf8)).sink_parquet(targets_parquet_path)
+    try:
+        targets = pl.scan_parquet(targets_parquet_path)
+        targets.with_columns(pl.col("target").cast(pl.Utf8)).sink_csv(targets_path, separator="\t")
+        process_targets(
+            targets,
+            samples,
+            sample_preclusters,
+            edges_path,
+            MIN_COASSEMBLY_COVERAGE=MIN_COASSEMBLY_COVERAGE,
+            MAX_COASSEMBLY_SAMPLES=MAX_COASSEMBLY_SAMPLES,
+            CHUNK_SIZE=CHUNK_SIZE,
+            )
+    finally:
+        if os.path.exists(targets_parquet_path):
+            os.remove(targets_parquet_path)
+
+def process_targets(
+    targets,
+    samples,
+    sample_preclusters,
+    edges_path,
+    MIN_COASSEMBLY_COVERAGE=10,
+    MAX_COASSEMBLY_SAMPLES=2,
+    CHUNK_SIZE=2):
 
     if targets.limit(1).collect().is_empty():
         logging.warning("No SingleM sequences found for the given samples")
@@ -286,13 +344,16 @@ def streaming_pipeline(
 
     logging.info("Using chosen clusters to find appropriate targets")
     def process_chunk(df):
+        # Only this chunk's samples are needed, keeping the join's build side small
+        chunk_samples = df.get_column("samples").str.split(",").explode().unique().implode()
+        chunk_targets = targets.filter(pl.col("sample").is_in(chunk_samples))
         sparse_edges = (
             df
             .lazy()
             .with_columns(sample_ids = pl.col("samples").str.split(",").cast(pl.List(pl.Categorical)))
             .with_columns(cluster_size = pl.col("sample_ids").list.len())
             .explode("sample_ids")
-            .join(targets.select("target", "coverage", sample_ids=pl.col("sample").cast(pl.Categorical)), on="sample_ids")
+            .join(chunk_targets.select("target", "coverage", sample_ids=pl.col("sample").cast(pl.Categorical)), on="sample_ids")
             .group_by("samples", "cluster_size", "target")
             .agg(pl.sum("coverage"), count = pl.len())
             .filter(pl.col("count") == pl.col("cluster_size"))

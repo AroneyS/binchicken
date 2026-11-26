@@ -7,7 +7,8 @@ import numpy as np
 import polars as pl
 from polars.testing import assert_frame_equal
 from bird_tool_utils import in_tempdir
-from binchicken.workflow.scripts.target_elusive import get_clusters, pipeline, streaming_pipeline
+import glob
+from binchicken.workflow.scripts.target_elusive import get_clusters, pipeline, streaming_pipeline, top_k_indices
 
 SAMPLE_DISTANCES_COLUMNS = {
     "query_name": str,
@@ -1070,6 +1071,44 @@ class Tests(unittest.TestCase):
             observed_edges = pl.read_csv("edges.tsv", schema_overrides=EDGES_COLUMNS, separator="\t")
             self.assertDataFrameEqual(expected_targets, observed_targets)
             self.assertDataFrameEqual(expected_edges, observed_edges)
+
+    def test_top_k_indices(self):
+        # Sparse top-k must match a stable argsort of the densified row, including ties and zero padding
+        rng = np.random.default_rng(0)
+        for _ in range(200):
+            n = int(rng.integers(1, 60))
+            k = int(rng.integers(1, n + 1))
+            nnz = int(rng.integers(0, n + 1))
+            row_indices = np.sort(rng.choice(n, nnz, replace=False)).astype(np.int32)
+            row_values = rng.choice([0.2, 0.5, 1.0], nnz).astype(np.float32)
+            dense = np.zeros(n, dtype=np.float32)
+            dense[row_indices] = row_values
+            np.testing.assert_array_equal(
+                np.argsort(dense, kind="stable")[-k:],
+                top_k_indices(row_indices, row_values, n, k),
+                )
+
+    def test_target_elusive_preclustered_no_temp_files(self):
+        # The Parquet copy of targets is removed after the edges are written
+        with in_tempdir():
+            unbinned = pl.LazyFrame([
+                ["S3.1", "sample_1", "AAA", 2, 6, "Root", ""],
+                ["S3.1", "sample_2", "AAA", 2, 6, "Root", ""],
+            ], orient="row", schema=APPRAISE_COLUMNS)
+            preclusters = pl.DataFrame([["sample_1,sample_2"]], orient="row", schema=CLUSTERS_COLUMNS)
+
+            streaming_pipeline(
+                unbinned,
+                set(["sample_1", "sample_2"]),
+                sample_preclusters=preclusters,
+                targets_path="targets.tsv",
+                edges_path="edges.tsv",
+                MAX_COASSEMBLY_SAMPLES=2,
+                CHUNK_SIZE=2,
+                )
+            observed_edges = pl.read_csv("edges.tsv", schema_overrides=EDGES_COLUMNS, separator="\t")
+            self.assertEqual(["sample_1,sample_2"], observed_edges.get_column("samples").to_list())
+            self.assertEqual([], glob.glob("*.parquet"))
 
     def test_target_elusive_preclustered_exclude_taxa(self):
         with in_tempdir():
