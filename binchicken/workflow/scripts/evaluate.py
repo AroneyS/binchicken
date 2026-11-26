@@ -7,7 +7,31 @@
 import polars as pl
 import os
 import argparse
-from binchicken.common import parse_snake_dict
+from binchicken.common import parse_snake_dict, RECOVERED_BIN_NAME_REGEX
+
+def split_bin_name(column):
+    """Split a bin name column into a coassembly/genome struct.
+
+    Handles recovered/ names (binchicken_[it<N>_]<coassembly>.<n>, optionally with a _transcripts suffix),
+    for which the whole name is kept as the genome, and <coassembly>-<genome> names (Aviary outputs/new genomes).
+    """
+    name = pl.col(column)
+    recovered_coassembly = (
+        name
+        .str.replace(r"_transcripts$", "")
+        .str.extract(RECOVERED_BIN_NAME_REGEX.pattern, 1)
+    )
+    parts = name.str.split("-")
+    return pl.struct(
+        pl.when(recovered_coassembly.is_not_null())
+            .then(recovered_coassembly)
+            .otherwise(parts.list.get(0))
+            .alias("coassembly"),
+        pl.when(recovered_coassembly.is_not_null())
+            .then(name)
+            .otherwise(parts.list.get(1, null_on_oob=True))
+            .alias("genome"),
+        ).alias(column)
 
 SINGLEM_COLUMNS = {
     "gene": str,
@@ -98,7 +122,7 @@ def evaluate(target_otu_table, binned_otu_table, elusive_clusters, elusive_edges
         elusive_edges
         .with_columns(
             pl.col("samples").str.split(",").list.eval(
-                        pl.when(pl.all_horizontal(pl.element().is_in(sample_coassemblies.get_column("samples"))))
+                        pl.when(pl.all_horizontal(pl.element().is_in(sample_coassemblies.get_column("samples").implode())))
                         .then(pl.element())
                         .otherwise(pl.element().str.replace(r"(_|\.)1$", ""))
                         ),
@@ -136,7 +160,7 @@ def evaluate(target_otu_table, binned_otu_table, elusive_clusters, elusive_edges
             pl.col("target").cast(str),
             pl.lit(None).cast(str).alias("found_in"),
             source_samples =
-                pl.when(pl.col("sample").is_in(sample_coassemblies.get_column("samples")))
+                pl.when(pl.col("sample").is_in(sample_coassemblies.get_column("samples").implode()))
                     .then(pl.col("sample"))
                 .otherwise(pl.col("sample").str.replace(r"(_|\.)1$", "")),
             )
@@ -185,11 +209,7 @@ def evaluate(target_otu_table, binned_otu_table, elusive_clusters, elusive_edges
     # Load recovered otu table and join elusive and nontarget sequences
     recovered_otu_table = (
         recovered_otu_table
-        .with_columns(
-            pl.col("sample")
-                .str.split("-")
-                .list.to_struct(upper_bound=2, fields=["coassembly", "genome"])
-            )
+        .with_columns(split_bin_name("sample"))
         .unnest("sample")
     )
 
@@ -207,7 +227,7 @@ def evaluate(target_otu_table, binned_otu_table, elusive_clusters, elusive_edges
                 .alias("taxonomy"),
             )
         .filter(
-            (pl.col("coassembly").is_in(recovered_otu_table["coassembly"])) &
+            (pl.col("coassembly").is_in(recovered_otu_table["coassembly"].implode())) &
             # Choose sequences where genome is present (from recovered) and/or target is present (from unbinned targets)
             ((pl.col("genome").is_not_null()) | (pl.col("target").is_not_null()))
             )
@@ -306,9 +326,7 @@ def summarise_stats(matches, combined_otu_table, recovered_bins):
     recovered_counts = (
         pl.from_dict(recovered_bins)
         .unpivot(variable_name="name")
-        .with_columns(
-            pl.col("name").str.split("-").list.to_struct(upper_bound=2, fields=["coassembly", "genome"])
-            )
+        .with_columns(split_bin_name("name"))
         .unnest("name")
         .group_by("coassembly")
         .agg(pl.len().alias("n"))

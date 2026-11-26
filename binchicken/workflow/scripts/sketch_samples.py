@@ -68,6 +68,7 @@ def processing(unbinned_path, output_path, taxa_of_interest=None, exclude_taxa=N
         with ProcessPoolExecutor(max_workers=threads) as executor:
             current_sample = ""
             current_sequences = []
+            completed_samples = set()
             i = 0
             group_subset = []
             futures = []
@@ -92,6 +93,13 @@ def processing(unbinned_path, output_path, taxa_of_interest=None, exclude_taxa=N
                     current_sample = sample
 
                 if sample != current_sample:
+                    # Rows are grouped by streaming, so a sample must not reappear after another has started
+                    completed_samples.add(current_sample)
+                    if sample in completed_samples:
+                        raise ValueError(
+                            f"Sample {sample} has non-contiguous rows in {unbinned_path}; "
+                            "rows must be grouped by sample"
+                            )
                     group_subset.append((current_sample, current_sequences))
                     current_sample = sample
                     current_sequences = [sequence]

@@ -291,6 +291,33 @@ class Tests(unittest.TestCase):
             observed_names = [s.name for s in load_file_as_signatures(signatures_path)]
             self.assertEqual(["sample_1"], observed_names)
 
+    def test_sketch_samples_non_contiguous_sample(self):
+        # A sample whose rows are split by another sample would be sketched twice from partial sequences
+        with in_tempdir():
+            unbinned = pl.DataFrame([
+                ["S3.1", "sample_1", "ATGACTAGTCATAGCTAGATTTGAGGCAGCAGGAGTTAGGAAAGCCCCCGGAGTTAGCTA", 5, 10, "Root"],
+                ["S3.1", "sample_2", "TGACTAGCTGGGCTAGCTATATTCTTTTTACGAGCGCGAGGAAAGCGACAGCGGCCAGGC", 5, 10, "Root"],
+                ["S3.1", "sample_1", "ATCGACTGACTTGATCGATCTTTGACGACGAGAGAGAGAGCGACGCGCCGAGAGGTTTCA", 5, 10, "Root"],
+            ], orient="row", schema=OTU_TABLE_COLUMNS)
+            unbinned.write_csv("unbinned.otu_table.tsv", separator="\t")
+
+            with self.assertRaisesRegex(ValueError, "sample_1"):
+                processing("unbinned.otu_table.tsv", output_path="./signatures.sig", threads=1)
+
+    def test_sketch_samples_non_contiguous_filtered_between(self):
+        # Rows of another sample that are all filtered out do not break contiguity
+        with in_tempdir():
+            unbinned = pl.DataFrame([
+                ["S3.1", "sample_1", "ATGACTAGTCATAGCTAGATTTGAGGCAGCAGGAGTTAGGAAAGCCCCCGGAGTTAGCTA", 5, 10, "Root; d__Bacteria"],
+                ["S3.1", "sample_2", "TGACTAGCTGGGCTAGCTATATTCTTTTTACGAGCGCGAGGAAAGCGACAGCGGCCAGGC", 5, 10, "Root; d__Archaea"],
+                ["S3.1", "sample_1", "ATCGACTGACTTGATCGATCTTTGACGACGAGAGAGAGAGCGACGCGCCGAGAGGTTTCA", 5, 10, "Root; d__Bacteria"],
+            ], orient="row", schema=OTU_TABLE_COLUMNS)
+            unbinned.write_csv("unbinned.otu_table.tsv", separator="\t")
+
+            signatures_path = processing("unbinned.otu_table.tsv", output_path="./signatures.sig", threads=1, exclude_taxa="d__Archaea")
+            observed_names = [s.name for s in load_file_as_signatures(signatures_path)]
+            self.assertEqual(["sample_1"], observed_names)
+
 
 if __name__ == '__main__':
     unittest.main()
