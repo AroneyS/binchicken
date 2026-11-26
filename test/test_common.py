@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 import unittest
-from binchicken.common import fasta_to_name, parse_snake_dict
+from binchicken.common import fasta_to_name, parse_snake_dict, bin_coassembly
 
 class Tests(unittest.TestCase):
     def test_fasta_to_name(self):
@@ -100,6 +100,22 @@ class Tests(unittest.TestCase):
         }
         observed = parse_snake_dict(snake_dict)
         self.assertEqual(expected, observed)
+
+
+    def test_bin_coassembly(self):
+        cases = {
+            "binchicken_coassembly_1.3": "coassembly_1",
+            "binchicken_coassembly_10.12": "coassembly_10",
+            "binchicken_it2_coassembly_0.1": "coassembly_0",
+            "binchicken_sample_1.1": "sample_1",
+            "binchicken_SRR123.4.2": "SRR123.4",
+            "coassembly_1-0": "coassembly_1",
+            "coassembly_10-3": "coassembly_10",
+            "sample_1-0": "sample_1",
+            "coassembly_0-GB_GCA_013286235.1": "coassembly_0",
+        }
+        for name, expected in cases.items():
+            self.assertEqual(expected, bin_coassembly(name), name)
 
 
 if __name__ == '__main__':

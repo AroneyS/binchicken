@@ -10,6 +10,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - `iterate` now falls back to `--aviary-outputs`/`--new-genomes` when the prior run's `recovered/` dir has no bins passing the quality thresholds, instead of failing with "Programming error: no bins to evaluate"
+- `--assemble-unmapped` with `--file-hierarchy` (default for >=10,000 samples) collected no reference genomes, so no reads were unmapped; without `--run-qc` it failed with a `KeyError`
+- `sketch_samples.py` sketched the header of appraise tables (with `found_in`) as a sample named `sample`, dropped the last kept sample when `--taxa-of-interest`/`--exclude-taxa` filtered the final rows, and merged stale per-chunk signature files from earlier runs
+- `evaluate --cluster` matched coassemblies by substring (`coassembly_1` also took bins from `coassembly_10`+), and failed for single-assembly bin names
+- `evaluate` now applies `--min-completeness`/`--max-contamination` to bins taken from a prior run's `recovered/` dir (previously all bins were evaluated)
+- Read size counting (`read_size.csv`) now fails on corrupt/truncated read files instead of silently undercounting
+- `query_processing.py` overwrites rather than appends to existing outputs
+- Coassembly cluster choice and recovery sample choice are now deterministic on ties (broken by `samples_hash` and sample name respectively)
 - Docs: `iterate` examples used `--coassembly-samples 3` (a sample list) instead of `--num-coassembly-samples 3`; demo pointed to `recovered_bins/` instead of `recovered/bins/`
 
 ### Changed

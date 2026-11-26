@@ -146,7 +146,7 @@ def main():
         WINDOW_SIZE=args.window_size
     )
 
-    with open(args.binned, "ab") as binned_file, open(args.unbinned, "ab") as unbinned_file:
+    with open(args.binned, "wb") as binned_file, open(args.unbinned, "wb") as unbinned_file:
         first = True
         for binned, unbinned in outputs:
             binned.write_csv(binned_file, separator="\t", include_header=first)

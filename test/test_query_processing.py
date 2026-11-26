@@ -5,7 +5,9 @@ import os
 os.environ["POLARS_MAX_THREADS"] = "1"
 import polars as pl
 from polars.testing import assert_frame_equal
-from binchicken.workflow.scripts.query_processing import processing
+from binchicken.workflow.scripts.query_processing import processing, main
+from unittest.mock import patch
+from bird_tool_utils import in_tempdir
 
 QUERY_COLUMNS = {
     "query_name": str,
@@ -198,6 +200,42 @@ class Tests(unittest.TestCase):
         observed_binned, observed_unbinned = processing(query, pipe, SEQUENCE_IDENTITY = 0.94)
         self.assertDataFrameEqual(expected_binned, observed_binned)
         self.assertDataFrameEqual(expected_unbinned, observed_unbinned)
+
+
+    def test_query_processing_main_overwrites_outputs(self):
+        # Outputs left over from an earlier attempt must be replaced, not appended to
+        with in_tempdir():
+            pl.DataFrame([
+                ["sample_1", "AAA", 1, 5, 10, "genome_1", "S3.1", "AAA", "Root"],
+                ["sample_1", "AAB", 10, 5, 10, "genome_1", "S3.1", "AAA", "Root"],
+            ], orient="row", schema=QUERY_COLUMNS).write_csv("query.tsv", separator="\t")
+            pl.DataFrame([
+                ["S3.1", "sample_1", "AAA", 5, 10, "Root"],
+                ["S3.1", "sample_1", "AAB", 5, 10, "Root"],
+            ], orient="row", schema=PIPE_COLUMNS).write_csv("pipe.tsv", separator="\t")
+
+            for path in ["binned.tsv", "unbinned.tsv"]:
+                with open(path, "w") as f:
+                    f.write("stale\n")
+
+            argv = [
+                "query_processing.py",
+                "--query-reads", "query.tsv",
+                "--pipe-reads", "pipe.tsv",
+                "--binned", "binned.tsv",
+                "--unbinned", "unbinned.tsv",
+            ]
+            with patch("sys.argv", argv):
+                main()
+
+            expected_binned = pl.DataFrame([
+                ["S3.1", "sample_1", "AAA", 5, 10, "Root", "genome_1"],
+            ], orient="row", schema=APPRAISE_COLUMNS)
+            expected_unbinned = pl.DataFrame([
+                ["S3.1", "sample_1", "AAB", 5, 10, "Root", None],
+            ], orient="row", schema=APPRAISE_COLUMNS)
+            self.assertDataFrameEqual(expected_binned, pl.read_csv("binned.tsv", separator="\t", schema_overrides=APPRAISE_COLUMNS))
+            self.assertDataFrameEqual(expected_unbinned, pl.read_csv("unbinned.tsv", separator="\t", schema_overrides=APPRAISE_COLUMNS))
 
 
 if __name__ == '__main__':

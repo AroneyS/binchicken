@@ -3022,5 +3022,74 @@ class Tests(unittest.TestCase):
             )
             assert_frame_equal(expected, observed, check_dtypes=False, check_row_order=False, abs_tol=1e-5)
 
+    def test_coassemble_hierarchy_unmapped(self):
+        # Without --run-qc the unmapping rules look reads up by hierarchical name, and
+        # reference bins must be collected using the bare sample name
+        with in_tempdir():
+            cmd = (
+                f"binchicken coassemble "
+                f"--forward {SAMPLE_READS_FORWARD} "
+                f"--reverse {SAMPLE_READS_REVERSE} "
+                f"--genomes {GENOMES} "
+                f"--singlem-metapackage {METAPACKAGE} "
+                f"--assemble-unmapped "
+                f"--unmapping-max-identity 99 "
+                f"--unmapping-max-alignment 90 "
+                f"--prodigal-meta "
+                f"--file-hierarchy always "
+                f"--file-hierarchy-depth 3 "
+                f"--file-hierarchy-chars 3 "
+                f"--output test "
+            )
+            extern.run(cmd)
+
+            unmapped_sample_1_path = os.path.join("test", "coassemble", "mapping", "sam", "ple", "_1", "sample_1_unmapped.1.fq.gz")
+            self.assertTrue(os.path.exists(unmapped_sample_1_path))
+            with gzip.open(unmapped_sample_1_path) as f:
+                file = f.read().decode()
+                self.assertTrue("@A00178:112:HMNM5DSXX:4:1622:16405:19194" in file)
+                self.assertTrue("@A00178:112:HMNM5DSXX:4:9999:19126:17300" not in file)
+
+    def test_coassemble_count_bp_truncated_gzip(self):
+        # A corrupt read file must fail read size counting, not silently undercount
+        with in_tempdir():
+            def gzip_reads(paths, truncate=None):
+                local_paths = []
+                for path in paths:
+                    local_path = os.path.abspath(os.path.basename(path) + ".gz")
+                    with open(path, "rb") as f_in, gzip.open(local_path, "wb") as f_out:
+                        f_out.write(f_in.read())
+                    if truncate and os.path.basename(path) == truncate:
+                        with open(local_path, "rb") as f:
+                            data = f.read()
+                        with open(local_path, "wb") as f:
+                            f.write(data[:len(data) // 2])
+                    local_paths.append(local_path)
+                return " ".join(local_paths)
+
+            def count_cmd(forward, reverse, output):
+                return (
+                    f"binchicken coassemble "
+                    f"--forward {forward} "
+                    f"--reverse {reverse} "
+                    f"--genomes {GENOMES} "
+                    f"--singlem-metapackage {METAPACKAGE} "
+                    f"--output {output} "
+                    f"--snakemake-args \" {os.path.abspath(os.path.join(output, 'coassemble', 'read_size.csv'))}\" "
+                )
+
+            # Control: intact files count correctly
+            forward = gzip_reads(SAMPLE_READS_FORWARD.split(" "))
+            reverse = gzip_reads(SAMPLE_READS_REVERSE.split(" "))
+            extern.run(count_cmd(forward, reverse, "control"))
+            with open(os.path.join("control", "coassemble", "read_size.csv")) as f:
+                self.assertEqual("sample_1,4832\nsample_2,3926\nsample_3,3624\n", f.read())
+
+            forward = gzip_reads(SAMPLE_READS_FORWARD.split(" "), truncate="sample_2.1.fq")
+            with self.assertRaises(extern.ExternCalledProcessError):
+                extern.run(count_cmd(forward, reverse, "test"))
+            self.assertFalse(os.path.exists(os.path.join("test", "coassemble", "read_size.csv")))
+
+
 if __name__ == '__main__':
     unittest.main()

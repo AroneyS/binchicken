@@ -2,8 +2,7 @@
 ### Setup ###
 #############
 import os
-import re
-from binchicken.common import pixi_run, setup_log
+from binchicken.common import pixi_run, setup_log, bin_coassembly
 os.umask(0o002)
 
 output_dir = os.path.abspath("evaluate")
@@ -11,11 +10,11 @@ logs_dir = output_dir + "/logs"
 scripts_dir = os.path.join(os.path.dirname(os.path.abspath(workflow.snakefile)), 'scripts')
 
 bins = config["recovered_bins"]
-coassemblies = list(set([re.search(r"coassembly_\d+", b)[0] for b in bins.keys()]))
+coassemblies = sorted(set(bin_coassembly(b) for b in bins.keys()))
 
 def get_cluster_genomes(wildcards):
     coassembly = wildcards.coassembly
-    new_bins = [bins[b] for b in bins if coassembly in b]
+    new_bins = [bins[b] for b in bins if bin_coassembly(b) == coassembly]
 
     return " ".join(config["original_bins"] + new_bins)
 

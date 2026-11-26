@@ -683,9 +683,10 @@ if long_reads:
             runtime = get_runtime(base_hours = 24),
         shell:
             f"{pixi_run} -e general "
-            "parallel -k -j {threads} "
+            "parallel --halt now,fail=1 -k -j {threads} "
+            "set -o pipefail ';' "
             "echo -n {{1}}, '&&' "
-            "{params.cat} {{2}} {{3}} '|' sed -n 2~4p '|' tr -d '\"\n\"' '|' wc -m "
+            "{params.cat} {{2}} {{3}} '|' sed -n 2~4p '|' tr -d '\"\n\"' '|' wc -c "
             ":::: {input.samples} ::::+ {input.reads_1} ::::+ {input.reads_2} "
             "> {output}"
 
@@ -704,9 +705,10 @@ if long_reads:
             runtime = get_runtime(base_hours = 24),
         shell:
             f"{pixi_run} -e general "
-            "parallel -k -j {threads} "
+            "parallel --halt now,fail=1 -k -j {threads} "
+            "set -o pipefail ';' "
             "echo -n {{1}}, '&&' "
-            "{params.cat} {{2}} {{3}} '|' sed -n 2~4p '|' tr -d '\"\n\"' '|' wc -m "
+            "{params.cat} {{2}} {{3}} '|' sed -n 2~4p '|' tr -d '\"\n\"' '|' wc -c "
             ":::: {input.samples} ::::+ {input.reads_1} ::::+ {input.reads_2} "
             "> {output}"
 
@@ -743,9 +745,10 @@ if long_reads:
             runtime = get_runtime(base_hours = 24),
         shell:
             f"{pixi_run} -e general "
-            "parallel -k -j {threads} "
+            "parallel --halt now,fail=1 -k -j {threads} "
+            "set -o pipefail ';' "
             "echo -n {{1}}, '&&' "
-            "{params.cat} {{2}} '|' sed -n 2~4p '|' tr -d '\"\n\"' '|' wc -m "
+            "{params.cat} {{2}} '|' sed -n 2~4p '|' tr -d '\"\n\"' '|' wc -c "
             ":::: {input.samples} ::::+ {input.long_reads} "
             "> {output}"
 
@@ -792,9 +795,10 @@ else:
             runtime = get_runtime(base_hours = 24),
         shell:
             f"{pixi_run} -e general "
-            "parallel -k -j {threads} "
+            "parallel --halt now,fail=1 -k -j {threads} "
+            "set -o pipefail ';' "
             "echo -n {{1}}, '&&' "
-            "{params.cat} {{2}} {{3}} '|' sed -n 2~4p '|' tr -d '\"\n\"' '|' wc -m "
+            "{params.cat} {{2}} {{3}} '|' sed -n 2~4p '|' tr -d '\"\n\"' '|' wc -c "
             ":::: {input.samples} ::::+ {input.reads_1} ::::+ {input.reads_2} "
             "> {output}"
 
@@ -1198,7 +1202,8 @@ rule collect_genomes:
         runtime = get_runtime(base_hours = 24),
     params:
         script = scripts_dir + "/collect_reference_bins.py",
-        sample = "{read}",
+        # With --file-hierarchy, {read} is a nested path; appraise tables hold the bare sample name
+        sample = lambda wildcards: os.path.basename(wildcards.read),
         min_appraised = config["unmapping_min_appraised"],
     shell:
         f"{pixi_run} -e default "
@@ -1243,7 +1248,7 @@ rule filter_bam_files:
         temp(output_dir + "/mapping/{read}_unmapped.bam"),
     params:
         genomes = lambda wildcards: os.path.basename(wildcards.read) + "_reference.fna",
-        reads_1 = lambda wildcards: os.path.basename(config["reads_1"][wildcards.read]) if not config["run_qc"] else os.path.basename(wildcards.read) + "_1.fastq.gz",
+        reads_1 = lambda wildcards: os.path.basename(reads_1[wildcards.read]) if not config["run_qc"] else os.path.basename(wildcards.read) + "_1.fastq.gz",
         sequence_identity = config["unmapping_max_identity"],
         alignment_percent = config["unmapping_max_alignment"],
     threads: 32

@@ -14,6 +14,19 @@ def fasta_to_name(filename):
                 break
     return sample_name
 
+RECOVERED_BIN_NAME_REGEX = re.compile(r"^binchicken_(?:it\d+_)?(.+)\.\d+$")
+
+def bin_coassembly(bin_name):
+    """Return the coassembly (or single-assembly sample) a bin key belongs to.
+
+    Bin keys are either recovered-dir names, binchicken_[it<N>_]<coassembly>.<n>,
+    or <coassembly>-<genome> (from --aviary-outputs / --new-genomes).
+    """
+    match = RECOVERED_BIN_NAME_REGEX.match(bin_name)
+    if match:
+        return match.group(1)
+    return bin_name.split("-")[0]
+
 def parse_snake_dict(s):
     # Remove leading/trailing whitespace
     s = s.strip()

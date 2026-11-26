@@ -12,6 +12,8 @@ from sourmash.sourmash_args import SaveSignaturesToLocation
 from concurrent.futures import ProcessPoolExecutor
 import extern
 import re
+import shlex
+import tempfile
 import argparse
 
 SINGLEM_OTU_TABLE_SCHEMA = {
@@ -46,14 +48,21 @@ def process_groups(groups, output_path):
             save_sigs.add(signature)
 
 def processing(unbinned_path, output_path, taxa_of_interest=None, exclude_taxa=None, threads=1, samples_per_group=1000):
-    output_dir = os.path.dirname(output_path)
+    output_dir = os.path.dirname(output_path) or "."
 
-    with open(unbinned_path) as f:
+    # Per-chunk signatures go in a fresh directory so files left by an earlier run are never merged in
+    with open(unbinned_path) as f, tempfile.TemporaryDirectory(prefix="signatures_", dir=output_dir) as chunk_dir:
         logging.info(f"Reading unbinned OTU table from {unbinned_path}")
         if taxa_of_interest:
             logging.info(f"Filtering for taxa of interest: {taxa_of_interest}")
         if exclude_taxa:
             logging.info(f"Excluding taxa: {exclude_taxa}")
+
+        # Locate columns by name: appraise tables may carry extra columns (e.g. found_in)
+        header = f.readline().rstrip("\n").split("\t")
+        sample_idx = header.index("sample")
+        sequence_idx = header.index("sequence")
+        taxonomy_idx = header.index("taxonomy")
 
         logging.info("Generating sketches in separate threads")
         with ProcessPoolExecutor(max_workers=threads) as executor:
@@ -62,16 +71,18 @@ def processing(unbinned_path, output_path, taxa_of_interest=None, exclude_taxa=N
             i = 0
             group_subset = []
             futures = []
-            for line in f:
-                line = line.strip()
-                if line == "gene\tsample\tsequence\tnum_hits\tcoverage\ttaxonomy":
-                    continue
 
-                sample = line.split("\t")[1]
-                sequence = line.split("\t")[2]
+            def submit(groups, i):
+                output_subpath = os.path.join(chunk_dir, f"signatures_thread_{i}.sig")
+                futures.append(executor.submit(process_groups, groups, output_subpath))
+
+            for line in f:
+                fields = line.rstrip("\n").split("\t")
+                sample = fields[sample_idx]
+                sequence = fields[sequence_idx]
 
                 if taxa_of_interest or exclude_taxa:
-                    taxonomy = line.split("\t")[5]
+                    taxonomy = fields[taxonomy_idx]
                     if taxa_of_interest and not re.search(taxa_of_interest, taxonomy):
                         continue
                     if exclude_taxa and re.search(exclude_taxa, taxonomy):
@@ -86,28 +97,24 @@ def processing(unbinned_path, output_path, taxa_of_interest=None, exclude_taxa=N
                     current_sequences = [sequence]
 
                     if len(group_subset) == samples_per_group:
-                        output_subpath = os.path.join(output_dir, f"signatures_thread_{i}.sig")
-                        future = executor.submit(process_groups, group_subset, output_subpath)
-                        futures.append(future)
+                        submit(group_subset, i)
                         i += 1
                         group_subset = []
                 else:
                     current_sequences.append(sequence)
 
-            # Submit any remaining groups that are smaller than samples_per_group
-            if sample == current_sample:
+            # Flush the last kept sample, then any remaining groups smaller than samples_per_group
+            if current_sample:
                 group_subset.append((current_sample, current_sequences))
 
             if group_subset:
-                output_subpath = os.path.join(output_dir, f"signatures_thread_{i}.sig")
-                future = executor.submit(process_groups, group_subset, output_subpath)
-                futures.append(future)
+                submit(group_subset, i)
 
             for future in futures:
                 future.result()
 
-    logging.info("Concatenating sketches")
-    extern.run(f"sourmash sig cat {os.path.join(output_dir, 'signatures_thread_*.sig')} -o {output_path}")
+        logging.info("Concatenating sketches")
+        extern.run(f"sourmash sig cat {shlex.quote(chunk_dir)}/signatures_thread_*.sig -o {shlex.quote(output_path)}")
 
     logging.info("Done")
     return output_path

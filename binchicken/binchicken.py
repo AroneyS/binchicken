@@ -733,22 +733,8 @@ def select_bins_from_recovered(recovered_bins_dir, min_completeness, max_contami
 
     bins = {}
     for name in passing_genomes:
-        bins[name] = os.path.join(recovered_bins_dir, "bins", name + ".fna")
+        bins[name] = os.path.abspath(os.path.join(recovered_bins_dir, "bins", name + ".fna"))
 
-    return bins
-
-def list_all_bins_from_recovered(recovered_bins_dir):
-    bins_dir = os.path.join(recovered_bins_dir, "bins")
-    if not os.path.isdir(bins_dir):
-        logging.warning(f"No bins directory found at {bins_dir}")
-        return {}
-
-    bins = {}
-    for filename in sorted(os.listdir(bins_dir)):
-        if not filename.endswith(".fna"):
-            continue
-        name = os.path.splitext(filename)[0]
-        bins[name] = os.path.abspath(os.path.join(bins_dir, filename))
     return bins
 
 def check_prior_assemblies(prior_assemblies, inputs):
@@ -1206,8 +1192,8 @@ def evaluate(args):
         prior_recovered = os.path.join(args.coassemble_output, "..", "recovered")
         if os.path.isdir(prior_recovered):
             logging.info("Using recovered dir from prior coassemble run")
-            # For evaluate, include all recovered bins; downstream rules filter as needed
-            bins = list_all_bins_from_recovered(prior_recovered)
+            # Apply the same completeness/contamination thresholds as for --aviary-outputs
+            bins = select_bins_from_recovered(prior_recovered, args.min_completeness, args.max_contamination)
 
     if bins is None or bins == {}:
         if args.aviary_outputs:
