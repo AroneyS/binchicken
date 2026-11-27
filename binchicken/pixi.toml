@@ -13,7 +13,7 @@ extern = "0.4.*"
 "ruamel.yaml" = ">=0.15.99"
 polars = "1.36.*"
 pigz = "2.3.*"
-pyarrow = "12.0.*"
+pyarrow = "16.1.*"
 parallel = "==20230522"
 sourmash = "4.8.*"
 sourmash_plugin_branchwater = "0.9.*"
@@ -24,7 +24,7 @@ pyopenssl = ">22.1.0"
 # TODO: check https://github.com/prefix-dev/pixi/issues/7335 before raising the cap.
 pixi = ">=0.72.1,<0.82"
 conda = "*"
-pip = "*"
+pip = ">=26.2"
 
 [feature.main.tasks]
 postinstall-base = { cmd = "pip uninstall -y binchicken || true && pip install --no-build-isolation --no-deps --disable-pip-version-check -e ..", cwd = "binchicken" }
