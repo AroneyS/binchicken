@@ -49,3 +49,27 @@ rm -r test/data/singlem_EIF.sdb
 rm -r test/data/singlem_metapackage_EIF.smpkg
 mv test/data/singlem_metapackage_EIF2.smpkg test/data/singlem_metapackage_EIF.smpkg
 ```
+
+## Live SingleM tables (pipe_live)
+
+`test/data/pipe_live/` holds real `singlem pipe` outputs for the test reads and genome, so tests not about
+SingleM itself can pass them with `--sample-singlem`/`--genome-singlem` and skip piping (results are identical).
+Regenerate them whenever SingleM or the test metapackage changes:
+
+```bash
+binchicken coassemble \
+    --forward test/data/sample_{1,2,3}.1.fq \
+    --reverse test/data/sample_{1,2,3}.2.fq \
+    --genomes test/data/GB_GCA_013286235.1.fna \
+    --singlem-metapackage test/data/singlem_metapackage.smpkg \
+    --prodigal-meta \
+    --output pipe_live_run \
+    --snakemake-args "$PWD/pipe_live_run/coassemble/summarise/bins_summarised.otu_table.tsv \
+        $PWD/pipe_live_run/coassemble/pipe/sample_1_read.otu_table.tsv \
+        $PWD/pipe_live_run/coassemble/pipe/sample_2_read.otu_table.tsv \
+        $PWD/pipe_live_run/coassemble/pipe/sample_3_read.otu_table.tsv"
+
+cp pipe_live_run/coassemble/pipe/sample_{1,2,3}_read.otu_table.tsv test/data/pipe_live/
+cp pipe_live_run/coassemble/summarise/bins_summarised.otu_table.tsv \
+    test/data/pipe_live/bins_summarised_GB_GCA_013286235.1.otu_table.tsv
+```

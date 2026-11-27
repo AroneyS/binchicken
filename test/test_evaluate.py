@@ -208,6 +208,8 @@ class Tests(unittest.TestCase):
             self.assertTrue("\nevaluate_plots" in output)
 
     def test_evaluate_genome_input(self):
+        # --new-genomes bins are named <coassembly-run>-<genome> and all evaluated (no quality filtering).
+        # The evaluation itself is covered by test_evaluate, so this checks the bins passed to it
         with in_tempdir():
             cmd = (
                 f"binchicken evaluate "
@@ -217,97 +219,18 @@ class Tests(unittest.TestCase):
                 f"--coassembly-run coassembly_0 "
                 f"--singlem-metapackage {METAPACKAGE} "
                 f"--output test "
+                f"--dryrun "
             )
             extern.run(cmd)
 
             config_path = os.path.join("test", "config.yaml")
             self.assertTrue(os.path.exists(config_path))
-
-            summary_path = os.path.join("test", "evaluate", "evaluate", "summary_stats.tsv")
-            self.assertTrue(os.path.exists(summary_path))
-            expected = "\n".join(
-                [
-                    "\t".join([
-                        "coassembly",
-                        "statistic",
-                        "within",
-                        "match",
-                        "nonmatch",
-                        "total",
-                        "match_percent",
-                    ]),
-                    "\t".join([
-                        "coassembly_0",
-                        "sequences",
-                        "targets",
-                        "1",
-                        "1",
-                        "2",
-                        "50.0",
-                    ]),
-                    "\t".join([
-                        "coassembly_0",
-                        "taxonomy",
-                        "targets",
-                        "1",
-                        "1",
-                        "2",
-                        "50.0",
-                    ]),
-                    "\t".join([
-                        "coassembly_0",
-                        "bins",
-                        "recovery",
-                        "1",
-                        "2",
-                        "3",
-                        "33.33",
-                    ]),
-                    "\t".join([
-                        "coassembly_0",
-                        "nontarget_bin_sequences",
-                        "recovery",
-                        "1",
-                        "2",
-                        "3",
-                        "33.33",
-                    ]),
-                    "\t".join([
-                        "coassembly_0",
-                        "nontarget_unbin_sequences",
-                        "recovery",
-                        "0",
-                        "3",
-                        "3",
-                        "0.0",
-                    ]),
-                    "\t".join([
-                        "coassembly_0",
-                        "novel_sequences",
-                        "recovery",
-                        "1",
-                        "2",
-                        "3",
-                        "33.33",
-                    ]),
-                    ""
-                ]
-            )
-            with open(summary_path) as f:
-                self.assertEqual(expected, f.read())
-
-            summarise_path = os.path.join("test", "evaluate", "summarise", "bins_summarised.otu_table.tsv")
-            self.assertTrue(os.path.exists(summarise_path))
-            with open(summarise_path) as f:
-                observed = f.read()
-
-            otu1 = "\t".join(["S3.7.ribosomal_protein_S7", "coassembly_0-bin_1_transcripts", "TATCAAGTTCCACAAGAAGTTAGAGGAGAAAGAAGAATCTCGTTAGCTATTAGATGGATT", "1", "1.14", "Root; d__Bacteria"])
-            otu2 = "\t".join(["S3.7.ribosomal_protein_S7", "coassembly_0-bin_3_transcripts", "TACCAGGTTCCTGTTGAAGTTCGCCCATCACGCCGTTCTGCTTTGGCAATGCGCTGGGTG", "1", "1.14", "Root; d__Bacteria; p__Proteobacteria; c__Gammaproteobacteria; o__Burkholderiales; f__Burkholderiaceae; g__Polynucleobacter; s__Polynucleobacter_sp018688335"])
-            otu3 = "\t".join(["S3.7.ribosomal_protein_S7", "coassembly_0-bin_3_transcripts", "TTCCAGGTGCCTACTGAAGTTCGTCCCGAGCGTAAAATTGCATTGGGTATGAAATGGCTG", "1", "1.14", "Root; d__Bacteria; p__Bacteroidota; c__Bacteroidia; o__Sphingobacteriales; f__Sphingobacteriaceae; g__Mucilaginibacter; s__Mucilaginibacter_sp013286235"])
-
-            self.assertTrue(otu1 in observed)
-            self.assertTrue(otu2 in observed)
-            self.assertTrue(otu3 in observed)
+            config = load_configfile(config_path)
+            expected = {
+                f"coassembly_0-{os.path.splitext(os.path.basename(g))[0]}": os.path.abspath(g)
+                for g in MOCK_GENOMES.split(" ")
+                }
+            self.assertEqual(expected, config["recovered_bins"])
 
     def test_evaluate_genome_files_input(self):
         with in_tempdir():

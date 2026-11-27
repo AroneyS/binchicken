@@ -8,10 +8,10 @@ dependencies:
 - extern=0.4.1
 - parallel=20230522
 - pigz=2.3.4
-- pip=26.1.2
+- pip=26.2.2
 - pixi=0.72.2
 - polars=1.36.1
-- pyarrow=12.0.1
+- pyarrow=16.1.0
 - pyopenssl=26.3.0
 - python=3.11.9
 - ruamel.yaml=0.19.1

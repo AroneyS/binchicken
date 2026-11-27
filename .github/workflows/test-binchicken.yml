@@ -4,6 +4,8 @@ on: [push, pull_request]
 jobs:
   pixi_test_dependencies_locked:
     name: Pixi test_dependencies_locked ${{ matrix.os }}
+    # Pushes run CI for every branch; pull_request runs only for forks, avoiding a duplicate run on PR branches
+    if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name != github.repository
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -24,6 +26,16 @@ jobs:
           mkdir -p binchicken/.pixi
           echo "Contents of binchicken directory:"
           ls -la binchicken
+          echo "PIXI_VERSION=$(pixi --version | cut -d ' ' -f 2)" >> $GITHUB_ENV
+
+      # Environments are cached once installed (before tests run, so nothing tests write into
+      # the envs, e.g. build's env variables, is cached). Keyed on the lock file and pixi version
+      - name: Restore pixi environments
+        id: pixi-envs
+        uses: actions/cache/restore@v4
+        with:
+          path: binchicken/.pixi/envs
+          key: pixi-envs-${{ runner.os }}-${{ env.PIXI_VERSION }}-${{ hashFiles('binchicken/pixi.lock') }}
 
       # Needed due to pixi run -e default breaking for import binchicken.
       # Not `pixi run postinstall`: its cwd = "binchicken" is invalid when the manifest is in binchicken/
@@ -45,6 +57,13 @@ jobs:
         run: |
           pixi run --manifest-path binchicken/pixi.toml -e dev binchicken build --skip-aviary-envs
 
+      - name: Save pixi environments
+        if: steps.pixi-envs.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: binchicken/.pixi/envs
+          key: ${{ steps.pixi-envs.outputs.cache-primary-key }}
+
       - name: Show environment info
         run: |
           pixi run --manifest-path binchicken/pixi.toml -e dev pixi list
@@ -52,11 +71,13 @@ jobs:
       - name: Run tests with Pixi
         run: |
           pixi run --manifest-path binchicken/pixi.toml -e dev binchicken -h
-          pixi run --manifest-path binchicken/pixi.toml -e dev pytest -v
+          pixi run --manifest-path binchicken/pixi.toml -e dev pytest -v -n auto
 
   # Run after removing lock file so dependences are unlocked
   pixi_test_dependencies_optimistic:
     name: Pixi test_dependencies_optimistic ${{ matrix.os }}
+    # Pushes run CI for every branch; pull_request runs only for forks, avoiding a duplicate run on PR branches
+    if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name != github.repository
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -110,4 +131,4 @@ jobs:
       - name: Run tests with Pixi
         run: |
           pixi run --manifest-path binchicken/pixi.toml -e dev binchicken -h
-          pixi run --manifest-path binchicken/pixi.toml -e dev pytest -v
+          pixi run --manifest-path binchicken/pixi.toml -e dev pytest -v -n auto

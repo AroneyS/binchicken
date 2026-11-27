@@ -24,6 +24,8 @@ SAMPLE_READS_FORWARD_PRE = " ".join([SAMPLE_READS_FORWARD, os.path.join(path_to_
 SAMPLE_READS_REVERSE_PRE = " ".join([SAMPLE_READS_REVERSE, os.path.join(path_to_data, "sample_5.2.fq")])
 
 METAPACKAGE = os.path.join(path_to_data, "singlem_metapackage.smpkg")
+# Live `singlem pipe` outputs of sample_{1,2,3} reads (see test/data/remake_metapackages.md)
+SAMPLE_SINGLEM_LIVE = ' '.join([os.path.join(path_to_data, "pipe_live", f"sample_{i}_read.otu_table.tsv") for i in [1, 2, 3]])
 
 MOCK_COASSEMBLE = os.path.join(path_to_data, "mock_coassemble")
 SAMPLE_SINGLEM_PRE = ' '.join([
@@ -45,6 +47,7 @@ class Tests(unittest.TestCase):
                 f"binchicken single "
                 f"--forward {SAMPLE_READS_FORWARD} "
                 f"--reverse {SAMPLE_READS_REVERSE} "
+                f"--sample-singlem {SAMPLE_SINGLEM_LIVE} "
                 f"--singlem-metapackage {METAPACKAGE} "
                 f"--min-sequence-coverage 1 "
                 f"--coassembly-samples sample_1 sample_2 "

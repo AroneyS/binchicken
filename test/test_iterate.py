@@ -36,6 +36,8 @@ TWO_GENOMES = " ".join([
     os.path.join(path_to_data, "GB_GCA_013286235.2.fna"),
     ])
 METAPACKAGE = os.path.join(path_to_data, "singlem_metapackage.smpkg")
+# Live `singlem pipe` outputs of sample_{1,2,3} reads (see test/data/remake_metapackages.md)
+SAMPLE_SINGLEM_LIVE = ' '.join([os.path.join(path_to_data, "pipe_live", f"sample_{i}_read.otu_table.tsv") for i in [1, 2, 3]])
 
 MOCK_COASSEMBLE = os.path.join(path_to_data, "mock_coassemble")
 MOCK_COASSEMBLE_MINIMAL = os.path.join(path_to_data, "mock_coassemble_minimal")
@@ -340,6 +342,7 @@ class Tests(unittest.TestCase):
                 f"--elusive-clusters {ELUSIVE_CLUSTERS} "
                 f"--forward {SAMPLE_READS_FORWARD} "
                 f"--reverse {SAMPLE_READS_REVERSE} "
+                f"--sample-singlem {SAMPLE_SINGLEM_LIVE} "
                 f"--genomes {GENOMES} "
                 f"--genome-transcripts {GENOME_TRANSCRIPTS} "
                 f"--singlem-metapackage {METAPACKAGE} "
@@ -480,6 +483,7 @@ class Tests(unittest.TestCase):
                 f"--exclude-coassemblies sample_1,sample_2 "
                 f"--forward {SAMPLE_READS_FORWARD} "
                 f"--reverse {SAMPLE_READS_REVERSE} "
+                f"--sample-singlem {SAMPLE_SINGLEM_LIVE} "
                 f"--genomes {GENOMES} "
                 f"--genome-singlem {GENOME_SINGLEM} "
                 f"--singlem-metapackage {METAPACKAGE} "
@@ -573,6 +577,7 @@ class Tests(unittest.TestCase):
                 f"--elusive-clusters {ELUSIVE_CLUSTERS} "
                 f"--forward {SAMPLE_READS_FORWARD} "
                 f"--reverse {SAMPLE_READS_REVERSE} "
+                f"--sample-singlem {SAMPLE_SINGLEM_LIVE} "
                 f"--genomes {GENOMES} "
                 f"--genome-singlem {GENOME_SINGLEM} "
                 f"--singlem-metapackage {METAPACKAGE} "
