@@ -2522,6 +2522,24 @@ class Tests(unittest.TestCase):
             self.assertTrue("\nfinish_mapping" not in output)
             self.assertTrue("\naviary_commands" in output)
 
+    def test_coassemble_sra_download_mock_path_with_suffix(self):
+        # An output path containing "_1" (e.g. a random temp dir) must not break locating single-file downloads
+        with in_tempdir():
+            output = os.path.join("tmp_1dir", "test")
+            cmd = (
+                f"binchicken coassemble "
+                f"--forward SRR3309137 SRR8334323 SRR8334324 "
+                f"--sra "
+                f"--output {output} "
+                f"--snakemake-args \" --config mock_sra=True\" "
+            )
+            extern.run(cmd)
+
+            sra_f0_path = os.path.join(output, "coassemble", "sra", "SRR3309137_1.fastq.gz")
+            self.assertTrue(os.path.exists(sra_f0_path))
+            sra_r0_path = os.path.join(output, "coassemble", "sra", "SRR3309137_2.fastq.gz")
+            self.assertTrue(os.path.exists(sra_r0_path))
+
     def test_coassemble_sra_download_mock(self):
         with in_tempdir():
             cmd = (

@@ -438,14 +438,15 @@ def download_sra(args):
         single_ended = {}
 
     if not single_ended and not args.dryrun and args.sra != "build":
-        for f, r in zip(expected_forward, expected_reverse):
+        for sra_name, f, r in zip(args.forward, expected_forward, expected_reverse):
             if os.path.isfile(f) & os.path.isfile(r):
                 continue
 
             if os.path.isfile(f) | os.path.isfile(r):
                 raise Exception(f"Mismatched downloads with {f} and {r}")
 
-            u = f.replace("_1", "")
+            # Built from the accession: replacing "_1" in the path would also hit directory names
+            u = sra_dir + sra_name + SRA_SUFFIX
             if not os.path.isfile(u):
                 raise Exception(f"Missing downloads: {f} and {r}")
 

@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `evaluate` now applies `--min-completeness`/`--max-contamination` to bins taken from a prior run's `recovered/` dir (previously all bins were evaluated)
 - Read size counting (`read_size.csv`) now fails on corrupt/truncated read files instead of silently undercounting
 - `query_processing.py` overwrites rather than appends to existing outputs
+- SRA downloads delivered as a single (interleaved) file were not found when the output path contained `_1` (e.g. some temporary directories), failing with "Missing downloads"
 - `evaluate` crashed (`ColumnNotFoundError: "match"`) when evaluating bins from a prior run's `recovered/` dir, as their names (`binchicken_<coassembly>.<n>`) were parsed by splitting on `-`
 - `sketch_samples.py` now fails if a sample's rows are not contiguous in the unbinned table, instead of silently sketching it twice from partial sequences
 - Coassembly cluster choice and recovery sample choice are now deterministic on ties (broken by `samples_hash` and sample name respectively)
