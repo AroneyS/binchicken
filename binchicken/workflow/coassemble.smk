@@ -320,27 +320,61 @@ rule genome_transcripts:
         "{params.prodigal_meta} "
         "&> {resources.log_path} "
 
-rule singlem_pipe_genomes:
-    input:
-        output_dir + "/transcripts/{genome}_protein.fna"
-    output:
-        output_dir + "/pipe/{genome}_bin.otu_table.tsv"
-    benchmark:
-        benchmarks_dir + "/pipe/{genome}_bin.tsv"
-    params:
-        singlem_metapackage = config["singlem_metapackage"]
-    threads: 1
-    resources:
-        mem_mb=get_mem_mb,
-        runtime = get_runtime(base_hours = 1),
-        log_path=lambda wildcards, attempt: setup_log(f"{logs_dir}/pipe/{wildcards.genome}_bin", attempt)
-    shell:
-        f"{pixi_run} -e singlem "
-        "singlem pipe "
-        "--forward {input} "
-        "--otu-table {output} "
-        "--metapackage {params.singlem_metapackage} "
-        "&> {resources.log_path}"
+# Genomes are piped through SingleM in batches, one cluster job per batch instead of one per genome.
+# Batches are fixed chunks of sorted genome names, so membership is the same whenever the workflow is
+# parsed (including inside cluster jobs). New genomes (update/iterate runs) are batched apart from the
+# rest, so requesting only their tables never pulls in other genomes. Genomes whose OTU table already
+# exists (e.g. provided tables) are left out of their batch.
+GENOME_BATCH_SIZE = int(config.get("genome_batch_size", 100))
+
+def genome_otu_table(genome):
+    return output_dir + f"/pipe/{genome}_bin.otu_table.tsv"
+
+new_genome_names = sorted(config["new_genomes"]) if config.get("new_genomes") else []
+other_genome_names = sorted(set(config["genomes"] or []) - set(new_genome_names)) if config.get("genomes") else []
+genome_batches = []
+for batch_set, names in [("new", new_genome_names), ("genomes", other_genome_names)]:
+    for batch_index, batch_start in enumerate(range(0, len(names), GENOME_BATCH_SIZE)):
+        batch_genomes = [g for g in names[batch_start:batch_start + GENOME_BATCH_SIZE] if not os.path.exists(genome_otu_table(g))]
+        if batch_genomes:
+            genome_batches.append((f"{batch_set}_{batch_index}", batch_genomes))
+
+for batch_name, batch_genomes in genome_batches:
+    rule:
+        name: f"singlem_pipe_genomes_batch_{batch_name}"
+        input:
+            [output_dir + f"/transcripts/{g}_protein.fna" for g in batch_genomes]
+        output:
+            [genome_otu_table(g) for g in batch_genomes]
+        benchmark:
+            benchmarks_dir + f"/pipe/genomes_batch_{batch_name}.tsv"
+        params:
+            singlem_metapackage = config["singlem_metapackage"],
+            batch_table = output_dir + f"/pipe/genomes_batch_{batch_name}.otu_table.tsv",
+            pipe_dir = output_dir + "/pipe",
+        threads: 8
+        resources:
+            mem_mb=get_mem_mb_fixed(16),
+            runtime = get_runtime(base_hours = 4),
+            log_path=lambda wildcards, attempt, batch_name=batch_name: setup_log(f"{logs_dir}/pipe/genomes_batch_{batch_name}", attempt)
+        shell:
+            f"{pixi_run} -e singlem "
+            "singlem pipe "
+            "--forward {input} "
+            "--otu-table {params.batch_table} "
+            "--metapackage {params.singlem_metapackage} "
+            "--threads {threads} "
+            "&> {resources.log_path} && "
+            # Split into per-genome tables (sample is the transcript basename, <genome>_protein).
+            # Rows are sorted: SingleM's row order within a gene varies between runs and batch compositions
+            "for out in {output}; do head -n 1 {params.batch_table} > $out; done && "
+            "LC_ALL=C awk -F '\\t' -v dir={params.pipe_dir:q} "
+            "'NR > 1 {{s = $2; sub(/_protein$/, \"\", s); print > (dir \"/\" s \"_bin.otu_table.tsv.rows\")}}' "
+            "{params.batch_table} && "
+            "for out in {output}; do "
+            "if [ -e $out.rows ]; then LC_ALL=C sort $out.rows >> $out && rm $out.rows; fi; "
+            "done && "
+            "rm {params.batch_table}"
 
 rule singlem_genomes_list:
     input:

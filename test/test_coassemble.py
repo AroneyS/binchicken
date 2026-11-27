@@ -929,6 +929,41 @@ class Tests(unittest.TestCase):
             with open(cluster_path) as f:
                 self.assertEqual(expected, f.read())
 
+    def test_coassemble_genome_batches(self):
+        # Genomes are piped through SingleM in batches; output must not depend on the batch size
+        three_genomes = " ".join([TWO_GENOMES, os.path.join(path_to_data, "GB_GCA_013286235.3.fna")])
+        genome_names = ["GB_GCA_013286235.1", "GB_GCA_013286235.2", "GB_GCA_013286235.3"]
+        with in_tempdir():
+            outputs = {}
+            for batch_size in [1, 2, 100]:
+                output = f"test_{batch_size}"
+                summarised = os.path.abspath(os.path.join(output, "coassemble", "summarise", "bins_summarised.otu_table.tsv"))
+                cmd = (
+                    f"binchicken coassemble "
+                    f"--forward {SAMPLE_READS_FORWARD} "
+                    f"--reverse {SAMPLE_READS_REVERSE} "
+                    f"--genomes {three_genomes} "
+                    f"--singlem-metapackage {METAPACKAGE} "
+                    f"--prodigal-meta "
+                    f"--output {output} "
+                    f"--snakemake-args \"{summarised} --config genome_batch_size={batch_size}\" "
+                )
+                extern.run(cmd)
+
+                benchmarks = os.listdir(os.path.join(output, "coassemble", "benchmarks", "pipe"))
+                self.assertEqual(-(-3 // batch_size), len([b for b in benchmarks if b.startswith("genomes_batch_")]))
+
+                tables = {}
+                for genome in genome_names + ["summarised"]:
+                    path = summarised if genome == "summarised" else os.path.join(output, "coassemble", "pipe", f"{genome}_bin.otu_table.tsv")
+                    with open(path) as f:
+                        tables[genome] = f.read()
+                outputs[batch_size] = tables
+
+            self.assertTrue(outputs[1]["GB_GCA_013286235.1"].count("\n") > 1)
+            self.assertEqual(outputs[1], outputs[2])
+            self.assertEqual(outputs[1], outputs[100])
+
     def test_coassemble_query_input_taxa_of_interest(self):
         with in_tempdir():
             cmd = (
