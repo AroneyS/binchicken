@@ -964,6 +964,40 @@ class Tests(unittest.TestCase):
             self.assertEqual(outputs[1], outputs[2])
             self.assertEqual(outputs[1], outputs[100])
 
+    def test_coassemble_genome_batches_rerun(self):
+        # Rerunning a completed run schedules no genome batches; a table older than its transcripts is rebuilt
+        with in_tempdir():
+            summarised = os.path.abspath(os.path.join("test", "coassemble", "summarise", "bins_summarised.otu_table.tsv"))
+            cmd = (
+                f"binchicken coassemble "
+                f"--forward {SAMPLE_READS_FORWARD} "
+                f"--reverse {SAMPLE_READS_REVERSE} "
+                f"--genomes {TWO_GENOMES} "
+                f"--singlem-metapackage {METAPACKAGE} "
+                f"--prodigal-meta "
+                f"--output test "
+                f"--snakemake-args \"{summarised}\" "
+            )
+            extern.run(cmd)
+            table_path = os.path.join("test", "coassemble", "pipe", "GB_GCA_013286235.1_bin.otu_table.tsv")
+            with open(table_path) as f:
+                original = f.read()
+            self.assertTrue(original.count("\n") > 1)
+
+            output = subprocess.run(cmd, shell=True, check=True, capture_output=True).stderr.decode()
+            self.assertNotIn("singlem_pipe_genomes_batch", output)
+
+            # Updated transcripts (Snakemake reruns on mtime only if the content also changed) rebuild the table
+            with open(table_path, "w") as f:
+                f.write(original.split("\n")[0] + "\n")
+            transcripts_path = os.path.join("test", "coassemble", "transcripts", "GB_GCA_013286235.1_protein.fna")
+            with open(transcripts_path, "a") as f:
+                f.write("\n")
+
+            extern.run(cmd)
+            with open(table_path) as f:
+                self.assertEqual(original, f.read())
+
     def test_coassemble_query_input_taxa_of_interest(self):
         with in_tempdir():
             cmd = (

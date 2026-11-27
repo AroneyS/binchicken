@@ -322,22 +322,21 @@ rule genome_transcripts:
 
 # Genomes are piped through SingleM in batches, one cluster job per batch instead of one per genome.
 # Batches are fixed chunks of sorted genome names, so membership is the same whenever the workflow is
-# parsed (including inside cluster jobs). New genomes (update/iterate runs) are batched apart from the
-# rest, so requesting only their tables never pulls in other genomes. Genomes whose OTU table already
-# exists (e.g. provided tables) are left out of their batch.
+# parsed (including inside cluster jobs) and reruns follow the usual rerun triggers. New genomes
+# (update/iterate runs) are batched apart from the rest, so requesting only their tables never pulls in
+# other genomes. Genomes with provided OTU tables (config provided_genome_otu_tables) are left out.
 GENOME_BATCH_SIZE = int(config.get("genome_batch_size", 100))
 
 def genome_otu_table(genome):
     return output_dir + f"/pipe/{genome}_bin.otu_table.tsv"
 
-new_genome_names = sorted(config["new_genomes"]) if config.get("new_genomes") else []
-other_genome_names = sorted(set(config["genomes"] or []) - set(new_genome_names)) if config.get("genomes") else []
+provided_genome_otu_tables = set(config.get("provided_genome_otu_tables") or [])
+new_genome_names = sorted(set(config["new_genomes"]) - provided_genome_otu_tables) if config.get("new_genomes") else []
+other_genome_names = sorted(set(config["genomes"]) - set(new_genome_names) - provided_genome_otu_tables) if config.get("genomes") else []
 genome_batches = []
 for batch_set, names in [("new", new_genome_names), ("genomes", other_genome_names)]:
     for batch_index, batch_start in enumerate(range(0, len(names), GENOME_BATCH_SIZE)):
-        batch_genomes = [g for g in names[batch_start:batch_start + GENOME_BATCH_SIZE] if not os.path.exists(genome_otu_table(g))]
-        if batch_genomes:
-            genome_batches.append((f"{batch_set}_{batch_index}", batch_genomes))
+        genome_batches.append((f"{batch_set}_{batch_index}", names[batch_start:batch_start + GENOME_BATCH_SIZE]))
 
 for batch_name, batch_genomes in genome_batches:
     rule:
@@ -367,13 +366,15 @@ for batch_name, batch_genomes in genome_batches:
             "&> {resources.log_path} && "
             # Split into per-genome tables (sample is the transcript basename, <genome>_protein).
             # Rows are sorted: SingleM's row order within a gene varies between runs and batch compositions
-            "for out in {output}; do head -n 1 {params.batch_table} > $out; done && "
+            # Tables are written to .tmp files and only moved into place once all are complete
+            "for out in {output}; do head -n 1 {params.batch_table} > $out.tmp; done && "
             "LC_ALL=C awk -F '\\t' -v dir={params.pipe_dir:q} "
             "'NR > 1 {{s = $2; sub(/_protein$/, \"\", s); print > (dir \"/\" s \"_bin.otu_table.tsv.rows\")}}' "
             "{params.batch_table} && "
             "for out in {output}; do "
-            "if [ -e $out.rows ]; then LC_ALL=C sort $out.rows >> $out && rm $out.rows; fi; "
+            "if [ -e $out.rows ]; then LC_ALL=C sort $out.rows >> $out.tmp && rm $out.rows; fi; "
             "done && "
+            "for out in {output}; do mv $out.tmp $out; done && "
             "rm {params.batch_table}"
 
 rule singlem_genomes_list:

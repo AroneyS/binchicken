@@ -1018,6 +1018,7 @@ def coassemble(args, iteration=None):
         "long_reads": long_reads,
         "long_read_type": args.long_read_type,
         "genomes": genomes if args.genomes else None,
+        "provided_genome_otu_tables": getattr(args, "provided_genome_otu_tables", None),
         "singlem_metapackage": metapackage,
         "coassembly_samples": args.coassembly_samples,
         "anchor_samples": args.anchor_samples,
@@ -1402,6 +1403,8 @@ def generate_genome_singlem(orig_args, new_genomes):
     args.singlem_metapackage = orig_args.singlem_metapackage
     args.prodigal_meta = orig_args.prodigal_meta
     args.genomes = new_genomes + ["mock_genome"]
+    # Its OTU table is copied in below, so the workflow must not try to generate it
+    args.provided_genome_otu_tables = ["mock_genome"]
 
     args.output = os.path.join(orig_args.output, "mock")
     if not os.path.exists(args.output):
