@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `query_processing.py` overwrites rather than appends to existing outputs
 - SRA downloads delivered as a single (interleaved) file were not found when the output path contained `_1` (e.g. some temporary directories), failing with "Missing downloads"
 - `evaluate` crashed (`ColumnNotFoundError: "match"`) when evaluating bins from a prior run's `recovered/` dir, as their names (`binchicken_<coassembly>.<n>`) were parsed by splitting on `-`
+- `evaluate` assigned bins to the wrong coassembly when coassembly/sample names contain `-` (e.g. Aviary bins of `sample-a` and `sample-b` were merged) or start with `it<N>_`; bin names are now resolved against the known coassembly names
 - `sketch_samples.py` now fails if a sample's rows are not contiguous in the unbinned table, instead of silently sketching it twice from partial sequences
 - Coassembly cluster choice and recovery sample choice are now deterministic on ties (broken by `samples_hash` and sample name respectively)
 - Docs: `iterate` examples used `--coassembly-samples 3` (a sample list) instead of `--num-coassembly-samples 3`; demo pointed to `recovered_bins/` instead of `recovered/bins/`

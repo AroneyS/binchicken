@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 import unittest
-from binchicken.common import fasta_to_name, parse_snake_dict, bin_coassembly
+from binchicken.common import split_bin_name, fasta_to_name, parse_snake_dict, bin_coassembly
 
 class Tests(unittest.TestCase):
     def test_fasta_to_name(self):
@@ -117,6 +117,34 @@ class Tests(unittest.TestCase):
         for name, expected in cases.items():
             self.assertEqual(expected, bin_coassembly(name), name)
 
+
+    def test_bin_coassembly_known_names(self):
+        # With known coassembly names, names are resolved against them rather than parsed blindly
+        known = ["it2_sample", "sample-a", "sample-a-b", "sample-b", "coassembly_0"]
+        cases = {
+            "binchicken_it2_sample.1": "it2_sample",
+            "binchicken_it1_it2_sample.1": "it2_sample",
+            "binchicken_it1_coassembly_0.3": "coassembly_0",
+            "sample-a-0": "sample-a",
+            "sample-b-0": "sample-b",
+            "sample-a-b-0": "sample-a-b",
+            "coassembly_0-genome-1": "coassembly_0",
+        }
+        for name, expected in cases.items():
+            self.assertEqual(expected, bin_coassembly(name, known), name)
+
+    def test_split_bin_name(self):
+        known = ["sample-a", "it2_sample"]
+        cases = {
+            # Aviary/new-genome keys keep the remaining genome suffix
+            "sample-a-0_transcripts": ("sample-a", "0_transcripts"),
+            "coassembly_0-genome-1": ("coassembly_0", "genome-1"),
+            # Recovered names keep the whole name as the genome
+            "binchicken_it2_sample.1_transcripts": ("it2_sample", "binchicken_it2_sample.1_transcripts"),
+            "binchicken_it2_sample.1": ("it2_sample", "binchicken_it2_sample.1"),
+        }
+        for name, expected in cases.items():
+            self.assertEqual(expected, split_bin_name(name, known), name)
 
 if __name__ == '__main__':
     unittest.main()

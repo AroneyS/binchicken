@@ -148,6 +148,50 @@ class Tests(unittest.TestCase):
                 self.assertDataFrameEqual(expected_unmatched, observed_unmatched)
                 self.assertDataFrameEqual(expected_summary, observed_summary)
 
+    def test_evaluate_script_ambiguous_names(self):
+        # Coassembly names containing "-" or starting with it<N>_ are resolved against the cluster names
+        targets = pl.DataFrame([
+            ["S3.1", "sample_1.1", "AAA", 5, 10.0, "Root; old", 10],
+            ["S3.1", "sample_2.1", "AAA", 5, 10.0, "Root; old", 10],
+        ], orient="row", schema=TARGET_COLUMNS)
+        binned = pl.DataFrame(schema={
+            "gene": str, "sample": str, "sequence": str, "num_hits": int, "coverage": float, "taxonomy": str, "found_in": str,
+            })
+        edges = pl.DataFrame([
+            ["match", 2, "sample_1.1,sample_2.1", "10"],
+        ], orient="row", schema=EDGE_COLUMNS)
+
+        cases = [
+            # (coassembly, bin keys, recovered OTU table sample, expected genome)
+            ("sample-a", ["sample-a-0", "sample-a-1"], "sample-a-1_transcripts", "1_transcripts"),
+            ("it2_sample", ["binchicken_it2_sample.0", "binchicken_it2_sample.1"], "binchicken_it2_sample.1_transcripts", "binchicken_it2_sample.1_transcripts"),
+        ]
+        for coassembly, bin_keys, otu_sample, genome in cases:
+            with self.subTest(coassembly=coassembly):
+                clusters = pl.DataFrame([
+                    ["sample_1,sample_2", 2, 1, 100, "sample_1,sample_2", coassembly],
+                ], orient="row", schema=CLUSTER_COLUMNS)
+                recovered = pl.DataFrame([
+                    ["S3.1", otu_sample, "AAA", 1, 2.0, "Root"],
+                ], orient="row", schema=SINGLEM_COLUMNS)
+                recovered_bins = {k: k + ".fna" for k in bin_keys}
+
+                expected_matches = pl.DataFrame([
+                    [coassembly, "S3.1", "AAA", genome, "10", None, "sample_1,sample_2", 10, 20.0, "Root"],
+                ], orient="row", schema=OUTPUT_COLUMNS)
+                expected_summary = pl.DataFrame([
+                    [coassembly, "sequences", "targets", 1, 0, 1, 100],
+                    [coassembly, "taxonomy", "targets", 1, 0, 1, 100],
+                    [coassembly, "nontarget_bin_sequences", "recovery", 0, 1, 1, 0],
+                    [coassembly, "nontarget_unbin_sequences", "recovery", 0, 1, 1, 0],
+                    [coassembly, "novel_sequences", "recovery", 0, 1, 1, 0],
+                    [coassembly, "bins", "recovery", 1, 1, 2, 50],
+                ], orient="row", schema=SUMMARY_COLUMNS)
+
+                observed_matches, _, observed_summary = evaluate(targets, binned, clusters, edges, recovered, recovered_bins)
+                self.assertDataFrameEqual(expected_matches, observed_matches)
+                self.assertDataFrameEqual(expected_summary, observed_summary)
+
     def test_evaluate_script_all_targets(self):
         targets = pl.DataFrame([
             ["S3.1", "sample_1.1", "AAA", 5, 10.0, "Root; old", 10],

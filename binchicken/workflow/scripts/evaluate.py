@@ -7,31 +7,12 @@
 import polars as pl
 import os
 import argparse
-from binchicken.common import parse_snake_dict, RECOVERED_BIN_NAME_REGEX
+from binchicken.common import parse_snake_dict, split_bin_name
 
-def split_bin_name(column):
-    """Split a bin name column into a coassembly/genome struct.
-
-    Handles recovered/ names (binchicken_[it<N>_]<coassembly>.<n>, optionally with a _transcripts suffix),
-    for which the whole name is kept as the genome, and <coassembly>-<genome> names (Aviary outputs/new genomes).
-    """
-    name = pl.col(column)
-    recovered_coassembly = (
-        name
-        .str.replace(r"_transcripts$", "")
-        .str.extract(RECOVERED_BIN_NAME_REGEX.pattern, 1)
-    )
-    parts = name.str.split("-")
-    return pl.struct(
-        pl.when(recovered_coassembly.is_not_null())
-            .then(recovered_coassembly)
-            .otherwise(parts.list.get(0))
-            .alias("coassembly"),
-        pl.when(recovered_coassembly.is_not_null())
-            .then(name)
-            .otherwise(parts.list.get(1, null_on_oob=True))
-            .alias("genome"),
-        ).alias(column)
+def bin_name_table(names, coassemblies, column):
+    """Map each bin name to its coassembly and genome, resolving names against the known coassemblies."""
+    rows = [(n, *split_bin_name(n, coassemblies)) for n in sorted(set(names))]
+    return pl.DataFrame(rows, schema={column: pl.Utf8, "coassembly": pl.Utf8, "genome": pl.Utf8}, orient="row")
 
 SINGLEM_COLUMNS = {
     "gene": str,
@@ -106,6 +87,9 @@ SUMMARY_COLUMNS = {
 def evaluate(target_otu_table, binned_otu_table, elusive_clusters, elusive_edges, recovered_otu_table, recovered_bins):
 
     print(f"Polars using {str(pl.thread_pool_size())} threads")
+
+    # Bin names are resolved against these (names may contain "-" or start with it<N>_)
+    coassemblies = elusive_clusters.get_column("coassembly").cast(pl.Utf8).unique().to_list()
 
     if len(recovered_otu_table) == 0:
         empty_output = pl.DataFrame(schema=OUTPUT_COLUMNS)
@@ -209,8 +193,8 @@ def evaluate(target_otu_table, binned_otu_table, elusive_clusters, elusive_edges
     # Load recovered otu table and join elusive and nontarget sequences
     recovered_otu_table = (
         recovered_otu_table
-        .with_columns(split_bin_name("sample"))
-        .unnest("sample")
+        .join(bin_name_table(recovered_otu_table.get_column("sample").to_list(), coassemblies, "sample"), on="sample", how="left")
+        .select("gene", "coassembly", "genome", pl.exclude("gene", "sample", "coassembly", "genome"))
     )
 
     combined_otu_table = (
@@ -251,11 +235,11 @@ def evaluate(target_otu_table, binned_otu_table, elusive_clusters, elusive_edges
     )
 
     # Summarise recovery stats
-    summary = summarise_stats(matches, combined_otu_table, recovered_bins)
+    summary = summarise_stats(matches, combined_otu_table, recovered_bins, coassemblies)
 
     return matches, unmatched, summary
 
-def summarise_stats(matches, combined_otu_table, recovered_bins):
+def summarise_stats(matches, combined_otu_table, recovered_bins, coassemblies=None):
     recovered_hits = (
         combined_otu_table
         .filter(
@@ -326,8 +310,8 @@ def summarise_stats(matches, combined_otu_table, recovered_bins):
     recovered_counts = (
         pl.from_dict(recovered_bins)
         .unpivot(variable_name="name")
-        .with_columns(split_bin_name("name"))
-        .unnest("name")
+        .join(bin_name_table(list(recovered_bins), coassemblies, "name"), on="name", how="left")
+        .drop("name")
         .group_by("coassembly")
         .agg(pl.len().alias("n"))
         .with_columns(

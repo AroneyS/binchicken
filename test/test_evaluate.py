@@ -607,5 +607,25 @@ class Tests(unittest.TestCase):
             self.assertNotIn(os.path.join(bins_dir, "binchicken_sample_2.1.fna"), commands["sample_1.txt"])
 
 
+    def test_evaluate_cluster_iteration_like_sample_name(self):
+        # A sample named it2_sample must not be read as iteration 2 of "sample"
+        with in_tempdir():
+            bins_dir = self._make_recovered_coassemble(["it2_sample", "sample"])
+            cmd = (
+                f"binchicken evaluate "
+                f"--coassemble-output prior_coassemble "
+                f"--cluster "
+                f"--genomes {GENOMES} "
+                f"--singlem-metapackage {METAPACKAGE} "
+                f"--output test "
+                f"--dryrun "
+                f"--snakemake-args \" --printshellcmds\" "
+            )
+            commands = self._cluster_commands(extern.run(cmd))
+
+            self.assertEqual(["it2_sample.txt", "original.txt", "sample.txt"], sorted(commands))
+            self.assertIn(os.path.join(bins_dir, "binchicken_it2_sample.1.fna"), commands["it2_sample.txt"])
+            self.assertNotIn(os.path.join(bins_dir, "binchicken_it2_sample.1.fna"), commands["sample.txt"])
+
 if __name__ == '__main__':
     unittest.main()

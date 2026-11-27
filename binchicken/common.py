@@ -14,18 +14,50 @@ def fasta_to_name(filename):
                 break
     return sample_name
 
-RECOVERED_BIN_NAME_REGEX = re.compile(r"^binchicken_(?:it\d+_)?(.+)\.\d+$")
+RECOVERED_BIN_NAME_REGEX = re.compile(r"^binchicken_(.+)\.\d+$")
+ITERATION_PREFIX_REGEX = re.compile(r"^it\d+_")
 
-def bin_coassembly(bin_name):
+def bin_coassembly(bin_name, coassemblies=None):
     """Return the coassembly (or single-assembly sample) a bin key belongs to.
 
     Bin keys are either recovered-dir names, binchicken_[it<N>_]<coassembly>.<n>,
     or <coassembly>-<genome> (from --aviary-outputs / --new-genomes).
+
+    Coassembly names may themselves contain "-" or start with it<N>_, so when the known
+    coassembly names are given, keys are resolved against them: recovered names are tried
+    as-is before stripping an iteration prefix, and <coassembly>-<genome> keys take the
+    longest matching name. Without known names (or no match), keys are parsed directly.
     """
+    known = set(coassemblies) if coassemblies is not None else None
     match = RECOVERED_BIN_NAME_REGEX.match(bin_name)
     if match:
-        return match.group(1)
+        name = match.group(1)
+        stripped = ITERATION_PREFIX_REGEX.sub("", name, count=1)
+        if known is not None:
+            for candidate in [name, stripped]:
+                if candidate in known:
+                    return candidate
+        return stripped
+
+    if known is not None:
+        matches = [c for c in known if bin_name.startswith(c + "-")]
+        if matches:
+            return max(matches, key=len)
     return bin_name.split("-")[0]
+
+def split_bin_name(name, coassemblies=None):
+    """Split a bin name, or a SingleM OTU table sample name (<bin>_transcripts), into (coassembly, genome).
+
+    Recovered-dir names keep the whole name as the genome; <coassembly>-<genome> names keep
+    the genome suffix (None if there is none).
+    """
+    base = name[:-len("_transcripts")] if name.endswith("_transcripts") else name
+    if RECOVERED_BIN_NAME_REGEX.match(base):
+        return bin_coassembly(base, coassemblies), name
+
+    coassembly = bin_coassembly(name, coassemblies)
+    genome = name[len(coassembly) + 1:] if name.startswith(coassembly + "-") else None
+    return coassembly, genome
 
 def parse_snake_dict(s):
     # Remove leading/trailing whitespace
