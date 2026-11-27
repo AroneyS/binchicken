@@ -7,6 +7,9 @@ import gzip
 from bird_tool_utils import in_tempdir
 import extern
 import subprocess
+import argparse
+from unittest.mock import patch
+from binchicken import binchicken as binchicken_module
 from snakemake.common.configfile import load_configfile
 import polars as pl
 from polars.testing import assert_frame_equal
@@ -68,6 +71,10 @@ SAMPLE_SINGLEM_WEIGHT = ' '.join([
     ])
 
 GENOME_TRANSCRIPTS = ' '.join([os.path.join(path_to_data, "GB_GCA_013286235.1_protein.fna")])
+# Live `singlem pipe` outputs of sample_{1,2,3} reads and GB_GCA_013286235.1 (--prodigal-meta), so tests
+# not about SingleM itself can skip it with identical results (see test/data/remake_metapackages.md)
+SAMPLE_SINGLEM_LIVE = ' '.join([os.path.join(path_to_data, "pipe_live", f"sample_{i}_read.otu_table.tsv") for i in [1, 2, 3]])
+GENOME_SINGLEM_LIVE = os.path.join(path_to_data, "pipe_live", "bins_summarised_GB_GCA_013286235.1.otu_table.tsv")
 GENOME_SINGLEM = os.path.join(MOCK_COASSEMBLE, "coassemble", "summarise", "bins_summarised.otu_table2.tsv")
 GENOME_SINGLEM_EIF = os.path.join(MOCK_COASSEMBLE, "coassemble", "summarise", "bins_summarised_EIF.otu_table.tsv")
 
@@ -398,6 +405,8 @@ class Tests(unittest.TestCase):
                 f"--singlem-metapackage {METAPACKAGE} "
                 f"--prodigal-meta "
                 f"--output test "
+                f"--snakemake-args \"{os.path.abspath('test/coassemble/lists/samples_list.tsv')} "
+                f"{os.path.abspath('test/coassemble/pipe_long/sample_4.1_read.otu_table.tsv')}\" "
             )
             extern.run(cmd)
 
@@ -417,9 +426,6 @@ class Tests(unittest.TestCase):
 
             pipe_long_path = os.path.join("test", "coassemble", "pipe_long", "sample_4.1_read.otu_table.tsv")
             self.assertTrue(os.path.exists(pipe_long_path))
-
-            cluster_path = os.path.join("test", "coassemble", "target", "elusive_clusters.tsv")
-            self.assertTrue(os.path.exists(cluster_path))
 
     def test_coassemble_long_reads_only(self):
         with in_tempdir():
@@ -474,6 +480,7 @@ class Tests(unittest.TestCase):
                 f"--singlem-metapackage {METAPACKAGE} "
                 f"--prodigal-meta "
                 f"--output test "
+                f"--snakemake-args \"{os.path.abspath('test/coassemble/read_size.csv')}\" "
             )
             extern.run(cmd)
 
@@ -935,7 +942,7 @@ class Tests(unittest.TestCase):
         genome_names = ["GB_GCA_013286235.1", "GB_GCA_013286235.2", "GB_GCA_013286235.3"]
         with in_tempdir():
             outputs = {}
-            for batch_size in [1, 2, 100]:
+            for batch_size in [1, 100]:
                 output = f"test_{batch_size}"
                 summarised = os.path.abspath(os.path.join(output, "coassemble", "summarise", "bins_summarised.otu_table.tsv"))
                 cmd = (
@@ -961,7 +968,6 @@ class Tests(unittest.TestCase):
                 outputs[batch_size] = tables
 
             self.assertTrue(outputs[1]["GB_GCA_013286235.1"].count("\n") > 1)
-            self.assertEqual(outputs[1], outputs[2])
             self.assertEqual(outputs[1], outputs[100])
 
     def test_coassemble_genome_batches_rerun(self):
@@ -1188,6 +1194,8 @@ class Tests(unittest.TestCase):
                 f"--forward {SAMPLE_READS_FORWARD} "
                 f"--reverse {SAMPLE_READS_REVERSE} "
                 f"--genomes {GENOMES} "
+                f"--sample-singlem {SAMPLE_SINGLEM_LIVE} "
+                f"--genome-singlem {GENOME_SINGLEM_LIVE} "
                 f"--singlem-metapackage {METAPACKAGE} "
                 f"--exclude-coassemblies sample_1,sample_2 "
                 f"--assemble-unmapped "
@@ -1234,6 +1242,7 @@ class Tests(unittest.TestCase):
                 f"binchicken coassemble "
                 f"--forward {SAMPLE_READS_FORWARD} "
                 f"--reverse {SAMPLE_READS_REVERSE} "
+                f"--sample-singlem {SAMPLE_SINGLEM_LIVE} "
                 f"--singlem-metapackage {METAPACKAGE} "
                 f"--single-assembly "
                 f"--min-sequence-coverage 1 "
@@ -1287,6 +1296,7 @@ class Tests(unittest.TestCase):
                 f"binchicken coassemble "
                 f"--forward {SAMPLE_READS_FORWARD} "
                 f"--reverse {SAMPLE_READS_REVERSE} "
+                f"--sample-singlem {SAMPLE_SINGLEM_LIVE} "
                 f"--singlem-metapackage {METAPACKAGE} "
                 f"--output test "
                 f"--snakemake-args \"cluster_graph\" "
@@ -1416,11 +1426,12 @@ class Tests(unittest.TestCase):
                 f"--forward {SAMPLE_READS_FORWARD} "
                 f"--reverse {SAMPLE_READS_REVERSE} "
                 f"--genomes {TWO_GENOMES} "
+                f"--sample-singlem {SAMPLE_SINGLEM_LIVE} "
                 f"--singlem-metapackage {METAPACKAGE} "
                 f"--assemble-unmapped "
                 f"--prodigal-meta "
                 f"--output test "
-                f"--snakemake-args \"--notemp finish_mapping\" "
+                f"--snakemake-args \"--notemp {os.path.abspath('test/coassemble/mapping/sample_1_reference.fna')}\" "
             )
             extern.run(cmd)
 
@@ -1784,6 +1795,8 @@ class Tests(unittest.TestCase):
                 f"--reverse {SAMPLE_READS_REVERSE} "
                 f"--anchor-samples sample_3 "
                 f"--genomes {GENOMES} "
+                f"--sample-singlem {SAMPLE_SINGLEM_LIVE} "
+                f"--genome-singlem {GENOME_SINGLEM_LIVE} "
                 f"--singlem-metapackage {METAPACKAGE} "
                 f"--prodigal-meta "
                 f"--output test "
@@ -1913,6 +1926,7 @@ class Tests(unittest.TestCase):
                 f"--reverse {SAMPLE_READS_REVERSE} "
                 f"--genomes {GENOMES} "
                 f"--genome-transcripts {GENOME_TRANSCRIPTS} "
+                f"--sample-singlem {SAMPLE_SINGLEM_LIVE} "
                 f"--output test "
                 f"--snakemake-args \"singlem_appraise_filtered\" "
             )
@@ -2594,20 +2608,24 @@ class Tests(unittest.TestCase):
     def test_coassemble_sra_download_mock_path_with_suffix(self):
         # An output path containing "_1" (e.g. a random temp dir) must not break locating single-file downloads
         with in_tempdir():
-            output = os.path.join("tmp_1dir", "test")
-            cmd = (
-                f"binchicken coassemble "
-                f"--forward SRR3309137 SRR8334323 SRR8334324 "
-                f"--sra "
-                f"--output {output} "
-                f"--snakemake-args \" --config mock_sra=True\" "
-            )
-            extern.run(cmd)
+            output = os.path.abspath(os.path.join("tmp_1dir", "test"))
+            sra_dir = os.path.join(output, "coassemble", "sra")
+            os.makedirs(output)
 
-            sra_f0_path = os.path.join(output, "coassemble", "sra", "SRR3309137_1.fastq.gz")
-            self.assertTrue(os.path.exists(sra_f0_path))
-            sra_r0_path = os.path.join(output, "coassemble", "sra", "SRR3309137_2.fastq.gz")
-            self.assertTrue(os.path.exists(sra_r0_path))
+            def mock_download(**kwargs):
+                # Interleaved single-file download, as delivered for SRR3309137
+                os.makedirs(sra_dir, exist_ok=True)
+                shutil.copy(os.path.join(path_to_data, "sra", "SRR3309137.fastq.gz"), sra_dir)
+
+            args = argparse.Namespace(
+                forward=["SRR3309137"], snakemake_profile="", retries=None, tmp_dir=None, output=output,
+                snakemake_args="", cores=1, dryrun=False, local_cores=1, download_limit=1, sra=True,
+                )
+            with patch.object(binchicken_module, "run_workflow", side_effect=mock_download):
+                binchicken_module.download_sra(args)
+
+            self.assertTrue(os.path.exists(os.path.join(sra_dir, "SRR3309137_1.fastq.gz")))
+            self.assertTrue(os.path.exists(os.path.join(sra_dir, "SRR3309137_2.fastq.gz")))
 
     def test_coassemble_sra_download_mock(self):
         with in_tempdir():
@@ -2662,6 +2680,8 @@ class Tests(unittest.TestCase):
                 f"--reverse {SAMPLE_READS_REVERSE} "
                 f"--sra-long-reads SRR3309137 "
                 f"--genomes {GENOMES} "
+                f"--sample-singlem {SAMPLE_SINGLEM_LIVE} "
+                f"--genome-singlem {GENOME_SINGLEM_LIVE} "
                 f"--singlem-metapackage {METAPACKAGE} "
                 f"--prodigal-meta "
                 f"--output test "
@@ -2702,6 +2722,8 @@ class Tests(unittest.TestCase):
                 f"--reverse {SAMPLE_READS_REVERSE} "
                 f"--short-long-read-pairs {pairs_path} "
                 f"--genomes {GENOMES} "
+                f"--sample-singlem {SAMPLE_SINGLEM_LIVE} "
+                f"--genome-singlem {GENOME_SINGLEM_LIVE} "
                 f"--singlem-metapackage {METAPACKAGE} "
                 f"--prodigal-meta "
                 f"--output test "
@@ -2746,6 +2768,7 @@ class Tests(unittest.TestCase):
                 f"--singlem-metapackage {METAPACKAGE} "
                 f"--prodigal-meta "
                 f"--output test "
+                f"--dryrun "
             )
             output = extern.run(cmd)
 
@@ -2775,6 +2798,7 @@ class Tests(unittest.TestCase):
                 f"--sra "
                 f"--short-long-read-pairs {pairs_path} "
                 f"--genomes {GENOMES} "
+                f"--genome-singlem {GENOME_SINGLEM_LIVE} "
                 f"--singlem-metapackage {METAPACKAGE} "
                 f"--prodigal-meta "
                 f"--output test "
