@@ -114,6 +114,7 @@ depends-on = [
 
 [feature.dev.dependencies]
 pytest = "*"
+pytest-xdist = "*"
 ipython = "*"
 toml = "*"
 pandoc = "*"
