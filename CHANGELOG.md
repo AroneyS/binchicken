@@ -10,10 +10,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - `iterate` now falls back to `--aviary-outputs`/`--new-genomes` when the prior run's `recovered/` dir has no bins passing the quality thresholds, instead of failing with "Programming error: no bins to evaluate"
+- `--assemble-unmapped` with `--file-hierarchy` (default for >=10,000 samples) collected no reference genomes, so no reads were unmapped; without `--run-qc` it failed with a `KeyError`
+- `sketch_samples.py` sketched the header of appraise tables (with `found_in`) as a sample named `sample`, dropped the last kept sample when `--taxa-of-interest`/`--exclude-taxa` filtered the final rows, and merged stale per-chunk signature files from earlier runs
+- `evaluate --cluster` matched coassemblies by substring (`coassembly_1` also took bins from `coassembly_10`+), and failed for single-assembly bin names
+- `evaluate` now applies `--min-completeness`/`--max-contamination` to bins taken from a prior run's `recovered/` dir (previously all bins were evaluated)
+- Read size counting (`read_size.csv`) now fails on corrupt/truncated read files instead of silently undercounting
+- `query_processing.py` overwrites rather than appends to existing outputs
+- `build --download-databases` failed on a fresh install, as the downloads ran in pixi environments (`pixi run --as-is`) before they were installed; environments are now created first
+- SRA downloads delivered as a single (interleaved) file were not found when the output path contained `_1` (e.g. some temporary directories), failing with "Missing downloads"
+- `evaluate` crashed (`ColumnNotFoundError: "match"`) when evaluating bins from a prior run's `recovered/` dir, as their names (`binchicken_<coassembly>.<n>`) were parsed by splitting on `-`
+- `evaluate` assigned bins to the wrong coassembly when coassembly/sample names contain `-` (e.g. Aviary bins of `sample-a` and `sample-b` were merged) or start with `it<N>_`; bin names are now resolved against the known coassembly names
+- `sketch_samples.py` now fails if a sample's rows are not contiguous in the unbinned table, instead of silently sketching it twice from partial sequences
+- Coassembly cluster choice and recovery sample choice are now deterministic on ties (broken by `samples_hash` and sample name respectively)
 - Docs: `iterate` examples used `--coassembly-samples 3` (a sample list) instead of `--num-coassembly-samples 3`; demo pointed to `recovered_bins/` instead of `recovered/bins/`
 
 ### Changed
 
+- Smaller cluster resource requests: memory is no longer 8 GB per thread for every rule. Rules whose memory scales with input (`sketch_samples`, `distance_samples`, `abundance_weighting`, `target_weighting`, `update_appraise`) request 10x input size within 16 GB to their previous request, and others use fixed requests (e.g. `map_reads` 64 GB, `qc_reads` 16 GB, `count_bp_*`/`filter_bam_files`/`bam_to_fastq` 8 GB with 8 threads). `target_elusive` and `cluster_graph` are unchanged. Memory still doubles on each retry
+- List-writing rules run locally instead of being submitted as cluster jobs, and the per-sample SingleM OTU table rename is now part of `singlem pipe` jobs (removing one cluster job per sample)
+- `coverm filter` now uses its `--threads` for output compression
+- Genomes are piped through SingleM in batches of 100 (one cluster job per batch rather than one per genome; new genomes in update/iterate runs are batched separately). Per-genome tables are only moved into place once the whole batch has finished. Rows within each genome's OTU table are now sorted, as SingleM's within-gene row order varied between runs
+- `collect_genomes` scans the appraise tables lazily, reading only the sample's rows into memory (~4x lower peak memory per sample job)
+- Faster preclustering in `target_elusive`: the top precluster samples are chosen from the sparse distance rows directly instead of densifying each row (O(n^2) overall; ~10x faster at 20k samples, 95 s at 1M), and targets are re-scanned per chunk from a temporary Parquet copy filtered to the chunk's samples. Choice of zero-similarity filler samples for samples with few neighbours is now deterministic
 - `iterate` now links previous-iteration bins taken from Aviary outputs into `previous_bins/` (was `recovered_bins/`), to avoid confusion with the `recovered/` output dir
 
 ## [0.16.0] - 2026-11-24

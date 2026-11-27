@@ -494,7 +494,8 @@ class Tests(unittest.TestCase):
             config_path = os.path.join("test", "config.yaml")
             self.assertTrue(os.path.exists(config_path))
 
-            self.assertTrue(re.search(r"singlem_pipe_genomes\s+2", output))
+            # Both new genomes are piped through SingleM in a single batch job
+            self.assertEqual(["1"], re.findall(r"^singlem_pipe_genomes_batch_\w+\s+(\d+)$", output, re.M))
 
             cluster_path = os.path.join("test", "coassemble", "target", "elusive_clusters.tsv")
             self.assertTrue(os.path.exists(cluster_path))
@@ -546,7 +547,7 @@ class Tests(unittest.TestCase):
             config_path = os.path.join("test", "config.yaml")
             self.assertTrue(os.path.exists(config_path))
 
-            self.assertFalse(re.search(r"singlem_pipe_genomes\s", output))
+            self.assertFalse(re.search(r"singlem_pipe_genomes_batch", output))
 
             original_bin_singlem_path = os.path.join("test", "coassemble", "pipe", os.path.splitext(os.path.basename(GENOMES.split(" ")[0]))[0]+"_bin.otu_table.tsv")
             self.assertFalse(os.path.exists(original_bin_singlem_path))
@@ -586,7 +587,7 @@ class Tests(unittest.TestCase):
             config_path = os.path.join("test", "config.yaml")
             self.assertTrue(os.path.exists(config_path))
 
-            self.assertFalse(re.search(r"singlem_pipe_genomes\s", output))
+            self.assertFalse(re.search(r"singlem_pipe_genomes_batch", output))
 
             binned_path = os.path.join("test", "coassemble", "appraise", "binned.otu_table.tsv")
             self.assertTrue(os.path.exists(binned_path))

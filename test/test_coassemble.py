@@ -929,6 +929,75 @@ class Tests(unittest.TestCase):
             with open(cluster_path) as f:
                 self.assertEqual(expected, f.read())
 
+    def test_coassemble_genome_batches(self):
+        # Genomes are piped through SingleM in batches; output must not depend on the batch size
+        three_genomes = " ".join([TWO_GENOMES, os.path.join(path_to_data, "GB_GCA_013286235.3.fna")])
+        genome_names = ["GB_GCA_013286235.1", "GB_GCA_013286235.2", "GB_GCA_013286235.3"]
+        with in_tempdir():
+            outputs = {}
+            for batch_size in [1, 2, 100]:
+                output = f"test_{batch_size}"
+                summarised = os.path.abspath(os.path.join(output, "coassemble", "summarise", "bins_summarised.otu_table.tsv"))
+                cmd = (
+                    f"binchicken coassemble "
+                    f"--forward {SAMPLE_READS_FORWARD} "
+                    f"--reverse {SAMPLE_READS_REVERSE} "
+                    f"--genomes {three_genomes} "
+                    f"--singlem-metapackage {METAPACKAGE} "
+                    f"--prodigal-meta "
+                    f"--output {output} "
+                    f"--snakemake-args \"{summarised} --config genome_batch_size={batch_size}\" "
+                )
+                extern.run(cmd)
+
+                benchmarks = os.listdir(os.path.join(output, "coassemble", "benchmarks", "pipe"))
+                self.assertEqual(-(-3 // batch_size), len([b for b in benchmarks if b.startswith("genomes_batch_")]))
+
+                tables = {}
+                for genome in genome_names + ["summarised"]:
+                    path = summarised if genome == "summarised" else os.path.join(output, "coassemble", "pipe", f"{genome}_bin.otu_table.tsv")
+                    with open(path) as f:
+                        tables[genome] = f.read()
+                outputs[batch_size] = tables
+
+            self.assertTrue(outputs[1]["GB_GCA_013286235.1"].count("\n") > 1)
+            self.assertEqual(outputs[1], outputs[2])
+            self.assertEqual(outputs[1], outputs[100])
+
+    def test_coassemble_genome_batches_rerun(self):
+        # Rerunning a completed run schedules no genome batches; a table older than its transcripts is rebuilt
+        with in_tempdir():
+            summarised = os.path.abspath(os.path.join("test", "coassemble", "summarise", "bins_summarised.otu_table.tsv"))
+            cmd = (
+                f"binchicken coassemble "
+                f"--forward {SAMPLE_READS_FORWARD} "
+                f"--reverse {SAMPLE_READS_REVERSE} "
+                f"--genomes {TWO_GENOMES} "
+                f"--singlem-metapackage {METAPACKAGE} "
+                f"--prodigal-meta "
+                f"--output test "
+                f"--snakemake-args \"{summarised}\" "
+            )
+            extern.run(cmd)
+            table_path = os.path.join("test", "coassemble", "pipe", "GB_GCA_013286235.1_bin.otu_table.tsv")
+            with open(table_path) as f:
+                original = f.read()
+            self.assertTrue(original.count("\n") > 1)
+
+            output = subprocess.run(cmd, shell=True, check=True, capture_output=True).stderr.decode()
+            self.assertNotIn("singlem_pipe_genomes_batch", output)
+
+            # Updated transcripts (Snakemake reruns on mtime only if the content also changed) rebuild the table
+            with open(table_path, "w") as f:
+                f.write(original.split("\n")[0] + "\n")
+            transcripts_path = os.path.join("test", "coassemble", "transcripts", "GB_GCA_013286235.1_protein.fna")
+            with open(transcripts_path, "a") as f:
+                f.write("\n")
+
+            extern.run(cmd)
+            with open(table_path) as f:
+                self.assertEqual(original, f.read())
+
     def test_coassemble_query_input_taxa_of_interest(self):
         with in_tempdir():
             cmd = (
@@ -2522,6 +2591,24 @@ class Tests(unittest.TestCase):
             self.assertTrue("\nfinish_mapping" not in output)
             self.assertTrue("\naviary_commands" in output)
 
+    def test_coassemble_sra_download_mock_path_with_suffix(self):
+        # An output path containing "_1" (e.g. a random temp dir) must not break locating single-file downloads
+        with in_tempdir():
+            output = os.path.join("tmp_1dir", "test")
+            cmd = (
+                f"binchicken coassemble "
+                f"--forward SRR3309137 SRR8334323 SRR8334324 "
+                f"--sra "
+                f"--output {output} "
+                f"--snakemake-args \" --config mock_sra=True\" "
+            )
+            extern.run(cmd)
+
+            sra_f0_path = os.path.join(output, "coassemble", "sra", "SRR3309137_1.fastq.gz")
+            self.assertTrue(os.path.exists(sra_f0_path))
+            sra_r0_path = os.path.join(output, "coassemble", "sra", "SRR3309137_2.fastq.gz")
+            self.assertTrue(os.path.exists(sra_r0_path))
+
     def test_coassemble_sra_download_mock(self):
         with in_tempdir():
             cmd = (
@@ -3021,6 +3108,75 @@ class Tests(unittest.TestCase):
                 .select(CHECKM2_QUALITY_COLUMNS.keys())
             )
             assert_frame_equal(expected, observed, check_dtypes=False, check_row_order=False, abs_tol=1e-5)
+
+    def test_coassemble_hierarchy_unmapped(self):
+        # Without --run-qc the unmapping rules look reads up by hierarchical name, and
+        # reference bins must be collected using the bare sample name
+        with in_tempdir():
+            cmd = (
+                f"binchicken coassemble "
+                f"--forward {SAMPLE_READS_FORWARD} "
+                f"--reverse {SAMPLE_READS_REVERSE} "
+                f"--genomes {GENOMES} "
+                f"--singlem-metapackage {METAPACKAGE} "
+                f"--assemble-unmapped "
+                f"--unmapping-max-identity 99 "
+                f"--unmapping-max-alignment 90 "
+                f"--prodigal-meta "
+                f"--file-hierarchy always "
+                f"--file-hierarchy-depth 3 "
+                f"--file-hierarchy-chars 3 "
+                f"--output test "
+            )
+            extern.run(cmd)
+
+            unmapped_sample_1_path = os.path.join("test", "coassemble", "mapping", "sam", "ple", "_1", "sample_1_unmapped.1.fq.gz")
+            self.assertTrue(os.path.exists(unmapped_sample_1_path))
+            with gzip.open(unmapped_sample_1_path) as f:
+                file = f.read().decode()
+                self.assertTrue("@A00178:112:HMNM5DSXX:4:1622:16405:19194" in file)
+                self.assertTrue("@A00178:112:HMNM5DSXX:4:9999:19126:17300" not in file)
+
+    def test_coassemble_count_bp_truncated_gzip(self):
+        # A corrupt read file must fail read size counting, not silently undercount
+        with in_tempdir():
+            def gzip_reads(paths, truncate=None):
+                local_paths = []
+                for path in paths:
+                    local_path = os.path.abspath(os.path.basename(path) + ".gz")
+                    with open(path, "rb") as f_in, gzip.open(local_path, "wb") as f_out:
+                        f_out.write(f_in.read())
+                    if truncate and os.path.basename(path) == truncate:
+                        with open(local_path, "rb") as f:
+                            data = f.read()
+                        with open(local_path, "wb") as f:
+                            f.write(data[:len(data) // 2])
+                    local_paths.append(local_path)
+                return " ".join(local_paths)
+
+            def count_cmd(forward, reverse, output):
+                return (
+                    f"binchicken coassemble "
+                    f"--forward {forward} "
+                    f"--reverse {reverse} "
+                    f"--genomes {GENOMES} "
+                    f"--singlem-metapackage {METAPACKAGE} "
+                    f"--output {output} "
+                    f"--snakemake-args \" {os.path.abspath(os.path.join(output, 'coassemble', 'read_size.csv'))}\" "
+                )
+
+            # Control: intact files count correctly
+            forward = gzip_reads(SAMPLE_READS_FORWARD.split(" "))
+            reverse = gzip_reads(SAMPLE_READS_REVERSE.split(" "))
+            extern.run(count_cmd(forward, reverse, "control"))
+            with open(os.path.join("control", "coassemble", "read_size.csv")) as f:
+                self.assertEqual("sample_1,4832\nsample_2,3926\nsample_3,3624\n", f.read())
+
+            forward = gzip_reads(SAMPLE_READS_FORWARD.split(" "), truncate="sample_2.1.fq")
+            with self.assertRaises(extern.ExternCalledProcessError):
+                extern.run(count_cmd(forward, reverse, "test"))
+            self.assertFalse(os.path.exists(os.path.join("test", "coassemble", "read_size.csv")))
+
 
 if __name__ == '__main__':
     unittest.main()

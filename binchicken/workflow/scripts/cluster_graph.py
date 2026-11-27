@@ -107,11 +107,13 @@ def find_recover_candidates(df, samples_df, MAX_RECOVERY_SAMPLES=20, CHUNK_SIZE=
             .join(samples_df, on="target_ids", how="left", coalesce=True)
             .group_by("samples_hash", "recover_candidates")
             .agg(pl.len().alias("count"))
-            .sort("count", descending=True)
             .group_by("samples_hash")
-            .head(MAX_RECOVERY_SAMPLES)
-            .group_by("samples_hash")
-            .agg("recover_candidates")
+            # Most shared targets first; ties broken by sample name so the choice is deterministic
+            .agg(
+                pl.col("recover_candidates")
+                    .sort_by(["count", pl.col("recover_candidates").cast(pl.Utf8)], descending=[True, False])
+                    .head(MAX_RECOVERY_SAMPLES)
+                )
         )
 
         return(candidates)
@@ -344,7 +346,8 @@ def pipeline(
                 .then(pl.col("target_ids").list.eval(pl.element().replace_strict(weightings_dict, default=0)).list.sum())
                 .otherwise(pl.col("target_ids").list.len()),
             )
-            .sort("total_targets", "total_size", descending=[True, False])
+            # samples_hash breaks ties so greedy cluster selection is deterministic
+            .sort("total_targets", "total_size", "samples_hash", descending=[True, False, False])
             .with_columns(
                 unique_samples = 
                     pl.col("samples")

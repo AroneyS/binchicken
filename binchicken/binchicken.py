@@ -438,14 +438,15 @@ def download_sra(args):
         single_ended = {}
 
     if not single_ended and not args.dryrun and args.sra != "build":
-        for f, r in zip(expected_forward, expected_reverse):
+        for sra_name, f, r in zip(args.forward, expected_forward, expected_reverse):
             if os.path.isfile(f) & os.path.isfile(r):
                 continue
 
             if os.path.isfile(f) | os.path.isfile(r):
                 raise Exception(f"Mismatched downloads with {f} and {r}")
 
-            u = f.replace("_1", "")
+            # Built from the accession: replacing "_1" in the path would also hit directory names
+            u = sra_dir + sra_name + SRA_SUFFIX
             if not os.path.isfile(u):
                 raise Exception(f"Missing downloads: {f} and {r}")
 
@@ -733,22 +734,8 @@ def select_bins_from_recovered(recovered_bins_dir, min_completeness, max_contami
 
     bins = {}
     for name in passing_genomes:
-        bins[name] = os.path.join(recovered_bins_dir, "bins", name + ".fna")
+        bins[name] = os.path.abspath(os.path.join(recovered_bins_dir, "bins", name + ".fna"))
 
-    return bins
-
-def list_all_bins_from_recovered(recovered_bins_dir):
-    bins_dir = os.path.join(recovered_bins_dir, "bins")
-    if not os.path.isdir(bins_dir):
-        logging.warning(f"No bins directory found at {bins_dir}")
-        return {}
-
-    bins = {}
-    for filename in sorted(os.listdir(bins_dir)):
-        if not filename.endswith(".fna"):
-            continue
-        name = os.path.splitext(filename)[0]
-        bins[name] = os.path.abspath(os.path.join(bins_dir, filename))
     return bins
 
 def check_prior_assemblies(prior_assemblies, inputs):
@@ -1031,6 +1018,7 @@ def coassemble(args, iteration=None):
         "long_reads": long_reads,
         "long_read_type": args.long_read_type,
         "genomes": genomes if args.genomes else None,
+        "provided_genome_otu_tables": getattr(args, "provided_genome_otu_tables", None),
         "singlem_metapackage": metapackage,
         "coassembly_samples": args.coassembly_samples,
         "anchor_samples": args.anchor_samples,
@@ -1206,8 +1194,8 @@ def evaluate(args):
         prior_recovered = os.path.join(args.coassemble_output, "..", "recovered")
         if os.path.isdir(prior_recovered):
             logging.info("Using recovered dir from prior coassemble run")
-            # For evaluate, include all recovered bins; downstream rules filter as needed
-            bins = list_all_bins_from_recovered(prior_recovered)
+            # Apply the same completeness/contamination thresholds as for --aviary-outputs
+            bins = select_bins_from_recovered(prior_recovered, args.min_completeness, args.max_contamination)
 
     if bins is None or bins == {}:
         if args.aviary_outputs:
@@ -1415,6 +1403,8 @@ def generate_genome_singlem(orig_args, new_genomes):
     args.singlem_metapackage = orig_args.singlem_metapackage
     args.prodigal_meta = orig_args.prodigal_meta
     args.genomes = new_genomes + ["mock_genome"]
+    # Its OTU table is copied in below, so the workflow must not try to generate it
+    args.provided_genome_otu_tables = ["mock_genome"]
 
     args.output = os.path.join(orig_args.output, "mock")
     if not os.path.exists(args.output):
@@ -1668,6 +1658,14 @@ def build(args):
     if args.metabuli_db:
         configure_variable("METABULI_DB_PATH", args.metabuli_db)
 
+    # Create pixi environments first: database downloads run in them with `pixi run --as-is`
+    extern.run(pixi_install)
+
+    if not args.skip_aviary_envs:
+        logging.info(f"Creating Aviary environments")
+        gpu_arg = "--gpu" if args.build_gpu else ""
+        extern.run(f"{pixi_run} -e aviary aviary build {gpu_arg}")
+
     # Download databases
     if args.download_databases:
         download_config = {
@@ -1717,14 +1715,6 @@ def build(args):
                 retries = args.retries,
                 snakemake_args = args.snakemake_args,
             )
-
-    # Create pixi environments
-    extern.run(pixi_install)
-
-    if not args.skip_aviary_envs:
-        logging.info(f"Creating Aviary environments")
-        gpu_arg = "--gpu" if args.build_gpu else ""
-        extern.run(f"{pixi_run} -e aviary aviary build {gpu_arg}")
 
     logging.info("---- Bin Chicken build ---------------------------------------------------------")
     logging.info(f"Bin Chicken build complete.")

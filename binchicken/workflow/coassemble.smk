@@ -50,6 +50,19 @@ def get_mem_mb(wildcards, threads, attempt):
 def get_mem_mb_no_attempts(wildcards, threads):
     return 8 * 1000 * threads
 
+def get_mem_mb_fixed(gb):
+    """Fixed memory request, scaled by attempt."""
+    def mem_func(wildcards, attempt):
+        return gb * 1000 * attempt
+    return mem_func
+
+def get_mem_mb_input(multiplier, min_gb, max_gb):
+    """Memory scaled by total input size, clamped to [min_gb, max_gb], then scaled by attempt.
+    max_gb matches the previous threads-based request, so the largest runs are unaffected."""
+    def mem_func(wildcards, input, attempt):
+        return int(min(max(input.size_mb * multiplier, min_gb * 1000), max_gb * 1000)) * attempt
+    return mem_func
+
 def get_runtime(base_hours):
     def runtime_func(wildcards, attempt):
         return f"{attempt * base_hours}h"
@@ -194,11 +207,12 @@ rule singlem_pipe_reads:
         reads_1 = lambda wildcards: reads_1[wildcards.read],
         reads_2 = lambda wildcards: reads_2[wildcards.read],
     output:
-        temp(output_dir + "/pipe/{read}_read_raw.otu_table.tsv")
+        output_dir + "/pipe/{read}_read.otu_table.tsv"
     benchmark:
         benchmarks_dir + "/pipe/{read}_read.tsv"
     params:
-        singlem_metapackage = config["singlem_metapackage"]
+        singlem_metapackage = config["singlem_metapackage"],
+        sample = lambda wildcards: os.path.basename(wildcards.read),
     threads: 1
     resources:
         mem_mb=get_mem_mb,
@@ -209,42 +223,24 @@ rule singlem_pipe_reads:
         "singlem pipe "
         "--forward {input.reads_1} "
         "--reverse {input.reads_2} "
-        "--otu-table {output} "
+        "--otu-table {output}.raw "
         "--metapackage {params.singlem_metapackage} "
-        "&> {resources.log_path}"
-
-rule rename_pipe_reads:
-    input:
-        output_dir + "/pipe/{read}_read_raw.otu_table.tsv"
-    output:
-        output_dir + "/pipe/{read}_read.otu_table.tsv"
-    params:
-        sample = "{read}",
-    threads: 1
-    resources:
-        mem_mb=get_mem_mb,
-        runtime = get_runtime(base_hours = 6),
-    run:
-        (
-            pl.scan_csv(input[0], separator="\t")
-            .with_columns(sample = pl.lit(params.sample))
-            .with_columns(
-                pl.when(pl.col("sample").str.contains("/"))
-                .then(pl.col("sample").str.split("/").list.last())
-                .otherwise(pl.col("sample"))
-            )
-            .sink_csv(output[0], separator="\t")
-        )
+        "&> {resources.log_path} && "
+        # Set the sample column to the bare sample name (with --file-hierarchy, {read} is a nested path)
+        "sample={params.sample:q} awk 'BEGIN {{FS = OFS = \"\\t\"}} NR > 1 {{$2 = ENVIRON[\"sample\"]}} 1' "
+        "{output}.raw > {output} && rm {output}.raw"
 
 rule singlem_pipe_long_reads:
     input:
-        reads = lambda wildcards: long_reads[wildcards.long_read],
+        # .get: a provided/existing table for a sample without long reads needs no input
+        reads = lambda wildcards: long_reads.get(wildcards.long_read, []),
     output:
-        temp(output_dir + "/pipe_long/{long_read}_read_raw.otu_table.tsv")
+        output_dir + "/pipe_long/{long_read}_read.otu_table.tsv"
     benchmark:
         benchmarks_dir + "/pipe/{long_read}_long_read.tsv"
     params:
-        singlem_metapackage = config["singlem_metapackage"]
+        singlem_metapackage = config["singlem_metapackage"],
+        sample = lambda wildcards: os.path.basename(wildcards.long_read),
     threads: 1
     resources:
         mem_mb=get_mem_mb,
@@ -254,32 +250,12 @@ rule singlem_pipe_long_reads:
         f"{pixi_run} -e singlem "
         "singlem pipe "
         "--forward {input.reads} "
-        "--otu-table {output} "
+        "--otu-table {output}.raw "
         "--metapackage {params.singlem_metapackage} "
-        "&> {resources.log_path}"
-
-rule rename_pipe_long_reads:
-    input:
-        output_dir + "/pipe_long/{long_read}_read_raw.otu_table.tsv"
-    output:
-        output_dir + "/pipe_long/{long_read}_read.otu_table.tsv"
-    params:
-        sample = "{long_read}",
-    threads: 1
-    resources:
-        mem_mb=get_mem_mb,
-        runtime = get_runtime(base_hours = 6),
-    run:
-        (
-            pl.scan_csv(input[0], separator="\t")
-            .with_columns(sample = pl.lit(params.sample))
-            .with_columns(
-                pl.when(pl.col("sample").str.contains("/"))
-                .then(pl.col("sample").str.split("/").list.last())
-                .otherwise(pl.col("sample"))
-            )
-            .sink_csv(output[0], separator="\t")
-        )
+        "&> {resources.log_path} && "
+        # Set the sample column to the bare sample name (with --file-hierarchy, {long_read} is a nested path)
+        "sample={params.sample:q} awk 'BEGIN {{FS = OFS = \"\\t\"}} NR > 1 {{$2 = ENVIRON[\"sample\"]}} 1' "
+        "{output}.raw > {output} && rm {output}.raw"
 
 rule combine_pipe_reads:
     input:
@@ -287,10 +263,7 @@ rule combine_pipe_reads:
         long = output_dir + "/pipe_long/{read}_read.otu_table.tsv",
     output:
         output_dir + "/pipe/{read}_read_combined.otu_table.tsv"
-    threads: 1
-    resources:
-        mem_mb=get_mem_mb,
-        runtime = get_runtime(base_hours = 6),
+    localrule: True
     run:
         otu_table_schema = {
             "gene": pl.Utf8, "sample": pl.Utf8, "sequence": pl.Utf8,
@@ -347,37 +320,69 @@ rule genome_transcripts:
         "{params.prodigal_meta} "
         "&> {resources.log_path} "
 
-rule singlem_pipe_genomes:
-    input:
-        output_dir + "/transcripts/{genome}_protein.fna"
-    output:
-        output_dir + "/pipe/{genome}_bin.otu_table.tsv"
-    benchmark:
-        benchmarks_dir + "/pipe/{genome}_bin.tsv"
-    params:
-        singlem_metapackage = config["singlem_metapackage"]
-    threads: 1
-    resources:
-        mem_mb=get_mem_mb,
-        runtime = get_runtime(base_hours = 1),
-        log_path=lambda wildcards, attempt: setup_log(f"{logs_dir}/pipe/{wildcards.genome}_bin", attempt)
-    shell:
-        f"{pixi_run} -e singlem "
-        "singlem pipe "
-        "--forward {input} "
-        "--otu-table {output} "
-        "--metapackage {params.singlem_metapackage} "
-        "&> {resources.log_path}"
+# Genomes are piped through SingleM in batches, one cluster job per batch instead of one per genome.
+# Batches are fixed chunks of sorted genome names, so membership is the same whenever the workflow is
+# parsed (including inside cluster jobs) and reruns follow the usual rerun triggers. New genomes
+# (update/iterate runs) are batched apart from the rest, so requesting only their tables never pulls in
+# other genomes. Genomes with provided OTU tables (config provided_genome_otu_tables) are left out.
+GENOME_BATCH_SIZE = int(config.get("genome_batch_size", 100))
+
+def genome_otu_table(genome):
+    return output_dir + f"/pipe/{genome}_bin.otu_table.tsv"
+
+provided_genome_otu_tables = set(config.get("provided_genome_otu_tables") or [])
+new_genome_names = sorted(set(config["new_genomes"]) - provided_genome_otu_tables) if config.get("new_genomes") else []
+other_genome_names = sorted(set(config["genomes"]) - set(new_genome_names) - provided_genome_otu_tables) if config.get("genomes") else []
+genome_batches = []
+for batch_set, names in [("new", new_genome_names), ("genomes", other_genome_names)]:
+    for batch_index, batch_start in enumerate(range(0, len(names), GENOME_BATCH_SIZE)):
+        genome_batches.append((f"{batch_set}_{batch_index}", names[batch_start:batch_start + GENOME_BATCH_SIZE]))
+
+for batch_name, batch_genomes in genome_batches:
+    rule:
+        name: f"singlem_pipe_genomes_batch_{batch_name}"
+        input:
+            [output_dir + f"/transcripts/{g}_protein.fna" for g in batch_genomes]
+        output:
+            [genome_otu_table(g) for g in batch_genomes]
+        benchmark:
+            benchmarks_dir + f"/pipe/genomes_batch_{batch_name}.tsv"
+        params:
+            singlem_metapackage = config["singlem_metapackage"],
+            batch_table = output_dir + f"/pipe/genomes_batch_{batch_name}.otu_table.tsv",
+            pipe_dir = output_dir + "/pipe",
+        threads: 8
+        resources:
+            mem_mb=get_mem_mb_fixed(16),
+            runtime = get_runtime(base_hours = 4),
+            log_path=lambda wildcards, attempt, batch_name=batch_name: setup_log(f"{logs_dir}/pipe/genomes_batch_{batch_name}", attempt)
+        shell:
+            f"{pixi_run} -e singlem "
+            "singlem pipe "
+            "--forward {input} "
+            "--otu-table {params.batch_table} "
+            "--metapackage {params.singlem_metapackage} "
+            "--threads {threads} "
+            "&> {resources.log_path} && "
+            # Split into per-genome tables (sample is the transcript basename, <genome>_protein).
+            # Rows are sorted: SingleM's row order within a gene varies between runs and batch compositions
+            # Tables are written to .tmp files and only moved into place once all are complete
+            "for out in {output}; do head -n 1 {params.batch_table} > $out.tmp; done && "
+            "LC_ALL=C awk -F '\\t' -v dir={params.pipe_dir:q} "
+            "'NR > 1 {{s = $2; sub(/_protein$/, \"\", s); print > (dir \"/\" s \"_bin.otu_table.tsv.rows\")}}' "
+            "{params.batch_table} && "
+            "for out in {output}; do "
+            "if [ -e $out.rows ]; then LC_ALL=C sort $out.rows >> $out.tmp && rm $out.rows; fi; "
+            "done && "
+            "for out in {output}; do mv $out.tmp $out; done && "
+            "rm {params.batch_table}"
 
 rule singlem_genomes_list:
     input:
         lambda wildcards: get_genomes(wildcards)
     output:
         output_dir + "/summarise/{version,.*}bins_otu_table_list.tsv"
-    threads: 1
-    resources:
-        mem_mb=get_mem_mb,
-        runtime = get_runtime(base_hours = 5),
+    localrule: True
     run:
         with open(output[0], "w") as f:
             for genome in input:
@@ -472,7 +477,7 @@ rule update_appraise:
         new_binned = output_dir + "/appraise/binned_new.otu_table.tsv",
     threads: 64
     resources:
-        mem_mb=get_mem_mb,
+        mem_mb=get_mem_mb_input(multiplier=10, min_gb=16, max_gb=512),
         runtime = get_runtime(base_hours = 24),
         log_path=lambda wildcards, attempt: setup_log(f"{logs_dir}/appraise/appraise", attempt)
     shell:
@@ -570,10 +575,7 @@ rule read_otu_table_list:
         reads = get_appraise_pipe_tables(),
     output:
         output_dir + "/lists/reads_otu_table_list.tsv",
-    threads: 1
-    resources:
-        mem_mb=get_mem_mb,
-        runtime = get_runtime(base_hours = 5),
+    localrule: True
     run:
         with open(output[0], "w") as f:
             for read in input.reads:
@@ -634,10 +636,7 @@ rule get_reads_list:
     output:
         reads_1 = output_dir + "/lists/{version,.*}reads_1_list.tsv",
         reads_2 = output_dir + "/lists/{version,.*}reads_2_list.tsv",
-    threads: 1
-    resources:
-        mem_mb=get_mem_mb,
-        runtime = get_runtime(base_hours = 5),
+    localrule: True
     run:
         with open(output.reads_1, "w") as f:
             for read in input.reads_1:
@@ -651,10 +650,7 @@ rule get_count_samples_list:
         output_dir + "/lists/{version,.*}count_samples_list.tsv",
     params:
         names = list(config["reads_1"].keys()),
-    threads: 1
-    resources:
-        mem_mb=get_mem_mb,
-        runtime = get_runtime(base_hours = 5),
+    localrule: True
     run:
         with open(output[0], "w") as f:
             for read in params.names:
@@ -679,13 +675,14 @@ if long_reads:
             cat = get_cat,
         threads: 8
         resources:
-            mem_mb=get_mem_mb,
+            mem_mb=get_mem_mb_fixed(8),
             runtime = get_runtime(base_hours = 24),
         shell:
             f"{pixi_run} -e general "
-            "parallel -k -j {threads} "
+            "parallel --halt now,fail=1 -k -j {threads} "
+            "set -o pipefail ';' "
             "echo -n {{1}}, '&&' "
-            "{params.cat} {{2}} {{3}} '|' sed -n 2~4p '|' tr -d '\"\n\"' '|' wc -m "
+            "{params.cat} {{2}} {{3}} '|' sed -n 2~4p '|' tr -d '\"\n\"' '|' wc -c "
             ":::: {input.samples} ::::+ {input.reads_1} ::::+ {input.reads_2} "
             "> {output}"
 
@@ -700,13 +697,14 @@ if long_reads:
             cat = "zcat" if reads_1 and list(reads_1.values())[0].endswith(".gz") else "cat",
         threads: 8
         resources:
-            mem_mb=get_mem_mb,
+            mem_mb=get_mem_mb_fixed(8),
             runtime = get_runtime(base_hours = 24),
         shell:
             f"{pixi_run} -e general "
-            "parallel -k -j {threads} "
+            "parallel --halt now,fail=1 -k -j {threads} "
+            "set -o pipefail ';' "
             "echo -n {{1}}, '&&' "
-            "{params.cat} {{2}} {{3}} '|' sed -n 2~4p '|' tr -d '\"\n\"' '|' wc -m "
+            "{params.cat} {{2}} {{3}} '|' sed -n 2~4p '|' tr -d '\"\n\"' '|' wc -c "
             ":::: {input.samples} ::::+ {input.reads_1} ::::+ {input.reads_2} "
             "> {output}"
 
@@ -717,10 +715,7 @@ if long_reads:
         params:
             long_reads = list(long_reads.values()),
             samples = list(long_reads.keys()),
-        threads: 1
-        resources:
-            mem_mb=get_mem_mb,
-            runtime = get_runtime(base_hours = 5),
+        localrule: True
         run:
             with open(output.long_reads, "w") as f:
                 for read in params.long_reads:
@@ -739,13 +734,14 @@ if long_reads:
             cat = get_cat_long(),
         threads: 8
         resources:
-            mem_mb=get_mem_mb,
+            mem_mb=get_mem_mb_fixed(8),
             runtime = get_runtime(base_hours = 24),
         shell:
             f"{pixi_run} -e general "
-            "parallel -k -j {threads} "
+            "parallel --halt now,fail=1 -k -j {threads} "
+            "set -o pipefail ';' "
             "echo -n {{1}}, '&&' "
-            "{params.cat} {{2}} '|' sed -n 2~4p '|' tr -d '\"\n\"' '|' wc -m "
+            "{params.cat} {{2}} '|' sed -n 2~4p '|' tr -d '\"\n\"' '|' wc -c "
             ":::: {input.samples} ::::+ {input.long_reads} "
             "> {output}"
 
@@ -755,10 +751,7 @@ if long_reads:
             long_reads = output_dir + "/long_read_size.csv",
         output:
             output_dir + "/read_size.csv"
-        threads: 1
-        resources:
-            mem_mb=get_mem_mb,
-            runtime = get_runtime(base_hours = 5),
+        localrule: True
         run:
             # Samples with both short and long reads (matched) appear in both inputs;
             # their sizes are summed rather than added as separate rows.
@@ -788,13 +781,14 @@ else:
             cat = get_cat,
         threads: 8
         resources:
-            mem_mb=get_mem_mb,
+            mem_mb=get_mem_mb_fixed(8),
             runtime = get_runtime(base_hours = 24),
         shell:
             f"{pixi_run} -e general "
-            "parallel -k -j {threads} "
+            "parallel --halt now,fail=1 -k -j {threads} "
+            "set -o pipefail ';' "
             "echo -n {{1}}, '&&' "
-            "{params.cat} {{2}} {{3}} '|' sed -n 2~4p '|' tr -d '\"\n\"' '|' wc -m "
+            "{params.cat} {{2}} {{3}} '|' sed -n 2~4p '|' tr -d '\"\n\"' '|' wc -c "
             ":::: {input.samples} ::::+ {input.reads_1} ::::+ {input.reads_2} "
             "> {output}"
 
@@ -803,10 +797,7 @@ rule get_abundance_weighted_samples_list:
         output_dir + "/lists/abundance_weighted_samples_list.tsv",
     params:
         samples = config["abundance_weighted_samples"],
-    threads: 1
-    resources:
-        mem_mb=get_mem_mb,
-        runtime = get_runtime(base_hours = 5),
+    localrule: True
     run:
         with open(output[0], "w") as f:
             for sample in params.samples:
@@ -823,7 +814,7 @@ rule abundance_weighting:
     params:
         script = scripts_dir + "/abundance_weighting.py",
     resources:
-        mem_mb=get_mem_mb,
+        mem_mb=get_mem_mb_input(multiplier=10, min_gb=16, max_gb=512),
         runtime = get_runtime(base_hours = 24),
         log_path=lambda wildcards, attempt: setup_log(f"{logs_dir}/appraise/abundance_weighting", attempt)
     benchmark:
@@ -851,7 +842,7 @@ rule sketch_samples:
     benchmark:
         benchmarks_dir + "/precluster/sketching.tsv"
     resources:
-        mem_mb=get_mem_mb,
+        mem_mb=get_mem_mb_input(multiplier=10, min_gb=16, max_gb=512),
         runtime = get_runtime(base_hours = 96),
         log_path=lambda wildcards, attempt: setup_log(f"{logs_dir}/precluster/sketching", attempt)
     shell:
@@ -883,7 +874,7 @@ rule distance_samples:
         distance = output_dir + "/sketch/samples.csv"
     threads: 128
     resources:
-        mem_mb=get_mem_mb,
+        mem_mb=get_mem_mb_input(multiplier=10, min_gb=16, max_gb=1024),
         runtime = get_runtime(base_hours = 48),
         log_path=lambda wildcards, attempt: setup_log(f"{logs_dir}/precluster/distance", attempt)
     benchmark:
@@ -919,10 +910,7 @@ rule get_samples_list:
         output_dir + "/lists/samples_list.tsv",
     params:
         names = list(config["reads_1"].keys()) + [read for read in config.get("long_reads", {}).keys() if read not in config["reads_1"]],
-    threads: 1
-    resources:
-        mem_mb=get_mem_mb,
-        runtime = get_runtime(base_hours = 5),
+    localrule: True
     run:
         with open(output[0], "w") as f:
             for read in params.names:
@@ -933,10 +921,7 @@ rule get_anchor_samples_list:
         output_dir + "/lists/anchor_samples_list.tsv",
     params:
         anchor_samples = config["anchor_samples"],
-    threads: 1
-    resources:
-        mem_mb=get_mem_mb,
-        runtime = get_runtime(base_hours = 5),
+    localrule: True
     run:
         with open(output[0], "w") as f:
             for sample in params.anchor_samples:
@@ -994,7 +979,7 @@ rule target_weighting:
     benchmark:
         benchmarks_dir + "/target/target_weighting.tsv"
     resources:
-        mem_mb=get_mem_mb,
+        mem_mb=get_mem_mb_input(multiplier=10, min_gb=16, max_gb=512),
         runtime = get_runtime(base_hours = 24),
         log_path=lambda wildcards, attempt: setup_log(f"{logs_dir}/target/target_weighting", attempt)
     shell:
@@ -1011,10 +996,7 @@ rule get_coassembly_samples:
         coassembly_samples = output_dir + "/lists/coassembly_samples_list.tsv",
     params:
         coassembly_samples = config["coassembly_samples"],
-    threads: 1
-    resources:
-        mem_mb=get_mem_mb,
-        runtime = get_runtime(base_hours = 5),
+    localrule: True
     run:
         with open(output[0], "w") as f:
             for sample in params.coassembly_samples:
@@ -1025,10 +1007,7 @@ rule get_exclude_coassemblies:
         exclude_coassemblies = output_dir + "/lists/exclude_coassemblies_list.tsv",
     params:
         exclude_coassemblies = config["exclude_coassemblies"],
-    threads: 1
-    resources:
-        mem_mb=get_mem_mb,
-        runtime = get_runtime(base_hours = 5),
+    localrule: True
     run:
         with open(output[0], "w") as f:
             for coassembly in params.exclude_coassemblies:
@@ -1151,7 +1130,7 @@ rule qc_reads:
         min_length = 70,
     threads: 16
     resources:
-        mem_mb=get_mem_mb,
+        mem_mb=get_mem_mb_fixed(16),
         runtime = get_runtime(base_hours = 4),
         log_path=lambda wildcards, attempt: setup_log(f"{logs_dir}/mapping/{wildcards.read}_qc", attempt)
     benchmark:
@@ -1176,10 +1155,7 @@ rule get_genomes_named_list:
         output_dir + "/lists/genomes_named_list.tsv",
     params:
         genomes = config["genomes"],
-    threads: 1
-    resources:
-        mem_mb=get_mem_mb,
-        runtime = get_runtime(base_hours = 5),
+    localrule: True
     run:
         with open(output[0], "w") as f:
             for genome, path in params.genomes.items():
@@ -1198,7 +1174,8 @@ rule collect_genomes:
         runtime = get_runtime(base_hours = 24),
     params:
         script = scripts_dir + "/collect_reference_bins.py",
-        sample = "{read}",
+        # With --file-hierarchy, {read} is a nested path; appraise tables hold the bare sample name
+        sample = lambda wildcards: os.path.basename(wildcards.read),
         min_appraised = config["unmapping_min_appraised"],
     shell:
         f"{pixi_run} -e default "
@@ -1220,7 +1197,7 @@ rule map_reads:
         dir = temp(directory(output_dir + "/mapping/{read}_coverm")),
     threads: 32
     resources:
-        mem_mb=get_mem_mb,
+        mem_mb=get_mem_mb_fixed(64),
         runtime = get_runtime(base_hours = 12),
         log_path=lambda wildcards, attempt: setup_log(f"{logs_dir}/mapping/{wildcards.read}_coverm", attempt)
     benchmark:
@@ -1243,12 +1220,12 @@ rule filter_bam_files:
         temp(output_dir + "/mapping/{read}_unmapped.bam"),
     params:
         genomes = lambda wildcards: os.path.basename(wildcards.read) + "_reference.fna",
-        reads_1 = lambda wildcards: os.path.basename(config["reads_1"][wildcards.read]) if not config["run_qc"] else os.path.basename(wildcards.read) + "_1.fastq.gz",
+        reads_1 = lambda wildcards: os.path.basename(reads_1[wildcards.read]) if not config["run_qc"] else os.path.basename(wildcards.read) + "_1.fastq.gz",
         sequence_identity = config["unmapping_max_identity"],
         alignment_percent = config["unmapping_max_alignment"],
-    threads: 32
+    threads: 8
     resources:
-        mem_mb=get_mem_mb,
+        mem_mb=get_mem_mb_fixed(8),
         runtime = get_runtime(base_hours = 4),
         log_path=lambda wildcards, attempt: setup_log(f"{logs_dir}/mapping/{wildcards.read}_filter", attempt)
     benchmark:
@@ -1262,6 +1239,7 @@ rule filter_bam_files:
         "--min-read-percent-identity-pair {params.sequence_identity} "
         "--min-read-aligned-percent-pair {params.alignment_percent} "
         "--proper-pairs-only "
+        "--threads {threads} "
         "&> {resources.log_path}"
 
 rule bam_to_fastq:
@@ -1270,9 +1248,9 @@ rule bam_to_fastq:
     output:
         reads_1 = output_dir + "/mapping/{read}_unmapped.1.fq.gz",
         reads_2 = output_dir + "/mapping/{read}_unmapped.2.fq.gz",
-    threads: 32
+    threads: 8
     resources:
-        mem_mb=get_mem_mb,
+        mem_mb=get_mem_mb_fixed(8),
         runtime = get_runtime(base_hours = 4),
         log_path=lambda wildcards, attempt: setup_log(f"{logs_dir}/mapping/{wildcards.read}_fastq", attempt)
     shell:
@@ -1317,10 +1295,7 @@ rule get_reads_named_list:
     params:
         reads_1 = lambda wildcards: get_reads(wildcards),
         reads_2 = lambda wildcards: get_reads(wildcards, forward=False),
-    threads: 1
-    resources:
-        mem_mb=get_mem_mb,
-        runtime = get_runtime(base_hours = 5),
+    localrule: True
     run:
         with open(output.reads_1, "w") as f:
             for sample, read in params.reads_1.items():
@@ -1334,10 +1309,7 @@ rule get_long_reads_named_list:
         long_reads = output_dir + "/lists/long_reads_named_list.tsv",
     params:
         long_reads = long_reads,
-    threads: 1
-    resources:
-        mem_mb=get_mem_mb,
-        runtime = get_runtime(base_hours = 5),
+    localrule: True
     run:
         with open(output.long_reads, "w") as f:
             for sample, read in params.long_reads.items():

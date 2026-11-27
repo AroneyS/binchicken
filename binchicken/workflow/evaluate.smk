@@ -2,8 +2,8 @@
 ### Setup ###
 #############
 import os
-import re
-from binchicken.common import pixi_run, setup_log
+import polars as pl
+from binchicken.common import pixi_run, setup_log, bin_coassembly
 os.umask(0o002)
 
 output_dir = os.path.abspath("evaluate")
@@ -11,11 +11,20 @@ logs_dir = output_dir + "/logs"
 scripts_dir = os.path.join(os.path.dirname(os.path.abspath(workflow.snakefile)), 'scripts')
 
 bins = config["recovered_bins"]
-coassemblies = list(set([re.search(r"coassembly_\d+", b)[0] for b in bins.keys()]))
+# Bin names are resolved against the known coassembly names (which may contain "-" or start with it<N>_)
+known_coassemblies = None
+if config.get("elusive_clusters") and os.path.exists(config["elusive_clusters"]):
+    known_coassemblies = (
+        pl.read_csv(config["elusive_clusters"], separator="\t", columns=["coassembly"], schema_overrides={"coassembly": pl.Utf8})
+        .get_column("coassembly")
+        .to_list()
+    )
+bin_coassemblies = {b: bin_coassembly(b, known_coassemblies) for b in bins}
+coassemblies = sorted(set(bin_coassemblies.values()))
 
 def get_cluster_genomes(wildcards):
     coassembly = wildcards.coassembly
-    new_bins = [bins[b] for b in bins if coassembly in b]
+    new_bins = [bins[b] for b in bins if bin_coassemblies[b] == coassembly]
 
     return " ".join(config["original_bins"] + new_bins)
 

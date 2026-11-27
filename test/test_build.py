@@ -3,7 +3,11 @@
 import unittest
 import os
 import extern
+import argparse
+from unittest.mock import patch
 from bird_tool_utils import in_tempdir
+from binchicken import binchicken as binchicken_module
+from binchicken.common import pixi_install
 
 path_to_data = os.path.join(os.path.dirname(os.path.realpath(__file__)),'data')
 
@@ -134,6 +138,25 @@ class Tests(unittest.TestCase):
             self.assertFalse("binchicken/workflow/env/fastp.yml will be created." in output)
             self.assertFalse("binchicken/workflow/env/general.yml will be created." in output)
 
+
+    def test_build_envs_before_download(self):
+        # Database downloads run inside pixi envs with `pixi run --as-is`, which requires them to be installed
+        with in_tempdir():
+            args = argparse.Namespace(
+                output=".", set_tmp_dir=None, singlem_metapackage="missing_metapackage.smpkg",
+                gtdbtk_db=None, checkm2_db=None, metabuli_db=None, download_databases=True,
+                cores=1, dryrun=False, snakemake_profile="", local_cores=1, retries=None,
+                snakemake_args="", skip_aviary_envs=False, build_gpu=False,
+            )
+            calls = []
+            with patch.object(binchicken_module, "configure_variable"), \
+                 patch.object(binchicken_module.extern, "run", side_effect=lambda cmd: calls.append(("run", cmd))), \
+                 patch.object(binchicken_module, "run_workflow", side_effect=lambda **kwargs: calls.append(("workflow", kwargs["workflow"]))):
+                binchicken_module.build(args)
+
+            self.assertEqual(("run", pixi_install), calls[0])
+            self.assertTrue("aviary build" in calls[1][1])
+            self.assertEqual(("workflow", "download.smk"), calls[2])
 
 if __name__ == '__main__':
     unittest.main()

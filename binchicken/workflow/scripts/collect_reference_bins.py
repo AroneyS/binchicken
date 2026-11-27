@@ -34,16 +34,22 @@ def trimmed_mean(data, trim=0.1):
 def pipeline(appraise_binned, appraise_unbinned, sample, MIN_APPRAISED=0.1, TRIM_FRACTION=0.1):
     print(f"Polars using {str(pl.thread_pool_size())} threads")
 
+    # Inputs may be LazyFrames scanning the full appraise tables: only this sample's rows are collected
     appraise_binned = (
         appraise_binned
+        .lazy()
         .with_columns(pl.col("sample").cast(str))
         .filter(pl.col("sample") == sample)
+        .collect()
     )
 
     appraise_unbinned = (
         appraise_unbinned
+        .lazy()
         .with_columns(pl.col("sample").cast(str))
         .filter(pl.col("sample") == sample)
+        .select("num_hits")
+        .collect()
     )
 
     num_binned = sum(appraise_binned.get_column("num_hits").to_list())
@@ -99,8 +105,9 @@ def main():
     os.environ["POLARS_MAX_THREADS"] = str(args.threads)
     import polars as pl
 
-    appraise_binned = pl.read_csv(args.appraise_binned, separator="\t")
-    appraise_unbinned = pl.read_csv(args.appraise_unbinned, separator="\t")
+    # Scan rather than read: the tables cover all samples, and this runs once per sample
+    appraise_binned = pl.scan_csv(args.appraise_binned, separator="\t", schema_overrides={"sample": pl.Utf8})
+    appraise_unbinned = pl.scan_csv(args.appraise_unbinned, separator="\t", schema_overrides={"sample": pl.Utf8})
 
     # Build a mapping from bin name to genome file path
     genomes_dict = {}

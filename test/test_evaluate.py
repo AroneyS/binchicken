@@ -518,8 +518,114 @@ class Tests(unittest.TestCase):
             self.assertTrue("\nsinglem_summarise_bins" in output)
             config = load_configfile(os.path.join("test", "config.yaml"))
             self.assertIn("recovered_bins", config)
-            self.assertEqual(sorted(config["recovered_bins"].keys()), ["binchicken_coassembly_0.1","binchicken_coassembly_0.2"])
+            # binchicken_coassembly_0.2 (36.49% complete) fails the default --min-completeness 70
+            self.assertEqual(sorted(config["recovered_bins"].keys()), ["binchicken_coassembly_0.1"])
 
+
+    def _make_recovered_coassemble(self, coassemblies):
+        """Mock a prior coassemble run with one passing recovered bin per coassembly."""
+        target_dir = os.path.join("prior_coassemble", "coassemble", "target")
+        appraise_dir = os.path.join("prior_coassemble", "coassemble", "appraise")
+        os.makedirs(target_dir, exist_ok=True)
+        os.makedirs(appraise_dir, exist_ok=True)
+        (
+            pl.DataFrame([
+                    ["sample_1,sample_2", "2", "2", "2869", "sample_1,sample_2", c] for c in coassemblies
+                    ],
+                orient="row", schema=ELUSIVE_CLUSTERS_COLUMNS
+                )
+            .write_csv(os.path.join(target_dir, "elusive_clusters.tsv"), separator="\t")
+        )
+        for path in [os.path.join(appraise_dir, "unbinned.otu_table.tsv"), os.path.join(appraise_dir, "binned.otu_table.tsv")]:
+            with open(path, "w") as f:
+                pass
+
+        recovered_dir = os.path.join("prior_coassemble", "recovered")
+        os.makedirs(os.path.join(recovered_dir, "bins"), exist_ok=True)
+        rows = []
+        for c in coassemblies:
+            name = f"binchicken_{c}.1"
+            with open(os.path.join(recovered_dir, "bins", name + ".fna"), "w") as f:
+                f.write(">contigA\nACGT\n")
+            rows.append([name, "83.86", "1.14", "Neural Network (Specific Model)", "11", "0.902", "6824", "307.7", "1705643", "0.6", "1669", "315", "25260", ""])
+        (
+            pl.DataFrame(rows, orient="row", schema=CHECKM2_QUALITY_COLUMNS)
+            .write_csv(os.path.join(recovered_dir, "quality_report.tsv"), separator="\t")
+        )
+        return os.path.abspath(os.path.join(recovered_dir, "bins"))
+
+    def _cluster_commands(self, output):
+        """Map cluster definition name -> planned coverm cluster command line."""
+        commands = {}
+        for line in output.splitlines():
+            if "coverm cluster" not in line:
+                continue
+            name = line.split("--output-cluster-definition ")[1].split(" ")[0]
+            commands[os.path.basename(name)] = line
+        return commands
+
+    def test_evaluate_cluster_coassembly_name_prefix(self):
+        # coassembly_1 must not pick up bins from coassembly_10 (substring match)
+        with in_tempdir():
+            bins_dir = self._make_recovered_coassemble(["coassembly_1", "coassembly_10"])
+            cmd = (
+                f"binchicken evaluate "
+                f"--coassemble-output prior_coassemble "
+                f"--cluster "
+                f"--genomes {GENOMES} "
+                f"--singlem-metapackage {METAPACKAGE} "
+                f"--output test "
+                f"--dryrun "
+                f"--snakemake-args \" --printshellcmds\" "
+            )
+            commands = self._cluster_commands(extern.run(cmd))
+
+            self.assertEqual(["coassembly_1.txt", "coassembly_10.txt", "original.txt"], sorted(commands))
+            self.assertIn(os.path.join(bins_dir, "binchicken_coassembly_1.1.fna"), commands["coassembly_1.txt"])
+            self.assertNotIn(os.path.join(bins_dir, "binchicken_coassembly_10.1.fna"), commands["coassembly_1.txt"])
+            self.assertIn(os.path.join(bins_dir, "binchicken_coassembly_10.1.fna"), commands["coassembly_10.txt"])
+            self.assertNotIn(os.path.join(bins_dir, "binchicken_coassembly_1.1.fna"), commands["coassembly_10.txt"])
+
+    def test_evaluate_cluster_single_assembly_names(self):
+        # Single-assembly runs name "coassemblies" after samples, with no coassembly_N in bin names
+        with in_tempdir():
+            bins_dir = self._make_recovered_coassemble(["sample_1", "sample_2"])
+            cmd = (
+                f"binchicken evaluate "
+                f"--coassemble-output prior_coassemble "
+                f"--cluster "
+                f"--genomes {GENOMES} "
+                f"--singlem-metapackage {METAPACKAGE} "
+                f"--output test "
+                f"--dryrun "
+                f"--snakemake-args \" --printshellcmds\" "
+            )
+            commands = self._cluster_commands(extern.run(cmd))
+
+            self.assertEqual(["original.txt", "sample_1.txt", "sample_2.txt"], sorted(commands))
+            self.assertIn(os.path.join(bins_dir, "binchicken_sample_1.1.fna"), commands["sample_1.txt"])
+            self.assertNotIn(os.path.join(bins_dir, "binchicken_sample_2.1.fna"), commands["sample_1.txt"])
+
+
+    def test_evaluate_cluster_iteration_like_sample_name(self):
+        # A sample named it2_sample must not be read as iteration 2 of "sample"
+        with in_tempdir():
+            bins_dir = self._make_recovered_coassemble(["it2_sample", "sample"])
+            cmd = (
+                f"binchicken evaluate "
+                f"--coassemble-output prior_coassemble "
+                f"--cluster "
+                f"--genomes {GENOMES} "
+                f"--singlem-metapackage {METAPACKAGE} "
+                f"--output test "
+                f"--dryrun "
+                f"--snakemake-args \" --printshellcmds\" "
+            )
+            commands = self._cluster_commands(extern.run(cmd))
+
+            self.assertEqual(["it2_sample.txt", "original.txt", "sample.txt"], sorted(commands))
+            self.assertIn(os.path.join(bins_dir, "binchicken_it2_sample.1.fna"), commands["it2_sample.txt"])
+            self.assertNotIn(os.path.join(bins_dir, "binchicken_it2_sample.1.fna"), commands["sample.txt"])
 
 if __name__ == '__main__':
     unittest.main()

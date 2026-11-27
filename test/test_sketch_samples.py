@@ -242,6 +242,82 @@ class Tests(unittest.TestCase):
             self.assertEqual(sample_2_sig.jaccard(sample_4_sig), 0.25)
             self.assertEqual(sample_3_sig.jaccard(sample_4_sig), 0.5)
 
+    def test_sketch_samples_found_in_header(self):
+        # Appraise unbinned tables carry a found_in column; the header row must not become a sample
+        with in_tempdir():
+            unbinned = pl.DataFrame([
+                ["S3.1", "sample_1", "ATGACTAGTCATAGCTAGATTTGAGGCAGCAGGAGTTAGGAAAGCCCCCGGAGTTAGCTA", 5, 10, "Root", ""],
+                ["S3.1", "sample_2", "TGACTAGCTGGGCTAGCTATATTCTTTTTACGAGCGCGAGGAAAGCGACAGCGGCCAGGC", 5, 10, "Root", ""],
+            ], orient="row", schema={**OTU_TABLE_COLUMNS, "found_in": str})
+            unbinned_path = "unbinned.otu_table.tsv"
+            unbinned.write_csv(unbinned_path, separator="\t")
+
+            signatures_path = processing(unbinned_path, output_path="./signatures.sig", threads=1)
+            observed_names = [s.name for s in load_file_as_signatures(signatures_path)]
+            self.assertEqual(["sample_1", "sample_2"], sorted(observed_names))
+
+    def test_sketch_samples_taxa_last_row_filtered(self):
+        # The final row is filtered out, which previously dropped the last kept sample
+        with in_tempdir():
+            unbinned = pl.DataFrame([
+                ["S3.1", "sample_1", "ATGACTAGTCATAGCTAGATTTGAGGCAGCAGGAGTTAGGAAAGCCCCCGGAGTTAGCTA", 5, 10, "Root; d__Bacteria"],
+                ["S3.1", "sample_2", "TGACTAGCTGGGCTAGCTATATTCTTTTTACGAGCGCGAGGAAAGCGACAGCGGCCAGGC", 5, 10, "Root; d__Bacteria"],
+                ["S3.1", "sample_3", "ATCGACTGACTTGATCGATCTTTGACGACGAGAGAGAGAGCGACGCGCCGAGAGGTTTCA", 5, 10, "Root; d__Archaea"],
+            ], orient="row", schema=OTU_TABLE_COLUMNS)
+            unbinned_path = "unbinned.otu_table.tsv"
+            unbinned.write_csv(unbinned_path, separator="\t")
+
+            for kwargs in [{"taxa_of_interest": "d__Bacteria"}, {"exclude_taxa": "d__Archaea"}]:
+                signatures_path = processing(unbinned_path, output_path="./signatures.sig", threads=1, **kwargs)
+                observed_names = [s.name for s in load_file_as_signatures(signatures_path)]
+                self.assertEqual(["sample_1", "sample_2"], sorted(observed_names))
+
+    def test_sketch_samples_stale_thread_files(self):
+        # Leftover per-thread signature files from a previous run must not be merged into the output
+        with in_tempdir():
+            stale_unbinned = pl.DataFrame([
+                ["S3.1", f"stale_{i}", "ATGACTAGTCATAGCTAGATTTGAGGCAGCAGGAGTTAGGAAAGCCCCCGGAGTTAGCTA", 5, 10, "Root"]
+                for i in range(3)
+            ], orient="row", schema=OTU_TABLE_COLUMNS)
+            stale_unbinned.write_csv("stale.otu_table.tsv", separator="\t")
+            processing("stale.otu_table.tsv", output_path="./signatures.sig", threads=1, samples_per_group=1)
+
+            unbinned = pl.DataFrame([
+                ["S3.1", "sample_1", "ATGACTAGTCATAGCTAGATTTGAGGCAGCAGGAGTTAGGAAAGCCCCCGGAGTTAGCTA", 5, 10, "Root"],
+            ], orient="row", schema=OTU_TABLE_COLUMNS)
+            unbinned.write_csv("unbinned.otu_table.tsv", separator="\t")
+
+            signatures_path = processing("unbinned.otu_table.tsv", output_path="./signatures.sig", threads=1, samples_per_group=1)
+            observed_names = [s.name for s in load_file_as_signatures(signatures_path)]
+            self.assertEqual(["sample_1"], observed_names)
+
+    def test_sketch_samples_non_contiguous_sample(self):
+        # A sample whose rows are split by another sample would be sketched twice from partial sequences
+        with in_tempdir():
+            unbinned = pl.DataFrame([
+                ["S3.1", "sample_1", "ATGACTAGTCATAGCTAGATTTGAGGCAGCAGGAGTTAGGAAAGCCCCCGGAGTTAGCTA", 5, 10, "Root"],
+                ["S3.1", "sample_2", "TGACTAGCTGGGCTAGCTATATTCTTTTTACGAGCGCGAGGAAAGCGACAGCGGCCAGGC", 5, 10, "Root"],
+                ["S3.1", "sample_1", "ATCGACTGACTTGATCGATCTTTGACGACGAGAGAGAGAGCGACGCGCCGAGAGGTTTCA", 5, 10, "Root"],
+            ], orient="row", schema=OTU_TABLE_COLUMNS)
+            unbinned.write_csv("unbinned.otu_table.tsv", separator="\t")
+
+            with self.assertRaisesRegex(ValueError, "sample_1"):
+                processing("unbinned.otu_table.tsv", output_path="./signatures.sig", threads=1)
+
+    def test_sketch_samples_non_contiguous_filtered_between(self):
+        # Rows of another sample that are all filtered out do not break contiguity
+        with in_tempdir():
+            unbinned = pl.DataFrame([
+                ["S3.1", "sample_1", "ATGACTAGTCATAGCTAGATTTGAGGCAGCAGGAGTTAGGAAAGCCCCCGGAGTTAGCTA", 5, 10, "Root; d__Bacteria"],
+                ["S3.1", "sample_2", "TGACTAGCTGGGCTAGCTATATTCTTTTTACGAGCGCGAGGAAAGCGACAGCGGCCAGGC", 5, 10, "Root; d__Archaea"],
+                ["S3.1", "sample_1", "ATCGACTGACTTGATCGATCTTTGACGACGAGAGAGAGAGCGACGCGCCGAGAGGTTTCA", 5, 10, "Root; d__Bacteria"],
+            ], orient="row", schema=OTU_TABLE_COLUMNS)
+            unbinned.write_csv("unbinned.otu_table.tsv", separator="\t")
+
+            signatures_path = processing("unbinned.otu_table.tsv", output_path="./signatures.sig", threads=1, exclude_taxa="d__Archaea")
+            observed_names = [s.name for s in load_file_as_signatures(signatures_path)]
+            self.assertEqual(["sample_1"], observed_names)
+
 
 if __name__ == '__main__':
     unittest.main()

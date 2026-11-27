@@ -1362,5 +1362,62 @@ class Tests(unittest.TestCase):
             self.assertDataFrameEqual(expected, observed)
 
 
+    def test_cluster_tie_break_samples_hash(self):
+        # Equal total_targets and total_size: the choice must be deterministic (lowest samples_hash wins)
+        elusive_edges = pl.DataFrame([
+            ["match", 2, "a,b", "0,1"],
+            ["match", 2, "a,c", "2,3"],
+            ["match", 2, "a,d", "4,5"],
+            ["match", 2, "a,e", "6,7"],
+        ], orient="row", schema=ELUSIVE_EDGES_COLUMNS)
+        read_size = pl.DataFrame([
+            ["a", 100],
+            ["b", 100],
+            ["c", 100],
+            ["d", 100],
+            ["e", 100],
+        ], orient="row", schema=READ_SIZE_COLUMNS)
+
+        # samples_hash order (polars 1.36): a,c < a,d < a,b < a,e
+        expected = pl.DataFrame([
+            ["a,c", 2, 2, 200, "a,c", "coassembly_0"],
+        ], orient="row", schema=ELUSIVE_CLUSTERS_COLUMNS)
+        for _ in range(20):
+            observed = pipeline(elusive_edges, read_size)
+            self.assertDataFrameEqual(expected, observed)
+
+    def test_find_recover_candidates_tie_break(self):
+        # Candidates tied on shared target count are chosen by sample name
+        with pl.StringCache():
+            sample_targets = (
+                pl.DataFrame([
+                        [s, [1,2]] for s in ["f", "e", "d", "c", "b", "a"]
+                    ], orient="row", schema=SAMPLE_TARGETS_COLUMNS
+                    )
+                .with_columns(pl.col("recover_candidates").cast(pl.Categorical))
+            )
+
+            clusters = (
+                pl.DataFrame([
+                        [12341234, ["a","b"], 2, [1,2], 2, 200],
+                    ], orient="row", schema=CAT_CLUSTERS_COLUMNS
+                    )
+                .with_columns(pl.col("samples").cast(pl.List(pl.Categorical)))
+            )
+
+            for _ in range(20):
+                observed = (
+                    find_recover_candidates(
+                        clusters,
+                        sample_targets,
+                        MAX_RECOVERY_SAMPLES=4,
+                        )
+                    .select(pl.col("recover_candidates").cast(pl.List(pl.Utf8)).list.sort())
+                    .to_series()
+                    .to_list()
+                )
+                self.assertEqual([["a", "b", "c", "d"]], observed)
+
+
 if __name__ == '__main__':
     unittest.main()
