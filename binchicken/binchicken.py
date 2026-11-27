@@ -1658,6 +1658,14 @@ def build(args):
     if args.metabuli_db:
         configure_variable("METABULI_DB_PATH", args.metabuli_db)
 
+    # Create pixi environments first: database downloads run in them with `pixi run --as-is`
+    extern.run(pixi_install)
+
+    if not args.skip_aviary_envs:
+        logging.info(f"Creating Aviary environments")
+        gpu_arg = "--gpu" if args.build_gpu else ""
+        extern.run(f"{pixi_run} -e aviary aviary build {gpu_arg}")
+
     # Download databases
     if args.download_databases:
         download_config = {
@@ -1707,14 +1715,6 @@ def build(args):
                 retries = args.retries,
                 snakemake_args = args.snakemake_args,
             )
-
-    # Create pixi environments
-    extern.run(pixi_install)
-
-    if not args.skip_aviary_envs:
-        logging.info(f"Creating Aviary environments")
-        gpu_arg = "--gpu" if args.build_gpu else ""
-        extern.run(f"{pixi_run} -e aviary aviary build {gpu_arg}")
 
     logging.info("---- Bin Chicken build ---------------------------------------------------------")
     logging.info(f"Bin Chicken build complete.")
